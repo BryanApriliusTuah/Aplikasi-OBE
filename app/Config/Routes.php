@@ -7,152 +7,152 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/auth/login', 'Auth::login');
 $routes->post('/auth/login', 'Auth::loginProcess');
-$routes->get('/', 'Auth::login'); 
+$routes->get('/', 'Auth::login');
 $routes->get('logout', 'Auth::logout');
 $routes->get('admin', 'Admin\Dashboard::index');
 $routes->get('admin/dashboard', 'Admin\Dashboard::index');
 
 
 
-$routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($routes) {
+$routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
 
-    // profil lulusan
-    $routes->get('profil-lulusan', 'ProfilLulusan::index');
-    $routes->get('profil-lulusan/create', 'ProfilLulusan::create');
-    $routes->post('profil-lulusan/store', 'ProfilLulusan::store');
-    $routes->get('profil-lulusan/edit/(:num)', 'ProfilLulusan::edit/$1');
-    $routes->post('profil-lulusan/update/(:num)', 'ProfilLulusan::update/$1');
-    $routes->get('profil-lulusan/delete/(:num)', 'ProfilLulusan::delete/$1');
-    $routes->post('profil-lulusan/delete/(:num)', 'ProfilLulusan::delete/$1');
+	// profil lulusan
+	$routes->get('profil-lulusan', 'ProfilLulusan::index');
+	$routes->get('profil-lulusan/create', 'ProfilLulusan::create');
+	$routes->post('profil-lulusan/store', 'ProfilLulusan::store');
+	$routes->get('profil-lulusan/edit/(:num)', 'ProfilLulusan::edit/$1');
+	$routes->post('profil-lulusan/update/(:num)', 'ProfilLulusan::update/$1');
+	$routes->get('profil-lulusan/delete/(:num)', 'ProfilLulusan::delete/$1');
+	$routes->post('profil-lulusan/delete/(:num)', 'ProfilLulusan::delete/$1');
 
-    //  CPL
-    $routes->get('cpl', 'Cpl::index');
-    $routes->get('cpl/create', 'Cpl::create');
-    $routes->post('cpl/store', 'Cpl::store');
-    $routes->get('cpl/edit/(:num)', 'Cpl::edit/$1');
-    $routes->post('cpl/update/(:num)', 'Cpl::update/$1');
-    $routes->get('cpl/delete/(:num)', 'Cpl::delete/$1');
-    
-    //Cpl-Pl
-    $routes->get('cpl-pl', 'CplPl::index');
-    $routes->get('cpl-pl/create', 'CplPl::create');
-    $routes->post('cpl-pl/store', 'CplPl::store');
-    $routes->get('cpl-pl/delete/(:num)', 'CplPl::delete/$1');
-    $routes->post('cpl-pl/delete/(:num)', 'CplPl::delete/$1');
+	//  CPL
+	$routes->get('cpl', 'Cpl::index');
+	$routes->get('cpl/create', 'Cpl::create');
+	$routes->post('cpl/store', 'Cpl::store');
+	$routes->get('cpl/edit/(:num)', 'Cpl::edit/$1');
+	$routes->post('cpl/update/(:num)', 'Cpl::update/$1');
+	$routes->get('cpl/delete/(:num)', 'Cpl::delete/$1');
 
-    //Bk
-    $routes->get('bahan-kajian', 'BahanKajian::index');
-    $routes->get('bahan-kajian/create', 'BahanKajian::create');
-    $routes->post('bahan-kajian/store', 'BahanKajian::store');
-    $routes->get('bahan-kajian/edit/(:num)', 'BahanKajian::edit/$1');
-    $routes->post('bahan-kajian/update/(:num)', 'BahanKajian::update/$1');
-    $routes->post('bahan-kajian/delete/(:num)', 'BahanKajian::delete/$1');
+	//Cpl-Pl
+	$routes->get('cpl-pl', 'CplPl::index');
+	$routes->get('cpl-pl/create', 'CplPl::create');
+	$routes->post('cpl-pl/store', 'CplPl::store');
+	$routes->get('cpl-pl/delete/(:num)', 'CplPl::delete/$1');
+	$routes->post('cpl-pl/delete/(:num)', 'CplPl::delete/$1');
 
-    // CPL-BK
-    $routes->get('cpl-bk', 'CplBk::index');
-    $routes->get('cpl-bk/create', 'CplBk::create');
-    $routes->post('cpl-bk/store', 'CplBk::store');
-    $routes->get('cpl-bk/delete/(:num)', 'CplBk::delete/$1');
-    $routes->post('cpl-bk/delete/(:num)', 'CplBk::delete/$1');
+	//Bk
+	$routes->get('bahan-kajian', 'BahanKajian::index');
+	$routes->get('bahan-kajian/create', 'BahanKajian::create');
+	$routes->post('bahan-kajian/store', 'BahanKajian::store');
+	$routes->get('bahan-kajian/edit/(:num)', 'BahanKajian::edit/$1');
+	$routes->post('bahan-kajian/update/(:num)', 'BahanKajian::update/$1');
+	$routes->post('bahan-kajian/delete/(:num)', 'BahanKajian::delete/$1');
 
-
-    // Mata Kuliah
-    $routes->get('mata-kuliah', 'MataKuliah::index');
-    $routes->get('mata-kuliah/create', 'MataKuliah::create');
-    $routes->post('mata-kuliah/store', 'MataKuliah::store');
-    $routes->get('mata-kuliah/edit/(:num)', 'MataKuliah::edit/$1');
-    $routes->post('mata-kuliah/update/(:num)', 'MataKuliah::update/$1');
-    $routes->post('mata-kuliah/delete/(:num)', 'MataKuliah::delete/$1');
+	// CPL-BK
+	$routes->get('cpl-bk', 'CplBk::index');
+	$routes->get('cpl-bk/create', 'CplBk::create');
+	$routes->post('cpl-bk/store', 'CplBk::store');
+	$routes->get('cpl-bk/delete/(:num)', 'CplBk::delete/$1');
+	$routes->post('cpl-bk/delete/(:num)', 'CplBk::delete/$1');
 
 
-
-    //BK-Mk
-    $routes->get('bkmk', 'BkMk::index');
-    $routes->post('bkmk/store', 'BkMk::store');
-    $routes->get('bkmk/delete/(:num)', 'BkMk::delete/$1');
-    $routes->get('bkmk/create', 'BkMk::create');
-    $routes->get('bkmk/edit/(:num)', 'BkMk::edit/$1');
-    $routes->post('bkmk/update/(:num)', 'BkMk::update/$1'); 
-    $routes->get('bkmk/matriks', 'BkMk::matriks');
-    $routes->post('bkmk/delete/(:num)', 'BkMk::delete/$1');
+	// Mata Kuliah
+	$routes->get('mata-kuliah', 'MataKuliah::index');
+	$routes->get('mata-kuliah/create', 'MataKuliah::create');
+	$routes->post('mata-kuliah/store', 'MataKuliah::store');
+	$routes->get('mata-kuliah/edit/(:num)', 'MataKuliah::edit/$1');
+	$routes->post('mata-kuliah/update/(:num)', 'MataKuliah::update/$1');
+	$routes->post('mata-kuliah/delete/(:num)', 'MataKuliah::delete/$1');
 
 
-    //CPL-Mk
-    $routes->get('cpl-mk', 'CplMk::index');
-    $routes->get('cpl-mk/create', 'CplMk::create');
-    $routes->post('cpl-mk/store', 'CplMk::store');
-    $routes->post('cpl-mk/delete/(:num)/(:num)', 'CplMk::delete/$1/$2');
+
+	//BK-Mk
+	$routes->get('bkmk', 'BkMk::index');
+	$routes->post('bkmk/store', 'BkMk::store');
+	$routes->get('bkmk/delete/(:num)', 'BkMk::delete/$1');
+	$routes->get('bkmk/create', 'BkMk::create');
+	$routes->get('bkmk/edit/(:num)', 'BkMk::edit/$1');
+	$routes->post('bkmk/update/(:num)', 'BkMk::update/$1');
+	$routes->get('bkmk/matriks', 'BkMk::matriks');
+	$routes->post('bkmk/delete/(:num)', 'BkMk::delete/$1');
 
 
-    //cpl-bk-mk
-    $routes->get('cpl-bk-mk', 'CplBkMkView::index');
+	//CPL-Mk
+	$routes->get('cpl-mk', 'CplMk::index');
+	$routes->get('cpl-mk/create', 'CplMk::create');
+	$routes->post('cpl-mk/store', 'CplMk::store');
+	$routes->post('cpl-mk/delete/(:num)/(:num)', 'CplMk::delete/$1/$2');
 
-    //organisasi mk
-    $routes->get('organisasi-mk', 'OrganisasiMk::index');
 
-    //peta pemenuhan CPL
-    $routes->get('peta-cpl', 'PetaCPL::index');
-    
-    
-    //  CPMK
-    $routes->get('cpmk', 'Cpmk::index');
-    $routes->get('cpmk/create', 'Cpmk::create');
-    $routes->post('cpmk/store', 'Cpmk::store');
-    $routes->post('cpmk/delete/(:num)', 'Cpmk::delete/$1');
-    $routes->get('cpmk/edit/(:num)', 'Cpmk::edit/$1');
-    $routes->post('cpmk/update/(:num)', 'Cpmk::update/$1');
+	//cpl-bk-mk
+	$routes->get('cpl-bk-mk', 'CplBkMkView::index');
 
-    //pemetaan cpl-mk-cpmk
-    $routes->get('pemetaan-cpl-mk-cpmk', 'PemetaanCplMkCpmk::index');
-    $routes->get('pemetaan-cpl-mk-cpmk/create', 'PemetaanCplMkCpmk::create');
-    $routes->post('pemetaan-cpl-mk-cpmk/store', 'PemetaanCplMkCpmk::store');
-    $routes->get('pemetaan-cpl-mk-cpmk/edit/(:num)/(:num)', 'PemetaanCplMkCpmk::edit/$1/$2');
-    $routes->post('pemetaan-cpl-mk-cpmk/update/(:num)/(:num)', 'PemetaanCplMkCpmk::update/$1/$2');
-    $routes->get('pemetaan-cpl-mk-cpmk/delete/(:num)', 'PemetaanCplMkCpmk::delete/$1');
-    $routes->post('pemetaan-cpl-mk-cpmk/deleteGroup/(:num)/(:num)', 'PemetaanCplMkCpmk::deleteGroup/$1/$2');
-    $routes->get('pemetaan-cpl-mk-cpmk/get-mk/(:num)', 'PemetaanCplMkCpmk::getMataKuliahByCpl/$1');
-    $routes->get('pemetaan-cpl-mk-cpmk/get-cpmk/(:any)', 'PemetaanCplMkCpmk::getCpmkByKodeCpl/$1');
-    $routes->get('pemetaan-cpl-mk-cpmk/exportExcel', 'PemetaanCplMkCpmk::exportExcel');
-    $routes->get('pemetaan-cpl-mk-cpmk/exportPdf', 'PemetaanCplMkCpmk::exportPdf');
+	//organisasi mk
+	$routes->get('organisasi-mk', 'OrganisasiMk::index');
 
-    // Pemetaan MK-CPMK-SUBCPMK
-    $routes->group('pemetaan-mk-cpmk-sub', static function ($routes) {
-        $routes->get('/', 'PemetaanMkCpmkSub::index');
-        $routes->get('create', 'PemetaanMkCpmkSub::create');
-        $routes->post('store', 'PemetaanMkCpmkSub::store');
-        $routes->get('edit/(:num)', 'PemetaanMkCpmkSub::edit/$1');
-        $routes->post('update/(:num)', 'PemetaanMkCpmkSub::update/$1');
-        $routes->post('delete/(:num)', 'PemetaanMkCpmkSub::delete/$1');
-        $routes->get('export-excel', 'PemetaanMkCpmkSub::exportExcel');
-        $routes->get('export-pdf', 'PemetaanMkCpmkSub::exportPdf');
-        $routes->get('get-next-suffix/(:num)', 'PemetaanMkCpmkSub::getNextSuffix/$1');
-    });
-    
-    // fetch MK by CPMK
-    $routes->get('pemetaan-mk-cpmk-subcpmk/get-mk/(:num)', 'PemetaanMkCpmkSub::getMkByCpmk/$1');
+	//peta pemenuhan CPL
+	$routes->get('peta-cpl', 'PetaCPL::index');
 
-    //Profil Lulusan
-    $routes->get('profil-prodi', 'ProfilProdi::index');
-    $routes->get('profil-prodi/create', 'ProfilProdi::create');
-    $routes->post('profil-prodi/store', 'ProfilProdi::store');
-    $routes->get('profil-prodi/edit/(:num)', 'ProfilProdi::edit/$1');
-    $routes->post('profil-prodi/update/(:num)', 'ProfilProdi::update/$1');
-    $routes->post('profil-prodi/delete/(:num)', 'ProfilProdi::delete/$1');
 
-    // Rute untuk Master Data Dosen
-    $routes->get('dosen', 'Dosen::index');
-    $routes->get('dosen/create', 'Dosen::create');
-    $routes->post('dosen/store', 'Dosen::store');
-    $routes->get('dosen/delete/(:num)', 'Dosen::delete/$1');
-    $routes->get('dosen/edit/(:num)', 'Dosen::edit/$1');   
-    $routes->post('dosen/update/(:num)', 'Dosen::update/$1');
-        
+	//  CPMK
+	$routes->get('cpmk', 'Cpmk::index');
+	$routes->get('cpmk/create', 'Cpmk::create');
+	$routes->post('cpmk/store', 'Cpmk::store');
+	$routes->post('cpmk/delete/(:num)', 'Cpmk::delete/$1');
+	$routes->get('cpmk/edit/(:num)', 'Cpmk::edit/$1');
+	$routes->post('cpmk/update/(:num)', 'Cpmk::update/$1');
 
-    //matriks pemetaan cpl-cpmk-mk persemester
-    $routes->get('cpl-cpmk-mk-per-semester', 'CplCpmkMkPerSemester::index');
-    
-    //matriks pemetaan MK-CPL-CPMK
-    $routes->get('mk-cpl-cpmk', 'MkCplCpmk::index');
+	//pemetaan cpl-mk-cpmk
+	$routes->get('pemetaan-cpl-mk-cpmk', 'PemetaanCplMkCpmk::index');
+	$routes->get('pemetaan-cpl-mk-cpmk/create', 'PemetaanCplMkCpmk::create');
+	$routes->post('pemetaan-cpl-mk-cpmk/store', 'PemetaanCplMkCpmk::store');
+	$routes->get('pemetaan-cpl-mk-cpmk/edit/(:num)/(:num)', 'PemetaanCplMkCpmk::edit/$1/$2');
+	$routes->post('pemetaan-cpl-mk-cpmk/update/(:num)/(:num)', 'PemetaanCplMkCpmk::update/$1/$2');
+	$routes->get('pemetaan-cpl-mk-cpmk/delete/(:num)', 'PemetaanCplMkCpmk::delete/$1');
+	$routes->post('pemetaan-cpl-mk-cpmk/deleteGroup/(:num)/(:num)', 'PemetaanCplMkCpmk::deleteGroup/$1/$2');
+	$routes->get('pemetaan-cpl-mk-cpmk/get-mk/(:num)', 'PemetaanCplMkCpmk::getMataKuliahByCpl/$1');
+	$routes->get('pemetaan-cpl-mk-cpmk/get-cpmk/(:any)', 'PemetaanCplMkCpmk::getCpmkByKodeCpl/$1');
+	$routes->get('pemetaan-cpl-mk-cpmk/exportExcel', 'PemetaanCplMkCpmk::exportExcel');
+	$routes->get('pemetaan-cpl-mk-cpmk/exportPdf', 'PemetaanCplMkCpmk::exportPdf');
+
+	// Pemetaan MK-CPMK-SUBCPMK
+	$routes->group('pemetaan-mk-cpmk-sub', static function ($routes) {
+		$routes->get('/', 'PemetaanMkCpmkSub::index');
+		$routes->get('create', 'PemetaanMkCpmkSub::create');
+		$routes->post('store', 'PemetaanMkCpmkSub::store');
+		$routes->get('edit/(:num)', 'PemetaanMkCpmkSub::edit/$1');
+		$routes->post('update/(:num)', 'PemetaanMkCpmkSub::update/$1');
+		$routes->post('delete/(:num)', 'PemetaanMkCpmkSub::delete/$1');
+		$routes->get('export-excel', 'PemetaanMkCpmkSub::exportExcel');
+		$routes->get('export-pdf', 'PemetaanMkCpmkSub::exportPdf');
+		$routes->get('get-next-suffix/(:num)', 'PemetaanMkCpmkSub::getNextSuffix/$1');
+	});
+
+	// fetch MK by CPMK
+	$routes->get('pemetaan-mk-cpmk-subcpmk/get-mk/(:num)', 'PemetaanMkCpmkSub::getMkByCpmk/$1');
+
+	//Profil Lulusan
+	$routes->get('profil-prodi', 'ProfilProdi::index');
+	$routes->get('profil-prodi/create', 'ProfilProdi::create');
+	$routes->post('profil-prodi/store', 'ProfilProdi::store');
+	$routes->get('profil-prodi/edit/(:num)', 'ProfilProdi::edit/$1');
+	$routes->post('profil-prodi/update/(:num)', 'ProfilProdi::update/$1');
+	$routes->post('profil-prodi/delete/(:num)', 'ProfilProdi::delete/$1');
+
+	// Rute untuk Master Data Dosen
+	$routes->get('dosen', 'Dosen::index');
+	$routes->get('dosen/create', 'Dosen::create');
+	$routes->post('dosen/store', 'Dosen::store');
+	$routes->get('dosen/delete/(:num)', 'Dosen::delete/$1');
+	$routes->get('dosen/edit/(:num)', 'Dosen::edit/$1');
+	$routes->post('dosen/update/(:num)', 'Dosen::update/$1');
+
+
+	//matriks pemetaan cpl-cpmk-mk persemester
+	$routes->get('cpl-cpmk-mk-per-semester', 'CplCpmkMkPerSemester::index');
+
+	//matriks pemetaan MK-CPL-CPMK
+	$routes->get('mk-cpl-cpmk', 'MkCplCpmk::index');
 });
 
 //teknik penilaian cpmk
@@ -224,15 +224,15 @@ $routes->post('admin/profil-prodi/update/(:num)', 'Admin\ProfilProdi::update/$1'
 
 // PROFIL MANAJEMEN
 $routes->group('admin', [
-    'namespace' => 'App\Controllers\Admin',
-    'filter'    => 'auth:admin' 
-], function($routes) {
-    $routes->get('user', 'User::index');
-    $routes->get('user/create', 'User::create');
-    $routes->post('user/store', 'User::store');
-    $routes->get('user/edit/(:num)', 'User::edit/$1');
-    $routes->post('user/update/(:num)', 'User::update/$1');
-    $routes->post('user/delete/(:num)', 'User::delete/$1');
+	'namespace' => 'App\Controllers\Admin',
+	'filter'    => 'auth:admin'
+], function ($routes) {
+	$routes->get('user', 'User::index');
+	$routes->get('user/create', 'User::create');
+	$routes->post('user/store', 'User::store');
+	$routes->get('user/edit/(:num)', 'User::edit/$1');
+	$routes->post('user/update/(:num)', 'User::update/$1');
+	$routes->post('user/delete/(:num)', 'User::delete/$1');
 });
 
 // //EXPORT
