@@ -27,14 +27,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php $no = 1; foreach ($users as $user): ?>
+                    <?php 
+                    $no = 1; 
+                    foreach ($users as $user): 
+                        // Determine badge color based on role
+                        $badge_class = 'bg-secondary'; // Default color
+                        if ($user['role'] == 'admin') {
+                            $badge_class = 'bg-primary';
+                        } elseif ($user['role'] == 'dosen') {
+                            $badge_class = 'bg-info';
+                        } elseif ($user['role'] == 'mahasiswa') {
+                            $badge_class = 'bg-success';
+                        }
+                    ?>
                     <tr>
                         <td><?= $no++ ?></td>
                         <td><?= esc($user['username']) ?></td>
                         <td><?= esc($user['nama_lengkap'] ?? '-') ?></td>
                         <td>
-                            <span class="badge <?= ($user['role'] == 'admin') ? 'bg-primary' : 'bg-info' ?>">
-                                <?= ucfirst($user['role']) ?>
+                            <span class="badge <?= $badge_class ?>">
+                                <?= ucfirst(esc($user['role'])) ?>
                             </span>
                         </td>
                         <td class="text-center">
@@ -57,7 +69,6 @@
     </div>
 </div>
 
-<!-- MODAL KONFIRMASI HAPUS -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
