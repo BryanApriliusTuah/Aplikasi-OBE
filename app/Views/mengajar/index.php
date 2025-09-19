@@ -27,7 +27,9 @@
 					<h5 class="mb-0">Filter & Kontrol</h5>
 				</div>
 				<div class="d-flex gap-2">
-					<a href="<?= base_url('admin/mengajar/create') ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Jadwal</a>
+					<?php if (session()->get('role') === 'admin'): ?>
+						<a href="<?= base_url('admin/mengajar/create') ?>" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Jadwal</a>
+					<?php endif; ?>
 					<div class="btn-group">
 						<button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
 							<i class="bi bi-download"></i> Export
@@ -88,11 +90,13 @@
 												<button class="btn btn-sm p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></button>
 												<ul class="dropdown-menu dropdown-menu-end">
 													<li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#detailModal" data-id="<?= $jadwal['id'] ?>"><i class="bi bi-eye me-2"></i>Lihat Detail</button></li>
-													<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/edit/' . (int)$jadwal['id']) ?>"><i class="bi bi-pencil-square me-2"></i>Edit</a></li>
-													<li>
-														<hr class="dropdown-divider">
-													</li>
-													<li><button class="dropdown-item text-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal" data-url="<?= base_url('admin/mengajar/delete/' . (int)$jadwal['id']) ?>" data-nama="<?= esc($jadwal['nama_mk']) ?>"><i class="bi bi-trash me-2"></i>Hapus</button></li>
+													<?php if (session()->get('role') === 'admin'): ?>
+														<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/edit/' . (int)$jadwal['id']) ?>"><i class="bi bi-pencil-square me-2"></i>Edit</a></li>
+														<li>
+															<hr class="dropdown-divider">
+														</li>
+														<li><button class="dropdown-item text-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal" data-url="<?= base_url('admin/mengajar/delete/' . (int)$jadwal['id']) ?>" data-nama="<?= esc($jadwal['nama_mk']) ?>"><i class="bi bi-trash me-2"></i>Hapus</button></li>
+													<?php endif; ?>
 												</ul>
 											</div>
 										</div>
