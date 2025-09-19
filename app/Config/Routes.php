@@ -12,8 +12,6 @@ $routes->get('logout', 'Auth::logout');
 $routes->get('admin', 'Admin\Dashboard::index');
 $routes->get('admin/dashboard', 'Admin\Dashboard::index');
 
-
-
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
 
 	// profil lulusan
@@ -147,12 +145,22 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('dosen/edit/(:num)', 'Dosen::edit/$1');
 	$routes->post('dosen/update/(:num)', 'Dosen::update/$1');
 
-
 	//matriks pemetaan cpl-cpmk-mk persemester
 	$routes->get('cpl-cpmk-mk-per-semester', 'CplCpmkMkPerSemester::index');
 
 	//matriks pemetaan MK-CPL-CPMK
 	$routes->get('mk-cpl-cpmk', 'MkCplCpmk::index');
+
+	//mengajar
+	$routes->get('mengajar', 'Mengajar::index');
+	$routes->get('mengajar/show/(:num)', 'Mengajar::show/$1');
+	$routes->get('mengajar/create', 'Mengajar::create');
+	$routes->post('mengajar/store', 'Mengajar::store');
+	$routes->get('mengajar/edit/(:num)', 'Mengajar::edit/$1');
+	$routes->post('mengajar/update/(:num)', 'Mengajar::update/$1');
+	$routes->delete('mengajar/delete/(:num)', 'Mengajar::delete/$1');
+	$routes->get('mengajar/exportExcel', 'Mengajar::exportExcel');
+	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
 });
 
 //teknik penilaian cpmk
