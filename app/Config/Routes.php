@@ -145,6 +145,14 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('dosen/edit/(:num)', 'Dosen::edit/$1');
 	$routes->post('dosen/update/(:num)', 'Dosen::update/$1');
 
+	// Rute untuk Master Data Mahasiswa
+	$routes->get('mahasiswa', 'Mahasiswa::index');
+	$routes->get('mahasiswa/create', 'Mahasiswa::create');
+	$routes->post('mahasiswa/store', 'Mahasiswa::store');
+	$routes->get('mahasiswa/edit/(:num)', 'Mahasiswa::edit/$1');
+	$routes->post('mahasiswa/update/(:num)', 'Mahasiswa::update/$1');
+	$routes->get('mahasiswa/delete/(:num)', 'Mahasiswa::delete/$1');
+
 	//matriks pemetaan cpl-cpmk-mk persemester
 	$routes->get('cpl-cpmk-mk-per-semester', 'CplCpmkMkPerSemester::index');
 
