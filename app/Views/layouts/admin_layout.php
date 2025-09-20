@@ -35,7 +35,8 @@
 					'admin/bahan-kajian',
 					'admin/mata-kuliah',
 					'admin/cpmk',
-					'admin/dosen'
+					'admin/dosen',
+					'admin/mahasiswa'
 				];
 				$isMasterDataOpen = in_array(uri_string(), $masterDataUris);
 				?>
@@ -52,6 +53,7 @@
 						<li><a class="nav-link <?= uri_string() == 'admin/mata-kuliah' ? 'active' : '' ?>" href="<?= base_url('admin/mata-kuliah') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Mata Kuliah yang Ditawarkan">Mata Kuliah</a></li>
 						<li><a class="nav-link <?= uri_string() == 'admin/cpmk' ? 'active' : '' ?>" href="<?= base_url('admin/cpmk') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Capaian Pembelajaran Mata Kuliah (CPMK)">CPMK</a></li>
 						<li><a class="nav-link <?= uri_string() == 'admin/dosen' ? 'active' : '' ?>" href="<?= base_url('admin/dosen') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Dosen">Data Dosen</a></li>
+						<li><a class="nav-link <?= uri_string() == 'admin/mahasiswa' ? 'active' : '' ?>" href="<?= base_url('admin/mahasiswa') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Mahasiswa">Data mahasiswa</a></li>
 					</ul>
 				</li>
 
