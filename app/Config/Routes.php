@@ -169,6 +169,16 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->delete('mengajar/delete/(:num)', 'Mengajar::delete/$1');
 	$routes->get('mengajar/exportExcel', 'Mengajar::exportExcel');
 	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
+
+	//nilai
+	$routes->get('nilai', 'Nilai::index');
+	$routes->get('nilai/input-nilai/(:num)', 'Nilai::inputNilai/$1');
+	$routes->post('nilai/save-nilai/(:num)', 'Nilai::saveNilai/$1');
+	$routes->get('nilai/detail-nilai/(:num)', 'Nilai::getDetailNilaiCpmk/$1');
+	$routes->get('nilai/dpna/(:num)', 'Nilai::getDpna/$1');
+	// $routes->get('nilai/cetak-dpna/(:num)', 'Nilai::cetakDpna/$1');
+	// $routes->get('nilai/exportExcel/(:num)', 'Nilai::exportExcel/$1');
+	// $routes->get('nilai/exportPdf/(:num)', 'Nilai::exportPdf/$1');
 });
 
 //teknik penilaian cpmk
