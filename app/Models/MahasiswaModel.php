@@ -68,4 +68,18 @@ class MahasiswaModel extends Model
 	 * @var string
 	 */
 	protected $updatedField = 'updated_at';
+
+	public function getStudentsForScoring(string $program_studi, int $semester): array
+	{
+		// This is a heuristic to determine the likely year of the students
+		$currentYear = date('Y');
+		$academicYear = (int)ceil($semester / 2);
+		$targetYear = $currentYear - $academicYear + 1;
+
+		return $this->where('program_studi', $program_studi)
+			// ->where('tahun_angkatan', $targetYear) // Optional: uncomment to filter by year
+			->where('status_mahasiswa', 'Aktif')
+			->orderBy('nim', 'ASC')
+			->findAll();
+	}
 }
