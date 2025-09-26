@@ -8,6 +8,29 @@
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 	<link rel="stylesheet" href="<?= base_url('css/custom.css') ?>">
+	<style>
+		/* Remove arrows/spinners from number input */
+
+		/* Chrome, Edge, Opera */
+		input[type=number]::-webkit-inner-spin-button,
+		input[type=number]::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+
+		/* Safari fix */
+		input[type=number] {
+			-webkit-appearance: textfield;
+			appearance: textfield;
+		}
+
+		/* Firefox */
+		input[type=number] {
+			-moz-appearance: textfield;
+			appearance: textfield;
+		}
+	</style>
+
 </head>
 
 <body>
