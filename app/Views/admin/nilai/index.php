@@ -71,17 +71,32 @@
 										<p class="card-title fw-bold mb-1"><?= esc($jadwal['nama_mk']) ?> (<?= esc($jadwal['kelas']) ?>)</p>
 										<div class="small text-muted mb-2">
 											<i class="bi bi-clock"></i> <?= date('H:i', strtotime($jadwal['jam_mulai'])) ?> - <?= date('H:i', strtotime($jadwal['jam_selesai'])) ?> |
-											<i class="bi bi-geo-alt"></i> <?= esc($jadwal['ruang']) ?>
+											<?php if (isset($jadwal['ruang'])): ?>
+												<i class="bi bi-geo-alt"></i> <?= esc($jadwal['ruang']) ?>
+											<?php else: ?>
+												<i class="bi bi-geo-alt"></i> Belum ada ruang
+											<?php endif; ?>
 										</div>
 										<div class="small text-muted">
 											<i class="bi bi-person-check"></i> <?= esc($jadwal['dosen_ketua'] ?? 'Belum ada ketua') ?>
+										</div>
+										<div class="mt-2">
+											<span class="small text-muted">Program Studi: <?= esc($jadwal['program_studi']) ?></span> <br />
+											<span class="small text-muted">Tahun Akademik: <?= esc($jadwal['tahun_akademik']) ?></span>
 										</div>
 									</div>
 									<div class="card-footer bg-white p-2 border-top-0">
 										<div class="d-flex gap-2 justify-content-end">
 											<button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#detailNilaiModal" data-jadwal-id="<?= $jadwal['id'] ?>"><i class="bi bi-bar-chart-steps"></i> Detail Nilai</button>
 											<button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#dpnaModal" data-jadwal-id="<?= $jadwal['id'] ?>"><i class="bi bi-file-earmark-text"></i> Lihat DPNA</button>
-											<a href="<?= base_url('admin/nilai/input-nilai/' . $jadwal['id']) ?>" class="btn btn-sm btn-primary"><i class="bi bi-pencil-square"></i> Input Nilai</a>
+
+											<?php if (isset($jadwal['can_input_grades']) && $jadwal['can_input_grades']): ?>
+												<a href="<?= base_url('admin/nilai/input-nilai/' . $jadwal['id']) ?>" class="btn btn-sm btn-primary"><i class="bi bi-pencil-square"></i> Input Nilai</a>
+											<?php else: ?>
+												<span class="btn btn-sm btn-secondary disabled" title="Hanya dosen pengampu yang dapat menginput nilai">
+													<i class="bi bi-lock"></i> Terbatas
+												</span>
+											<?php endif; ?>
 										</div>
 									</div>
 								</div>

@@ -3,11 +3,12 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\MengajarModel; // You'll need to create or use this model
+use App\Models\MengajarModel;
 use App\Models\MahasiswaModel;
 use App\Models\CpmkModel;
 use App\Models\NilaiMahasiswaModel;
 use App\Models\NilaiCpmkMahasiswaModel;
+use App\Models\DosenModel;
 
 class Nilai extends BaseController
 {
@@ -32,8 +33,20 @@ class Nilai extends BaseController
 			'Sabtu' => []
 		];
 
+		// Get current user's dosen_id if they are a lecturer
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
 		foreach ($schedules as $schedule) {
 			if (isset($jadwal_by_day[$schedule['hari']])) {
+				// Check if current user can input grades for this schedule
+				$canInputGrades = $this->canInputGrades($schedule['id'], $currentDosenId);
+				$schedule['can_input_grades'] = $canInputGrades;
+
 				$jadwal_by_day[$schedule['hari']][] = $schedule;
 			}
 		}
@@ -42,9 +55,38 @@ class Nilai extends BaseController
 			'title' => 'Penilaian Jadwal Ajar',
 			'jadwal_by_day' => $jadwal_by_day,
 			'filters' => $filters,
+			'current_dosen_id' => $currentDosenId,
 		];
 
-		return view('admin/nilai/index', $data); // The new view file
+		// dd($data);
+
+		return view('admin/nilai/index', $data);
+	}
+
+	/**
+	 * Check if the current user can input grades for a specific schedule
+	 */
+	private function canInputGrades($jadwal_id, $current_dosen_id)
+	{
+		// Admin can always input grades
+		if (session()->get('role') === 'admin') {
+			return true;
+		}
+
+		// If not a lecturer or no dosen_id, cannot input grades
+		if (session()->get('role') !== 'dosen' || !$current_dosen_id) {
+			return false;
+		}
+
+		// Check if the current lecturer is assigned to this schedule
+		$db = \Config\Database::connect();
+		$builder = $db->table('jadwal_dosen');
+		$result = $builder->where([
+			'jadwal_mengajar_id' => $jadwal_id,
+			'dosen_id' => $current_dosen_id
+		])->get()->getRowArray();
+
+		return !empty($result);
 	}
 
 	/**
@@ -91,6 +133,18 @@ class Nilai extends BaseController
 	 */
 	public function inputNilai($jadwal_id)
 	{
+		// Check access permissions first
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen pengampu yang dapat menginput nilai.');
+		}
+
 		$jadwalModel = new MengajarModel();
 		$mahasiswaModel = new MahasiswaModel();
 		$cpmkModel = new CpmkModel();
@@ -101,8 +155,7 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
-		// This is a simplified way to get "enrolled" students.
-		// A proper system might have a dedicated enrollment table.
+		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
 
@@ -117,7 +170,7 @@ class Nilai extends BaseController
 			'existing_scores' => $existing_scores,
 		];
 
-		return view('admin/nilai/input_nilai', $data); // A new view for the form
+		return view('admin/nilai/input_nilai', $data);
 	}
 
 	/**
@@ -125,6 +178,18 @@ class Nilai extends BaseController
 	 */
 	public function saveNilai($jadwal_id)
 	{
+		// Check access permissions first
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menyimpan nilai pada jadwal ini.');
+		}
+
 		$nilai_data = $this->request->getPost('nilai');
 
 		if (empty($nilai_data)) {
