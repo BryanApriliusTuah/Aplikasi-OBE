@@ -179,6 +179,19 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	// $routes->get('nilai/cetak-dpna/(:num)', 'Nilai::cetakDpna/$1');
 	// $routes->get('nilai/exportExcel/(:num)', 'Nilai::exportExcel/$1');
 	// $routes->get('nilai/exportPdf/(:num)', 'Nilai::exportPdf/$1');
+
+	//capaian cpmk
+	$routes->get('capaian-cpmk', 'CapaianCpmk::index');
+	$routes->get('capaian-cpmk/chart-data', 'CapaianCpmk::getChartData');
+	$routes->get('capaian-cpmk/detail-data', 'CapaianCpmk::getDetailData');
+	$routes->get('capaian-cpmk/get-kelas', 'CapaianCpmk::getKelasByMataKuliah');
+
+	//capaian cpl
+	$routes->get('capaian-cpl', 'CapaianCpl::index');
+    $routes->get('capaian-cpl/chart-data', 'CapaianCpl::getChartData');
+    $routes->get('capaian-cpl/detail-data', 'CapaianCpl::getDetailData');
+    $routes->get('capaian-cpl/mahasiswa', 'CapaianCpl::getMahasiswaByFilter');
+    $routes->get('capaian-cpl/comparative-data', 'CapaianCpl::getComparativeData');
 });
 
 //teknik penilaian cpmk
