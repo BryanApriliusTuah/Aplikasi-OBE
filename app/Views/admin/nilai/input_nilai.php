@@ -78,6 +78,76 @@
 		</div>
 	</div>
 
+	<!-- CPMK Weight Information Box -->
+	<?php if (!empty($cpmk_list)): ?>
+		<div class="card border-0 shadow-sm mb-4">
+			<div class="card-header bg-info bg-opacity-10 border-0 py-3">
+				<h6 class="mb-0 text-info">
+					<i class="bi bi-calculator me-2"></i>Informasi Bobot CPMK (dari RPS Mingguan)
+				</h6>
+			</div>
+			<div class="card-body">
+				<div class="row g-3">
+					<?php foreach ($cpmk_list as $cpmk): ?>
+						<div class="col-md-3 col-sm-6">
+							<div class="d-flex align-items-center p-2 bg-light rounded">
+								<div class="bg-info bg-opacity-25 rounded p-2 me-3">
+									<i class="bi bi-percent text-info"></i>
+								</div>
+								<div>
+									<div class="fw-bold text-dark"><?= esc($cpmk['kode_cpmk']) ?></div>
+									<div class="text-muted small">
+										Bobot: <span class="fw-semibold text-info"><?= number_format($cpmk['bobot_cpmk'], 1) ?>%</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
+				
+				<hr class="my-3">
+				
+				<div class="d-flex align-items-center justify-content-between">
+					<div>
+						<strong class="text-dark">Total Bobot:</strong> 
+						<span class="fs-5 fw-bold <?= abs($total_weight - 100) > 0.01 ? 'text-warning' : 'text-success' ?>">
+							<?= number_format($total_weight, 1) ?>%
+						</span>
+					</div>
+					
+					<?php if (abs($total_weight - 100) > 0.01): ?>
+						<div class="alert alert-warning mb-0 py-2 px-3" role="alert">
+							<i class="bi bi-exclamation-triangle-fill me-2"></i>
+							<small>
+								<strong>Perhatian:</strong> Total bobot tidak 100%. 
+								Sistem akan menggunakan proporsi relatif dalam perhitungan nilai akhir.
+							</small>
+						</div>
+					<?php else: ?>
+						<div class="alert alert-success mb-0 py-2 px-3" role="alert">
+							<i class="bi bi-check-circle-fill me-2"></i>
+							<small><strong>Bobot valid.</strong> Total bobot = 100%</small>
+						</div>
+					<?php endif; ?>
+				</div>
+
+				<?php if ($total_weight == 0): ?>
+					<div class="alert alert-danger mt-3 mb-0" role="alert">
+						<i class="bi bi-x-circle-fill me-2"></i>
+						<strong>Bobot belum diatur!</strong> 
+						Tidak ada bobot CPMK yang ditemukan dari RPS Mingguan. 
+						Sistem akan menggunakan rata-rata sederhana untuk perhitungan nilai akhir.
+						<br>
+						<small class="mt-2 d-block">
+							<i class="bi bi-info-circle me-1"></i>
+							Harap lengkapi RPS Mingguan untuk mata kuliah ini dengan mengisi bobot pada setiap minggu pembelajaran.
+						</small>
+					</div>
+				<?php endif; ?>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<div class="card border-0 shadow-sm">
 		<div class="card-header bg-primary text-white py-3">
 			<div class="d-flex justify-content-between align-items-center">
@@ -158,11 +228,14 @@
 										</div>
 									</th>
 									<?php foreach ($cpmk_list as $cpmk) : ?>
-										<th class="text-center align-middle" style="width: 120px; min-width: 120px;"
+										<th class="text-center align-middle" style="width: 130px; min-width: 130px;"
 											title="<?= esc($cpmk['deskripsi']) ?>" data-bs-toggle="tooltip">
 											<div class="d-flex flex-column align-items-center">
 												<span class="fw-bold"><?= esc($cpmk['kode_cpmk']) ?></span>
 												<small class="opacity-75">(0-100)</small>
+												<span class="badge bg-info mt-1" style="font-size: 0.7rem;">
+													<?= number_format($cpmk['bobot_cpmk'], 0) ?>%
+												</span>
 											</div>
 										</th>
 									<?php endforeach; ?>
@@ -192,7 +265,8 @@
 														name="nilai[<?= $mahasiswa['id'] ?>][<?= $cpmk['id'] ?>]"
 														value="<?= esc($existing_scores[$mahasiswa['id']][$cpmk['id']] ?? '') ?>"
 														data-mahasiswa="<?= $mahasiswa['id'] ?>"
-														data-cpmk="<?= $cpmk['id'] ?>">
+														data-cpmk="<?= $cpmk['id'] ?>"
+														placeholder="0-100">
 												</div>
 											</td>
 										<?php endforeach; ?>
@@ -327,7 +401,7 @@
 			validateInput(input);
 		});
 
-		// ## UPDATED: Form Submission Validation Logic ##
+		// Form Submission Validation Logic
 		document.getElementById('nilaiForm').addEventListener('submit', function(e) {
 			hideFormAlert(); // Hide previous alerts on new submission attempt
 

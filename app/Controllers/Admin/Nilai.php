@@ -157,10 +157,18 @@ class Nilai extends BaseController
 
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get CPMK list with weights from rps_mingguan
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
 
 		// Get existing scores to pre-fill the form
 		$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Calculate total weight
+		$total_weight = 0;
+		foreach ($cpmk_list as $cpmk) {
+			$total_weight += (float) $cpmk['bobot_cpmk'];
+		}
 
 		$data = [
 			'title' => 'Input Nilai',
@@ -168,6 +176,7 @@ class Nilai extends BaseController
 			'mahasiswa_list' => $students,
 			'cpmk_list' => $cpmk_list,
 			'existing_scores' => $existing_scores,
+			'total_weight' => $total_weight,
 		];
 
 		return view('admin/nilai/input_nilai', $data);
@@ -198,8 +207,27 @@ class Nilai extends BaseController
 
 		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
 		$nilaiCpmkMahasiswaModel = new NilaiCpmkMahasiswaModel();
+		$cpmkModel = new CpmkModel();
 
 		$db = \Config\Database::connect();
+
+		// Get CPMK weights from rps_mingguan for this jadwal
+		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
+		$cpmk_weights = [];
+		$total_weight = 0;
+
+		foreach ($cpmk_list as $cpmk) {
+			$cpmk_weights[$cpmk['id']] = (float) $cpmk['bobot_cpmk'];
+			$total_weight += (float) $cpmk['bobot_cpmk'];
+		}
+
+		// Log warning if weights don't sum to 100
+		if (abs($total_weight - 100) > 0.01 && $total_weight > 0) {
+			log_message('warning', "Total CPMK weight for jadwal {$jadwal_id} is {$total_weight}, not 100. Using weighted average.");
+		}
+
+		// If no weights defined, fall back to simple average
+		$use_weighted = ($total_weight > 0);
 
 		foreach ($nilai_data as $mahasiswa_id => $cpmk_scores) {
 			$db->transStart();
@@ -215,18 +243,43 @@ class Nilai extends BaseController
 				$nilaiCpmkMahasiswaModel->saveOrUpdate($cpmkData);
 			}
 
-			// 2. Calculate and save final score
-			$valid_scores = array_filter($cpmk_scores, function ($val) {
-				return is_numeric($val);
-			});
-			$nilai_akhir = !empty($valid_scores) ? array_sum($valid_scores) / count($valid_scores) : 0;
+			// 2. Calculate final score
+			$nilai_akhir = 0;
+
+			if ($use_weighted) {
+				// Calculate weighted average based on rps_mingguan bobot
+				$weighted_sum = 0;
+				$used_weight = 0;
+
+				foreach ($cpmk_scores as $cpmk_id => $score) {
+					if (is_numeric($score) && isset($cpmk_weights[$cpmk_id]) && $cpmk_weights[$cpmk_id] > 0) {
+						$weight = $cpmk_weights[$cpmk_id];
+						$weighted_sum += ($score * $weight);
+						$used_weight += $weight;
+					}
+				}
+
+				// Calculate final score
+				if ($used_weight > 0) {
+					$nilai_akhir = $weighted_sum / $used_weight;
+				}
+			} else {
+				// Fallback: simple average if no weights defined
+				$valid_scores = array_filter($cpmk_scores, function ($val) {
+					return is_numeric($val);
+				});
+
+				if (!empty($valid_scores)) {
+					$nilai_akhir = array_sum($valid_scores) / count($valid_scores);
+				}
+			}
 
 			$finalData = [
 				'mahasiswa_id' => $mahasiswa_id,
 				'jadwal_mengajar_id' => $jadwal_id,
-				'nilai_akhir' => $nilai_akhir,
+				'nilai_akhir' => round($nilai_akhir, 2),
 				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
-				'status_kelulusan' => $nilai_akhir >= 50 ? 'Lulus' : 'Tidak Lulus',
+				'status_kelulusan' => $nilai_akhir > 50 ? 'Lulus' : 'Tidak Lulus',
 			];
 			$nilaiMahasiswaModel->saveOrUpdate($finalData);
 
@@ -242,15 +295,13 @@ class Nilai extends BaseController
 
 	private function calculateGrade($score)
 	{
-		if ($score >= 85) return 'A';
-		if ($score >= 80) return 'A-';
-		if ($score >= 75) return 'B+';
-		if ($score >= 70) return 'B';
-		if ($score >= 65) return 'B-';
-		if ($score >= 60) return 'C+';
-		if ($score >= 55) return 'C';
-		if ($score >= 50) return 'C-';
-		if ($score >= 40) return 'D';
-		return 'E';
+		// Based on OBE/KKNI/SKKNI APTIKOM Guideline Rubric
+		if ($score > 80) return 'A';      // Istimewa
+		if ($score > 70) return 'AB';     // Baik Sekali
+		if ($score > 65) return 'B';      // Baik
+		if ($score > 60) return 'BC';     // Cukup Baik
+		if ($score > 50) return 'C';      // Cukup
+		if ($score > 40) return 'D';      // Kurang
+		return 'E';                       // Sangat Kurang
 	}
 }
