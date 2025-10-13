@@ -17,7 +17,7 @@
 
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
-					<h2 class="fw-bold text-primary mb-1">Input Nilai Mahasiswa</h2>
+					<h2 class="fw-bold mb-1">Input Nilai Mahasiswa</h2>
 					<p class="text-muted mb-0">Masukkan nilai CPMK untuk setiap mahasiswa</p>
 				</div>
 				<a href="<?= base_url('admin/nilai') ?>" class="btn btn-outline-secondary">
@@ -81,8 +81,8 @@
 	<!-- CPMK Weight Information Box -->
 	<?php if (!empty($cpmk_list)): ?>
 		<div class="card border-0 shadow-sm mb-4">
-			<div class="card-header bg-info bg-opacity-10 border-0 py-3">
-				<h6 class="mb-0 text-info">
+			<div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+				<h6 class="mb-0 text-black fw-semibold">
 					<i class="bi bi-calculator me-2"></i>Informasi Bobot CPMK (dari RPS Mingguan)
 				</h6>
 			</div>
@@ -97,29 +97,29 @@
 								<div>
 									<div class="fw-bold text-dark"><?= esc($cpmk['kode_cpmk']) ?></div>
 									<div class="text-muted small">
-										Bobot: <span class="fw-semibold text-info"><?= number_format($cpmk['bobot_cpmk'], 1) ?>%</span>
+										Bobot: <span class="fw-semibold text-black"><?= number_format($cpmk['bobot_cpmk'], 1) ?>%</span>
 									</div>
 								</div>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
-				
+
 				<hr class="my-3">
-				
+
 				<div class="d-flex align-items-center justify-content-between">
 					<div>
-						<strong class="text-dark">Total Bobot:</strong> 
+						<strong class="text-dark">Total Bobot:</strong>
 						<span class="fs-5 fw-bold <?= abs($total_weight - 100) > 0.01 ? 'text-warning' : 'text-success' ?>">
 							<?= number_format($total_weight, 1) ?>%
 						</span>
 					</div>
-					
+
 					<?php if (abs($total_weight - 100) > 0.01): ?>
 						<div class="alert alert-warning mb-0 py-2 px-3" role="alert">
 							<i class="bi bi-exclamation-triangle-fill me-2"></i>
 							<small>
-								<strong>Perhatian:</strong> Total bobot tidak 100%. 
+								<strong>Perhatian:</strong> Total bobot tidak 100%.
 								Sistem akan menggunakan proporsi relatif dalam perhitungan nilai akhir.
 							</small>
 						</div>
@@ -134,8 +134,8 @@
 				<?php if ($total_weight == 0): ?>
 					<div class="alert alert-danger mt-3 mb-0" role="alert">
 						<i class="bi bi-x-circle-fill me-2"></i>
-						<strong>Bobot belum diatur!</strong> 
-						Tidak ada bobot CPMK yang ditemukan dari RPS Mingguan. 
+						<strong>Bobot belum diatur!</strong>
+						Tidak ada bobot CPMK yang ditemukan dari RPS Mingguan.
 						Sistem akan menggunakan rata-rata sederhana untuk perhitungan nilai akhir.
 						<br>
 						<small class="mt-2 d-block">
@@ -196,8 +196,8 @@
 									<button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillAllValues(0)">
 										<i class="bi bi-arrow-down-circle me-1"></i>Set Semua 0
 									</button>
-									<button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillAllValues(75)">
-										<i class="bi bi-arrow-up-circle me-1"></i>Set Semua 75
+									<button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillAllValues(80)">
+										<i class="bi bi-arrow-up-circle me-1"></i>Set Semua 80
 									</button>
 									<button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllValues()">
 										<i class="bi bi-eraser me-1"></i>Kosongkan Semua
@@ -233,7 +233,7 @@
 											<div class="d-flex flex-column align-items-center">
 												<span class="fw-bold"><?= esc($cpmk['kode_cpmk']) ?></span>
 												<small class="opacity-75">(0-100)</small>
-												<span class="badge bg-info mt-1" style="font-size: 0.7rem;">
+												<span class="badge bg-primary mt-1" style="font-size: 0.7rem;">
 													<?= number_format($cpmk['bobot_cpmk'], 0) ?>%
 												</span>
 											</div>
