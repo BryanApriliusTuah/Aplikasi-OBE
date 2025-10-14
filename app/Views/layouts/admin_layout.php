@@ -194,6 +194,34 @@
 					</a>
 				</li>
 				<?php
+				$mbkmUris = [
+					'admin/mbkm',
+					'admin/mbkm-jenis',
+				];
+				$isMbkmOpen = in_array(uri_string(), $mbkmUris);
+				?>
+
+				<li class="nav-item sidebar-dropdown<?= $isMbkmOpen ? ' open' : '' ?>">
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+						data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola kegiatan MBKM">
+						<span><i class="bi bi-backpack"></i> MBKM </span>
+						<span class="caret"></span>
+					</a>
+					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isMbkmOpen ? ' show' : '' ?>">
+						<li><a class="nav-link <?= uri_string() == 'admin/mbkm' ? 'active' : '' ?>"
+								href="<?= base_url('admin/mbkm') ?>"
+								data-bs-toggle="tooltip" data-bs-placement="right"
+								title="Kelola kegiatan MBKM mahasiswa">
+								Kegiatan MBKM</a></li>
+						<li><a class="nav-link <?= uri_string() == 'admin/mbkm-jenis' ? 'active' : '' ?>"
+								href="<?= base_url('admin/mbkm-jenis') ?>"
+								data-bs-toggle="tooltip" data-bs-placement="right"
+								title="Kelola jenis kegiatan MBKM">
+								Jenis Kegiatan</a></li>
+						<!-- Removed: MBKM Komponen - Access through Jenis page -->
+					</ul>
+				</li>
+				<?php
 				$profilCplUris = [
 					'admin/capaian-cpmk',
 					'admin/capaian-cpl'

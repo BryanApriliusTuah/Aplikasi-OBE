@@ -188,10 +188,48 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 
 	//capaian cpl
 	$routes->get('capaian-cpl', 'CapaianCpl::index');
-    $routes->get('capaian-cpl/chart-data', 'CapaianCpl::getChartData');
-    $routes->get('capaian-cpl/detail-data', 'CapaianCpl::getDetailData');
-    $routes->get('capaian-cpl/mahasiswa', 'CapaianCpl::getMahasiswaByFilter');
-    $routes->get('capaian-cpl/comparative-data', 'CapaianCpl::getComparativeData');
+	$routes->get('capaian-cpl/chart-data', 'CapaianCpl::getChartData');
+	$routes->get('capaian-cpl/detail-data', 'CapaianCpl::getDetailData');
+	$routes->get('capaian-cpl/mahasiswa', 'CapaianCpl::getMahasiswaByFilter');
+	$routes->get('capaian-cpl/comparative-data', 'CapaianCpl::getComparativeData');
+
+	// MBKM Management Routes
+	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {
+		// Main CRUD operations
+		$routes->get('/', 'MbkmController::index');
+		$routes->get('create', 'MbkmController::create');
+		$routes->post('store', 'MbkmController::store');
+		$routes->get('edit/(:num)', 'MbkmController::edit/$1');
+		$routes->post('update/(:num)', 'MbkmController::update/$1');
+		$routes->get('delete/(:num)', 'MbkmController::delete/$1');
+
+		// Scoring/Grading routes
+		$routes->get('input-nilai/(:num)', 'MbkmController::inputNilai/$1');
+		$routes->post('save-nilai/(:num)', 'MbkmController::saveNilai/$1');
+
+		// AJAX routes
+		$routes->get('detail-nilai/(:num)', 'MbkmController::detailNilai/$1');
+	});
+
+	// MBKM Jenis Kegiatan Management (Optional - for managing activity types)
+	$routes->group('mbkm-jenis', ['filter' => 'auth'], function ($routes) {
+		$routes->get('/', 'MbkmJenisController::index');
+		$routes->get('create', 'MbkmJenisController::create');
+		$routes->post('store', 'MbkmJenisController::store');
+		$routes->get('edit/(:num)', 'MbkmJenisController::edit/$1');
+		$routes->post('update/(:num)', 'MbkmJenisController::update/$1');
+		$routes->get('delete/(:num)', 'MbkmJenisController::delete/$1');
+	});
+
+	// MBKM Komponen Nilai Management (Optional - for managing scoring components)
+	$routes->group('mbkm-komponen', ['filter' => 'auth'], function ($routes) {
+		$routes->get('(:num)', 'MbkmKomponenController::index/$1'); // List by jenis_kegiatan_id
+		$routes->get('create/(:num)', 'MbkmKomponenController::create/$1');
+		$routes->post('store', 'MbkmKomponenController::store');
+		$routes->get('edit/(:num)', 'MbkmKomponenController::edit/$1');
+		$routes->post('update/(:num)', 'MbkmKomponenController::update/$1');
+		$routes->get('delete/(:num)', 'MbkmKomponenController::delete/$1');
+	});
 });
 
 //teknik penilaian cpmk
