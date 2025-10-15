@@ -6,125 +6,161 @@ use App\Controllers\BaseController;
 
 class MbkmJenisController extends BaseController
 {
-    protected $db;
+	protected $db;
 
-    public function __construct()
-    {
-        $this->db = \Config\Database::connect();
-    }
+	public function __construct()
+	{
+		$this->db = \Config\Database::connect();
+	}
 
-    // List all activity types
-    public function index()
-    {
-        $jenis = $this->db->table('mbkm_jenis_kegiatan')
-            ->orderBy('kode_kegiatan', 'ASC')
-            ->get()
-            ->getResultArray();
+	/**
+	 * Check if user is admin
+	 */
+	private function isAdmin()
+	{
+		return session()->get('role') === 'admin';
+	}
 
-        $data = ['jenis_kegiatan' => $jenis];
-        return view('admin/mbkm_jenis/index', $data);
-    }
+	/**
+	 * Redirect non-admin users with error message
+	 */
+	private function unauthorizedAccess()
+	{
+		return redirect()->to('/admin/mbkm-jenis')->with('error', 'Anda tidak memiliki akses untuk melakukan operasi ini');
+	}
 
-    // Show create form
-    public function create()
-    {
-        return view('admin/mbkm_jenis/create');
-    }
+	// List all activity types - Accessible to all authenticated users
+	public function index()
+	{
+		$jenis = $this->db->table('mbkm_jenis_kegiatan')
+			->orderBy('kode_kegiatan', 'ASC')
+			->get()
+			->getResultArray();
 
-    // Store new activity type
-    public function store()
-    {
-        $validation = \Config\Services::validation();
-        
-        $rules = [
-            'kode_kegiatan' => 'required|is_unique[mbkm_jenis_kegiatan.kode_kegiatan]|max_length[20]',
-            'nama_kegiatan' => 'required|max_length[100]',
-            'sks_konversi' => 'required|integer|greater_than[0]'
-        ];
+		$data = ['jenis_kegiatan' => $jenis];
+		return view('admin/mbkm_jenis/index', $data);
+	}
 
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
-        }
+	// Show create form (Admin Only)
+	public function create()
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
 
-        $data = [
-            'kode_kegiatan' => $this->request->getPost('kode_kegiatan'),
-            'nama_kegiatan' => $this->request->getPost('nama_kegiatan'),
-            'deskripsi' => $this->request->getPost('deskripsi'),
-            'sks_konversi' => $this->request->getPost('sks_konversi'),
-            'status' => 'aktif'
-        ];
+		return view('admin/mbkm_jenis/create');
+	}
 
-        if ($this->db->table('mbkm_jenis_kegiatan')->insert($data)) {
-            return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil ditambahkan');
-        }
-        
-        return redirect()->back()->withInput()->with('error', 'Gagal menambahkan jenis kegiatan');
-    }
+	// Store new activity type (Admin Only)
+	public function store()
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
 
-    // Show edit form
-    public function edit($id)
-    {
-        $jenis = $this->db->table('mbkm_jenis_kegiatan')
-            ->where('id', $id)
-            ->get()
-            ->getRowArray();
+		$validation = \Config\Services::validation();
 
-        if (!$jenis) {
-            return redirect()->to('/admin/mbkm-jenis')->with('error', 'Data tidak ditemukan');
-        }
+		$rules = [
+			'kode_kegiatan' => 'required|is_unique[mbkm_jenis_kegiatan.kode_kegiatan]|max_length[20]',
+			'nama_kegiatan' => 'required|max_length[100]',
+			'sks_konversi' => 'required|integer|greater_than[0]'
+		];
 
-        $data = ['jenis' => $jenis];
-        return view('admin/mbkm_jenis/edit', $data);
-    }
+		if (!$this->validate($rules)) {
+			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
 
-    // Update activity type
-    public function update($id)
-    {
-        $validation = \Config\Services::validation();
-        
-        $rules = [
-            'kode_kegiatan' => "required|max_length[20]|is_unique[mbkm_jenis_kegiatan.kode_kegiatan,id,{$id}]",
-            'nama_kegiatan' => 'required|max_length[100]',
-            'sks_konversi' => 'required|integer|greater_than[0]',
-            'status' => 'required|in_list[aktif,nonaktif]'
-        ];
+		$data = [
+			'kode_kegiatan' => $this->request->getPost('kode_kegiatan'),
+			'nama_kegiatan' => $this->request->getPost('nama_kegiatan'),
+			'deskripsi' => $this->request->getPost('deskripsi'),
+			'sks_konversi' => $this->request->getPost('sks_konversi'),
+			'status' => 'aktif'
+		];
 
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
-        }
+		if ($this->db->table('mbkm_jenis_kegiatan')->insert($data)) {
+			return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil ditambahkan');
+		}
 
-        $data = [
-            'kode_kegiatan' => $this->request->getPost('kode_kegiatan'),
-            'nama_kegiatan' => $this->request->getPost('nama_kegiatan'),
-            'deskripsi' => $this->request->getPost('deskripsi'),
-            'sks_konversi' => $this->request->getPost('sks_konversi'),
-            'status' => $this->request->getPost('status')
-        ];
+		return redirect()->back()->withInput()->with('error', 'Gagal menambahkan jenis kegiatan');
+	}
 
-        if ($this->db->table('mbkm_jenis_kegiatan')->where('id', $id)->update($data)) {
-            return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil diperbarui');
-        }
-        
-        return redirect()->back()->withInput()->with('error', 'Gagal memperbarui jenis kegiatan');
-    }
+	// Show edit form (Admin Only)
+	public function edit($id)
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
 
-    // Delete activity type
-    public function delete($id)
-    {
-        // Check if used in any activity
-        $used = $this->db->table('mbkm_kegiatan')
-            ->where('jenis_kegiatan_id', $id)
-            ->countAllResults();
+		$jenis = $this->db->table('mbkm_jenis_kegiatan')
+			->where('id', $id)
+			->get()
+			->getRowArray();
 
-        if ($used > 0) {
-            return redirect()->to('/admin/mbkm-jenis')
-                ->with('error', "Jenis kegiatan tidak dapat dihapus karena sedang digunakan oleh {$used} kegiatan");
-        }
+		if (!$jenis) {
+			return redirect()->to('/admin/mbkm-jenis')->with('error', 'Data tidak ditemukan');
+		}
 
-        if ($this->db->table('mbkm_jenis_kegiatan')->where('id', $id)->delete()) {
-            return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil dihapus');
-        }
-        
-        return redirect()->to('/admin/mbkm-jenis')->with('error', 'Gagal menghapus jenis kegiatan');
-    }
+		$data = ['jenis' => $jenis];
+		return view('admin/mbkm_jenis/edit', $data);
+	}
+
+	// Update activity type (Admin Only)
+	public function update($id)
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
+		$validation = \Config\Services::validation();
+
+		$rules = [
+			'kode_kegiatan' => "required|max_length[20]|is_unique[mbkm_jenis_kegiatan.kode_kegiatan,id,{$id}]",
+			'nama_kegiatan' => 'required|max_length[100]',
+			'sks_konversi' => 'required|integer|greater_than[0]',
+			'status' => 'required|in_list[aktif,nonaktif]'
+		];
+
+		if (!$this->validate($rules)) {
+			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
+
+		$data = [
+			'kode_kegiatan' => $this->request->getPost('kode_kegiatan'),
+			'nama_kegiatan' => $this->request->getPost('nama_kegiatan'),
+			'deskripsi' => $this->request->getPost('deskripsi'),
+			'sks_konversi' => $this->request->getPost('sks_konversi'),
+			'status' => $this->request->getPost('status')
+		];
+
+		if ($this->db->table('mbkm_jenis_kegiatan')->where('id', $id)->update($data)) {
+			return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil diperbarui');
+		}
+
+		return redirect()->back()->withInput()->with('error', 'Gagal memperbarui jenis kegiatan');
+	}
+
+	// Delete activity type (Admin Only)
+	public function delete($id)
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
+		// Check if used in any activity
+		$used = $this->db->table('mbkm_kegiatan')
+			->where('jenis_kegiatan_id', $id)
+			->countAllResults();
+
+		if ($used > 0) {
+			return redirect()->to('/admin/mbkm-jenis')
+				->with('error', "Jenis kegiatan tidak dapat dihapus karena sedang digunakan oleh {$used} kegiatan");
+		}
+
+		if ($this->db->table('mbkm_jenis_kegiatan')->where('id', $id)->delete()) {
+			return redirect()->to('/admin/mbkm-jenis')->with('success', 'Jenis kegiatan berhasil dihapus');
+		}
+
+		return redirect()->to('/admin/mbkm-jenis')->with('error', 'Gagal menghapus jenis kegiatan');
+	}
 }

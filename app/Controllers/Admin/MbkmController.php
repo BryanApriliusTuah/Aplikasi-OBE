@@ -16,6 +16,22 @@ class MbkmController extends BaseController
 		$this->db = \Config\Database::connect();
 	}
 
+	/**
+	 * Check if user is admin
+	 */
+	private function isAdmin()
+	{
+		return session()->get('role') === 'admin';
+	}
+
+	/**
+	 * Redirect non-admin users with error message
+	 */
+	private function unauthorizedAccess()
+	{
+		return redirect()->to('/admin/mbkm')->with('error', 'Anda tidak memiliki akses untuk melakukan operasi ini');
+	}
+
 	// Index - List all MBKM activities
 	public function index()
 	{
@@ -50,9 +66,13 @@ class MbkmController extends BaseController
 		return view('admin/mbkm/index', $data);
 	}
 
-	// Create - Show form
+	// Create - Show form (Admin Only)
 	public function create()
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		$mahasiswa = $this->db->table('mahasiswa')
 			->where('status_mahasiswa', 'Aktif')
 			->orderBy('nama_lengkap', 'ASC')
@@ -79,13 +99,17 @@ class MbkmController extends BaseController
 		return view('admin/mbkm/create', $data);
 	}
 
-	// Store - Save new activity
+	// Store - Save new activity (Admin Only)
 	public function store()
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		$validation = \Config\Services::validation();
 
 		$rules = [
-			'mahasiswa_ids' => 'required', // Changed from mahasiswa_id to mahasiswa_ids
+			'mahasiswa_ids' => 'required',
 			'jenis_kegiatan_id' => 'required|integer',
 			'judul_kegiatan' => 'required|min_length[5]|max_length[255]',
 			'tempat_kegiatan' => 'required|max_length[255]',
@@ -158,9 +182,13 @@ class MbkmController extends BaseController
 		return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil ditambahkan dengan ' . count($mahasiswa_ids) . ' mahasiswa');
 	}
 
-	// Edit - Show form
+	// Edit - Show form (Admin Only)
 	public function edit($id)
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		$kegiatan = $this->mbkmModel->find($id);
 
 		if (!$kegiatan) {
@@ -219,9 +247,13 @@ class MbkmController extends BaseController
 		return view('admin/mbkm/edit', $data);
 	}
 
-	// Update - Save changes
+	// Update - Save changes (Admin Only)
 	public function update($id)
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		$validation = \Config\Services::validation();
 
 		$rules = [
@@ -266,9 +298,13 @@ class MbkmController extends BaseController
 		}
 	}
 
-	// Delete
+	// Delete (Admin Only)
 	public function delete($id)
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		if ($this->mbkmModel->delete($id)) {
 			return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil dihapus');
 		} else {
@@ -276,9 +312,13 @@ class MbkmController extends BaseController
 		}
 	}
 
-	// Input nilai - Show form
+	// Input nilai - Show form (Admin Only)
 	public function inputNilai($kegiatan_id)
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		// Get kegiatan with full details
 		$kegiatan = $this->db->table('mbkm_kegiatan k')
 			->select('k.*, jk.nama_kegiatan, jk.kode_kegiatan')
@@ -322,9 +362,13 @@ class MbkmController extends BaseController
 		return view('admin/mbkm/input_nilai', $data);
 	}
 
-	// Save nilai
+	// Save nilai (Admin Only)
 	public function saveNilai($kegiatan_id)
 	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
 		$komponen_ids = $this->request->getPost('komponen_id');
 		$nilai_array = $this->request->getPost('nilai');
 		$catatan_array = $this->request->getPost('catatan');
@@ -382,7 +426,7 @@ class MbkmController extends BaseController
 		return redirect()->to('/admin/mbkm')->with('success', 'Nilai berhasil disimpan');
 	}
 
-	// Detail nilai (AJAX) - FIXED VERSION
+	// Detail nilai (AJAX) - Accessible to all authenticated users
 	public function detailNilai($kegiatan_id)
 	{
 		if (!$this->request->isAJAX()) {

@@ -8,9 +8,11 @@
 			<a href="<?= base_url('admin/mbkm') ?>" class="btn btn-outline-secondary">
 				<i class="bi bi-arrow-left"></i> Kembali ke MBKM
 			</a>
-			<a href="<?= base_url('admin/mbkm-jenis/create') ?>" class="btn btn-primary">
-				<i class="bi bi-plus-circle"></i> Tambah Jenis Kegiatan
-			</a>
+			<?php if (session()->get('role') === 'admin'): ?>
+				<a href="<?= base_url('admin/mbkm-jenis/create') ?>" class="btn btn-primary">
+					<i class="bi bi-plus-circle"></i> Tambah Jenis Kegiatan
+				</a>
+			<?php endif; ?>
 		</div>
 	</div>
 
@@ -39,7 +41,9 @@
 							<th width="35%">Deskripsi</th>
 							<th width="8%" class="text-center">SKS</th>
 							<th width="8%" class="text-center">Status</th>
-							<th width="7%" class="text-center">Aksi</th>
+							<?php if (session()->get('role') === 'admin'): ?>
+								<th width="7%" class="text-center">Aksi</th>
+							<?php endif; ?>
 						</tr>
 					</thead>
 					<tbody>
@@ -68,25 +72,27 @@
 											<span class="badge bg-secondary">Nonaktif</span>
 										<?php endif; ?>
 									</td>
-									<td class="text-center">
-										<div class="btn-group btn-group-sm" role="group">
-											<a href="<?= base_url('admin/mbkm-komponen/' . $jenis['id']) ?>"
-												class="btn btn-outline-info"
-												title="Kelola Komponen Nilai">
-												<i class="bi bi-list-check"></i>
-											</a>
-											<a href="<?= base_url('admin/mbkm-jenis/edit/' . $jenis['id']) ?>"
-												class="btn btn-outline-warning"
-												title="Edit">
-												<i class="bi bi-pencil"></i>
-											</a>
-											<button class="btn btn-outline-danger"
-												onclick="confirmDelete(<?= $jenis['id'] ?>)"
-												title="Hapus">
-												<i class="bi bi-trash"></i>
-											</button>
-										</div>
-									</td>
+									<?php if (session()->get('role') === 'admin'): ?>
+										<td class="text-center">
+											<div class="btn-group btn-group-sm" role="group">
+												<a href="<?= base_url('admin/mbkm-komponen/' . $jenis['id']) ?>"
+													class="btn btn-outline-info"
+													title="Kelola Komponen Nilai">
+													<i class="bi bi-list-check"></i>
+												</a>
+												<a href="<?= base_url('admin/mbkm-jenis/edit/' . $jenis['id']) ?>"
+													class="btn btn-outline-warning"
+													title="Edit">
+													<i class="bi bi-pencil"></i>
+												</a>
+												<button class="btn btn-outline-danger"
+													onclick="confirmDelete(<?= $jenis['id'] ?>)"
+													title="Hapus">
+													<i class="bi bi-trash"></i>
+												</button>
+											</div>
+										</td>
+									<?php endif; ?>
 								</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -94,15 +100,17 @@
 				</table>
 			</div>
 
-			<?php if (!empty($jenis_kegiatan)): ?>
-				<div class="alert alert-info mt-3">
-					<i class="bi bi-info-circle"></i> <strong>Informasi:</strong>
-					<ul class="mb-0 mt-2">
-						<li>Klik <i class="bi bi-list-check"></i> untuk mengelola komponen penilaian</li>
-						<li>Total jenis kegiatan: <strong><?= count($jenis_kegiatan) ?></strong></li>
-						<li>Jenis kegiatan yang sudah digunakan tidak dapat dihapus</li>
-					</ul>
-				</div>
+			<?php if (session()->get('role') === 'admin'): ?>
+				<?php if (!empty($jenis_kegiatan)): ?>
+					<div class="alert alert-info mt-3">
+						<i class="bi bi-info-circle"></i> <strong>Informasi:</strong>
+						<ul class="mb-0 mt-2">
+							<li>Klik <i class="bi bi-list-check"></i> untuk mengelola komponen penilaian</li>
+							<li>Total jenis kegiatan: <strong><?= count($jenis_kegiatan) ?></strong></li>
+							<li>Jenis kegiatan yang sudah digunakan tidak dapat dihapus</li>
+						</ul>
+					</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	</div>

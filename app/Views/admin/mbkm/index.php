@@ -24,9 +24,11 @@
 					<i class="bi bi-funnel-fill fs-5 text-primary"></i>
 					<h5 class="mb-0">Filter Kegiatan</h5>
 				</div>
-				<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
-					<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-				</a>
+				<?php if (session()->get('role') === 'admin'): ?>
+					<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
+						<i class="bi bi-plus-circle"></i> Tambah Kegiatan
+					</a>
+				<?php endif; ?>
 			</div>
 		</div>
 		<div class="card-body">
@@ -148,19 +150,21 @@
 												<i class="bi bi-eye"></i> Detail
 											</button>
 
-											<?php if ($status_key == 'disetujui' || $status_key == 'berlangsung' || $status_key == 'selesai'): ?>
-												<a href="<?= base_url('admin/mbkm/input-nilai/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-success">
-													<i class="bi bi-pencil-square"></i> Input Nilai
+											<?php if (session()->get('role') === 'admin'): ?>
+												<?php if ($status_key == 'disetujui' || $status_key == 'berlangsung' || $status_key == 'selesai'): ?>
+													<a href="<?= base_url('admin/mbkm/input-nilai/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-success">
+														<i class="bi bi-pencil-square"></i> Input Nilai
+													</a>
+												<?php endif; ?>
+
+												<a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
+													<i class="bi bi-pencil"></i> Edit
 												</a>
+
+												<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $kegiatan['id'] ?>)">
+													<i class="bi bi-trash"></i> Hapus
+												</button>
 											<?php endif; ?>
-
-											<a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
-												<i class="bi bi-pencil"></i> Edit
-											</a>
-
-											<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $kegiatan['id'] ?>)">
-												<i class="bi bi-trash"></i> Hapus
-											</button>
 										</div>
 									</div>
 								</div>
