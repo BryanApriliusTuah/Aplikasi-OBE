@@ -248,6 +248,7 @@ class MbkmController extends BaseController
 	}
 
 	// Update - Save changes (Admin Only)
+	// Update - Save changes (Admin Only)
 	public function update($id)
 	{
 		if (!$this->isAdmin()) {
@@ -257,6 +258,7 @@ class MbkmController extends BaseController
 		$validation = \Config\Services::validation();
 
 		$rules = [
+			'mahasiswa_ids' => 'required',
 			'jenis_kegiatan_id' => 'required|integer',
 			'judul_kegiatan' => 'required|min_length[5]|max_length[255]',
 			'tempat_kegiatan' => 'required|max_length[255]',
@@ -275,13 +277,22 @@ class MbkmController extends BaseController
 		$tanggal_selesai = strtotime($this->request->getPost('tanggal_selesai'));
 		$durasi_minggu = ceil(($tanggal_selesai - $tanggal_mulai) / (60 * 60 * 24 * 7));
 
+		// Get mahasiswa IDs array
+		$mahasiswa_ids = $this->request->getPost('mahasiswa_ids');
+
+		if (empty($mahasiswa_ids) || !is_array($mahasiswa_ids)) {
+			return redirect()->back()->withInput()->with('error', 'Pilih minimal satu mahasiswa');
+		}
+
+		$this->db->transStart(); // Start transaction
+
 		$data = [
 			'jenis_kegiatan_id' => $this->request->getPost('jenis_kegiatan_id'),
 			'judul_kegiatan' => $this->request->getPost('judul_kegiatan'),
 			'tempat_kegiatan' => $this->request->getPost('tempat_kegiatan'),
 			'pembimbing_lapangan' => $this->request->getPost('pembimbing_lapangan'),
 			'kontak_pembimbing' => $this->request->getPost('kontak_pembimbing'),
-			'dosen_pembimbing_id' => $this->request->getPost('dosen_pembimbing_id'),
+			'dosen_pembimbing_id' => $this->request->getPost('dosen_pembimbing_id') ?: null,
 			'tanggal_mulai' => $this->request->getPost('tanggal_mulai'),
 			'tanggal_selesai' => $this->request->getPost('tanggal_selesai'),
 			'durasi_minggu' => $durasi_minggu,
@@ -291,11 +302,35 @@ class MbkmController extends BaseController
 			'tahun_akademik' => $this->request->getPost('tahun_akademik')
 		];
 
-		if ($this->mbkmModel->update($id, $data)) {
-			return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil diperbarui');
-		} else {
+		// Update kegiatan
+		if (!$this->mbkmModel->update($id, $data)) {
+			$this->db->transRollback();
 			return redirect()->back()->withInput()->with('error', 'Gagal memperbarui kegiatan MBKM');
 		}
+
+		// Delete existing mahasiswa relationships
+		$this->db->table('mbkm_kegiatan_mahasiswa')
+			->where('kegiatan_id', $id)
+			->delete();
+
+		// Insert new mahasiswa relationships
+		foreach ($mahasiswa_ids as $mahasiswa_id) {
+			$relasi_data = [
+				'kegiatan_id' => $id,
+				'mahasiswa_id' => $mahasiswa_id,
+				'peran' => 'Peserta'
+			];
+
+			$this->db->table('mbkm_kegiatan_mahasiswa')->insert($relasi_data);
+		}
+
+		$this->db->transComplete(); // Complete transaction
+
+		if ($this->db->transStatus() === false) {
+			return redirect()->back()->withInput()->with('error', 'Gagal memperbarui kegiatan MBKM');
+		}
+
+		return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil diperbarui dengan ' . count($mahasiswa_ids) . ' mahasiswa');
 	}
 
 	// Delete (Admin Only)
