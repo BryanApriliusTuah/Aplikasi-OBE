@@ -232,10 +232,37 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	});
 });
 
+$routes->group('mahasiswa', ['filter' => 'auth'], function ($routes) {
+	// Dashboard
+	$routes->get('/', 'MahasiswaController::dashboard');
+	$routes->get('dashboard', 'MahasiswaController::dashboard');
+
+	// Nilai Routes
+	$routes->get('nilai', 'MahasiswaController::nilai');
+	$routes->get('nilai/detail/(:num)', 'MahasiswaController::nilaiDetail/$1');
+
+	// Jadwal Routes (if needed)
+	$routes->get('jadwal', 'MahasiswaController::jadwal');
+
+	// Profil CPL Routes (if needed)
+	$routes->get('profil-cpl', 'MahasiswaController::profilCpl');
+
+	// MBKM Routes (if needed)
+	$routes->get('mbkm', 'MahasiswaController::mbkm');
+	$routes->get('mbkm/daftar', 'MahasiswaController::mbkmDaftar');
+	$routes->post('mbkm/daftar/store', 'MahasiswaController::mbkmDaftarStore');
+	$routes->get('mbkm/detail/(:num)', 'MahasiswaController::mbkmDetail/$1');
+
+	// Profile Routes (if needed)
+	$routes->get('profil', 'MahasiswaController::profil');
+	$routes->post('profil/update', 'MahasiswaController::updateProfil');
+
+	//Change Password
+	$routes->post('profil/change-password', 'MahasiswaController::changePassword');
+});
+
 //teknik penilaian cpmk
 $routes->get('teknik-penilaian-cpmk', 'TeknikPenilaianCpmk::index');
-
-
 
 //mekanisme penilaian
 $routes->get('tahap-mekanisme-penilaian', 'TahapMekanismePenilaian::index');
