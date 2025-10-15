@@ -95,4 +95,55 @@ class NilaiCpmkMahasiswaModel extends Model
 			return $this->insert($data);
 		}
 	}
+
+	/**
+	 * Get CPMK scores with CPMK details
+	 */
+	public function getNilaiCpmkWithDetails($mahasiswaId, $jadwalId)
+	{
+		return $this->select('nilai_cpmk_mahasiswa.*, cpmk.kode_cpmk, cpmk.deskripsi')
+			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
+			->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
+			->where('nilai_cpmk_mahasiswa.jadwal_mengajar_id', $jadwalId)
+			->orderBy('cpmk.kode_cpmk', 'ASC')
+			->findAll();
+	}
+
+	/**
+	 * Calculate average CPMK score for a student in a course
+	 */
+	public function getAverageCpmk($mahasiswaId, $jadwalId)
+	{
+		$result = $this->selectAvg('nilai_cpmk')
+			->where('mahasiswa_id', $mahasiswaId)
+			->where('jadwal_mengajar_id', $jadwalId)
+			->get()
+			->getRow();
+
+		return $result ? $result->nilai_cpmk : 0;
+	}
+
+	/**
+	 * Get CPMK scores grouped by CPL
+	 */
+	public function getNilaiCpmkByCpl($mahasiswaId)
+	{
+		return $this->select('
+                cpl.kode_cpl,
+                cpl.deskripsi as cpl_deskripsi,
+                cpmk.kode_cpmk,
+                cpmk.deskripsi as cpmk_deskripsi,
+                AVG(nilai_cpmk_mahasiswa.nilai_cpmk) as rata_rata_cpmk,
+                mata_kuliah.nama_mk
+            ')
+			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
+			->join('cpl_cpmk', 'cpmk.id = cpl_cpmk.cpmk_id')
+			->join('cpl', 'cpl_cpmk.cpl_id = cpl.id')
+			->join('jadwal_mengajar', 'nilai_cpmk_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
+			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+			->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
+			->groupBy('cpl.id, cpmk.id, mata_kuliah.id')
+			->orderBy('cpl.kode_cpl', 'ASC')
+			->findAll();
+	}
 }

@@ -108,4 +108,49 @@ class NilaiMahasiswaModel extends Model
 			return $this->insert($data);
 		}
 	}
+
+	/**
+	 * Get nilai with mata kuliah details
+	 */
+	public function getNilaiWithDetails($mahasiswaId = null)
+	{
+		$builder = $this->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas')
+			->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
+			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id');
+
+		if ($mahasiswaId) {
+			$builder->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId);
+		}
+
+		return $builder->orderBy('jadwal_mengajar.tahun_akademik', 'DESC')
+			->orderBy('mata_kuliah.semester', 'ASC')
+			->findAll();
+	}
+
+	/**
+     * Calculate IPK for a student
+     */
+    public function calculateIPK($mahasiswaId)
+    {
+        $nilai = $this->select('nilai_mahasiswa.nilai_akhir, mata_kuliah.sks')
+            ->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
+            ->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+            ->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId)
+            ->where('nilai_mahasiswa.status_kelulusan', 'Lulus')
+            ->findAll();
+
+        if (empty($nilai)) {
+            return 0;
+        }
+
+        $totalNilai = 0;
+        $totalSks = 0;
+
+        foreach ($nilai as $n) {
+            $totalNilai += $n['nilai_akhir'] * $n['sks'];
+            $totalSks += $n['sks'];
+        }
+
+        return $totalSks > 0 ? $totalNilai / $totalSks : 0;
+    }
 }
