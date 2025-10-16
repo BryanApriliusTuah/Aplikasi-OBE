@@ -185,6 +185,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('capaian-cpmk/chart-data', 'CapaianCpmk::getChartData');
 	$routes->get('capaian-cpmk/detail-data', 'CapaianCpmk::getDetailData');
 	$routes->get('capaian-cpmk/get-kelas', 'CapaianCpmk::getKelasByMataKuliah');
+	$routes->get('capaian-cpmk/comparative-subjects', 'CapaianCpmk::getComparativeSubjects');
+	$routes->get('capaian-cpmk/all-subjects-data', 'CapaianCpmk::getAllSubjectsData');
 
 	//capaian cpl
 	$routes->get('capaian-cpl', 'CapaianCpl::index');
