@@ -192,6 +192,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('capaian-cpl/detail-data', 'CapaianCpl::getDetailData');
 	$routes->get('capaian-cpl/mahasiswa', 'CapaianCpl::getMahasiswaByFilter');
 	$routes->get('capaian-cpl/comparative-data', 'CapaianCpl::getComparativeData');
+	$routes->get('capaian-cpl/subject-data', 'CapaianCpl::getSubjectData');
+	$routes->get('capaian-cpl/subjects-list', 'CapaianCpl::getSubjectsList');
+	$routes->get('capaian-cpl/comparative-subjects', 'CapaianCpl::getComparativeSubjects');
+	$routes->get('capaian-cpl/all-subjects-data', 'CapaianCpl::getAllSubjectsData');
 
 	// MBKM Management Routes
 	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {
