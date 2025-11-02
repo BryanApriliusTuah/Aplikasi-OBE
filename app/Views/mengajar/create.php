@@ -80,9 +80,9 @@
 							<hr class="my-3">
 
 							<div class="col-12">
-								<label for="dosen_leader" class="form-label">Dosen Ketua (Penanggung Jawab)</label>
+								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
 								<select class="form-select" id="dosen_leader" name="dosen_leader" required>
-									<option value="">-- Pilih Dosen Ketua --</option>
+									<option value="">-- Pilih Dosen Koordinator --</option>
 									<?php foreach ($dosen_list as $dosen): ?>
 										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader') == $dosen['id'] ? 'selected' : '' ?>>
 											<?= esc($dosen['nama_lengkap']) ?>

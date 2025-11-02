@@ -74,11 +74,29 @@ class Mengajar extends BaseController
 			$jadwal_by_day[$day][] = $jadwal;
 		}
 
+		// Get distinct tahun akademik for filter dropdown
+		$tahun_akademik_list = $this->db->table('jadwal_mengajar')
+			->distinct()
+			->select('tahun_akademik')
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Get distinct program studi for filter dropdown
+		$program_studi_list = $this->db->table('jadwal_mengajar')
+			->distinct()
+			->select('program_studi')
+			->orderBy('program_studi', 'ASC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'title' => 'Jadwal Mengajar (Tampilan Papan)',
 			'jadwal_by_day' => $jadwal_by_day,
 			'filters' => $filters,
-			'total_jadwal' => count($jadwal_list)
+			'total_jadwal' => count($jadwal_list),
+			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
+			'program_studi_list' => array_column($program_studi_list, 'program_studi')
 		];
 
 		// Note: We are not sending a $pager object anymore

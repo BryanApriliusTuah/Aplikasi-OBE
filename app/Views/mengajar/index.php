@@ -48,15 +48,20 @@
 					<div class="col-md-4">
 						<label for="filter_program_studi" class="form-label">Program Studi</label>
 						<select class="form-select" id="filter_program_studi" name="program_studi">
-							<option value="">Semua Program Studi</option>
-							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? '') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? '') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? '') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
+							<!-- <option value="">Semua Program Studi</option> -->
+							<?php foreach ($program_studi_list as $prodi): ?>
+								<option value="<?= esc($prodi) ?>" <?= (empty($filters['program_studi']) && $prodi == 'Teknik Informatika') || ($filters['program_studi'] ?? '') == $prodi ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+							<?php endforeach; ?>
 						</select>
 					</div>
 					<div class="col-md-4">
 						<label for="filter_tahun_akademik" class="form-label">Tahun Akademik</label>
-						<input type="text" class="form-control" name="tahun_akademik" value="<?= esc($filters['tahun_akademik'] ?? '') ?>" placeholder="e.g. 2024/2025 Ganjil">
+						<select class="form-select" id="filter_tahun_akademik" name="tahun_akademik">
+							<option value="">Semua Tahun Akademik</option>
+							<?php foreach ($tahun_akademik_list as $tahun): ?>
+								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun_akademik'] ?? '') == $tahun ? 'selected' : '' ?>><?= esc($tahun) ?></option>
+							<?php endforeach; ?>
+						</select>
 					</div>
 					<div class="col-md-4 d-flex gap-2">
 						<button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Terapkan</button>
