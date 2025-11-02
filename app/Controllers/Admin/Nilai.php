@@ -9,6 +9,7 @@ use App\Models\CpmkModel;
 use App\Models\NilaiMahasiswaModel;
 use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\DosenModel;
+use App\Models\NilaiTeknikPenilaianModel;
 
 class Nilai extends BaseController
 {
@@ -303,5 +304,202 @@ class Nilai extends BaseController
 		if ($score > 50) return 'C';      // Cukup
 		if ($score > 40) return 'D';      // Kurang
 		return 'E';                       // Sangat Kurang
+	}
+
+	/**
+	 * Display the form to input scores by teknik_penilaian (new method)
+	 */
+	public function inputNilaiByTeknikPenilaian($jadwal_id)
+	{
+		// Check access permissions first
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen pengampu yang dapat menginput nilai.');
+		}
+
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get COMBINED teknik_penilaian list (grouped by type, not by week)
+		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+		if (empty($combined_data['combined_list'])) {
+			return redirect()->back()->with('error', 'Tidak ada teknik penilaian yang terdefinisi pada RPS untuk mata kuliah ini. Silakan lengkapi RPS terlebih dahulu.');
+		}
+
+		// Get existing scores to pre-fill the form (combined view)
+		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+
+		$data = [
+			'title' => 'Input Nilai Berdasarkan Teknik Penilaian',
+			'jadwal' => $jadwal,
+			'mahasiswa_list' => $students,
+			'combined_list' => $combined_data['combined_list'],
+			'teknik_by_tahap' => $combined_data['by_tahap'],
+			'existing_scores' => $existing_scores,
+		];
+
+		return view('admin/nilai/input_nilai_teknik', $data);
+	}
+
+	/**
+	 * Save scores by teknik_penilaian (combined mode) and auto-calculate CPMK scores
+	 */
+	public function saveNilaiByTeknikPenilaian($jadwal_id)
+	{
+		// Check access permissions first
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menyimpan nilai pada jadwal ini.');
+		}
+
+		$nilai_data = $this->request->getPost('nilai');
+
+		if (empty($nilai_data)) {
+			return redirect()->back()->with('error', 'Tidak ada data nilai yang dikirim.');
+		}
+
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
+		$cpmkModel = new CpmkModel();
+
+		$db = \Config\Database::connect();
+		$db->transStart();
+
+		// Get combined data to map teknik_key to all rps_mingguan_ids
+		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+		$teknik_mapping = [];
+
+		// Build mapping: teknik_key => [rps_mingguan_id, ...]
+		foreach ($combined_data['combined_list'] as $item) {
+			$teknik_mapping[$item['teknik_key']] = $item['rps_mingguan_ids'];
+		}
+
+		// 1. Save teknik_penilaian scores (distribute to all matching rps_mingguan_ids)
+		foreach ($nilai_data as $mahasiswa_id => $teknik_scores) {
+			foreach ($teknik_scores as $teknik_key => $score) {
+				// Get all rps_mingguan_ids that use this teknik_key
+				if (isset($teknik_mapping[$teknik_key])) {
+					foreach ($teknik_mapping[$teknik_key] as $rps_info) {
+						$scoreData = [
+							'mahasiswa_id' => $mahasiswa_id,
+							'jadwal_mengajar_id' => $jadwal_id,
+							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
+							'teknik_penilaian_key' => $teknik_key,
+							'nilai' => empty($score) ? null : $score,
+						];
+						$nilaiTeknikModel->saveOrUpdate($scoreData);
+					}
+				}
+			}
+		}
+
+		// 2. Calculate CPMK scores from teknik_penilaian scores
+		$cpmk_scores = $nilaiTeknikModel->calculateCpmkScores($jadwal_id);
+
+		// 3. Save calculated CPMK scores
+		foreach ($cpmk_scores as $mahasiswa_id => $cpmk_data) {
+			foreach ($cpmk_data as $cpmk_id => $cpmk_score) {
+				$cpmkData = [
+					'mahasiswa_id' => $mahasiswa_id,
+					'jadwal_mengajar_id' => $jadwal_id,
+					'cpmk_id' => $cpmk_id,
+					'nilai_cpmk' => $cpmk_score,
+				];
+				$nilaiCpmkModel->saveOrUpdate($cpmkData);
+			}
+		}
+
+		// 4. Calculate final scores based on CPMK weights
+		foreach ($cpmk_scores as $mahasiswa_id => $cpmk_data) {
+			$nilai_akhir = 0;
+
+			// Calculate sum of all CPMK scores
+			if (!empty($cpmk_data)) {
+				$nilai_akhir = array_sum($cpmk_data);
+			}
+
+			$finalData = [
+				'mahasiswa_id' => $mahasiswa_id,
+				'jadwal_mengajar_id' => $jadwal_id,
+				'nilai_akhir' => round($nilai_akhir, 2),
+				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
+				'status_kelulusan' => $nilai_akhir > 50 ? 'Lulus' : 'Tidak Lulus',
+			];
+			$nilaiMahasiswaModel->saveOrUpdate($finalData);
+		}
+
+		$db->transComplete();
+
+		if ($db->transStatus() === false) {
+			return redirect()->to('admin/nilai')->with('error', 'Gagal menyimpan nilai.');
+		}
+
+		return redirect()->to('admin/nilai')->with('success', 'Nilai berhasil disimpan. CPMK scores dihitung otomatis berdasarkan teknik penilaian.');
+	}
+
+	/**
+	 * AJAX endpoint to get detail nilai by teknik_penilaian
+	 */
+	public function getDetailNilaiTeknikPenilaian($jadwal_id)
+	{
+		if (!$this->request->isAJAX()) {
+			return $this->response->setStatusCode(403);
+		}
+
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+		$mahasiswaModel = new MahasiswaModel();
+
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
+		$scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Group by CPMK for display
+		$teknik_by_cpmk = [];
+		foreach ($teknik_list as $item) {
+			$cpmk_id = $item['cpmk_id'];
+			if (!isset($teknik_by_cpmk[$cpmk_id])) {
+				$teknik_by_cpmk[$cpmk_id] = [
+					'kode_cpmk' => $item['kode_cpmk'],
+					'cpmk_deskripsi' => $item['cpmk_deskripsi'],
+					'items' => []
+				];
+			}
+			$teknik_by_cpmk[$cpmk_id]['items'][] = $item;
+		}
+
+		$data = [
+			'jadwal' => $jadwal,
+			'students' => $students,
+			'teknik_by_cpmk' => $teknik_by_cpmk,
+			'scores' => $scores,
+		];
+
+		return $this->response->setJSON($data);
 	}
 }

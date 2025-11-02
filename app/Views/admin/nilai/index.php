@@ -91,7 +91,28 @@
 											<button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#dpnaModal" data-jadwal-id="<?= $jadwal['id'] ?>"><i class="bi bi-file-earmark-text"></i> Lihat DPNA</button>
 
 											<?php if (isset($jadwal['can_input_grades']) && $jadwal['can_input_grades']): ?>
-												<a href="<?= base_url('admin/nilai/input-nilai/' . $jadwal['id']) ?>" class="btn btn-sm btn-primary"><i class="bi bi-pencil-square"></i> Input Nilai</a>
+												<div class="btn-group" role="group">
+													<button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+														<i class="bi bi-pencil-square"></i> Input Nilai
+													</button>
+													<ul class="dropdown-menu dropdown-menu-end">
+														<li>
+															<a class="dropdown-item" href="<?= base_url('admin/nilai/input-nilai-teknik/' . $jadwal['id']) ?>">
+																<i class="bi bi-clipboard-check text-primary me-2"></i>
+																<strong>By Teknik Penilaian</strong>
+																<small class="d-block text-muted">Kehadiran, Tugas, UTS, UAS, dll</small>
+															</a>
+														</li>
+														<li><hr class="dropdown-divider"></li>
+														<li>
+															<a class="dropdown-item" href="<?= base_url('admin/nilai/input-nilai/' . $jadwal['id']) ?>">
+																<i class="bi bi-list-check text-secondary me-2"></i>
+																By CPMK (Langsung)
+																<small class="d-block text-muted">Input langsung per CPMK</small>
+															</a>
+														</li>
+													</ul>
+												</div>
 											<?php else: ?>
 												<span class="btn btn-sm btn-secondary disabled" title="Hanya dosen pengampu yang dapat menginput nilai">
 													<i class="bi bi-lock"></i> Terbatas
