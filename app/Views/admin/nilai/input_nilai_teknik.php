@@ -19,10 +19,28 @@
 				<div>
 					<h2 class="fw-bold mb-1">Input Nilai Berdasarkan Teknik Penilaian</h2>
 					<p class="text-muted mb-0">Masukkan nilai untuk setiap teknik penilaian (Kehadiran, Tugas, UTS, UAS, dll)</p>
+					<?php if (isset($jadwal['is_nilai_validated']) && $jadwal['is_nilai_validated'] == 1): ?>
+						<div class="alert alert-success alert-sm mt-2 mb-0 py-2">
+							<i class="bi bi-check-circle-fill me-1"></i>
+							<strong>Nilai telah divalidasi</strong>
+							<?php if (isset($jadwal['validated_by_name'])): ?>
+								oleh <strong><?= esc($jadwal['validated_by_name']) ?></strong>
+							<?php endif; ?>
+							pada <?= date('d/m/Y H:i', strtotime($jadwal['validated_at'])) ?>
+						</div>
+					<?php endif; ?>
 				</div>
-				<a href="<?= base_url('admin/nilai') ?>" class="btn btn-outline-secondary">
-					<i class="bi bi-arrow-left me-2"></i>Kembali
-				</a>
+				<div class="d-flex gap-2">
+					<a href="<?= base_url('admin/nilai/unduh-dpna/' . $jadwal['id']) ?>"
+						class="btn btn-success"
+						target="_blank"
+						title="Unduh Daftar Penilaian Nilai Akhir">
+						<i class="bi bi-download me-2"></i>Unduh DPNA
+					</a>
+					<a href="<?= base_url('admin/nilai') ?>" class="btn btn-outline-secondary">
+						<i class="bi bi-arrow-left me-2"></i>Kembali
+					</a>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -111,16 +129,16 @@
 						?>
 						<?php if ($rps_id): ?>
 							<a href="<?= base_url('rps/preview/' . $rps_id) ?>"
-							   class="btn btn-sm btn-outline-primary"
-							   target="_blank"
-							   title="Lihat RPS">
+								class="btn btn-sm btn-outline-primary"
+								target="_blank"
+								title="Lihat RPS">
 								<i class="bi bi-file-text"></i>
 								<span class="d-none d-lg-inline ms-1">RPS</span>
 							</a>
 							<a href="<?= base_url('rps/mingguan/' . $rps_id) ?>"
-							   class="btn btn-sm btn-outline-secondary"
-							   target="_blank"
-							   title="Kelola RPS Mingguan">
+								class="btn btn-sm btn-outline-secondary"
+								target="_blank"
+								title="Kelola RPS Mingguan">
 								<i class="bi bi-calendar-week"></i>
 								<span class="d-none d-lg-inline ms-1">Mingguan</span>
 							</a>
@@ -176,18 +194,41 @@
 						<div class="row align-items-center">
 							<div class="col-md-8">
 								<div class="d-flex gap-2 flex-wrap">
-									<button type="button" class="btn btn-success btn-sm" onclick="fillAllValues()">
-										<i class="bi bi-lightning-fill me-1"></i>Isi Semua (Testing)
-									</button>
-									<button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllValues()">
-										<i class="bi bi-eraser me-1"></i>Kosongkan Semua
-									</button>
+									<?php
+									$isValidated = isset($jadwal['is_nilai_validated']) && $jadwal['is_nilai_validated'] == 1;
+									$isDosen = session()->get('role') === 'dosen';
+									$isAdmin = session()->get('role') === 'admin';
+									$canEdit = !$isValidated;
+									?>
+									<?php if (!$isValidated): ?>
+										<button type="button" class="btn btn-success btn-sm" onclick="fillAllValues()">
+											<i class="bi bi-lightning-fill me-1"></i>Isi Semua (Testing)
+										</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllValues()">
+											<i class="bi bi-eraser me-1"></i>Kosongkan Semua
+										</button>
+										<button type="button" class="btn btn-primary btn-sm" onclick="validateNilai()">
+											<i class="bi bi-check-circle me-1"></i>Validasi Nilai
+										</button>
+									<?php endif; ?>
+
+									<?php if ($isValidated && $isAdmin): ?>
+										<button type="button" class="btn btn-warning btn-sm" onclick="unvalidateNilai()">
+											<i class="bi bi-x-circle me-1"></i>Batal Validasi
+										</button>
+									<?php endif; ?>
 								</div>
 							</div>
 							<div class="col-md-4 text-end">
-								<button type="submit" class="btn btn-primary">
-									<i class="bi bi-save me-2"></i>Simpan & Hitung CPMK
-								</button>
+								<?php if ($canEdit): ?>
+									<button type="submit" class="btn btn-primary">
+										<i class="bi bi-save me-2"></i>Simpan & Hitung CPMK
+									</button>
+								<?php else: ?>
+									<button type="button" class="btn btn-secondary" disabled>
+										<i class="bi bi-lock me-2"></i>Nilai Sudah Divalidasi
+									</button>
+								<?php endif; ?>
 							</div>
 						</div>
 					</div>
@@ -238,7 +279,9 @@
 											$is_last_in_group = ($item_index === $item_count);
 											$show_border = $is_last_in_group && !$is_last_tahap_group;
 											// Build tooltip with week details
-											$weeks = array_map(function($rps) { return $rps['minggu']; }, $item['rps_mingguan_ids']);
+											$weeks = array_map(function ($rps) {
+												return $rps['minggu'];
+											}, $item['rps_mingguan_ids']);
 											$weeks_display = count($weeks) > 5 ? 'W' . min($weeks) . '-' . max($weeks) : implode(',', $weeks);
 											$tooltip = esc($item['teknik_label']) . " - Minggu " . implode(', ', $weeks) . " (" . number_format($item['total_bobot'], 1) . "%)";
 											?>
@@ -307,7 +350,8 @@
 													data-mahasiswa="<?= $mahasiswa['id'] ?>"
 													data-teknik="<?= $item['teknik_key'] ?>"
 													placeholder="0-100"
-													style="min-width: 85px;">
+													style="min-width: 85px;"
+													<?= (!$canEdit) ? 'readonly' : '' ?>>
 											</td>
 										<?php endforeach; ?>
 									</tr>
@@ -328,9 +372,15 @@
 								</div>
 							</div>
 							<div class="col-md-4 text-end">
-								<button type="submit" class="btn btn-primary btn-lg">
-									<i class="bi bi-cloud-upload me-2"></i>Simpan & Hitung CPMK
-								</button>
+								<?php if ($canEdit): ?>
+									<button type="submit" class="btn btn-primary btn-lg">
+										<i class="bi bi-cloud-upload me-2"></i>Simpan & Hitung CPMK
+									</button>
+								<?php else: ?>
+									<button type="button" class="btn btn-secondary btn-lg" disabled>
+										<i class="bi bi-lock me-2"></i>Nilai Sudah Divalidasi
+									</button>
+								<?php endif; ?>
 							</div>
 						</div>
 					</div>
@@ -556,6 +606,44 @@
 			setTimeout(() => {
 				statusEl.textContent = '';
 			}, 3000);
+		}
+	}
+
+	function validateNilai() {
+		if (confirm('Apakah Anda yakin ingin memvalidasi nilai ini?\n\nSetelah divalidasi, nilai tidak dapat lagi diedit.\nHanya admin yang dapat membatalkan validasi.')) {
+			// Create a form and submit
+			const form = document.createElement('form');
+			form.method = 'POST';
+			form.action = '<?= base_url('admin/nilai/validate/' . $jadwal['id']) ?>';
+
+			// Add CSRF token
+			const csrfInput = document.createElement('input');
+			csrfInput.type = 'hidden';
+			csrfInput.name = '<?= csrf_token() ?>';
+			csrfInput.value = '<?= csrf_hash() ?>';
+			form.appendChild(csrfInput);
+
+			document.body.appendChild(form);
+			form.submit();
+		}
+	}
+
+	function unvalidateNilai() {
+		if (confirm('Apakah Anda yakin ingin membatalkan validasi nilai ini?\n\nSetelah dibatalkan, dosen dapat kembali mengedit nilai.')) {
+			// Create a form and submit
+			const form = document.createElement('form');
+			form.method = 'POST';
+			form.action = '<?= base_url('admin/nilai/unvalidate/' . $jadwal['id']) ?>';
+
+			// Add CSRF token
+			const csrfInput = document.createElement('input');
+			csrfInput.type = 'hidden';
+			csrfInput.name = '<?= csrf_token() ?>';
+			csrfInput.value = '<?= csrf_hash() ?>';
+			form.appendChild(csrfInput);
+
+			document.body.appendChild(form);
+			form.submit();
 		}
 	}
 </script>

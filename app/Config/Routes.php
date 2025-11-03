@@ -181,6 +181,11 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('nilai/input-nilai-teknik/(:num)', 'Nilai::inputNilaiByTeknikPenilaian/$1');
 	$routes->post('nilai/save-nilai-teknik/(:num)', 'Nilai::saveNilaiByTeknikPenilaian/$1');
 	$routes->get('nilai/detail-nilai-teknik/(:num)', 'Nilai::getDetailNilaiTeknikPenilaian/$1');
+	$routes->post('nilai/validate/(:num)', 'Nilai::validateNilai/$1');
+	$routes->post('nilai/unvalidate/(:num)', 'Nilai::unvalidateNilai/$1');
+	$routes->get('nilai/lihat-nilai/(:num)', 'Nilai::lihatNilai/$1');
+	$routes->get('nilai/unduh-dpna/(:num)', 'Nilai::unduhDpna/$1');
+	$routes->get('nilai/export-dpna-excel/(:num)', 'Nilai::exportDpnaExcel/$1');
 
 	// $routes->get('nilai/cetak-dpna/(:num)', 'Nilai::cetakDpna/$1');
 	// $routes->get('nilai/exportExcel/(:num)', 'Nilai::exportExcel/$1');

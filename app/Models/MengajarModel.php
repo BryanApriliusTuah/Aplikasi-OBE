@@ -23,7 +23,10 @@ class MengajarModel extends Model
 		'hari',
 		'jam_mulai',
 		'jam_selesai',
-		'status'
+		'status',
+		'is_nilai_validated',
+		'validated_at',
+		'validated_by'
 	];
 
 	// Dates

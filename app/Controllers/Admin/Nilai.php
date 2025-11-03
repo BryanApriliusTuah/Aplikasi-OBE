@@ -42,11 +42,87 @@ class Nilai extends BaseController
 			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
 		}
 
+		// Get validation status and score completion for all schedules at once
+		$jadwal_ids = array_column($schedules, 'id');
+		$validation_status = [];
+		$score_completion = [];
+
+		if (!empty($jadwal_ids)) {
+			$db = \Config\Database::connect();
+			$validation_results = $db->table('jadwal_mengajar')
+				->select('id, is_nilai_validated')
+				->whereIn('id', $jadwal_ids)
+				->get()
+				->getResultArray();
+
+			foreach ($validation_results as $result) {
+				$validation_status[$result['id']] = $result['is_nilai_validated'];
+			}
+
+			// Calculate score completion for each jadwal
+			foreach ($jadwal_ids as $jadwal_id) {
+				// Get total students for this jadwal
+				$jadwal_info = array_values(array_filter($schedules, function($s) use ($jadwal_id) {
+					return $s['id'] == $jadwal_id;
+				}))[0] ?? null;
+
+				if (!$jadwal_info) continue;
+
+				$mahasiswaModel = new MahasiswaModel();
+				$students = $mahasiswaModel->getStudentsForScoring($jadwal_info['program_studi'], $jadwal_info['semester']);
+				$total_students = count($students);
+
+				if ($total_students == 0) {
+					$score_completion[$jadwal_id] = ['completed' => 0, 'total' => 0];
+					continue;
+				}
+
+				// Get combined teknik penilaian for this jadwal
+				$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+				$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+				if (empty($combined_data['combined_list'])) {
+					$score_completion[$jadwal_id] = ['completed' => 0, 'total' => $total_students];
+					continue;
+				}
+
+				$teknik_keys = array_column($combined_data['combined_list'], 'teknik_key');
+				$total_teknik = count($teknik_keys);
+
+				// Count students with complete scores
+				$completed_students = 0;
+				foreach ($students as $student) {
+					// Check if this student has all teknik scores
+					$student_scores = $db->table('nilai_teknik_penilaian')
+						->select('teknik_penilaian_key, nilai')
+						->where('mahasiswa_id', $student['id'])
+						->where('jadwal_mengajar_id', $jadwal_id)
+						->whereIn('teknik_penilaian_key', $teknik_keys)
+						->where('nilai IS NOT NULL')
+						->get()
+						->getResultArray();
+
+					// Student is complete if they have scores for all teknik
+					if (count($student_scores) >= $total_teknik) {
+						$completed_students++;
+					}
+				}
+
+				$score_completion[$jadwal_id] = ['completed' => $completed_students, 'total' => $total_students];
+			}
+		}
+
 		foreach ($schedules as $schedule) {
 			if (isset($jadwal_by_day[$schedule['hari']])) {
 				// Check if current user can input grades for this schedule
 				$canInputGrades = $this->canInputGrades($schedule['id'], $currentDosenId);
 				$schedule['can_input_grades'] = $canInputGrades;
+
+				// Add validation status
+				$schedule['is_nilai_validated'] = $validation_status[$schedule['id']] ?? 0;
+
+				// Add score completion
+				$schedule['score_completion'] = $score_completion[$schedule['id']] ?? ['completed' => 0, 'total' => 0];
 
 				$jadwal_by_day[$schedule['hari']][] = $schedule;
 			}
@@ -332,6 +408,40 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
+		// Get validation status directly from jadwal_mengajar table (not from view)
+		$jadwalValidation = $jadwalModel->find($jadwal_id);
+		if ($jadwalValidation) {
+			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
+			$jadwal['validated_at'] = $jadwalValidation['validated_at'];
+			$jadwal['validated_by'] = $jadwalValidation['validated_by'];
+
+			// Get validator user information
+			if ($jadwalValidation['validated_by']) {
+				$db = \Config\Database::connect();
+				$validator = $db->table('users')
+					->select('users.username, users.role')
+					->where('users.id', $jadwalValidation['validated_by'])
+					->get()
+					->getRowArray();
+
+				if ($validator) {
+					// Get full name based on role
+					if ($validator['role'] === 'dosen') {
+						$dosen = $db->table('dosen')
+							->select('nama_lengkap')
+							->where('user_id', $jadwalValidation['validated_by'])
+							->get()
+							->getRowArray();
+						$jadwal['validated_by_name'] = $dosen ? $dosen['nama_lengkap'] : $validator['username'];
+					} else {
+						// For admin or other roles, just use username
+						$jadwal['validated_by_name'] = $validator['username'];
+					}
+					$jadwal['validator_role'] = $validator['role'];
+				}
+			}
+		}
+
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 
@@ -372,6 +482,14 @@ class Nilai extends BaseController
 
 		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
 			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menyimpan nilai pada jadwal ini.');
+		}
+
+		// Check if nilai is already validated (only dosen is blocked, admin can still edit)
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->find($jadwal_id);
+
+		if ($jadwal && $jadwal['is_nilai_validated'] == 1 && session()->get('role') === 'dosen') {
+			return redirect()->back()->with('error', 'Nilai sudah divalidasi. Anda tidak dapat lagi mengedit nilai. Hubungi admin jika perlu mengubah nilai.');
 		}
 
 		$nilai_data = $this->request->getPost('nilai');
@@ -501,5 +619,506 @@ class Nilai extends BaseController
 		];
 
 		return $this->response->setJSON($data);
+	}
+
+	/**
+	 * Validate the nilai for a specific jadwal (Admin and Dosen can validate)
+	 * After validation, dosen cannot edit the scores anymore
+	 */
+	public function validateNilai($jadwal_id)
+	{
+		// Check if user has permission (both admin and dosen can validate)
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		// Check if user can access this jadwal
+		if (session()->get('role') !== 'admin' && !$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memvalidasi nilai pada jadwal ini.');
+		}
+
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->find($jadwal_id);
+
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Check if already validated
+		if ($jadwal['is_nilai_validated'] == 1) {
+			return redirect()->back()->with('warning', 'Nilai untuk jadwal ini sudah divalidasi sebelumnya.');
+		}
+
+		// Update validation status
+		$updateData = [
+			'is_nilai_validated' => 1,
+			'validated_at' => date('Y-m-d H:i:s'),
+			'validated_by' => session()->get('user_id')
+		];
+
+		if ($jadwalModel->update($jadwal_id, $updateData)) {
+			$message = session()->get('role') === 'admin'
+				? 'Nilai berhasil divalidasi. Dosen tidak dapat lagi mengedit nilai.'
+				: 'Nilai berhasil divalidasi. Anda tidak dapat lagi mengedit nilai.';
+			return redirect()->back()->with('success', $message);
+		} else {
+			return redirect()->back()->with('error', 'Gagal memvalidasi nilai.');
+		}
+	}
+
+	/**
+	 * Unvalidate the nilai for a specific jadwal (Admin only)
+	 * After unvalidation, dosen can edit the scores again
+	 */
+	public function unvalidateNilai($jadwal_id)
+	{
+		// Only admin can unvalidate
+		if (session()->get('role') !== 'admin') {
+			return redirect()->back()->with('error', 'Hanya admin yang dapat membatalkan validasi nilai.');
+		}
+
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->find($jadwal_id);
+
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Check if not validated
+		if ($jadwal['is_nilai_validated'] == 0) {
+			return redirect()->back()->with('warning', 'Nilai untuk jadwal ini belum divalidasi.');
+		}
+
+		// Update validation status
+		$updateData = [
+			'is_nilai_validated' => 0,
+			'validated_at' => null,
+			'validated_by' => null
+		];
+
+		if ($jadwalModel->update($jadwal_id, $updateData)) {
+			return redirect()->back()->with('success', 'Validasi nilai berhasil dibatalkan. Dosen dapat mengedit nilai kembali.');
+		} else {
+			return redirect()->back()->with('error', 'Gagal membatalkan validasi nilai.');
+		}
+	}
+
+	/**
+	 * Display read-only view of scores by teknik_penilaian
+	 * Anyone can view this (no permission check required)
+	 */
+	public function lihatNilai($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get validation status directly from jadwal_mengajar table
+		$jadwalValidation = $jadwalModel->find($jadwal_id);
+		if ($jadwalValidation) {
+			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
+			$jadwal['validated_at'] = $jadwalValidation['validated_at'];
+			$jadwal['validated_by'] = $jadwalValidation['validated_by'];
+
+			// Get validator user information
+			if ($jadwalValidation['validated_by']) {
+				$db = \Config\Database::connect();
+				$validator = $db->table('users')
+					->select('users.username, users.role')
+					->where('users.id', $jadwalValidation['validated_by'])
+					->get()
+					->getRowArray();
+
+				if ($validator) {
+					// Get full name based on role
+					if ($validator['role'] === 'dosen') {
+						$dosen = $db->table('dosen')
+							->select('nama_lengkap')
+							->where('user_id', $jadwalValidation['validated_by'])
+							->get()
+							->getRowArray();
+						$jadwal['validated_by_name'] = $dosen ? $dosen['nama_lengkap'] : $validator['username'];
+					} else {
+						// For admin or other roles, just use username
+						$jadwal['validated_by_name'] = $validator['username'];
+					}
+					$jadwal['validator_role'] = $validator['role'];
+				}
+			}
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get COMBINED teknik_penilaian list
+		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+		if (empty($combined_data['combined_list'])) {
+			return redirect()->back()->with('error', 'Tidak ada teknik penilaian yang terdefinisi pada RPS untuk mata kuliah ini.');
+		}
+
+		// Get existing scores to display
+		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+
+		$data = [
+			'title' => 'Lihat Nilai',
+			'jadwal' => $jadwal,
+			'mahasiswa_list' => $students,
+			'combined_list' => $combined_data['combined_list'],
+			'teknik_by_tahap' => $combined_data['by_tahap'],
+			'existing_scores' => $existing_scores,
+			'readonly' => true, // Flag to indicate read-only mode
+		];
+
+		return view('admin/nilai/lihat_nilai', $data);
+	}
+
+	/**
+	 * Download DPNA (Daftar Penilaian Nilai Akhir) as HTML table
+	 * Shows: No, NIM, Nama, Tugas, UTS, UAS, Nilai Akhir, Nilai Huruf
+	 */
+	public function unduhDpna($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
+
+		// Get jadwal details
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get existing scores
+		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+
+		// Get combined teknik data to calculate weights
+		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+		// Calculate weights for Tugas, UTS, and UAS
+		// Also create a weight map for weighted calculation
+		$tugas_weight = 0;
+		$uts_weight = 0;
+		$uas_weight = 0;
+		$teknik_weight_map = [];
+
+		foreach ($combined_data['combined_list'] as $item) {
+			$teknik_key = $item['teknik_key'];
+			$weight = $item['total_bobot'];
+
+			// Store weight for this technique
+			$teknik_weight_map[$teknik_key] = $weight;
+
+			if ($teknik_key === 'tes_tulis_uts') {
+				$uts_weight += $weight;
+			} elseif ($teknik_key === 'tes_tulis_uas') {
+				$uas_weight += $weight;
+			} else {
+				// All other techniques count as "Tugas"
+				$tugas_weight += $weight;
+			}
+		}
+
+		// Get final scores (nilai akhir and nilai huruf)
+		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
+		$final_scores_map = [];
+		foreach ($final_scores as $score) {
+			$final_scores_map[$score['mahasiswa_id']] = $score;
+		}
+
+		// Prepare DPNA data
+		$dpna_data = [];
+		$no = 1;
+		foreach ($students as $student) {
+			$mahasiswa_id = $student['id'];
+
+			// Calculate Tugas using WEIGHTED AVERAGE (all teknik except UTS and UAS)
+			$tugas_weighted_sum = 0;
+			$tugas_total_weight = 0;
+			$uts_score = 0;
+			$uas_score = 0;
+
+			if (isset($existing_scores[$mahasiswa_id])) {
+				foreach ($existing_scores[$mahasiswa_id] as $teknik_key => $nilai) {
+					if ($nilai !== null && $nilai !== '') {
+						if ($teknik_key === 'tes_tulis_uts') {
+							$uts_score = $nilai;
+						} elseif ($teknik_key === 'tes_tulis_uas') {
+							$uas_score = $nilai;
+						} else {
+							// All other techniques count as "Tugas" - use weighted calculation
+							$weight = $teknik_weight_map[$teknik_key] ?? 0;
+							if ($weight > 0) {
+								$tugas_weighted_sum += ($nilai * $weight);
+								$tugas_total_weight += $weight;
+							}
+						}
+					}
+				}
+			}
+
+			// Calculate weighted average for Tugas
+			$tugas_avg = $tugas_total_weight > 0 ? round($tugas_weighted_sum / $tugas_total_weight, 2) : 0;
+
+			// Get nilai akhir and nilai huruf
+			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
+			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
+
+			$dpna_data[] = [
+				'no' => $no++,
+				'nim' => $student['nim'],
+				'nama' => $student['nama_lengkap'],
+				'tugas' => $tugas_avg,
+				'uts' => $uts_score,
+				'uas' => $uas_score,
+				'nilai_akhir' => $nilai_akhir,
+				'nilai_huruf' => $nilai_huruf
+			];
+		}
+
+		$data = [
+			'title' => 'DPNA - ' . $jadwal['nama_mk'],
+			'jadwal' => $jadwal,
+			'dpna_data' => $dpna_data,
+			'weights' => [
+				'tugas' => round($tugas_weight, 1),
+				'uts' => round($uts_weight, 1),
+				'uas' => round($uas_weight, 1)
+			]
+		];
+
+		return view('admin/nilai/dpna', $data);
+	}
+
+	/**
+	 * Export DPNA to Excel
+	 */
+	public function exportDpnaExcel($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
+
+		// Get jadwal details
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get existing scores
+		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+
+		// Get combined teknik data to calculate weights
+		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+		// Calculate weights for Tugas, UTS, and UAS
+		$tugas_weight = 0;
+		$uts_weight = 0;
+		$uas_weight = 0;
+		$teknik_weight_map = [];
+
+		foreach ($combined_data['combined_list'] as $item) {
+			$teknik_key = $item['teknik_key'];
+			$weight = $item['total_bobot'];
+			$teknik_weight_map[$teknik_key] = $weight;
+
+			if ($teknik_key === 'tes_tulis_uts') {
+				$uts_weight += $weight;
+			} elseif ($teknik_key === 'tes_tulis_uas') {
+				$uas_weight += $weight;
+			} else {
+				$tugas_weight += $weight;
+			}
+		}
+
+		// Get final scores
+		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
+		$final_scores_map = [];
+		foreach ($final_scores as $score) {
+			$final_scores_map[$score['mahasiswa_id']] = $score;
+		}
+
+		// Prepare DPNA data
+		$dpna_data = [];
+		$no = 1;
+		foreach ($students as $student) {
+			$mahasiswa_id = $student['id'];
+
+			$tugas_weighted_sum = 0;
+			$tugas_total_weight = 0;
+			$uts_score = 0;
+			$uas_score = 0;
+
+			if (isset($existing_scores[$mahasiswa_id])) {
+				foreach ($existing_scores[$mahasiswa_id] as $teknik_key => $nilai) {
+					if ($nilai !== null && $nilai !== '') {
+						if ($teknik_key === 'tes_tulis_uts') {
+							$uts_score = $nilai;
+						} elseif ($teknik_key === 'tes_tulis_uas') {
+							$uas_score = $nilai;
+						} else {
+							$weight = $teknik_weight_map[$teknik_key] ?? 0;
+							if ($weight > 0) {
+								$tugas_weighted_sum += ($nilai * $weight);
+								$tugas_total_weight += $weight;
+							}
+						}
+					}
+				}
+			}
+
+			$tugas_avg = $tugas_total_weight > 0 ? round($tugas_weighted_sum / $tugas_total_weight, 2) : 0;
+			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
+			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
+
+			$dpna_data[] = [
+				'no' => $no++,
+				'nim' => $student['nim'],
+				'nama' => $student['nama_lengkap'],
+				'tugas' => $tugas_avg,
+				'uts' => $uts_score,
+				'uas' => $uas_score,
+				'nilai_akhir' => $nilai_akhir,
+				'nilai_huruf' => $nilai_huruf
+			];
+		}
+
+		// Create Excel file using PhpSpreadsheet
+		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$sheet = $spreadsheet->getActiveSheet();
+
+		// Set document properties
+		$spreadsheet->getProperties()
+			->setCreator('OBE System')
+			->setTitle('DPNA - ' . $jadwal['nama_mk'])
+			->setSubject('Daftar Penilaian Nilai Akhir');
+
+		// Set header
+		$sheet->setCellValue('A1', 'DAFTAR PENILAIAN NILAI AKHIR (DPNA)');
+		$sheet->mergeCells('A1:H1');
+		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Course information
+		$row = 3;
+		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kode MK');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kelas');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Program Studi');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Dosen Pengampu');
+		$sheet->setCellValue('B' . $row, ': ' . ($jadwal['dosen_ketua'] ?? 'N/A'));
+
+		// Weights information
+		$row += 2;
+		$sheet->setCellValue('A' . $row, 'Bobot Penilaian:');
+		$sheet->getStyle('A' . $row)->getFont()->setBold(true);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Tugas');
+		$sheet->setCellValue('B' . $row, ': ' . round($tugas_weight, 1) . '%');
+		$row++;
+		$sheet->setCellValue('A' . $row, 'UTS');
+		$sheet->setCellValue('B' . $row, ': ' . round($uts_weight, 1) . '%');
+		$row++;
+		$sheet->setCellValue('A' . $row, 'UAS');
+		$sheet->setCellValue('B' . $row, ': ' . round($uas_weight, 1) . '%');
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Total');
+		$sheet->setCellValue('B' . $row, ': ' . round($tugas_weight + $uts_weight + $uas_weight, 1) . '%');
+		$sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
+
+		// Table header
+		$row += 2;
+		$headerRow = $row;
+		$sheet->setCellValue('A' . $row, 'No');
+		$sheet->setCellValue('B' . $row, 'NIM');
+		$sheet->setCellValue('C' . $row, 'Nama');
+		$sheet->setCellValue('D' . $row, 'Tugas (' . round($tugas_weight, 1) . '%)');
+		$sheet->setCellValue('E' . $row, 'UTS (' . round($uts_weight, 1) . '%)');
+		$sheet->setCellValue('F' . $row, 'UAS (' . round($uas_weight, 1) . '%)');
+		$sheet->setCellValue('G' . $row, 'Nilai Akhir');
+		$sheet->setCellValue('H' . $row, 'Nilai Huruf');
+
+		// Style header
+		$headerStyle = $sheet->getStyle('A' . $row . ':H' . $row);
+		$headerStyle->getFont()->setBold(true);
+		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+			->getStartColor()->setARGB('FF4472C4');
+		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Data rows
+		$row++;
+		foreach ($dpna_data as $data) {
+			$sheet->setCellValue('A' . $row, $data['no']);
+			$sheet->setCellValue('B' . $row, $data['nim']);
+			$sheet->setCellValue('C' . $row, $data['nama']);
+			$sheet->setCellValue('D' . $row, $data['tugas']);
+			$sheet->setCellValue('E' . $row, $data['uts']);
+			$sheet->setCellValue('F' . $row, $data['uas']);
+			$sheet->setCellValue('G' . $row, $data['nilai_akhir']);
+			$sheet->setCellValue('H' . $row, $data['nilai_huruf']);
+
+			// Center align for numeric columns
+			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('D' . $row . ':H' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+			$row++;
+		}
+
+		// Add borders to table
+		$lastRow = $row - 1;
+		$sheet->getStyle('A' . $headerRow . ':H' . $lastRow)->applyFromArray([
+			'borders' => [
+				'allBorders' => [
+					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+					'color' => ['argb' => 'FF000000'],
+				],
+			],
+		]);
+
+		// Auto-size columns
+		foreach (range('A', 'H') as $col) {
+			$sheet->getColumnDimension($col)->setAutoSize(true);
+		}
+
+		// Set filename
+		$filename = 'DPNA_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
+
+		// Output file
+		$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $filename . '"');
+		header('Cache-Control: max-age=0');
+
+		$writer->save('php://output');
+		exit;
 	}
 }
