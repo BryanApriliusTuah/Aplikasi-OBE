@@ -707,6 +707,70 @@ class Nilai extends BaseController
 	}
 
 	/**
+	 * Display CPMK scores for all students in a teaching schedule
+	 * Anyone can view this (no permission check required)
+	 */
+	public function lihatCpmk($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$cpmkModel = new CpmkModel();
+		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get validation status directly from jadwal_mengajar table
+		$jadwalValidation = $jadwalModel->find($jadwal_id);
+		if ($jadwalValidation) {
+			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
+			$jadwal['validated_at'] = $jadwalValidation['validated_at'];
+			$jadwal['validated_by'] = $jadwalValidation['validated_by'];
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get CPMK list for this jadwal
+		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
+
+		// Get all CPMK scores for all students
+		$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Calculate statistics for each CPMK
+		$cpmk_stats = [];
+		foreach ($cpmk_list as $cpmk) {
+			$scores = [];
+			foreach ($students as $student) {
+				$score = $existing_scores[$student['id']][$cpmk['id']] ?? null;
+				if ($score !== null && $score !== '') {
+					$scores[] = (float)$score;
+				}
+			}
+
+			$cpmk_stats[$cpmk['id']] = [
+				'count' => count($scores),
+				'avg' => count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0,
+				'min' => count($scores) > 0 ? min($scores) : 0,
+				'max' => count($scores) > 0 ? max($scores) : 0,
+			];
+		}
+
+		$data = [
+			'title' => 'Lihat Nilai CPMK',
+			'jadwal' => $jadwal,
+			'mahasiswa_list' => $students,
+			'cpmk_list' => $cpmk_list,
+			'existing_scores' => $existing_scores,
+			'cpmk_stats' => $cpmk_stats,
+		];
+
+		return view('admin/nilai/lihat_cpmk', $data);
+	}
+
+	/**
 	 * Display read-only view of scores by teknik_penilaian
 	 * Anyone can view this (no permission check required)
 	 */

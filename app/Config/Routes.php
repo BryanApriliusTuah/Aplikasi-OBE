@@ -184,6 +184,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->post('nilai/validate/(:num)', 'Nilai::validateNilai/$1');
 	$routes->post('nilai/unvalidate/(:num)', 'Nilai::unvalidateNilai/$1');
 	$routes->get('nilai/lihat-nilai/(:num)', 'Nilai::lihatNilai/$1');
+	$routes->get('nilai/lihat-cpmk/(:num)', 'Nilai::lihatCpmk/$1');
 	$routes->get('nilai/unduh-dpna/(:num)', 'Nilai::unduhDpna/$1');
 	$routes->get('nilai/export-dpna-excel/(:num)', 'Nilai::exportDpnaExcel/$1');
 

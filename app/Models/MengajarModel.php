@@ -94,9 +94,64 @@ class MengajarModel extends Model
 		}
 
 		if ($singleResult) {
-			return $builder->get()->getRowArray();
+			$result = $builder->get()->getRowArray();
+			if ($result) {
+				$result = $this->attachDosenTeam($result);
+			}
+			return $result;
 		}
 
-		return $builder->get()->getResultArray();
+		$results = $builder->get()->getResultArray();
+
+		// Attach dosen team information to each jadwal
+		foreach ($results as &$jadwal) {
+			$jadwal = $this->attachDosenTeam($jadwal);
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Attach dosen team information (coordinator and members) to a jadwal record
+	 */
+	private function attachDosenTeam($jadwal)
+	{
+		if (!isset($jadwal['id'])) {
+			return $jadwal;
+		}
+
+		// Get all dosen for this jadwal with their roles
+		$dosenBuilder = $this->db->table('jadwal_dosen jd');
+		$dosenBuilder->select('d.nama_lengkap, jd.role');
+		$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
+		$dosenBuilder->where('jd.jadwal_mengajar_id', $jadwal['id']);
+		$dosenBuilder->orderBy('jd.role', 'DESC'); // coordinator/ketua first
+		$dosenList = $dosenBuilder->get()->getResultArray();
+
+		// Separate coordinator from members
+		$koordinator = null;
+		$anggota = [];
+
+		foreach ($dosenList as $dosen) {
+			// Check if this is the coordinator (role could be 'koordinator', 'ketua', etc.)
+			if (in_array(strtolower($dosen['role']), ['koordinator', 'ketua', 'coordinator'])) {
+				$koordinator = $dosen['nama_lengkap'];
+			} else {
+				$anggota[] = $dosen['nama_lengkap'];
+			}
+		}
+
+		// If no coordinator found but there are dosen, use the first one as coordinator
+		if (!$koordinator && !empty($dosenList)) {
+			$koordinator = $dosenList[0]['nama_lengkap'];
+			array_shift($dosenList); // Remove first from list
+			$anggota = array_column($dosenList, 'nama_lengkap');
+		}
+
+		// Add to jadwal array
+		$jadwal['dosen_ketua'] = $koordinator;
+		$jadwal['dosen_anggota'] = $anggota; // Array of team member names
+
+		return $jadwal;
 	}
 }
