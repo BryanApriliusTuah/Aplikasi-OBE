@@ -214,7 +214,7 @@
 								<th class="sticky-col" rowspan="2" style="min-width: 150px;">NIM</th>
 								<th class="sticky-col" rowspan="2" style="min-width: 200px;">Nama Mahasiswa</th>
 								<th class="text-center" colspan="<?= count($cpmk_list) ?>">Nilai CPMK</th>
-								<th class="text-center" rowspan="2" style="width: 100px;">Total</th>
+								<th class="text-center" rowspan="2" style="width: 100px;">Nilai MK</th>
 							</tr>
 							<tr>
 								<?php foreach ($cpmk_list as $cpmk): ?>
