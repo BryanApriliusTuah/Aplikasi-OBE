@@ -17,7 +17,7 @@ class Nilai extends BaseController
 	{
 		$jadwalModel = new MengajarModel();
 		$filters = [
-			'program_studi' => $this->request->getGet('program_studi'),
+			'program_studi' => $this->request->getGet('program_studi') ?? 'Teknik Informatika',
 			'tahun_akademik' => $this->request->getGet('tahun_akademik'),
 		];
 

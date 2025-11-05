@@ -83,9 +83,9 @@
 						<label for="filter_program_studi" class="form-label">Program Studi</label>
 						<select class="form-select" id="filter_program_studi" name="program_studi">
 							<option value="">Semua Program Studi</option>
-							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? '') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? '') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? '') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
+							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
+							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
+							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
 						</select>
 					</div>
 					<div class="col-md-4">
