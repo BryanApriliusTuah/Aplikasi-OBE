@@ -66,13 +66,21 @@
 	}
 
 	.badge-capaian {
-		background-color: rgba(255, 193, 7, 0.75);
-		color: #000;
 		font-weight: 600;
 		padding: 0.3rem 0.6rem;
 		border-radius: 0.25rem;
 		font-size: 0.75rem;
 		display: inline-block;
+	}
+
+	.badge-capaian-low {
+		background-color: rgba(220, 53, 69, 0.85);
+		color: white;
+	}
+
+	.badge-capaian-medium {
+		background-color: rgba(255, 193, 7, 0.85);
+		color: #000;
 	}
 </style>
 
@@ -80,15 +88,15 @@
 	<div class="cpmk-header">
 		<div class="d-flex justify-content-between align-items-center">
 			<div>
-				<h2 class="fw-bold mb-2">
-					<i class="bi bi-graph-up-arrow"></i> Nilai CPMK Per Mahasiswa
-				</h2>
-				<p class="mb-0">
+				<p class="mb-0 display-6 fw-bold">
 					<?= esc($jadwal['nama_mk']) ?> - Kelas <?= esc($jadwal['kelas']) ?>
 				</p>
 				<small><?= esc($jadwal['tahun_akademik']) ?></small>
 			</div>
 			<div class="text-end">
+				<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $jadwal['id']) ?>" class="btn btn-success me-2">
+					<i class="bi bi-file-earmark-excel"></i> Export to Excel
+				</a>
 				<a href="<?= base_url('admin/nilai') ?>" class="btn btn-light">
 					<i class="bi bi-arrow-left"></i> Kembali
 				</a>
@@ -113,42 +121,51 @@
 	<?php endif; ?>
 
 	<!-- CPMK Statistics -->
-	<div class="row mb-4">
-		<div class="col-12">
-			<h5 class="mb-3"><i class="bi bi-bar-chart-fill"></i> Statistik CPMK</h5>
+	<div class="card shadow-sm mb-4">
+		<div class="card-header bg-light">
+			<h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Statistik CPMK</h5>
 		</div>
-		<?php foreach ($cpmk_list as $cpmk): ?>
-			<div class="col-md-3 mb-3">
-				<div class="card stats-card h-100">
-					<div class="card-body">
-						<h6 class="card-title text-primary fw-bold"><?= esc($cpmk['kode_cpmk']) ?></h6>
-						<p class="card-text small text-muted mb-2"><?= esc($cpmk['deskripsi']) ?></p>
-						<div class="d-flex justify-content-between align-items-center">
-							<small class="text-muted">Bobot:</small>
-							<span class="badge bg-primary"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
-						</div>
-						<hr>
-						<div class="row text-center small">
-							<div class="col-4">
-								<div class="text-muted">Rata-rata</div>
-								<div class="fw-bold text-success"><?= $cpmk_stats[$cpmk['id']]['avg'] ?></div>
-							</div>
-							<div class="col-4">
-								<div class="text-muted">Capaian</div>
-								<?php
-								$avg_capaian = ($cpmk_stats[$cpmk['id']]['avg'] / $cpmk['bobot_cpmk']) * 100;
-								?>
-								<div class="fw-bold text-info"><?= number_format($avg_capaian, 2) ?>%</div>
-							</div>
-							<div class="col-4">
-								<div class="text-muted">Terisi</div>
-								<div class="fw-bold"><?= $cpmk_stats[$cpmk['id']]['count'] ?>/<?= count($mahasiswa_list) ?></div>
-							</div>
-						</div>
-					</div>
-				</div>
+		<div class="card-body p-0">
+			<div class="table-responsive">
+				<table class="table table-bordered table-hover mb-0 align-middle">
+					<thead class="table-light">
+						<tr>
+							<th class="text-center" style="width: 50px;">No</th>
+							<th style="min-width: 120px;">Kode CPMK</th>
+							<th style="min-width: 250px;">Deskripsi</th>
+							<th class="text-center" style="width: 100px;">Bobot</th>
+							<th class="text-center" style="width: 120px;">Rata-rata</th>
+							<th class="text-center" style="width: 120px;">Capaian</th>
+							<th class="text-center" style="width: 100px;">Terisi</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ($cpmk_list as $index => $cpmk): ?>
+							<?php
+							$avg_capaian = ($cpmk_stats[$cpmk['id']]['avg'] / $cpmk['bobot_cpmk']) * 100;
+							?>
+							<tr>
+								<td class="text-center"><?= $index + 1 ?></td>
+								<td class="text-center"><strong class="text-primary"><?= esc($cpmk['kode_cpmk']) ?></strong></td>
+								<td><small class="text-muted"><?= esc($cpmk['deskripsi']) ?></small></td>
+								<td class="text-center">
+									<span class="badge bg-secondary"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
+								</td>
+								<td class="text-center">
+									<strong><?= $cpmk_stats[$cpmk['id']]['avg'] ?></strong>
+								</td>
+								<td class="text-center">
+									<strong><?= number_format($avg_capaian, 2) ?>%</strong>
+								</td>
+								<td class="text-center">
+									<strong><?= $cpmk_stats[$cpmk['id']]['count'] ?></strong> / <?= count($mahasiswa_list) ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
 			</div>
-		<?php endforeach; ?>
+		</div>
 	</div>
 
 	<!-- CPMK Achievement Charts -->
@@ -160,29 +177,6 @@
 				</div>
 				<div class="card-body">
 					<canvas id="cpmkCapaianChart" style="max-height: 400px;"></canvas>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Badge Legend -->
-	<div class="card shadow-sm mb-3">
-		<div class="card-body">
-			<div class="row align-items-center">
-				<div class="col-md-3">
-					<h6 class="mb-0"><i class="bi bi-info-circle"></i> Keterangan:</h6>
-				</div>
-				<div class="col-md-9">
-					<div class="d-flex flex-wrap gap-4 align-items-center">
-						<div>
-							<span class="badge-score"></i>.</span>
-							<small class="text-muted ms-2">= Skor CPMK</small>
-						</div>
-						<div>
-							<span class="badge-capaian">.</span>
-							<small class="text-muted ms-2">= Capaian CPMK (%)</small>
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>
@@ -274,8 +268,9 @@
 													</span>
 													<?php
 													$capaian = ($score / $cpmk['bobot_cpmk']) * 100;
+													$capaian_class = $capaian < 60 ? 'badge-capaian-low' : 'badge-capaian-medium';
 													?>
-													<span class="badge-capaian">
+													<span class="badge-capaian <?= $capaian_class ?>">
 														<?= number_format($capaian, 2) ?>%
 													</span>
 												</div>
@@ -305,8 +300,38 @@
 		</div>
 	</div>
 
+	<!-- Badge Legend -->
+	<div class="card shadow-sm mb-3 mt-4">
+		<div class="card-body">
+			<div class="row align-items-center">
+				<div class="col-md-3">
+					<h6 class="mb-0"><i class="bi bi-info-circle"></i> Keterangan:</h6>
+				</div>
+				<div class="col-md-9">
+					<div class="d-flex flex-wrap gap-4 align-items-center">
+						<div>
+							<span class="badge-score">.</span>
+							<small class="text-muted ms-2">= Skor CPMK</small>
+						</div>
+						<div>
+							<span class="badge-capaian badge-capaian-low">.</span>
+							<small class="text-muted ms-2">= Capaian CPMK &lt; 60%</small>
+						</div>
+						<div>
+							<span class="badge-capaian badge-capaian-medium">.</span>
+							<small class="text-muted ms-2">= Capaian CPMK ≥ 60%</small>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<!-- Action Buttons -->
 	<div class="d-flex gap-2 justify-content-end mt-4 mb-4">
+		<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $jadwal['id']) ?>" class="btn btn-success">
+			<i class="bi bi-file-earmark-excel"></i> Export to Excel
+		</a>
 		<a href="<?= base_url('admin/nilai') ?>" class="btn btn-secondary">
 			<i class="bi bi-arrow-left"></i> Kembali ke Daftar
 		</a>
@@ -336,7 +361,9 @@
 	}
 
 	.badge-score,
-	.badge-capaian {
+	.badge-capaian,
+	.badge-capaian-low,
+	.badge-capaian-medium {
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
@@ -344,6 +371,7 @@
 
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <script>
 	// Prepare data for CPMK Average Capaian Chart
@@ -379,6 +407,7 @@
 					borderRadius: 5
 				}]
 			},
+			plugins: [ChartDataLabels],
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -406,6 +435,18 @@
 								];
 							}
 						}
+					},
+					datalabels: {
+						anchor: 'end',
+						align: 'top',
+						formatter: function(value) {
+							return value.toFixed(2) + '%';
+						},
+						font: {
+							weight: 'bold',
+							size: 12
+						},
+						color: '#333'
 					}
 				},
 				scales: {

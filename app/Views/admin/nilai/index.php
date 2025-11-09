@@ -49,10 +49,15 @@
 	color: #0d6efd !important;
 	border: 1px solid #dee2e6 !important;
 }
+.btn-outline-purple:hover {
+	background-color: #764ba2 !important;
+	border-color: #764ba2 !important;
+	color: white !important;
+}
 </style>
 
 <div class="container-fluid px-4">
-	<h2 class="fw-bold my-4 text-center">Penilaian Jadwal Mengajar</h2>
+	<h2 class="fw-bold my-4 text-center">Penilaian</h2>
 
 	<?php if (session()->getFlashdata('success')): ?>
 		<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -226,7 +231,7 @@
 											<a href="<?= base_url('admin/nilai/lihat-nilai/' . $jadwal['id']) ?>"
 											   class="btn btn-sm btn-outline-info"
 											   data-bs-toggle="tooltip"
-											   title="Lihat Nilai Teknik">
+											   title="Lihat Teknik Penilaian">
 												<i class="bi bi-eye"></i>
 											</a>
 
@@ -235,6 +240,14 @@
 											   data-bs-toggle="tooltip"
 											   title="Lihat Nilai CPMK">
 												<i class="bi bi-graph-up"></i>
+											</a>
+
+											<a href="<?= base_url('admin/nilai/lihat-cpl/' . $jadwal['id']) ?>"
+											   class="btn btn-sm btn-outline-purple"
+											   data-bs-toggle="tooltip"
+											   title="Lihat Nilai CPL"
+											   style="border-color: #764ba2; color: #764ba2;">
+												<i class="bi bi-trophy"></i>
 											</a>
 
 											<?php if (isset($jadwal['can_input_grades']) && $jadwal['can_input_grades']): ?>

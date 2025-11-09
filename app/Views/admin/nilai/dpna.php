@@ -197,12 +197,13 @@
 				</th>
 				<th style="width: 100px;">Nilai Akhir</th>
 				<th style="width: 80px;">Nilai Huruf</th>
+				<th style="width: 100px;">Keterangan</th>
 			</tr>
 		</thead>
 		<tbody>
 			<?php if (empty($dpna_data)): ?>
 				<tr>
-					<td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+					<td colspan="9" style="text-align: center; padding: 30px; color: #999;">
 						Tidak ada data mahasiswa
 					</td>
 				</tr>
@@ -229,6 +230,7 @@
 						<td><?= number_format($row['uas'], 2) ?></td>
 						<td><?= number_format($row['nilai_akhir'], 2) ?></td>
 						<td class="<?= $grade_class ?>"><?= esc($row['nilai_huruf']) ?></td>
+						<td><?= esc($row['keterangan'] ?? '-') ?></td>
 					</tr>
 				<?php endforeach; ?>
 			<?php endif; ?>
