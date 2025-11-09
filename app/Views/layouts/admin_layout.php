@@ -218,7 +218,6 @@
 								data-bs-toggle="tooltip" data-bs-placement="right"
 								title="Kelola jenis kegiatan MBKM">
 								Jenis Kegiatan</a></li>
-						<!-- Removed: MBKM Komponen - Access through Jenis page -->
 					</ul>
 				</li>
 				<?php
@@ -241,6 +240,15 @@
 
 					</ul>
 				</li>
+
+				<?php if (session('role') === 'admin'): ?>
+					<li class="nav-item">
+						<a class="nav-link<?= uri_string() == 'admin/settings' ? ' active' : '' ?>" href="<?= base_url('admin/settings') ?>"
+							data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola pengaturan sistem penilaian dan grade">
+							<i class="bi bi-gear"></i> Settings
+						</a>
+					</li>
+				<?php endif; ?>
 			</ul>
 		</div>
 		<main class="main-content">
