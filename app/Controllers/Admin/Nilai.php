@@ -356,7 +356,7 @@ class Nilai extends BaseController
 				'jadwal_mengajar_id' => $jadwal_id,
 				'nilai_akhir' => round($nilai_akhir, 2),
 				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
-				'status_kelulusan' => $nilai_akhir > 50 ? 'Lulus' : 'Tidak Lulus',
+				'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),
 			];
 			$nilaiMahasiswaModel->saveOrUpdate($finalData);
 
@@ -372,14 +372,38 @@ class Nilai extends BaseController
 
 	private function calculateGrade($score)
 	{
-		// Based on OBE/KKNI/SKKNI APTIKOM Guideline Rubric
-		if ($score > 80) return 'A';      // Istimewa
-		if ($score > 70) return 'AB';     // Baik Sekali
-		if ($score > 65) return 'B';      // Baik
-		if ($score > 60) return 'BC';     // Cukup Baik
-		if ($score > 50) return 'C';      // Cukup
-		if ($score > 40) return 'D';      // Kurang
-		return 'E';                       // Sangat Kurang
+		// Use dynamic grade configuration from database
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$gradeLetter = $gradeConfigModel->getGradeLetter($score);
+
+		// Fallback to hardcoded values if no configuration found in database
+		if (!$gradeLetter) {
+			// Based on OBE/KKNI/SKKNI APTIKOM Guideline Rubric
+			if ($score > 80) return 'A';      // Istimewa
+			if ($score > 70) return 'AB';     // Baik Sekali
+			if ($score > 65) return 'B';      // Baik
+			if ($score > 60) return 'BC';     // Cukup Baik
+			if ($score > 50) return 'C';      // Cukup
+			if ($score > 40) return 'D';      // Kurang
+			return 'E';                       // Sangat Kurang
+		}
+
+		return $gradeLetter;
+	}
+
+	private function calculatePassingStatus($score)
+	{
+		// Use dynamic grade configuration from database
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$isPassing = $gradeConfigModel->isPassing($score);
+
+		// Fallback to hardcoded value if no configuration found in database
+		if ($isPassing === null) {
+			// Default passing score is > 50 (grade C and above)
+			$isPassing = $score > 50;
+		}
+
+		return $isPassing ? 'Lulus' : 'Tidak Lulus';
 	}
 
 	/**
@@ -455,6 +479,10 @@ class Nilai extends BaseController
 		// Get existing scores to pre-fill the form (combined view)
 		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
 
+		// Get dynamic grade configuration from database
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$grades = $gradeConfigModel->getActiveGrades();
+
 		$data = [
 			'title' => 'Input Nilai Berdasarkan Teknik Penilaian',
 			'jadwal' => $jadwal,
@@ -462,6 +490,7 @@ class Nilai extends BaseController
 			'combined_list' => $combined_data['combined_list'],
 			'teknik_by_tahap' => $combined_data['by_tahap'],
 			'existing_scores' => $existing_scores,
+			'grade_config' => $grades,
 		];
 
 		return view('admin/nilai/input_nilai_teknik', $data);
@@ -564,7 +593,7 @@ class Nilai extends BaseController
 				'jadwal_mengajar_id' => $jadwal_id,
 				'nilai_akhir' => round($nilai_akhir, 2),
 				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
-				'status_kelulusan' => $nilai_akhir > 50 ? 'Lulus' : 'Tidak Lulus',
+				'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),
 			];
 			$nilaiMahasiswaModel->saveOrUpdate($finalData);
 		}
@@ -771,6 +800,683 @@ class Nilai extends BaseController
 	}
 
 	/**
+	 * Display CPL scores for all students in a teaching schedule
+	 * Anyone can view this (no permission check required)
+	 */
+	public function lihatCpl($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$cpmkModel = new CpmkModel();
+		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get validation status directly from jadwal_mengajar table
+		$jadwalValidation = $jadwalModel->find($jadwal_id);
+		if ($jadwalValidation) {
+			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
+			$jadwal['validated_at'] = $jadwalValidation['validated_at'];
+			$jadwal['validated_by'] = $jadwalValidation['validated_by'];
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get CPMK list for this jadwal
+		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
+
+		// Get all CPMK scores for all students
+		$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Calculate statistics for each CPMK
+		$cpmk_stats = [];
+		foreach ($cpmk_list as $cpmk) {
+			$scores = [];
+			foreach ($students as $student) {
+				$score = $existing_scores[$student['id']][$cpmk['id']] ?? null;
+				if ($score !== null && $score !== '') {
+					$scores[] = (float)$score;
+				}
+			}
+
+			$cpmk_stats[$cpmk['id']] = [
+				'count' => count($scores),
+				'avg' => count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0,
+				'min' => count($scores) > 0 ? min($scores) : 0,
+				'max' => count($scores) > 0 ? max($scores) : 0,
+			];
+		}
+
+		// Calculate CPL data
+		$db = \Config\Database::connect();
+
+		// Get mata_kuliah_id from jadwal_mengajar table
+		$jadwal_data = $db->table('jadwal_mengajar')
+			->select('mata_kuliah_id')
+			->where('id', $jadwal_id)
+			->get()
+			->getRowArray();
+
+		if (!$jadwal_data) {
+			// If no mata_kuliah found, initialize empty arrays
+			$cpl_list = [];
+			$cpl_stats = [];
+			$cpl_mahasiswa_scores = [];
+		} else {
+			$mata_kuliah_id = $jadwal_data['mata_kuliah_id'];
+
+			// Get all CPLs for this mata kuliah
+			$cpl_list = $db->table('cpl')
+				->select('cpl.id, cpl.kode_cpl, cpl.deskripsi')
+				->join('cpl_mk', 'cpl.id = cpl_mk.cpl_id')
+				->where('cpl_mk.mata_kuliah_id', $mata_kuliah_id)
+				->orderBy('cpl.kode_cpl', 'ASC')
+				->get()
+				->getResultArray();
+
+			// Calculate CPL achievements (aggregate)
+			$cpl_stats = [];
+			foreach ($cpl_list as $cpl) {
+				// Get all CPMKs mapped to this CPL
+				$cpmk_for_cpl = $db->table('cpl_cpmk')
+					->select('cpmk_id')
+					->where('cpl_id', $cpl['id'])
+					->get()
+					->getResultArray();
+
+				$cpmk_ids = array_column($cpmk_for_cpl, 'cpmk_id');
+
+				// Calculate total score and total weight for this CPL
+				$total_cpmk_score = 0;
+				$total_cpmk_weight = 0;
+				$cpmk_count = 0;
+				$cpmk_codes = [];
+
+				foreach ($cpmk_list as $cpmk) {
+					if (in_array($cpmk['id'], $cpmk_ids)) {
+						$cpmk_count++;
+						$cpmk_codes[] = $cpmk['kode_cpmk'];
+						// Get average score for this CPMK
+						$avg_score = $cpmk_stats[$cpmk['id']]['avg'] ?? 0;
+						$weight = (float)$cpmk['bobot_cpmk'];
+
+						$total_cpmk_score += $avg_score;
+						$total_cpmk_weight += $weight;
+					}
+				}
+
+				// Calculate CPL achievement: Σ(CPMK score) / Σ(CPMK weight)
+				$cpl_achievement = 0;
+				if ($total_cpmk_weight > 0) {
+					$cpl_achievement = ($total_cpmk_score / $total_cpmk_weight) * 100;
+				}
+
+				$cpl_stats[$cpl['id']] = [
+					'kode_cpl' => $cpl['kode_cpl'],
+					'deskripsi' => $cpl['deskripsi'],
+					'total_score' => round($total_cpmk_score, 2),
+					'total_weight' => round($total_cpmk_weight, 2),
+					'achievement' => round($cpl_achievement, 2),
+					'cpmk_count' => $cpmk_count,
+					'cpmk_codes' => $cpmk_codes
+				];
+			}
+
+			// Calculate CPL scores per student
+			$cpl_mahasiswa_scores = [];
+			foreach ($students as $student) {
+				$mahasiswa_id = $student['id'];
+				$cpl_mahasiswa_scores[$mahasiswa_id] = [];
+
+				foreach ($cpl_list as $cpl) {
+					// Get all CPMKs mapped to this CPL
+					$cpmk_for_cpl = $db->table('cpl_cpmk')
+						->select('cpmk_id')
+						->where('cpl_id', $cpl['id'])
+						->get()
+						->getResultArray();
+
+					$cpmk_ids = array_column($cpmk_for_cpl, 'cpmk_id');
+
+					// Calculate total score and total weight for this student and CPL
+					$student_total_score = 0;
+					$student_total_weight = 0;
+
+					foreach ($cpmk_list as $cpmk) {
+						if (in_array($cpmk['id'], $cpmk_ids)) {
+							// Get this student's score for this CPMK
+							$student_cpmk_score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+
+							if ($student_cpmk_score !== null && $student_cpmk_score !== '') {
+								$weight = (float)$cpmk['bobot_cpmk'];
+								$student_total_score += (float)$student_cpmk_score;
+								$student_total_weight += $weight;
+							}
+						}
+					}
+
+					// Calculate CPL percentage
+					$cpl_percentage = null;
+					if ($student_total_weight > 0) {
+						$cpl_percentage = ($student_total_score / $student_total_weight) * 100;
+					}
+
+					// Store both raw score and percentage
+					$cpl_mahasiswa_scores[$mahasiswa_id][$cpl['id']] = [
+						'score' => $student_total_score > 0 ? $student_total_score : null,
+						'percentage' => $cpl_percentage
+					];
+				}
+			}
+		}
+
+		$data = [
+			'title' => 'Lihat Nilai CPL',
+			'jadwal' => $jadwal,
+			'mahasiswa_list' => $students,
+			'cpl_list' => $cpl_list,
+			'cpl_stats' => $cpl_stats,
+			'cpl_mahasiswa_scores' => $cpl_mahasiswa_scores ?? [],
+		];
+
+		return view('admin/nilai/lihat_cpl', $data);
+	}
+
+	/**
+	 * Export CPMK scores to Excel with separate columns for score and capaian
+	 */
+	public function exportCpmkExcel($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$cpmkModel = new CpmkModel();
+		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get CPMK list for this jadwal
+		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
+
+		// Get all CPMK scores for all students
+		$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Create Excel file using PhpSpreadsheet
+		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$sheet = $spreadsheet->getActiveSheet();
+
+		// Set document properties
+		$spreadsheet->getProperties()
+			->setCreator('OBE System')
+			->setTitle('Nilai CPMK - ' . $jadwal['nama_mk'])
+			->setSubject('Nilai CPMK');
+
+		// Set header
+		$sheet->setCellValue('A1', 'NILAI CPMK');
+		$totalColumns = 3 + (count($cpmk_list) * 2) + 1; // No, NIM, Nama + (CPMK Score + Capaian) * count + Nilai Akhir
+		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$sheet->mergeCells('A1:' . $lastColumn . '1');
+		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Course information
+		$row = 3;
+		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kode MK');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kelas');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Program Studi');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
+
+		// Table header
+		$row += 2;
+		$headerRow = $row;
+		$col = 1;
+
+		// Basic columns
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
+
+		// CPMK columns - separate Score and Capaian
+		foreach ($cpmk_list as $cpmk) {
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpmk['kode_cpmk'] . ' - Skor');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpmk['kode_cpmk'] . ' - Capaian (%)');
+		}
+
+		// Nilai Akhir MK column
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, 'Nilai Akhir MK');
+
+		// Style header
+		$headerStyle = $sheet->getStyle('A' . $row . ':' . $lastColumn . $row);
+		$headerStyle->getFont()->setBold(true);
+		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+			->getStartColor()->setARGB('FF4472C4');
+		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setWrapText(true);
+
+		// Data rows
+		$row++;
+		$no = 1;
+		foreach ($students as $student) {
+			$col = 1;
+			$mahasiswa_id = $student['id'];
+
+			// Basic info
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $no++);
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nim']);
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nama_lengkap']);
+
+			// CPMK scores and capaian
+			$student_scores = [];
+			foreach ($cpmk_list as $cpmk) {
+				$score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+
+				// Score column
+				if ($score !== null && $score !== '') {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $score);
+					$student_scores[] = (float)$score;
+
+					// Capaian column
+					$capaian = ($score / $cpmk['bobot_cpmk']) * 100;
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($capaian, 2));
+				} else {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+				}
+			}
+
+			// Nilai Akhir MK
+			if (count($student_scores) > 0) {
+				$total = array_sum($student_scores);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, number_format($total, 2));
+			} else {
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, '-');
+			}
+
+			// Center align for all data columns
+			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('D' . $row . ':' . $lastColumn . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+			$row++;
+		}
+
+		// Add borders to table
+		$lastRow = $row - 1;
+		$sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $lastRow)->applyFromArray([
+			'borders' => [
+				'allBorders' => [
+					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+					'color' => ['argb' => 'FF000000'],
+				],
+			],
+		]);
+
+		// Auto-size columns
+		for ($i = 1; $i <= $totalColumns; $i++) {
+			$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+			$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+		}
+
+		// Set filename
+		$filename = 'Nilai_CPMK_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
+
+		// Output file
+		$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $filename . '"');
+		header('Cache-Control: max-age=0');
+
+		$writer->save('php://output');
+		exit;
+	}
+
+	/**
+	 * Export CPL scores to Excel
+	 */
+	public function exportCplExcel($jadwal_id)
+	{
+		$jadwalModel = new MengajarModel();
+		$mahasiswaModel = new MahasiswaModel();
+		$cpmkModel = new CpmkModel();
+		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		// Get students for this class
+		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+		// Get CPMK list for this jadwal
+		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
+
+		// Get all CPMK scores for all students
+		$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+		// Calculate statistics for each CPMK
+		$cpmk_stats = [];
+		foreach ($cpmk_list as $cpmk) {
+			$scores = [];
+			foreach ($students as $student) {
+				$score = $existing_scores[$student['id']][$cpmk['id']] ?? null;
+				if ($score !== null && $score !== '') {
+					$scores[] = (float)$score;
+				}
+			}
+
+			$cpmk_stats[$cpmk['id']] = [
+				'count' => count($scores),
+				'avg' => count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0,
+				'min' => count($scores) > 0 ? min($scores) : 0,
+				'max' => count($scores) > 0 ? max($scores) : 0,
+			];
+		}
+
+		// Calculate CPL data
+		$db = \Config\Database::connect();
+
+		// Get mata_kuliah_id from jadwal_mengajar table
+		$jadwal_data = $db->table('jadwal_mengajar')
+			->select('mata_kuliah_id')
+			->where('id', $jadwal_id)
+			->get()
+			->getRowArray();
+
+		if (!$jadwal_data) {
+			$cpl_list = [];
+			$cpl_stats = [];
+			$cpl_mahasiswa_scores = [];
+		} else {
+			$mata_kuliah_id = $jadwal_data['mata_kuliah_id'];
+
+			// Get all CPLs for this mata kuliah
+			$cpl_list = $db->table('cpl')
+				->select('cpl.id, cpl.kode_cpl, cpl.deskripsi')
+				->join('cpl_mk', 'cpl.id = cpl_mk.cpl_id')
+				->where('cpl_mk.mata_kuliah_id', $mata_kuliah_id)
+				->orderBy('cpl.kode_cpl', 'ASC')
+				->get()
+				->getResultArray();
+
+			// Calculate CPL achievements (aggregate)
+			$cpl_stats = [];
+			foreach ($cpl_list as $cpl) {
+				// Get all CPMKs mapped to this CPL
+				$cpmk_for_cpl = $db->table('cpl_cpmk')
+					->select('cpmk_id')
+					->where('cpl_id', $cpl['id'])
+					->get()
+					->getResultArray();
+
+				$cpmk_ids = array_column($cpmk_for_cpl, 'cpmk_id');
+
+				// Calculate total score and total weight for this CPL
+				$total_cpmk_score = 0;
+				$total_cpmk_weight = 0;
+				$cpmk_count = 0;
+				$cpmk_codes = [];
+
+				foreach ($cpmk_list as $cpmk) {
+					if (in_array($cpmk['id'], $cpmk_ids)) {
+						$cpmk_count++;
+						$cpmk_codes[] = $cpmk['kode_cpmk'];
+						// Get average score for this CPMK
+						$avg_score = $cpmk_stats[$cpmk['id']]['avg'] ?? 0;
+						$weight = (float)$cpmk['bobot_cpmk'];
+
+						$total_cpmk_score += $avg_score;
+						$total_cpmk_weight += $weight;
+					}
+				}
+
+				// Calculate CPL achievement
+				$cpl_achievement = 0;
+				if ($total_cpmk_weight > 0) {
+					$cpl_achievement = ($total_cpmk_score / $total_cpmk_weight) * 100;
+				}
+
+				$cpl_stats[$cpl['id']] = [
+					'kode_cpl' => $cpl['kode_cpl'],
+					'deskripsi' => $cpl['deskripsi'],
+					'total_score' => round($total_cpmk_score, 2),
+					'total_weight' => round($total_cpmk_weight, 2),
+					'achievement' => round($cpl_achievement, 2),
+					'cpmk_count' => $cpmk_count,
+					'cpmk_codes' => $cpmk_codes
+				];
+			}
+
+			// Calculate CPL scores per student
+			$cpl_mahasiswa_scores = [];
+			foreach ($students as $student) {
+				$mahasiswa_id = $student['id'];
+				$cpl_mahasiswa_scores[$mahasiswa_id] = [];
+
+				foreach ($cpl_list as $cpl) {
+					// Get all CPMKs mapped to this CPL
+					$cpmk_for_cpl = $db->table('cpl_cpmk')
+						->select('cpmk_id')
+						->where('cpl_id', $cpl['id'])
+						->get()
+						->getResultArray();
+
+					$cpmk_ids = array_column($cpmk_for_cpl, 'cpmk_id');
+
+					// Calculate total score and total weight for this student and CPL
+					$student_total_score = 0;
+					$student_total_weight = 0;
+
+					foreach ($cpmk_list as $cpmk) {
+						if (in_array($cpmk['id'], $cpmk_ids)) {
+							// Get this student's score for this CPMK
+							$student_cpmk_score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+
+							if ($student_cpmk_score !== null && $student_cpmk_score !== '') {
+								$weight = (float)$cpmk['bobot_cpmk'];
+								$student_total_score += (float)$student_cpmk_score;
+								$student_total_weight += $weight;
+							}
+						}
+					}
+
+					// Calculate CPL score for this student
+					$cpl_score = null;
+					if ($student_total_weight > 0) {
+						$cpl_score = ($student_total_score / $student_total_weight) * 100;
+					}
+
+					$cpl_mahasiswa_scores[$mahasiswa_id][$cpl['id']] = $cpl_score;
+				}
+			}
+		}
+
+		// Create Excel file using PhpSpreadsheet
+		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$sheet = $spreadsheet->getActiveSheet();
+
+		// Set document properties
+		$spreadsheet->getProperties()
+			->setCreator('OBE System')
+			->setTitle('Nilai CPL - ' . $jadwal['nama_mk'])
+			->setSubject('Nilai CPL');
+
+		// Set header
+		$sheet->setCellValue('A1', 'NILAI CPL (CAPAIAN PEMBELAJARAN LULUSAN)');
+		$totalColumns = 3 + (count($cpl_list) * 2); // No, NIM, Nama + (CPL score + percentage) * count
+		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$sheet->mergeCells('A1:' . $lastColumn . '1');
+		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Course information
+		$row = 3;
+		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kode MK');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Kelas');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
+		$row++;
+		$sheet->setCellValue('A' . $row, 'Program Studi');
+		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
+
+		// Student Scores Table
+		$row += 2;
+		$sheet->setCellValue('A' . $row, 'NILAI CPL PER MAHASISWA');
+		$sheet->mergeCells('A' . $row . ':' . $lastColumn . $row);
+		$sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
+		$sheet->getStyle('A' . $row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+			->getStartColor()->setARGB('FFE0E0E0');
+
+		// Table header
+		$row++;
+		$headerRow = $row;
+		$col = 1;
+
+		// Basic columns
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
+
+		// CPL columns - separate score and percentage
+		foreach ($cpl_list as $cpl) {
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpl['kode_cpl'] . ' - Skor');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpl['kode_cpl'] . ' - Capaian (%)');
+		}
+
+		// Style header
+		$headerStyle = $sheet->getStyle('A' . $row . ':' . $lastColumn . $row);
+		$headerStyle->getFont()->setBold(true);
+		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+			->getStartColor()->setARGB('FF4472C4');
+		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setWrapText(true);
+
+		// Data rows
+		$row++;
+		$no = 1;
+		foreach ($students as $student) {
+			$col = 1;
+			$mahasiswa_id = $student['id'];
+
+			// Basic info
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $no++);
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nim']);
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nama_lengkap']);
+
+			// CPL scores
+			foreach ($cpl_list as $cpl) {
+				// Recalculate CPL score and percentage for this student
+				$cpmk_for_cpl = $db->table('cpl_cpmk')
+					->select('cpmk_id')
+					->where('cpl_id', $cpl['id'])
+					->get()
+					->getResultArray();
+
+				$cpmk_ids = array_column($cpmk_for_cpl, 'cpmk_id');
+
+				$student_total_score = 0;
+				$student_total_weight = 0;
+
+				foreach ($cpmk_list as $cpmk) {
+					if (in_array($cpmk['id'], $cpmk_ids)) {
+						$student_cpmk_score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+
+						if ($student_cpmk_score !== null && $student_cpmk_score !== '') {
+							$weight = (float)$cpmk['bobot_cpmk'];
+							$student_total_score += (float)$student_cpmk_score;
+							$student_total_weight += $weight;
+						}
+					}
+				}
+
+				// Calculate CPL percentage
+				$cpl_percentage = null;
+				if ($student_total_weight > 0) {
+					$cpl_percentage = ($student_total_score / $student_total_weight) * 100;
+				}
+
+				// Display score and percentage in separate columns
+				if ($cpl_percentage !== null) {
+					// Score column
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($student_total_score, 2));
+					// Percentage column
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($cpl_percentage, 2));
+				} else {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+				}
+			}
+
+			// Center align for all data columns
+			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('D' . $row . ':' . $lastColumn . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+			$row++;
+		}
+
+		// Add borders to student table
+		$lastRow = $row - 1;
+		$sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $lastRow)->applyFromArray([
+			'borders' => [
+				'allBorders' => [
+					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+					'color' => ['argb' => 'FF000000'],
+				],
+			],
+		]);
+
+		// Auto-size columns
+		for ($i = 1; $i <= $totalColumns; $i++) {
+			$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+			$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+		}
+
+		// Set wider width for description column
+		$sheet->getColumnDimension('C')->setWidth(30);
+
+		// Set filename
+		$filename = 'Nilai_CPL_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
+
+		// Output file
+		$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $filename . '"');
+		header('Cache-Control: max-age=0');
+
+		$writer->save('php://output');
+		exit;
+	}
+
+	/**
 	 * Display read-only view of scores by teknik_penilaian
 	 * Anyone can view this (no permission check required)
 	 */
@@ -902,6 +1608,15 @@ class Nilai extends BaseController
 			$final_scores_map[$score['mahasiswa_id']] = $score;
 		}
 
+		// Helper function to calculate keterangan based on grade
+		$getKeterangan = function($grade) {
+			$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
+			if (in_array(strtoupper($grade), $failingGrades)) {
+				return 'TM'; // Tidak Memenuhi
+			}
+			return 'Lulus';
+		};
+
 		// Prepare DPNA data
 		$dpna_data = [];
 		$no = 1;
@@ -939,6 +1654,7 @@ class Nilai extends BaseController
 			// Get nilai akhir and nilai huruf
 			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
 			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
+			$keterangan = $getKeterangan($nilai_huruf);
 
 			$dpna_data[] = [
 				'no' => $no++,
@@ -948,7 +1664,8 @@ class Nilai extends BaseController
 				'uts' => $uts_score,
 				'uas' => $uas_score,
 				'nilai_akhir' => $nilai_akhir,
-				'nilai_huruf' => $nilai_huruf
+				'nilai_huruf' => $nilai_huruf,
+				'keterangan' => $keterangan
 			];
 		}
 
@@ -1018,6 +1735,15 @@ class Nilai extends BaseController
 			$final_scores_map[$score['mahasiswa_id']] = $score;
 		}
 
+		// Helper function to calculate keterangan based on grade
+		$getKeterangan = function($grade) {
+			$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
+			if (in_array(strtoupper($grade), $failingGrades)) {
+				return 'TM'; // Tidak Memenuhi
+			}
+			return 'Lulus';
+		};
+
 		// Prepare DPNA data
 		$dpna_data = [];
 		$no = 1;
@@ -1050,6 +1776,7 @@ class Nilai extends BaseController
 			$tugas_avg = $tugas_total_weight > 0 ? round($tugas_weighted_sum / $tugas_total_weight, 2) : 0;
 			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
 			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
+			$keterangan = $getKeterangan($nilai_huruf);
 
 			$dpna_data[] = [
 				'no' => $no++,
@@ -1059,7 +1786,8 @@ class Nilai extends BaseController
 				'uts' => $uts_score,
 				'uas' => $uas_score,
 				'nilai_akhir' => $nilai_akhir,
-				'nilai_huruf' => $nilai_huruf
+				'nilai_huruf' => $nilai_huruf,
+				'keterangan' => $keterangan
 			];
 		}
 
@@ -1075,7 +1803,7 @@ class Nilai extends BaseController
 
 		// Set header
 		$sheet->setCellValue('A1', 'DAFTAR PENILAIAN NILAI AKHIR (DPNA)');
-		$sheet->mergeCells('A1:H1');
+		$sheet->mergeCells('A1:I1');
 		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
 		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
@@ -1128,9 +1856,10 @@ class Nilai extends BaseController
 		$sheet->setCellValue('F' . $row, 'UAS (' . round($uas_weight, 1) . '%)');
 		$sheet->setCellValue('G' . $row, 'Nilai Akhir');
 		$sheet->setCellValue('H' . $row, 'Nilai Huruf');
+		$sheet->setCellValue('I' . $row, 'Keterangan');
 
 		// Style header
-		$headerStyle = $sheet->getStyle('A' . $row . ':H' . $row);
+		$headerStyle = $sheet->getStyle('A' . $row . ':I' . $row);
 		$headerStyle->getFont()->setBold(true);
 		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 			->getStartColor()->setARGB('FF4472C4');
@@ -1148,17 +1877,18 @@ class Nilai extends BaseController
 			$sheet->setCellValue('F' . $row, $data['uas']);
 			$sheet->setCellValue('G' . $row, $data['nilai_akhir']);
 			$sheet->setCellValue('H' . $row, $data['nilai_huruf']);
+			$sheet->setCellValue('I' . $row, $data['keterangan']);
 
 			// Center align for numeric columns
 			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-			$sheet->getStyle('D' . $row . ':H' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('D' . $row . ':I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
 			$row++;
 		}
 
 		// Add borders to table
 		$lastRow = $row - 1;
-		$sheet->getStyle('A' . $headerRow . ':H' . $lastRow)->applyFromArray([
+		$sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->applyFromArray([
 			'borders' => [
 				'allBorders' => [
 					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -1168,7 +1898,7 @@ class Nilai extends BaseController
 		]);
 
 		// Auto-size columns
-		foreach (range('A', 'H') as $col) {
+		foreach (range('A', 'I') as $col) {
 			$sheet->getColumnDimension($col)->setAutoSize(true);
 		}
 
@@ -1184,5 +1914,304 @@ class Nilai extends BaseController
 
 		$writer->save('php://output');
 		exit;
+	}
+
+	/**
+	 * Import scores from Excel file (DPNA format)
+	 * Accepts Excel file with columns: No, NIM, Nama, Tugas, UTS, UAS
+	 * Maps back to individual teknik_penilaian scores
+	 */
+	public function importNilaiExcel($jadwal_id)
+	{
+		// Check if AJAX request
+		if (!$this->request->isAJAX()) {
+			return $this->response->setStatusCode(403)->setJSON([
+				'status' => 'error',
+				'message' => 'Invalid request method.'
+			]);
+		}
+
+		// Check access permissions
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'Anda tidak memiliki akses untuk mengimport nilai pada jadwal ini.'
+			]);
+		}
+
+		// Check if nilai is already validated (only dosen is blocked)
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->find($jadwal_id);
+
+		if ($jadwal && $jadwal['is_nilai_validated'] == 1 && session()->get('role') === 'dosen') {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'Nilai sudah divalidasi. Anda tidak dapat lagi mengedit nilai.'
+			]);
+		}
+
+		// Validate uploaded file
+		$file = $this->request->getFile('file_nilai');
+
+		if (!$file || !$file->isValid()) {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'File tidak valid atau tidak ditemukan.'
+			]);
+		}
+
+		// Check file extension
+		$allowedExtensions = ['xlsx', 'xls'];
+		if (!in_array($file->getExtension(), $allowedExtensions)) {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'Format file tidak didukung. Gunakan file Excel (.xlsx atau .xls).'
+			]);
+		}
+
+		// Check file size (max 5MB)
+		if ($file->getSize() > 5 * 1024 * 1024) {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'Ukuran file terlalu besar. Maksimal 5MB.'
+			]);
+		}
+
+		try {
+			// Load Excel file
+			$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
+			$sheet = $spreadsheet->getActiveSheet();
+
+			// Find the header row (should contain "NIM", "Tugas", "UTS", "UAS")
+			$headerRow = null;
+			$highestRow = $sheet->getHighestRow();
+
+			for ($row = 1; $row <= min(20, $highestRow); $row++) {
+				$cellValue = strtoupper(trim($sheet->getCell('B' . $row)->getValue()));
+				if ($cellValue === 'NIM') {
+					$headerRow = $row;
+					break;
+				}
+			}
+
+			if (!$headerRow) {
+				return $this->response->setJSON([
+					'status' => 'error',
+					'message' => 'Format file tidak sesuai. Tidak dapat menemukan header "NIM".'
+				]);
+			}
+
+			// Get column indices for Tugas, UTS, UAS
+			$columns = [];
+			$columnLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+
+			foreach ($columnLetters as $letter) {
+				$headerValue = strtoupper(trim($sheet->getCell($letter . $headerRow)->getValue()));
+				if (strpos($headerValue, 'NIM') !== false) {
+					$columns['nim'] = $letter;
+				} elseif (strpos($headerValue, 'TUGAS') !== false) {
+					$columns['tugas'] = $letter;
+				} elseif (strpos($headerValue, 'UTS') !== false) {
+					$columns['uts'] = $letter;
+				} elseif (strpos($headerValue, 'UAS') !== false) {
+					$columns['uas'] = $letter;
+				}
+			}
+
+			// Validate required columns
+			if (!isset($columns['nim']) || !isset($columns['tugas']) || !isset($columns['uts']) || !isset($columns['uas'])) {
+				return $this->response->setJSON([
+					'status' => 'error',
+					'message' => 'Format file tidak sesuai. Kolom yang diperlukan: NIM, Tugas, UTS, UAS.'
+				]);
+			}
+
+			// Get mahasiswa data for this jadwal
+			$mahasiswaModel = new MahasiswaModel();
+			$jadwalDetails = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+			$students = $mahasiswaModel->getStudentsForScoring($jadwalDetails['program_studi'], $jadwalDetails['semester']);
+
+			// Create NIM to mahasiswa_id mapping
+			$nimToId = [];
+			foreach ($students as $student) {
+				$nimToId[$student['nim']] = $student['id'];
+			}
+
+			// Get combined teknik data to map scores
+			$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+			$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+
+			// Build mapping: technique type => [rps_mingguan_ids]
+			$tugas_mapping = [];
+			$uts_mapping = [];
+			$uas_mapping = [];
+
+			foreach ($combined_data['combined_list'] as $item) {
+				$teknik_key = $item['teknik_key'];
+				$rps_ids = $item['rps_mingguan_ids'];
+
+				if ($teknik_key === 'tes_tulis_uts') {
+					$uts_mapping = $rps_ids;
+				} elseif ($teknik_key === 'tes_tulis_uas') {
+					$uas_mapping = $rps_ids;
+				} else {
+					// All other techniques are "Tugas"
+					$tugas_mapping[$teknik_key] = $rps_ids;
+				}
+			}
+
+			// Parse data rows
+			$imported_count = 0;
+			$errors = [];
+			$db = \Config\Database::connect();
+
+			$db->transStart();
+
+			for ($row = $headerRow + 1; $row <= $highestRow; $row++) {
+				$nim = trim($sheet->getCell($columns['nim'] . $row)->getValue());
+
+				// Skip empty rows
+				if (empty($nim)) {
+					continue;
+				}
+
+				// Check if student exists
+				if (!isset($nimToId[$nim])) {
+					$errors[] = "Baris $row: NIM $nim tidak ditemukan dalam daftar mahasiswa.";
+					continue;
+				}
+
+				$mahasiswa_id = $nimToId[$nim];
+				$tugas = $sheet->getCell($columns['tugas'] . $row)->getValue();
+				$uts = $sheet->getCell($columns['uts'] . $row)->getValue();
+				$uas = $sheet->getCell($columns['uas'] . $row)->getValue();
+
+				// Validate scores (0-100)
+				$tugas = is_numeric($tugas) ? floatval($tugas) : null;
+				$uts = is_numeric($uts) ? floatval($uts) : null;
+				$uas = is_numeric($uas) ? floatval($uas) : null;
+
+				if ($tugas !== null && ($tugas < 0 || $tugas > 100)) {
+					$errors[] = "Baris $row (NIM $nim): Nilai Tugas tidak valid ($tugas). Harus antara 0-100.";
+					continue;
+				}
+				if ($uts !== null && ($uts < 0 || $uts > 100)) {
+					$errors[] = "Baris $row (NIM $nim): Nilai UTS tidak valid ($uts). Harus antara 0-100.";
+					continue;
+				}
+				if ($uas !== null && ($uas < 0 || $uas > 100)) {
+					$errors[] = "Baris $row (NIM $nim): Nilai UAS tidak valid ($uas). Harus antara 0-100.";
+					continue;
+				}
+
+				// Save Tugas scores (distribute to all "Tugas" techniques)
+				foreach ($tugas_mapping as $teknik_key => $rps_ids) {
+					foreach ($rps_ids as $rps_info) {
+						$scoreData = [
+							'mahasiswa_id' => $mahasiswa_id,
+							'jadwal_mengajar_id' => $jadwal_id,
+							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
+							'teknik_penilaian_key' => $teknik_key,
+							'nilai' => $tugas,
+						];
+						$nilaiTeknikModel->saveOrUpdate($scoreData);
+					}
+				}
+
+				// Save UTS scores
+				if (!empty($uts_mapping)) {
+					foreach ($uts_mapping as $rps_info) {
+						$scoreData = [
+							'mahasiswa_id' => $mahasiswa_id,
+							'jadwal_mengajar_id' => $jadwal_id,
+							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
+							'teknik_penilaian_key' => 'tes_tulis_uts',
+							'nilai' => $uts,
+						];
+						$nilaiTeknikModel->saveOrUpdate($scoreData);
+					}
+				}
+
+				// Save UAS scores
+				if (!empty($uas_mapping)) {
+					foreach ($uas_mapping as $rps_info) {
+						$scoreData = [
+							'mahasiswa_id' => $mahasiswa_id,
+							'jadwal_mengajar_id' => $jadwal_id,
+							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
+							'teknik_penilaian_key' => 'tes_tulis_uas',
+							'nilai' => $uas,
+						];
+						$nilaiTeknikModel->saveOrUpdate($scoreData);
+					}
+				}
+
+				$imported_count++;
+			}
+
+			// Calculate CPMK scores from imported teknik_penilaian scores
+			$cpmk_scores = $nilaiTeknikModel->calculateCpmkScores($jadwal_id);
+
+			// Save calculated CPMK scores
+			$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+			foreach ($cpmk_scores as $mahasiswa_id => $cpmk_data) {
+				foreach ($cpmk_data as $cpmk_id => $cpmk_score) {
+					$cpmkData = [
+						'mahasiswa_id' => $mahasiswa_id,
+						'jadwal_mengajar_id' => $jadwal_id,
+						'cpmk_id' => $cpmk_id,
+						'nilai_cpmk' => $cpmk_score,
+					];
+					$nilaiCpmkModel->saveOrUpdate($cpmkData);
+				}
+			}
+
+			// Calculate final scores
+			$nilaiMahasiswaModel = new NilaiMahasiswaModel();
+			foreach ($cpmk_scores as $mahasiswa_id => $cpmk_data) {
+				$nilai_akhir = 0;
+				if (!empty($cpmk_data)) {
+					$nilai_akhir = array_sum($cpmk_data);
+				}
+
+				$finalData = [
+					'mahasiswa_id' => $mahasiswa_id,
+					'jadwal_mengajar_id' => $jadwal_id,
+					'nilai_akhir' => round($nilai_akhir, 2),
+					'nilai_huruf' => $this->calculateGrade($nilai_akhir),
+					'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),
+				];
+				$nilaiMahasiswaModel->saveOrUpdate($finalData);
+			}
+
+			$db->transComplete();
+
+			if ($db->transStatus() === false) {
+				return $this->response->setJSON([
+					'status' => 'error',
+					'message' => 'Gagal menyimpan data ke database.'
+				]);
+			}
+
+			return $this->response->setJSON([
+				'status' => 'success',
+				'message' => 'Data nilai berhasil diimport dan CPMK scores dihitung otomatis.',
+				'imported_count' => $imported_count,
+				'errors' => $errors
+			]);
+
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'status' => 'error',
+				'message' => 'Terjadi kesalahan saat memproses file: ' . $e->getMessage()
+			]);
+		}
 	}
 }
