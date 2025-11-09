@@ -37,6 +37,15 @@
 						title="Unduh Daftar Penilaian Nilai Akhir">
 						<i class="bi bi-download me-2"></i>Unduh DPNA
 					</a>
+					<?php if (!isset($jadwal['is_nilai_validated']) || $jadwal['is_nilai_validated'] == 0): ?>
+						<button type="button"
+							class="btn btn-primary"
+							data-bs-toggle="modal"
+							data-bs-target="#uploadNilaiModal"
+							title="Unggah/Import Nilai dari Excel">
+							<i class="bi bi-upload me-2"></i>Unggah
+						</button>
+					<?php endif; ?>
 					<a href="<?= base_url('admin/nilai') ?>" class="btn btn-outline-secondary">
 						<i class="bi bi-arrow-left me-2"></i>Kembali
 					</a>
@@ -261,6 +270,16 @@
 											<?= esc($tahap) ?>
 										</th>
 									<?php endforeach; ?>
+									<th class="text-center align-middle bg-success bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
+										<div class="d-flex flex-column align-items-center">
+											<span class="fw-bold">Nilai Huruf</span>
+										</div>
+									</th>
+									<th class="text-center align-middle bg-warning bg-opacity-10" style="width: 150px; min-width: 150px;" rowspan="2">
+										<div class="d-flex flex-column align-items-center">
+											<span class="fw-bold">Keterangan</span>
+										</div>
+									</th>
 								</tr>
 								<tr>
 									<?php
@@ -349,11 +368,22 @@
 													value="<?= esc($existing_scores[$mahasiswa['id']][$item['teknik_key']] ?? '') ?>"
 													data-mahasiswa="<?= $mahasiswa['id'] ?>"
 													data-teknik="<?= $item['teknik_key'] ?>"
+													data-bobot="<?= $item['total_bobot'] ?>"
 													placeholder="0-100"
 													style="min-width: 85px;"
 													<?= (!$canEdit) ? 'readonly' : '' ?>>
 											</td>
 										<?php endforeach; ?>
+										<td class="align-middle text-center">
+											<span class="badge bg-success nilai-huruf-display"
+												data-mahasiswa="<?= $mahasiswa['id'] ?>"
+												style="font-size: 1rem; min-width: 50px;">-</span>
+										</td>
+										<td class="align-middle text-center">
+											<span class="badge bg-secondary keterangan-display"
+												data-mahasiswa="<?= $mahasiswa['id'] ?>"
+												style="font-size: 0.85rem;">-</span>
+										</td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -386,6 +416,64 @@
 					</div>
 				</form>
 			<?php endif; ?>
+		</div>
+	</div>
+</div>
+
+<!-- Upload Nilai Modal -->
+<div class="modal fade" id="uploadNilaiModal" tabindex="-1" aria-labelledby="uploadNilaiModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header bg-primary text-white">
+				<h5 class="modal-title" id="uploadNilaiModalLabel">
+					<i class="bi bi-upload me-2"></i>Unggah Nilai dari Excel
+				</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form id="uploadNilaiForm" enctype="multipart/form-data">
+				<div class="modal-body">
+					<div class="alert alert-info">
+						<i class="bi bi-info-circle me-2"></i>
+						<strong>Instruksi:</strong>
+						<ul class="mb-0 mt-2">
+							<li>File harus dalam format Excel (.xlsx)</li>
+							<li>Gunakan template dari tombol "Unduh DPNA" untuk memastikan format yang benar</li>
+							<li>Kolom yang akan diimport: Tugas, UTS, UAS</li>
+							<li>Pastikan NIM mahasiswa sesuai dengan data di sistem</li>
+							<li>Nilai yang di-upload akan menggantikan nilai yang sudah ada</li>
+						</ul>
+					</div>
+
+					<div class="mb-3">
+						<label for="fileNilai" class="form-label fw-bold">Pilih File Excel</label>
+						<input type="file"
+							class="form-control"
+							id="fileNilai"
+							name="file_nilai"
+							accept=".xlsx,.xls"
+							required>
+						<div class="form-text">Format: .xlsx atau .xls (maksimal 5MB)</div>
+					</div>
+
+					<div id="uploadProgress" class="d-none">
+						<div class="progress">
+							<div class="progress-bar progress-bar-striped progress-bar-animated"
+								role="progressbar"
+								style="width: 100%">
+								Mengupload...
+							</div>
+						</div>
+					</div>
+
+					<div id="uploadResult" class="mt-3"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-primary" id="btnUpload">
+						<i class="bi bi-upload me-2"></i>Unggah & Import
+					</button>
+				</div>
+			</form>
 		</div>
 	</div>
 </div>
@@ -477,6 +565,36 @@
 		border-right: 4px solid #ffc107 !important;
 	}
 
+	/* Sticky columns for Nilai Huruf and Keterangan (last two columns) */
+	#nilaiTable thead th:nth-last-child(1),
+	#nilaiTable thead th:nth-last-child(2),
+	#nilaiTable tbody td:nth-last-child(1),
+	#nilaiTable tbody td:nth-last-child(2) {
+		position: sticky;
+		background-color: white;
+		z-index: 10;
+	}
+
+	#nilaiTable thead th:nth-last-child(1),
+	#nilaiTable tbody td:nth-last-child(1) {
+		right: 0;
+	}
+
+	#nilaiTable thead th:nth-last-child(2),
+	#nilaiTable tbody td:nth-last-child(2) {
+		right: 150px;
+	}
+
+	#nilaiTable thead th:nth-last-child(1),
+	#nilaiTable thead th:nth-last-child(2) {
+		z-index: 20;
+	}
+
+	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(1),
+	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(2) {
+		background-color: rgba(0, 0, 0, 0.05);
+	}
+
 	/* Ensure body doesn't scroll horizontally */
 	body {
 		overflow-x: hidden;
@@ -542,11 +660,145 @@
 			}
 		}
 
+		// Dynamic grade configuration from database
+		const gradeConfig = <?= json_encode($grade_config ?? []) ?>;
+
+		// Function to convert numeric grade to letter grade using dynamic config
+		function getNilaiHuruf(score) {
+			// Use dynamic grade configuration from database
+			if (gradeConfig && gradeConfig.length > 0) {
+				for (let i = 0; i < gradeConfig.length; i++) {
+					const grade = gradeConfig[i];
+					const minScore = parseFloat(grade.min_score);
+					const maxScore = parseFloat(grade.max_score);
+
+					if (score > minScore && score <= maxScore) {
+						// Determine color based on is_passing and score range
+						let color = 'secondary';
+						if (grade.is_passing == 1) {
+							if (score > 80) color = 'success';
+							else if (score > 65) color = 'info';
+							else color = 'warning';
+						} else {
+							color = 'danger';
+						}
+
+						return {
+							grade: grade.grade_letter,
+							color: color,
+							is_passing: grade.is_passing == 1
+						};
+					}
+				}
+			}
+
+			// Fallback to hardcoded values if no config found
+			if (score > 80) return { grade: 'A', color: 'success', is_passing: true };
+			if (score > 70) return { grade: 'AB', color: 'success', is_passing: true };
+			if (score > 65) return { grade: 'B', color: 'info', is_passing: true };
+			if (score > 60) return { grade: 'BC', color: 'info', is_passing: true };
+			if (score > 50) return { grade: 'C', color: 'warning', is_passing: true };
+			if (score > 40) return { grade: 'D', color: 'danger', is_passing: false };
+			return { grade: 'E', color: 'danger', is_passing: false };
+		}
+
+		// Function to get keterangan based on grade info
+		function getKeterangan(gradeInfo) {
+			if (gradeInfo.is_passing) {
+				return {
+					text: 'Lulus',
+					color: 'success',
+					title: 'Lulus'
+				};
+			} else {
+				return {
+					text: 'Tidak Lulus',
+					color: 'danger',
+					title: 'Tidak Lulus'
+				};
+			}
+		}
+
+		// Function to calculate final score for a student
+		function calculateFinalScore(mahasiswaId) {
+			const inputs = document.querySelectorAll(`.nilai-input[data-mahasiswa="${mahasiswaId}"]`);
+			let totalScore = 0;
+			let totalBobot = 0;
+			let validCount = 0;
+
+			inputs.forEach(input => {
+				const value = parseFloat(input.value.replace(',', '.'));
+				const bobot = parseFloat(input.getAttribute('data-bobot')) || 0;
+
+				if (!isNaN(value) && value >= 0 && value <= 100) {
+					totalScore += value * bobot;
+					totalBobot += bobot;
+					validCount++;
+				}
+			});
+
+			// If all inputs are filled and valid
+			if (validCount === inputs.length && validCount > 0) {
+				// Calculate weighted average
+				const finalScore = totalBobot > 0 ? totalScore / totalBobot : totalScore / validCount;
+				return finalScore;
+			}
+
+			return null;
+		}
+
+		// Function to update nilai huruf and keterangan displays
+		function updateGradeDisplays(mahasiswaId) {
+			const finalScore = calculateFinalScore(mahasiswaId);
+			const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
+			const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
+
+			if (finalScore !== null) {
+				const gradeInfo = getNilaiHuruf(finalScore);
+				const keteranganInfo = getKeterangan(gradeInfo);
+
+				// Update Nilai Huruf
+				nilaiHurufEl.textContent = gradeInfo.grade;
+				nilaiHurufEl.className = `badge bg-${gradeInfo.color} nilai-huruf-display`;
+				nilaiHurufEl.setAttribute('data-mahasiswa', mahasiswaId);
+				nilaiHurufEl.style.fontSize = '1rem';
+				nilaiHurufEl.style.minWidth = '50px';
+				nilaiHurufEl.title = `Nilai Akhir: ${finalScore.toFixed(2)}`;
+
+				// Update Keterangan
+				keteranganEl.textContent = keteranganInfo.text;
+				keteranganEl.className = `badge bg-${keteranganInfo.color} keterangan-display`;
+				keteranganEl.setAttribute('data-mahasiswa', mahasiswaId);
+				keteranganEl.style.fontSize = '0.85rem';
+				keteranganEl.title = keteranganInfo.title;
+			} else {
+				// Reset to default if scores are incomplete
+				nilaiHurufEl.textContent = '-';
+				nilaiHurufEl.className = 'badge bg-secondary nilai-huruf-display';
+				nilaiHurufEl.setAttribute('data-mahasiswa', mahasiswaId);
+				nilaiHurufEl.style.fontSize = '1rem';
+				nilaiHurufEl.style.minWidth = '50px';
+				nilaiHurufEl.title = '';
+
+				keteranganEl.textContent = '-';
+				keteranganEl.className = 'badge bg-secondary keterangan-display';
+				keteranganEl.setAttribute('data-mahasiswa', mahasiswaId);
+				keteranganEl.style.fontSize = '0.85rem';
+				keteranganEl.title = '';
+			}
+		}
+
 		nilaiInputs.forEach(input => {
 			input.addEventListener('input', function() {
 				validateInput(this);
+				// Update grade displays when input changes
+				const mahasiswaId = this.getAttribute('data-mahasiswa');
+				updateGradeDisplays(mahasiswaId);
 			});
 			validateInput(input);
+			// Initial calculation for existing values
+			const mahasiswaId = input.getAttribute('data-mahasiswa');
+			updateGradeDisplays(mahasiswaId);
 		});
 
 		// Form Submission Validation Logic
@@ -574,15 +826,28 @@
 	function fillAllValues() {
 		if (confirm('Apakah Anda yakin ingin mengisi semua nilai dengan data testing (70-95)?')) {
 			const inputs = document.querySelectorAll('.nilai-input');
+			const updatedMahasiswa = new Set();
 			let filledCount = 0;
+
 			inputs.forEach(input => {
 				// Generate random score between 70-95 for realistic test data
 				const randomScore = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
 				input.value = randomScore;
 				input.classList.remove('is-invalid');
 				input.classList.add('is-valid');
+				updatedMahasiswa.add(input.getAttribute('data-mahasiswa'));
 				filledCount++;
 			});
+
+			// Update grade displays for all affected students
+			updatedMahasiswa.forEach(mahasiswaId => {
+				const firstInput = document.querySelector(`.nilai-input[data-mahasiswa="${mahasiswaId}"]`);
+				if (firstInput) {
+					const event = new Event('input');
+					firstInput.dispatchEvent(event);
+				}
+			});
+
 			updateSaveStatus(`${filledCount} nilai berhasil diisi dengan data testing.`);
 		}
 	}
@@ -590,10 +855,32 @@
 	function clearAllValues() {
 		if (confirm('Apakah Anda yakin ingin mengosongkan semua nilai?')) {
 			const inputs = document.querySelectorAll('.nilai-input');
+			const updatedMahasiswa = new Set();
+
 			inputs.forEach(input => {
 				input.value = '';
 				input.classList.remove('is-valid', 'is-invalid');
+				updatedMahasiswa.add(input.getAttribute('data-mahasiswa'));
 			});
+
+			// Reset grade displays for all students
+			updatedMahasiswa.forEach(mahasiswaId => {
+				const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
+				const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
+
+				if (nilaiHurufEl) {
+					nilaiHurufEl.textContent = '-';
+					nilaiHurufEl.className = 'badge bg-secondary nilai-huruf-display';
+					nilaiHurufEl.title = '';
+				}
+
+				if (keteranganEl) {
+					keteranganEl.textContent = '-';
+					keteranganEl.className = 'badge bg-secondary keterangan-display';
+					keteranganEl.title = '';
+				}
+			});
+
 			updateSaveStatus('Semua nilai dikosongkan.');
 		}
 	}
@@ -646,5 +933,100 @@
 			form.submit();
 		}
 	}
+
+	// Handle upload form submission
+	document.getElementById('uploadNilaiForm').addEventListener('submit', function(e) {
+		e.preventDefault();
+
+		const fileInput = document.getElementById('fileNilai');
+		const uploadProgress = document.getElementById('uploadProgress');
+		const uploadResult = document.getElementById('uploadResult');
+		const btnUpload = document.getElementById('btnUpload');
+
+		// Validate file
+		if (!fileInput.files || fileInput.files.length === 0) {
+			uploadResult.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Silakan pilih file terlebih dahulu.</div>';
+			return;
+		}
+
+		const file = fileInput.files[0];
+		const maxSize = 5 * 1024 * 1024; // 5MB
+
+		if (file.size > maxSize) {
+			uploadResult.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Ukuran file terlalu besar. Maksimal 5MB.</div>';
+			return;
+		}
+
+		// Show progress
+		uploadProgress.classList.remove('d-none');
+		uploadResult.innerHTML = '';
+		btnUpload.disabled = true;
+		btnUpload.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengupload...';
+
+		// Create FormData
+		const formData = new FormData();
+		formData.append('file_nilai', file);
+
+		// Send AJAX request
+		fetch('<?= base_url('admin/nilai/import-nilai-excel/' . $jadwal['id']) ?>', {
+			method: 'POST',
+			body: formData,
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest',
+				'<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			uploadProgress.classList.add('d-none');
+			btnUpload.disabled = false;
+			btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+
+			if (data.status === 'success') {
+				uploadResult.innerHTML = `
+					<div class="alert alert-success">
+						<i class="bi bi-check-circle me-2"></i>
+						<strong>Berhasil!</strong> ${data.message}
+						<br><small>Total: ${data.imported_count} mahasiswa diimport.</small>
+					</div>
+				`;
+
+				// Reload page after 2 seconds
+				setTimeout(function() {
+					window.location.reload();
+				}, 2000);
+			} else {
+				uploadResult.innerHTML = `
+					<div class="alert alert-danger">
+						<i class="bi bi-x-circle me-2"></i>
+						<strong>Gagal!</strong> ${data.message}
+						${data.errors ? '<ul class="mb-0 mt-2">' + data.errors.map(err => '<li>' + err + '</li>').join('') + '</ul>' : ''}
+					</div>
+				`;
+			}
+		})
+		.catch(error => {
+			uploadProgress.classList.add('d-none');
+			btnUpload.disabled = false;
+			btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+
+			uploadResult.innerHTML = `
+				<div class="alert alert-danger">
+					<i class="bi bi-x-circle me-2"></i>
+					<strong>Error!</strong> Terjadi kesalahan saat mengupload file.
+					<br><small>${error.message}</small>
+				</div>
+			`;
+		});
+	});
+
+	// Reset modal when closed
+	document.getElementById('uploadNilaiModal').addEventListener('hidden.bs.modal', function() {
+		document.getElementById('uploadNilaiForm').reset();
+		document.getElementById('uploadProgress').classList.add('d-none');
+		document.getElementById('uploadResult').innerHTML = '';
+		document.getElementById('btnUpload').disabled = false;
+		document.getElementById('btnUpload').innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+	});
 </script>
 <?= $this->endSection() ?>
