@@ -185,12 +185,26 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->post('nilai/unvalidate/(:num)', 'Nilai::unvalidateNilai/$1');
 	$routes->get('nilai/lihat-nilai/(:num)', 'Nilai::lihatNilai/$1');
 	$routes->get('nilai/lihat-cpmk/(:num)', 'Nilai::lihatCpmk/$1');
+	$routes->get('nilai/lihat-cpl/(:num)', 'Nilai::lihatCpl/$1');
 	$routes->get('nilai/unduh-dpna/(:num)', 'Nilai::unduhDpna/$1');
 	$routes->get('nilai/export-dpna-excel/(:num)', 'Nilai::exportDpnaExcel/$1');
+	$routes->get('nilai/export-cpmk-excel/(:num)', 'Nilai::exportCpmkExcel/$1');
+	$routes->get('nilai/export-cpl-excel/(:num)', 'Nilai::exportCplExcel/$1');
+	$routes->post('nilai/import-nilai-excel/(:num)', 'Nilai::importNilaiExcel/$1');
 
 	// $routes->get('nilai/cetak-dpna/(:num)', 'Nilai::cetakDpna/$1');
 	// $routes->get('nilai/exportExcel/(:num)', 'Nilai::exportExcel/$1');
 	// $routes->get('nilai/exportPdf/(:num)', 'Nilai::exportPdf/$1');
+
+	//settings (Grade Configuration)
+	$routes->get('settings', 'Settings::index');
+	$routes->get('settings/create', 'Settings::create');
+	$routes->post('settings/store', 'Settings::store');
+	$routes->get('settings/edit/(:num)', 'Settings::edit/$1');
+	$routes->post('settings/update/(:num)', 'Settings::update/$1');
+	$routes->get('settings/delete/(:num)', 'Settings::delete/$1');
+	$routes->get('settings/toggle/(:num)', 'Settings::toggle/$1');
+	$routes->get('settings/reset-to-default', 'Settings::resetToDefault');
 
 	//capaian cpmk
 	$routes->get('capaian-cpmk', 'CapaianCpmk::index');
