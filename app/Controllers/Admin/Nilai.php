@@ -1208,6 +1208,57 @@ class Nilai extends BaseController
 			$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
 		}
 
+		// Get NIP of dosen ketua
+		$db = \Config\Database::connect();
+		$dosenKetuaNip = $db->table('jadwal_dosen jd')
+			->select('d.nip')
+			->join('dosen d', 'd.id = jd.dosen_id')
+			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.role', 'leader')
+			->get()
+			->getRowArray();
+		$nip = $dosenKetuaNip['nip'] ?? '';
+
+		// Add signature section
+		$row = $lastRow + 3; // Add some space after the table
+
+		// Date and location on the right side
+		$signatureStartCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$signatureEndCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$sheet->setCellValue($signatureStartCol . $row, 'Palangka Raya, ' . date('d F Y'));
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Mengetahui
+		$sheet->setCellValue($signatureStartCol . $row, 'Mengetahui');
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Title
+		$sheet->setCellValue($signatureStartCol . $row, 'Dosen Koordinator Mata Kuliah');
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		// Add empty rows for signature space
+		$row += 4;
+
+		// Dosen name
+		$sheet->setCellValue($signatureStartCol . $row, $jadwal['dosen_ketua']);
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->getStyle($signatureStartCol . $row)->getFont()->setBold(true);
+
+		$row++;
+
+		// NIP line
+		$sheet->setCellValue($signatureStartCol . $row, 'NIP. ' . $nip);
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
 		// Set filename
 		$filename = 'Nilai_CPMK_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
 
@@ -1596,6 +1647,56 @@ class Nilai extends BaseController
 
 		// Set wider width for description column
 		$sheet->getColumnDimension('C')->setWidth(30);
+
+		// Get NIP of dosen ketua
+		$dosenKetuaNip = $db->table('jadwal_dosen jd')
+			->select('d.nip')
+			->join('dosen d', 'd.id = jd.dosen_id')
+			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.role', 'leader')
+			->get()
+			->getRowArray();
+		$nip = $dosenKetuaNip['nip'] ?? '';
+
+		// Add signature section
+		$row = $lastRow + 3; // Add some space after the table
+
+		// Date and location on the right side
+		$signatureStartCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$signatureEndCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+		$sheet->setCellValue($signatureStartCol . $row, 'Palangka Raya, ' . date('d F Y'));
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Mengetahui
+		$sheet->setCellValue($signatureStartCol . $row, 'Mengetahui');
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Title
+		$sheet->setCellValue($signatureStartCol . $row, 'Dosen Koordinator Mata Kuliah');
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		// Add empty rows for signature space
+		$row += 4;
+
+		// Dosen name
+		$sheet->setCellValue($signatureStartCol . $row, $jadwal['dosen_ketua']);
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->getStyle($signatureStartCol . $row)->getFont()->setBold(true);
+
+		$row++;
+
+		// NIP line
+		$sheet->setCellValue($signatureStartCol . $row, 'NIP. ' . $nip);
+		$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+		$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		// Set filename
 		$filename = 'Nilai_CPL_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
@@ -2085,6 +2186,55 @@ class Nilai extends BaseController
 		foreach (range('A', 'I') as $col) {
 			$sheet->getColumnDimension($col)->setAutoSize(true);
 		}
+
+		// Get NIP of dosen ketua
+		$db = \Config\Database::connect();
+		$dosenKetuaNip = $db->table('jadwal_dosen jd')
+			->select('d.nip')
+			->join('dosen d', 'd.id = jd.dosen_id')
+			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.role', 'leader')
+			->get()
+			->getRowArray();
+		$nip = $dosenKetuaNip['nip'] ?? '';
+
+		// Add signature section
+		$row = $lastRow + 3; // Add some space after the table
+
+		// Date and location on the right side
+		$sheet->setCellValue('I' . $row, 'Palangka Raya, ' . date('d F Y'));
+		$sheet->mergeCells('I' . $row . ':I' . $row);
+		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Mengetahui
+		$sheet->setCellValue('I' . $row, 'Mengetahui');
+		$sheet->mergeCells('I' . $row . ':I' . $row);
+		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		$row++;
+
+		// Title
+		$sheet->setCellValue('I' . $row, 'Dosen Koordinator Mata Kuliah');
+		$sheet->mergeCells('I' . $row . ':I' . $row);
+		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+		// Add empty rows for signature space
+		$row += 4;
+
+		// Dosen name
+		$sheet->setCellValue('I' . $row, $jadwal['dosen_ketua']);
+		$sheet->mergeCells('I' . $row . ':I' . $row);
+		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->getStyle('I' . $row)->getFont()->setBold(true);
+
+		$row++;
+
+		// NIP line
+		$sheet->setCellValue('I' . $row, 'NIP. ' . $nip);
+		$sheet->mergeCells('I' . $row . ':I' . $row);
+		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		// Set filename
 		$filename = 'DPNA_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
