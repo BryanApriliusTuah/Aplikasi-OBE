@@ -147,9 +147,9 @@
 							<tr>
 								<td class="text-center"><?= $index + 1 ?></td>
 								<td class="text-center"><strong class="text-primary"><?= esc($cpmk['kode_cpmk']) ?></strong></td>
-								<td><small class="text-muted"><?= esc($cpmk['deskripsi']) ?></small></td>
+								<td><small class="text-dark"><?= esc($cpmk['deskripsi']) ?></small></td>
 								<td class="text-center">
-									<span class="badge bg-secondary"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
+									<span class="badge bg-info text-dark me-1 mb-1"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
 								</td>
 								<td class="text-center">
 									<strong><?= $cpmk_stats[$cpmk['id']]['avg'] ?></strong>

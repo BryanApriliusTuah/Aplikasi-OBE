@@ -146,7 +146,7 @@
 								<tr>
 									<td class="text-center"><?= $index + 1 ?></td>
 									<td class="text-center"><strong class="text-primary"><?= esc($cpl['kode_cpl']) ?></strong></td>
-									<td><small class="text-muted"><?= esc($cpl['deskripsi']) ?></small></td>
+									<td><small class="text-dark"><?= esc($cpl['deskripsi']) ?></small></td>
 									<td class="text-center">
 										<?php if (!empty($stats['cpmk_codes'])): ?>
 											<?php foreach ($stats['cpmk_codes'] as $cpmk_code): ?>
@@ -157,7 +157,7 @@
 										<?php endif; ?>
 									</td>
 									<td class="text-center">
-										<strong class="text-success"><?= $stats['total_score'] ?? 0 ?></strong>
+										<strong><?= $stats['total_score'] ?? 0 ?></strong>
 									</td>
 									<td class="text-center">
 										<strong><?= $stats['total_weight'] ?? 0 ?>%</strong>
