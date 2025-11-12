@@ -150,7 +150,7 @@
 									<td class="text-center">
 										<?php if (!empty($stats['cpmk_codes'])): ?>
 											<?php foreach ($stats['cpmk_codes'] as $cpmk_code): ?>
-												<span class="badge bg-info text-dark me-1 mb-1"><?= esc($cpmk_code) ?></span>
+												<span class="badge bg-primary text-white me-1 mb-1"><?= esc($cpmk_code) ?></span>
 											<?php endforeach; ?>
 										<?php else: ?>
 											<span class="text-muted">-</span>
