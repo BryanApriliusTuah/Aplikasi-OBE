@@ -174,30 +174,33 @@
 	<table class="dpna">
 		<thead>
 			<tr>
-				<th style="width: 50px;">No</th>
-				<th style="width: 120px;">NIM</th>
-				<th style="width: 250px;">Nama</th>
-				<th style="width: 80px;">
+				<th rowspan="2" style="width: 50px;">No</th>
+				<th rowspan="2" style="width: 120px;">NIM</th>
+				<th rowspan="2" style="width: 250px;">Nama</th>
+				<th rowspan="2" style="width: 80px;">
 					Tugas
 					<?php if (isset($weights['tugas']) && $weights['tugas'] > 0): ?>
 						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['tugas'] ?>%)</small>
 					<?php endif; ?>
 				</th>
-				<th style="width: 80px;">
+				<th rowspan="2" style="width: 80px;">
 					UTS
 					<?php if (isset($weights['uts']) && $weights['uts'] > 0): ?>
 						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['uts'] ?>%)</small>
 					<?php endif; ?>
 				</th>
-				<th style="width: 80px;">
+				<th rowspan="2" style="width: 80px;">
 					UAS
 					<?php if (isset($weights['uas']) && $weights['uas'] > 0): ?>
 						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['uas'] ?>%)</small>
 					<?php endif; ?>
 				</th>
-				<th style="width: 100px;">Nilai Akhir</th>
-				<th style="width: 80px;">Nilai Huruf</th>
-				<th style="width: 100px;">Keterangan</th>
+				<th colspan="2" style="width: 150px;">Nilai Akhir</th>
+				<th rowspan="2" style="width: 100px;">Keterangan</th>
+			</tr>
+			<tr>
+				<th style="width: 80px;">Angka</th>
+				<th style="width: 70px;">Huruf</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -229,7 +232,7 @@
 						<td><?= number_format($row['uts'], 2) ?></td>
 						<td><?= number_format($row['uas'], 2) ?></td>
 						<td><?= number_format($row['nilai_akhir'], 2) ?></td>
-						<td class="<?= $grade_class ?>"><?= esc($row['nilai_huruf']) ?></td>
+						<td><strong><?= esc($row['nilai_huruf']) ?></strong></td>
 						<td><?= esc($row['keterangan'] ?? '-') ?></td>
 					</tr>
 				<?php endforeach; ?>

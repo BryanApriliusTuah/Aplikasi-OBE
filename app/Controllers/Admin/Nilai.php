@@ -62,7 +62,7 @@ class Nilai extends BaseController
 			// Calculate score completion for each jadwal
 			foreach ($jadwal_ids as $jadwal_id) {
 				// Get total students for this jadwal
-				$jadwal_info = array_values(array_filter($schedules, function($s) use ($jadwal_id) {
+				$jadwal_info = array_values(array_filter($schedules, function ($s) use ($jadwal_id) {
 					return $s['id'] == $jadwal_id;
 				}))[0] ?? null;
 
@@ -1020,57 +1020,129 @@ class Nilai extends BaseController
 			->setTitle('Nilai CPMK - ' . $jadwal['nama_mk'])
 			->setSubject('Nilai CPMK');
 
-		// Set header
-		$sheet->setCellValue('A1', 'NILAI CPMK');
+		// Set row height for header
+		$sheet->getRowDimension(1)->setRowHeight(50);
+		$sheet->getRowDimension(2)->setRowHeight(20);
+
+		// Add logo if exists
+		$logoPath = FCPATH . 'img/Logo UPR.png';
+		if (file_exists($logoPath)) {
+			$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+			$drawing->setName('Logo');
+			$drawing->setDescription('Logo');
+			$drawing->setPath($logoPath);
+			$drawing->setCoordinates('A1');
+			$drawing->setHeight(50); // Set logo height
+			$drawing->setOffsetX(10);
+			$drawing->setOffsetY(5);
+			$drawing->setWorksheet($sheet);
+		}
+
+		// Determine semester type (Genap/Ganjil) based on semester number
+		$semester_type = '';
+		if (isset($jadwal['semester'])) {
+			$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+		}
+
+		// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+
+		// Calculate total columns for proper header width
 		$totalColumns = 3 + (count($cpmk_list) * 2) + 1; // No, NIM, Nama + (CPMK Score + Capaian) * count + Nilai Akhir
 		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
-		$sheet->mergeCells('A1:' . $lastColumn . '1');
-		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Set header - Ministry text (in same row as logo)
+		$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
+		$sheet->setCellValue('B1', $header_text);
+		$header_end_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns - 1);
+		$sheet->mergeCells('B1:' . $header_end_col . '1');
+		$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// Set CPMK and Semester info on the right side (last column)
+		$cpmk_text = "NILAI CPMK\nSemester " . $semester_type . " " . $tahun;
+		$sheet->setCellValue($lastColumn . '1', $cpmk_text);
+		$sheet->getStyle($lastColumn . '1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle($lastColumn . '1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// University text (row 2)
+		$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+		$sheet->mergeCells('B2:' . $header_end_col . '2');
+		$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B2')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
 		// Course information
-		$row = 3;
-		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row = 4;
+		$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kode MK');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kelas');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Program Studi');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
+		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
 
-		// Table header
+		// Style course information (bold and bigger)
+		$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
+
+		// Table header - First row
 		$row += 2;
 		$headerRow = $row;
 		$col = 1;
 
-		// Basic columns
+		// Basic columns - First row
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
 
-		// CPMK columns - separate Score and Capaian
+		// CPMK columns - merged headers with sub-cells
 		foreach ($cpmk_list as $cpmk) {
-			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpmk['kode_cpmk'] . ' - Skor');
-			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpmk['kode_cpmk'] . ' - Capaian (%)');
+			$startCol = $col;
+			$endCol = $col + 1;
+			$startColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startCol);
+			$endColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($endCol);
+
+			// Merge cells for CPMK header
+			$sheet->setCellValue($startColLetter . $row, $cpmk['kode_cpmk']);
+			$sheet->mergeCells($startColLetter . $row . ':' . $endColLetter . $row);
+
+			$col += 2;
 		}
 
 		// Nilai Akhir MK column
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, 'Nilai Akhir MK');
 
-		// Style header
-		$headerStyle = $sheet->getStyle('A' . $row . ':' . $lastColumn . $row);
+		// Merge cells vertically for columns that span both header rows
+		$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+		$nilaiAkhirCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+		$sheet->mergeCells($nilaiAkhirCol . $row . ':' . $nilaiAkhirCol . ($row + 1));
+
+		// Second header row - Sub-headers for CPMK
+		$row++;
+		$col = 4; // Start after No, NIM, Nama
+		foreach ($cpmk_list as $cpmk) {
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Skor');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Capaian (%)');
+		}
+
+		// Style both header rows
+		$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $row);
 		$headerStyle->getFont()->setBold(true);
 		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 			->getStartColor()->setARGB('FF4472C4');
 		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
 		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 		$headerStyle->getAlignment()->setWrapText(true);
 
 		// Data rows
@@ -1130,9 +1202,9 @@ class Nilai extends BaseController
 			],
 		]);
 
-		// Auto-size columns
-		for ($i = 1; $i <= $totalColumns; $i++) {
-			$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+		// Auto-size all columns
+		foreach (range(1, $totalColumns) as $col) {
+			$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
 			$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
 		}
 
@@ -1321,62 +1393,125 @@ class Nilai extends BaseController
 			->setTitle('Nilai CPL - ' . $jadwal['nama_mk'])
 			->setSubject('Nilai CPL');
 
-		// Set header
-		$sheet->setCellValue('A1', 'NILAI CPL (CAPAIAN PEMBELAJARAN LULUSAN)');
+		// Set row height for header
+		$sheet->getRowDimension(1)->setRowHeight(50);
+		$sheet->getRowDimension(2)->setRowHeight(20);
+
+		// Add logo if exists
+		$logoPath = FCPATH . 'img/Logo UPR.png';
+		if (file_exists($logoPath)) {
+			$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+			$drawing->setName('Logo');
+			$drawing->setDescription('Logo');
+			$drawing->setPath($logoPath);
+			$drawing->setCoordinates('A1');
+			$drawing->setHeight(50); // Set logo height
+			$drawing->setOffsetX(10);
+			$drawing->setOffsetY(5);
+			$drawing->setWorksheet($sheet);
+		}
+
+		// Determine semester type (Genap/Ganjil) based on semester number
+		$semester_type = '';
+		if (isset($jadwal['semester'])) {
+			$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+		}
+
+		// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+
+		// Calculate total columns for proper header width
 		$totalColumns = 3 + (count($cpl_list) * 2); // No, NIM, Nama + (CPL score + percentage) * count
 		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
-		$sheet->mergeCells('A1:' . $lastColumn . '1');
-		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+		// Set header - Ministry text (in same row as logo)
+		$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
+		$sheet->setCellValue('B1', $header_text);
+		$header_end_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns - 1);
+		$sheet->mergeCells('B1:' . $header_end_col . '1');
+		$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// Set CPL and Semester info on the right side (last column)
+		$cpl_text = "NILAI CPL\nSemester " . $semester_type . " " . $tahun;
+		$sheet->setCellValue($lastColumn . '1', $cpl_text);
+		$sheet->getStyle($lastColumn . '1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle($lastColumn . '1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// University text (row 2)
+		$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+		$sheet->mergeCells('B2:' . $header_end_col . '2');
+		$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B2')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
 		// Course information
-		$row = 3;
-		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row = 4;
+		$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kode MK');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kelas');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Program Studi');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
+		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
 
-		// Student Scores Table
+		// Style course information (bold and bigger)
+		$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
+
+
+		// Table header - First row
 		$row += 2;
-		$sheet->setCellValue('A' . $row, 'NILAI CPL PER MAHASISWA');
-		$sheet->mergeCells('A' . $row . ':' . $lastColumn . $row);
-		$sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
-		$sheet->getStyle('A' . $row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-			->getStartColor()->setARGB('FFE0E0E0');
-
-		// Table header
-		$row++;
 		$headerRow = $row;
 		$col = 1;
 
-		// Basic columns
+		// Basic columns - First row
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
 		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
 
-		// CPL columns - separate score and percentage
+		// CPL columns - merged headers with sub-cells
 		foreach ($cpl_list as $cpl) {
-			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpl['kode_cpl'] . ' - Skor');
-			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpl['kode_cpl'] . ' - Capaian (%)');
+			$startCol = $col;
+			$endCol = $col + 1;
+			$startColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startCol);
+			$endColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($endCol);
+
+			// Merge cells for CPL header
+			$sheet->setCellValue($startColLetter . $row, $cpl['kode_cpl']);
+			$sheet->mergeCells($startColLetter . $row . ':' . $endColLetter . $row);
+
+			$col += 2;
 		}
 
-		// Style header
-		$headerStyle = $sheet->getStyle('A' . $row . ':' . $lastColumn . $row);
+		// Merge cells vertically for columns that span both header rows
+		$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+
+		// Second header row - Sub-headers for CPL
+		$row++;
+		$col = 4; // Start after No, NIM, Nama
+		foreach ($cpl_list as $cpl) {
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Skor');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Capaian (%)');
+		}
+
+		// Style both header rows
+		$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $row);
 		$headerStyle->getFont()->setBold(true);
 		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 			->getStartColor()->setARGB('FF4472C4');
 		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
 		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 		$headerStyle->getAlignment()->setWrapText(true);
 
 		// Data rows
@@ -1609,7 +1744,7 @@ class Nilai extends BaseController
 		}
 
 		// Helper function to calculate keterangan based on grade
-		$getKeterangan = function($grade) {
+		$getKeterangan = function ($grade) {
 			$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
 			if (in_array(strtoupper($grade), $failingGrades)) {
 				return 'TM'; // Tidak Memenuhi
@@ -1736,7 +1871,7 @@ class Nilai extends BaseController
 		}
 
 		// Helper function to calculate keterangan based on grade
-		$getKeterangan = function($grade) {
+		$getKeterangan = function ($grade) {
 			$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
 			if (in_array(strtoupper($grade), $failingGrades)) {
 				return 'TM'; // Tidak Memenuhi
@@ -1801,70 +1936,113 @@ class Nilai extends BaseController
 			->setTitle('DPNA - ' . $jadwal['nama_mk'])
 			->setSubject('Daftar Penilaian Nilai Akhir');
 
-		// Set header
-		$sheet->setCellValue('A1', 'DAFTAR PENILAIAN NILAI AKHIR (DPNA)');
-		$sheet->mergeCells('A1:I1');
-		$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-		$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		// Set row height for header
+		$sheet->getRowDimension(1)->setRowHeight(50);
+		$sheet->getRowDimension(2)->setRowHeight(20);
+
+		// Add logo if exists
+		$logoPath = FCPATH . 'img/Logo UPR.png';
+		if (file_exists($logoPath)) {
+			$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+			$drawing->setName('Logo');
+			$drawing->setDescription('Logo');
+			$drawing->setPath($logoPath);
+			$drawing->setCoordinates('A1');
+			$drawing->setHeight(50); // Set logo height
+			$drawing->setOffsetX(10);
+			$drawing->setOffsetY(5);
+			$drawing->setWorksheet($sheet);
+		}
+
+		// Determine semester type (Genap/Ganjil) based on semester number
+		$semester_type = '';
+		if (isset($jadwal['semester'])) {
+			$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+		}
+
+		// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+
+		// Set header - Ministry text (in same row as logo)
+		$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
+		$sheet->setCellValue('B1', $header_text);
+		$sheet->mergeCells('B1:H1');
+		$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// Set DPNA and Semester info on the right side (column I)
+		$dpna_text = "DPNA\nSemester " . $semester_type . " " . $tahun;
+		$sheet->setCellValue('I1', $dpna_text);
+		$sheet->getStyle('I1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('I1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		// University text (row 2)
+		$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+		$sheet->mergeCells('B2:H2');
+		$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B2')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
 		// Course information
-		$row = 3;
-		$sheet->setCellValue('A' . $row, 'Mata Kuliah');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['nama_mk']);
+		$row = 4;
+		$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kode MK');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kode_mk']);
+		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
 		$row++;
-		$sheet->setCellValue('A' . $row, 'Kelas');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['kelas']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Tahun Akademik');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['tahun_akademik']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Program Studi');
-		$sheet->setCellValue('B' . $row, ': ' . $jadwal['program_studi']);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Dosen Pengampu');
-		$sheet->setCellValue('B' . $row, ': ' . ($jadwal['dosen_ketua'] ?? 'N/A'));
+		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
 
-		// Weights information
-		$row += 2;
-		$sheet->setCellValue('A' . $row, 'Bobot Penilaian:');
-		$sheet->getStyle('A' . $row)->getFont()->setBold(true);
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Tugas');
-		$sheet->setCellValue('B' . $row, ': ' . round($tugas_weight, 1) . '%');
-		$row++;
-		$sheet->setCellValue('A' . $row, 'UTS');
-		$sheet->setCellValue('B' . $row, ': ' . round($uts_weight, 1) . '%');
-		$row++;
-		$sheet->setCellValue('A' . $row, 'UAS');
-		$sheet->setCellValue('B' . $row, ': ' . round($uas_weight, 1) . '%');
-		$row++;
-		$sheet->setCellValue('A' . $row, 'Total');
-		$sheet->setCellValue('B' . $row, ': ' . round($tugas_weight + $uts_weight + $uas_weight, 1) . '%');
-		$sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
+		// Style course information (bold and bigger)
+		$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
 
-		// Table header
+		// Table header - First row
 		$row += 2;
 		$headerRow = $row;
 		$sheet->setCellValue('A' . $row, 'No');
 		$sheet->setCellValue('B' . $row, 'NIM');
 		$sheet->setCellValue('C' . $row, 'Nama');
-		$sheet->setCellValue('D' . $row, 'Tugas (' . round($tugas_weight, 1) . '%)');
-		$sheet->setCellValue('E' . $row, 'UTS (' . round($uts_weight, 1) . '%)');
-		$sheet->setCellValue('F' . $row, 'UAS (' . round($uas_weight, 1) . '%)');
+		$tugas_text = "Tugas \n(" . round($tugas_weight, 1) . '%)';
+		$sheet->setCellValue('D' . $row, $tugas_text);
+		$uts_text = "UTS \n(" . round($uts_weight, 1) . '%)';
+		$sheet->setCellValue('E' . $row, $uts_text);
+		$uas_text = "UAS \n(" . round($uas_weight, 1) . '%)';
+		$sheet->setCellValue('F' . $row, $uas_text);
 		$sheet->setCellValue('G' . $row, 'Nilai Akhir');
-		$sheet->setCellValue('H' . $row, 'Nilai Huruf');
+		$sheet->mergeCells('G' . $row . ':H' . $row);
 		$sheet->setCellValue('I' . $row, 'Keterangan');
 
-		// Style header
-		$headerStyle = $sheet->getStyle('A' . $row . ':I' . $row);
+		// Merge cells vertically for columns that span both header rows
+		$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+		$sheet->mergeCells('D' . $row . ':D' . ($row + 1));
+		$sheet->mergeCells('E' . $row . ':E' . ($row + 1));
+		$sheet->mergeCells('F' . $row . ':F' . ($row + 1));
+		$sheet->mergeCells('I' . $row . ':I' . ($row + 1));
+
+		// Second header row - Sub-headers for Nilai Akhir
+		$row++;
+		$sheet->setCellValue('G' . $row, 'Angka');
+		$sheet->setCellValue('H' . $row, 'Huruf');
+
+		// Style both header rows
+		$headerStyle = $sheet->getStyle('A' . $headerRow . ':I' . $row);
 		$headerStyle->getFont()->setBold(true);
 		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 			->getStartColor()->setARGB('FF4472C4');
 		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
 		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+		$headerStyle->getAlignment()->setWrapText(true);
 
 		// Data rows
 		$row++;
@@ -1875,6 +2053,12 @@ class Nilai extends BaseController
 			$sheet->setCellValue('D' . $row, $data['tugas']);
 			$sheet->setCellValue('E' . $row, $data['uts']);
 			$sheet->setCellValue('F' . $row, $data['uas']);
+
+			// Add background color to cells D, E, F
+			$sheet->getStyle('D' . $row . ':F' . $row)->getFill()
+				->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FFFFFF00'); // Light yellow
+
 			$sheet->setCellValue('G' . $row, $data['nilai_akhir']);
 			$sheet->setCellValue('H' . $row, $data['nilai_huruf']);
 			$sheet->setCellValue('I' . $row, $data['keterangan']);
@@ -2206,7 +2390,6 @@ class Nilai extends BaseController
 				'imported_count' => $imported_count,
 				'errors' => $errors
 			]);
-
 		} catch (\Exception $e) {
 			return $this->response->setJSON([
 				'status' => 'error',
