@@ -1905,6 +1905,17 @@ class Nilai extends BaseController
 			];
 		}
 
+		// Get NIP of dosen ketua
+		$db = \Config\Database::connect();
+		$dosenKetuaNip = $db->table('jadwal_dosen jd')
+			->select('d.nip')
+			->join('dosen d', 'd.id = jd.dosen_id')
+			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.role', 'leader')
+			->get()
+			->getRowArray();
+		$nip = $dosenKetuaNip['nip'] ?? '';
+
 		$data = [
 			'title' => 'DPNA - ' . $jadwal['nama_mk'],
 			'jadwal' => $jadwal,
@@ -1913,7 +1924,8 @@ class Nilai extends BaseController
 				'tugas' => round($tugas_weight, 1),
 				'uts' => round($uts_weight, 1),
 				'uas' => round($uas_weight, 1)
-			]
+			],
+			'nip' => $nip
 		];
 
 		return view('admin/nilai/dpna', $data);

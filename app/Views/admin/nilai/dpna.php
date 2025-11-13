@@ -10,18 +10,20 @@
 			margin: 20px;
 			background-color: #f5f5f5;
 		}
+		/* Hide CodeIgniter Debug Toolbar */
+		#toolbarContainer {
+			display: none !important;
+		}
 		.header {
 			text-align: center;
-			margin-bottom: 30px;
+			margin-bottom: 20px;
 		}
-		.header h1 {
-			margin: 5px 0;
-			font-size: 24px;
+		.header table {
+			width: 100%;
+			border-collapse: collapse;
 		}
-		.header p {
-			margin: 3px 0;
-			font-size: 14px;
-			color: #555;
+		.header td {
+			padding: 5px;
 		}
 		.info-box {
 			background-color: #fff;
@@ -39,7 +41,7 @@
 			font-size: 14px;
 		}
 		.info-box td:first-child {
-			width: 150px;
+			width: 250px;
 			font-weight: bold;
 		}
 		table.dpna {
@@ -136,37 +138,51 @@
 		</a>
 	</div>
 
+	<?php
+	// Determine semester type (Genap/Ganjil) based on semester number
+	$semester_type = '';
+	if (isset($jadwal['semester'])) {
+		$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+	}
+
+	// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+	$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+	?>
+
 	<div class="header">
-		<h1>DAFTAR PENILAIAN NILAI AKHIR (DPNA)</h1>
-		<p><?= esc($jadwal['nama_mk']) ?></p>
-		<p>Kelas: <?= esc($jadwal['kelas']) ?> | Tahun Akademik: <?= esc($jadwal['tahun_akademik']) ?></p>
+		<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+			<tr>
+				<td rowspan="2" style="width: 80px; vertical-align: middle; text-align: center;">
+					<img src="<?= base_url('img/Logo UPR.png') ?>" alt="Logo UPR" style="height: 60px;">
+				</td>
+				<td style="text-align: center; vertical-align: middle; padding: 5px;">
+					<strong style="font-size: 16px;">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</strong>
+				</td>
+				<td rowspan="2" style="width: 150px; vertical-align: middle; text-align: center; padding: 10px;">
+					<strong style="font-size: 16px;">DPNA<br>Semester <?= $semester_type ?> <?= $tahun ?></strong>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center; vertical-align: middle; padding: 5px;">
+					<strong style="font-size: 16px;">UNIVERSITAS PALANGKA RAYA</strong>
+				</td>
+			</tr>
+		</table>
 	</div>
 
 	<div class="info-box">
 		<table>
 			<tr>
-				<td>Mata Kuliah</td>
-				<td>: <?= esc($jadwal['nama_mk']) ?></td>
+				<td style="width: 250px;">MATA KULIAH</td>
+				<td>: <?= strtoupper(esc($jadwal['nama_mk'])) ?></td>
 			</tr>
 			<tr>
-				<td>Kode Mata Kuliah</td>
-				<td>: <?= esc($jadwal['kode_mk']) ?></td>
+				<td>KELAS/PROGRAM STUDI</td>
+				<td>: <?= strtoupper(esc($jadwal['kelas'])) ?> / <?= strtoupper(esc($jadwal['program_studi'])) ?></td>
 			</tr>
 			<tr>
-				<td>Kelas</td>
-				<td>: <?= esc($jadwal['kelas']) ?></td>
-			</tr>
-			<tr>
-				<td>Tahun Akademik</td>
-				<td>: <?= esc($jadwal['tahun_akademik']) ?></td>
-			</tr>
-			<tr>
-				<td>Program Studi</td>
-				<td>: <?= esc($jadwal['program_studi']) ?></td>
-			</tr>
-			<tr>
-				<td>Dosen Pengampu</td>
-				<td>: <?= esc($jadwal['dosen_ketua'] ?? 'N/A') ?></td>
+				<td>DOSEN PENGAMPU</td>
+				<td>: <?= strtoupper(esc($jadwal['dosen_ketua'] ?? 'N/A')) ?></td>
 			</tr>
 		</table>
 	</div>
@@ -240,11 +256,20 @@
 		</tbody>
 	</table>
 
-	<div style="margin-top: 50px; text-align: right; page-break-inside: avoid;">
-		<p>Dicetak pada: <?= date('d F Y, H:i') ?> WIB</p>
-		<br><br><br>
-		<p>_______________________________</p>
-		<p><?= esc($jadwal['dosen_ketua'] ?? 'Dosen Pengampu') ?></p>
+	<div style="margin-top: 50px; page-break-inside: avoid;">
+		<table style="width: 100%; border-collapse: collapse;">
+			<tr>
+				<td style="width: 70%;"></td>
+				<td style="width: 30%; text-align: left;">
+					<p style="margin: 5px 0;">Palangka Raya, <?= date('d F Y') ?></p>
+					<p style="margin: 5px 0;">Mengetahui</p>
+					<p style="margin: 5px 0;">Dosen Koordinator Mata Kuliah</p>
+					<br><br><br>
+					<p style="margin: 5px 0;"><strong><?= esc($jadwal['dosen_ketua'] ?? 'Dosen Pengampu') ?></strong></p>
+					<p style="margin: 5px 0;">NIP. <?= esc($nip ?? '') ?></p>
+				</td>
+			</tr>
+		</table>
 	</div>
 </body>
 </html>
