@@ -470,7 +470,7 @@
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
 					<button type="submit" class="btn btn-primary" id="btnUpload">
-						<i class="bi bi-upload me-2"></i>Unggah & Import
+						<i class="bi bi-upload me-2"></i>Unggah
 					</button>
 				</div>
 			</form>
@@ -693,13 +693,41 @@
 			}
 
 			// Fallback to hardcoded values if no config found
-			if (score > 80) return { grade: 'A', color: 'success', is_passing: true };
-			if (score > 70) return { grade: 'AB', color: 'success', is_passing: true };
-			if (score > 65) return { grade: 'B', color: 'info', is_passing: true };
-			if (score > 60) return { grade: 'BC', color: 'info', is_passing: true };
-			if (score > 50) return { grade: 'C', color: 'warning', is_passing: true };
-			if (score > 40) return { grade: 'D', color: 'danger', is_passing: false };
-			return { grade: 'E', color: 'danger', is_passing: false };
+			if (score > 80) return {
+				grade: 'A',
+				color: 'success',
+				is_passing: true
+			};
+			if (score > 70) return {
+				grade: 'AB',
+				color: 'success',
+				is_passing: true
+			};
+			if (score > 65) return {
+				grade: 'B',
+				color: 'info',
+				is_passing: true
+			};
+			if (score > 60) return {
+				grade: 'BC',
+				color: 'info',
+				is_passing: true
+			};
+			if (score > 50) return {
+				grade: 'C',
+				color: 'warning',
+				is_passing: true
+			};
+			if (score > 40) return {
+				grade: 'D',
+				color: 'danger',
+				is_passing: false
+			};
+			return {
+				grade: 'E',
+				color: 'danger',
+				is_passing: false
+			};
 		}
 
 		// Function to get keterangan based on grade info
@@ -969,21 +997,21 @@
 
 		// Send AJAX request
 		fetch('<?= base_url('admin/nilai/import-nilai-excel/' . $jadwal['id']) ?>', {
-			method: 'POST',
-			body: formData,
-			headers: {
-				'X-Requested-With': 'XMLHttpRequest',
-				'<?= csrf_header() ?>': '<?= csrf_hash() ?>'
-			}
-		})
-		.then(response => response.json())
-		.then(data => {
-			uploadProgress.classList.add('d-none');
-			btnUpload.disabled = false;
-			btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest',
+					'<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				uploadProgress.classList.add('d-none');
+				btnUpload.disabled = false;
+				btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah';
 
-			if (data.status === 'success') {
-				uploadResult.innerHTML = `
+				if (data.status === 'success') {
+					uploadResult.innerHTML = `
 					<div class="alert alert-success">
 						<i class="bi bi-check-circle me-2"></i>
 						<strong>Berhasil!</strong> ${data.message}
@@ -991,33 +1019,33 @@
 					</div>
 				`;
 
-				// Reload page after 2 seconds
-				setTimeout(function() {
-					window.location.reload();
-				}, 2000);
-			} else {
-				uploadResult.innerHTML = `
+					// Reload page after 2 seconds
+					setTimeout(function() {
+						window.location.reload();
+					}, 2000);
+				} else {
+					uploadResult.innerHTML = `
 					<div class="alert alert-danger">
 						<i class="bi bi-x-circle me-2"></i>
 						<strong>Gagal!</strong> ${data.message}
 						${data.errors ? '<ul class="mb-0 mt-2">' + data.errors.map(err => '<li>' + err + '</li>').join('') + '</ul>' : ''}
 					</div>
 				`;
-			}
-		})
-		.catch(error => {
-			uploadProgress.classList.add('d-none');
-			btnUpload.disabled = false;
-			btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+				}
+			})
+			.catch(error => {
+				uploadProgress.classList.add('d-none');
+				btnUpload.disabled = false;
+				btnUpload.innerHTML = '<i class="bi bi-upload me-2"></i>Unggah';
 
-			uploadResult.innerHTML = `
+				uploadResult.innerHTML = `
 				<div class="alert alert-danger">
 					<i class="bi bi-x-circle me-2"></i>
 					<strong>Error!</strong> Terjadi kesalahan saat mengupload file.
 					<br><small>${error.message}</small>
 				</div>
 			`;
-		});
+			});
 	});
 
 	// Reset modal when closed
@@ -1026,7 +1054,7 @@
 		document.getElementById('uploadProgress').classList.add('d-none');
 		document.getElementById('uploadResult').innerHTML = '';
 		document.getElementById('btnUpload').disabled = false;
-		document.getElementById('btnUpload').innerHTML = '<i class="bi bi-upload me-2"></i>Unggah & Import';
+		document.getElementById('btnUpload').innerHTML = '<i class="bi bi-upload me-2"></i>Unggah';
 	});
 </script>
 <?= $this->endSection() ?>
