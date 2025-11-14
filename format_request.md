@@ -14,6 +14,19 @@ Response:
 "Angkatan"		: 2021
 ```
 
+## Data Dosen
+
+API GET: /obe-dosen
+
+Response:
+
+```json
+"NIP" 			: "197503151997031002",
+"Nama"			: "Budi Santoso, S.Kom., M.T.",
+"Program Studi"	: "Teknik Informatika",
+"Fakultas" 		: "Teknik"
+```
+
 ## Data Mata Kuliah
 
 API GET: /obe-mata-kuliah
@@ -36,15 +49,37 @@ Response:
 {
 	[
 		"Kode MK"	: "1DCP101030",
-		"Peserta"	: {
+		"Mahasiswa"	: {
 			"NIM" : ["213030503137", "213030503138", "213030503139", "..."]
 		}
 	],
 	[
 		"Kode MK"	: "1DCP101031",
-		"Peserta"	: {
+		"Mahasiswa"	: {
 			"NIM" : ["213030503137", "213030503138", "213030503139", "..."]
 		}
 	]
+}
+```
+
+## Data MBKM
+
+API GET: /obe-mbkm
+Response:
+
+```json
+{
+	[
+		"Jenis_MBKM"		: "Magang",
+		"Kegiatan"			: "Dicoding Software Developer",
+		"Tempat_MBKM"		: "Dicoding",
+		"Tanggal Mulai"		: "01/01/2021",
+		"Tanggal Selesai"	: "30/12/2021",
+		"SKS Konversi"		: 20,
+		"Dosen Pembimbing"	: "Budi Santoso, S.Kom., M.T.",
+		"Mahasiswa"			: {
+			"NIM" : ["213030503137", "213030503138", "213030503139", "..."]
+		}
+	],
 }
 ```
