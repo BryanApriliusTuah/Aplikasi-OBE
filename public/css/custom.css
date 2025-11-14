@@ -28,6 +28,19 @@ body {
   letter-spacing: 1px;
 }
 
+.user-info {
+  color: #2e384d;
+  padding-right: 1rem;
+  border-right: 2px solid #d1d5e0;
+}
+.user-info .user-name {
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+.user-info .user-role {
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
 .logout-link {
   color: #224abe !important;
   font-weight: 600;
@@ -139,7 +152,26 @@ body {
     padding: 24px 8px;
   }
   .content-wrapper { padding: 18px 8px 12px 8px; }
-  .topbar { padding: 0.7rem 1rem; }
+  .topbar {
+    padding: 0.7rem 1rem;
+    flex-wrap: wrap;
+  }
+  .topbar .brand {
+    margin-left: 0;
+    font-size: 1rem;
+  }
+  .user-info {
+    font-size: 0.85rem;
+  }
+  .user-info .user-name {
+    font-size: 0.85rem;
+  }
+  .user-info .user-role {
+    font-size: 0.75rem;
+  }
+  .logout-link {
+    font-size: 0.9rem;
+  }
 }
 
 /* Sidebar dropdown */

@@ -36,9 +36,26 @@
 <body>
 	<div class="topbar">
 		<span class="brand">Sistem Kurikulum OBE TI UPR</span>
-		<a href="<?= base_url('logout') ?>" class="logout-link" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Keluar dari sistem">
-			<i class="bi bi-box-arrow-right"></i> Logout
-		</a>
+		<div class="d-flex align-items-center gap-3">
+			<div class="user-info text-end">
+				<div class="user-name fw-bold"><?= session('nama_lengkap') ?? session('username') ?></div>
+				<div class="user-role text-muted small">
+					<?php
+					$role = session('role');
+					if ($role === 'admin') {
+						echo 'Administrator';
+					} elseif ($role === 'dosen') {
+						echo 'Dosen' . (session('nip') ? ' (' . session('nip') . ')' : '');
+					} elseif ($role === 'mahasiswa') {
+						echo 'Mahasiswa' . (session('nim') ? ' (' . session('nim') . ')' : '');
+					}
+					?>
+				</div>
+			</div>
+			<a href="<?= base_url('logout') ?>" class="logout-link" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Keluar dari sistem">
+				<i class="bi bi-box-arrow-right"></i> Logout
+			</a>
+		</div>
 	</div>
 	<div class="wrapper">
 		<div class="sidebar">
