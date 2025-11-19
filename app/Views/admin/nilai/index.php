@@ -242,14 +242,6 @@
 												<i class="bi bi-graph-up"></i>
 											</a>
 
-											<a href="<?= base_url('admin/nilai/lihat-cpl/' . $jadwal['id']) ?>"
-											   class="btn btn-sm btn-outline-purple"
-											   data-bs-toggle="tooltip"
-											   title="Lihat Nilai CPL"
-											   style="border-color: #764ba2; color: #764ba2;">
-												<i class="bi bi-trophy"></i>
-											</a>
-
 											<?php if (isset($jadwal['can_input_grades']) && $jadwal['can_input_grades']): ?>
 												<a href="<?= base_url('admin/nilai/input-nilai-teknik/' . $jadwal['id']) ?>"
 												   class="btn btn-sm btn-primary"
