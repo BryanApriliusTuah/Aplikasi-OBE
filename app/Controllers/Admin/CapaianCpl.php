@@ -106,18 +106,55 @@ class CapaianCpl extends BaseController
 
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-			// Get average nilai_cpmk for this student across all CPMK linked to this CPL
-			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa');
-			$result = $nilaiBuilder
-				->select('AVG(nilai_cpmk) as rata_rata, COUNT(DISTINCT cpmk_id) as jumlah_cpmk, COUNT(DISTINCT jadwal_mengajar_id) as jumlah_mk')
-				->where('mahasiswa_id', $mahasiswaId)
-				->whereIn('cpmk_id', $cpmkIds)
+			// Get all nilai_cpmk for this student for these CPMK
+			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id')
+				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->where('ncm.mahasiswa_id', $mahasiswaId)
+				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->get()
-				->getRowArray();
+				->getResultArray();
 
-			$average = $result['rata_rata'] ? round($result['rata_rata'], 2) : 0;
-			$jumlahCpmk = $result['jumlah_cpmk'] ?? 0;
-			$jumlahMk = $result['jumlah_mk'] ?? 0;
+			// Calculate weighted CPL
+			$totalWeightedScore = 0;
+			$totalWeight = 0;
+			$distinctCpmk = [];
+			$distinctMk = [];
+
+			foreach ($nilaiList as $nilai) {
+				// Get bobot from rps_mingguan
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				$bobot = 0;
+				if ($rps) {
+					$rpsMingguan = $db->table('rps_mingguan')
+						->select('bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $nilai['cpmk_id'])
+						->get()
+						->getRowArray();
+
+					$bobot = $rpsMingguan['bobot'] ?? 0;
+				}
+
+				// If bobot is 0, use weight of 1 to avoid division by zero
+				$weight = $bobot > 0 ? $bobot : 1;
+
+				$totalWeightedScore += $nilai['nilai_cpmk'] * $weight;
+				$totalWeight += $weight;
+
+				$distinctCpmk[$nilai['cpmk_id']] = true;
+				$distinctMk[$nilai['jadwal_mengajar_id']] = true;
+			}
+
+			$average = $totalWeight > 0 ? round($totalWeightedScore / $totalWeight, 2) : 0;
+			$jumlahCpmk = count($distinctCpmk);
+			$jumlahMk = count($distinctMk);
 
 			$chartData['labels'][] = $cpl['kode_cpl'];
 			$chartData['data'][] = $average;
@@ -306,16 +343,68 @@ class CapaianCpl extends BaseController
 
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-			// Get average for all students
-			$result = $db->table('nilai_cpmk_mahasiswa')
-				->select('AVG(nilai_cpmk) as rata_rata, COUNT(DISTINCT mahasiswa_id) as jumlah_mahasiswa')
-				->whereIn('mahasiswa_id', $mahasiswaIds)
-				->whereIn('cpmk_id', $cpmkIds)
+			// Get all nilai_cpmk for all students for these CPMK
+			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
+				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
+				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->get()
-				->getRowArray();
+				->getResultArray();
 
-			$average = $result['rata_rata'] ? round($result['rata_rata'], 2) : 0;
-			$jumlahMhs = $result['jumlah_mahasiswa'] ?? 0;
+			// Calculate weighted CPL for each student, then average
+			$studentScores = [];
+
+			foreach ($nilaiList as $nilai) {
+				// Get bobot from rps_mingguan
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				$bobot = 0;
+				if ($rps) {
+					$rpsMingguan = $db->table('rps_mingguan')
+						->select('bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $nilai['cpmk_id'])
+						->get()
+						->getRowArray();
+
+					$bobot = $rpsMingguan['bobot'] ?? 0;
+				}
+
+				// If bobot is 0, use weight of 1
+				$weight = $bobot > 0 ? $bobot : 1;
+
+				$mhsId = $nilai['mahasiswa_id'];
+				if (!isset($studentScores[$mhsId])) {
+					$studentScores[$mhsId] = [
+						'totalWeightedScore' => 0,
+						'totalWeight' => 0
+					];
+				}
+
+				$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
+				$studentScores[$mhsId]['totalWeight'] += $weight;
+			}
+
+			// Calculate average across all students
+			$totalCplScore = 0;
+			$studentCount = 0;
+
+			foreach ($studentScores as $mhsId => $scores) {
+				if ($scores['totalWeight'] > 0) {
+					$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+					$totalCplScore += $cplScore;
+					$studentCount++;
+				}
+			}
+
+			$average = $studentCount > 0 ? round($totalCplScore / $studentCount, 2) : 0;
+			$jumlahMhs = $studentCount;
 
 			$chartData['labels'][] = $cpl['kode_cpl'];
 			$chartData['data'][] = $average;
@@ -725,15 +814,66 @@ class CapaianCpl extends BaseController
 
 				$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-				// Get average for this specific jadwal
-				$result = $db->table('nilai_cpmk_mahasiswa')
-					->select('AVG(nilai_cpmk) as rata_rata')
-					->where('jadwal_mengajar_id', $jadwal['id'])
-					->whereIn('cpmk_id', $cpmkIds)
+				// Get all nilai_cpmk for this jadwal for these CPMK
+				$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+					->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id')
+					->where('ncm.jadwal_mengajar_id', $jadwal['id'])
+					->whereIn('ncm.cpmk_id', $cpmkIds)
 					->get()
-					->getRowArray();
+					->getResultArray();
 
-				$average = $result['rata_rata'] ? round($result['rata_rata'], 2) : 0;
+				// Calculate weighted CPL for each student, then average
+				$studentScores = [];
+
+				foreach ($nilaiList as $nilai) {
+					// Get bobot from rps_mingguan
+					$rps = $db->table('rps')
+						->select('id')
+						->where('mata_kuliah_id', $jadwal['mata_kuliah_id'])
+						->orderBy('created_at', 'DESC')
+						->get()
+						->getRowArray();
+
+					$bobot = 0;
+					if ($rps) {
+						$rpsMingguan = $db->table('rps_mingguan')
+							->select('bobot')
+							->where('rps_id', $rps['id'])
+							->where('cpmk_id', $nilai['cpmk_id'])
+							->get()
+							->getRowArray();
+
+						$bobot = $rpsMingguan['bobot'] ?? 0;
+					}
+
+					// If bobot is 0, use weight of 1
+					$weight = $bobot > 0 ? $bobot : 1;
+
+					$mhsId = $nilai['mahasiswa_id'];
+					if (!isset($studentScores[$mhsId])) {
+						$studentScores[$mhsId] = [
+							'totalWeightedScore' => 0,
+							'totalWeight' => 0
+						];
+					}
+
+					$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
+					$studentScores[$mhsId]['totalWeight'] += $weight;
+				}
+
+				// Calculate average across all students
+				$totalCplScore = 0;
+				$studentCount = 0;
+
+				foreach ($studentScores as $mhsId => $scores) {
+					if ($scores['totalWeight'] > 0) {
+						$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+						$totalCplScore += $cplScore;
+						$studentCount++;
+					}
+				}
+
+				$average = $studentCount > 0 ? round($totalCplScore / $studentCount, 2) : 0;
 				$dataPoints[] = $average;
 			}
 
@@ -767,15 +907,69 @@ class CapaianCpl extends BaseController
 				if (!empty($cpmkLinked)) {
 					$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-					$result = $db->table('nilai_cpmk_mahasiswa')
-						->select('AVG(nilai_cpmk) as rata_rata')
-						->where('jadwal_mengajar_id', $jadwal['id'])
-						->whereIn('cpmk_id', $cpmkIds)
+					// Get all nilai_cpmk for this jadwal for these CPMK
+					$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+						->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id')
+						->where('ncm.jadwal_mengajar_id', $jadwal['id'])
+						->whereIn('ncm.cpmk_id', $cpmkIds)
 						->get()
-						->getRowArray();
+						->getResultArray();
 
-					if ($result['rata_rata']) {
-						$totalCpl += $result['rata_rata'];
+					// Calculate weighted CPL for each student, then average
+					$studentScores = [];
+
+					foreach ($nilaiList as $nilai) {
+						// Get bobot from rps_mingguan
+						$rps = $db->table('rps')
+							->select('id')
+							->where('mata_kuliah_id', $jadwal['mata_kuliah_id'])
+							->orderBy('created_at', 'DESC')
+							->get()
+							->getRowArray();
+
+						$bobot = 0;
+						if ($rps) {
+							$rpsMingguan = $db->table('rps_mingguan')
+								->select('bobot')
+								->where('rps_id', $rps['id'])
+								->where('cpmk_id', $nilai['cpmk_id'])
+								->get()
+								->getRowArray();
+
+							$bobot = $rpsMingguan['bobot'] ?? 0;
+						}
+
+						// If bobot is 0, use weight of 1
+						$weight = $bobot > 0 ? $bobot : 1;
+
+						$mhsId = $nilai['mahasiswa_id'];
+						if (!isset($studentScores[$mhsId])) {
+							$studentScores[$mhsId] = [
+								'totalWeightedScore' => 0,
+								'totalWeight' => 0
+							];
+						}
+
+						$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
+						$studentScores[$mhsId]['totalWeight'] += $weight;
+					}
+
+					// Calculate average across all students
+					$totalCplScore = 0;
+					$studentCount = 0;
+
+					foreach ($studentScores as $mhsId => $scores) {
+						if ($scores['totalWeight'] > 0) {
+							$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+							$totalCplScore += $cplScore;
+							$studentCount++;
+						}
+					}
+
+					$average = $studentCount > 0 ? ($totalCplScore / $studentCount) : 0;
+
+					if ($average > 0) {
+						$totalCpl += $average;
 						$countCpl++;
 					}
 				}

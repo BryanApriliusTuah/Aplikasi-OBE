@@ -19,16 +19,6 @@
 				</button>
 			</li>
 			<li class="nav-item" role="presentation">
-				<button class="nav-link" id="subject-tab" data-bs-toggle="tab" data-bs-target="#subject" type="button" role="tab">
-					<i class="bi bi-book"></i> Per Mata Kuliah
-				</button>
-			</li>
-			<li class="nav-item" role="presentation">
-				<button class="nav-link" id="multi-subject-tab" data-bs-toggle="tab" data-bs-target="#multiSubject" type="button" role="tab">
-					<i class="bi bi-books"></i> Komparasi Mata Kuliah
-				</button>
-			</li>
-			<li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
 					<i class="bi bi-grid-3x3"></i> Semua Mata Kuliah
 				</button>
@@ -151,114 +141,6 @@
 				</div>
 			</div>
 
-			<!-- Subject Tab -->
-			<div class="tab-pane fade" id="subject" role="tabpanel">
-				<!-- Filter Section Subject -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter Mata Kuliah</h5>
-					</div>
-					<div class="card-body">
-						<form id="filterSubjectForm">
-							<div class="row g-3">
-								<div class="col-md-4">
-									<label for="programStudiSubjectSelect" class="form-label">Program Studi</label>
-									<select class="form-select" id="programStudiSubjectSelect" name="program_studi">
-										<option value="">-- Semua Program Studi --</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>"><?= esc($prodi) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<div class="col-md-3">
-									<label for="tahunAkademikSubjectSelect" class="form-label">Tahun Akademik</label>
-									<select class="form-select" id="tahunAkademikSubjectSelect" name="tahun_akademik">
-										<option value="">-- Semua Tahun --</option>
-									</select>
-								</div>
-								<div class="col-md-4">
-									<label for="jadwalSelect" class="form-label">Mata Kuliah & Kelas <span class="text-danger">*</span></label>
-									<select class="form-select" id="jadwalSelect" name="jadwal_id" required disabled>
-										<option value="">-- Pilih Mata Kuliah --</option>
-									</select>
-								</div>
-								<div class="col-md-1 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</form>
-					</div>
-				</div>
-
-				<!-- Info Section Subject -->
-				<div id="infoSectionSubject" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi Mata Kuliah:</strong></h6>
-					<div id="infoContentSubject"></div>
-				</div>
-
-				<!-- Chart Section Subject -->
-				<div id="chartSectionSubject" class="d-none"></div>
-
-				<!-- Empty State Subject -->
-				<div id="emptyStateSubject" class="text-center py-5">
-					<i class="bi bi-book" style="font-size: 4rem; color: #ccc;"></i>
-					<p class="text-muted mt-3">Pilih mata kuliah untuk melihat grafik capaian CPL berdasarkan mata kuliah</p>
-				</div>
-			</div>
-
-			<!-- Multi Subject Comparative Tab -->
-			<div class="tab-pane fade" id="multiSubject" role="tabpanel">
-				<!-- Filter Section Multi Subject -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter Mata Kuliah (Pilih Multiple)</h5>
-					</div>
-					<div class="card-body">
-						<form id="filterMultiSubjectForm">
-							<div class="row g-3">
-								<div class="col-md-4">
-									<label for="programStudiMultiSelect" class="form-label">Program Studi</label>
-									<select class="form-select" id="programStudiMultiSelect" name="program_studi">
-										<option value="">-- Semua Program Studi --</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>"><?= esc($prodi) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<div class="col-md-3">
-									<label for="tahunAkademikMultiSelect" class="form-label">Tahun Akademik</label>
-									<select class="form-select" id="tahunAkademikMultiSelect" name="tahun_akademik">
-										<option value="">-- Semua Tahun --</option>
-									</select>
-								</div>
-								<div class="col-md-4">
-									<label for="mataKuliahMultiSelect" class="form-label">Mata Kuliah (Pilih beberapa) <span class="text-danger">*</span></label>
-									<select class="form-select" id="mataKuliahMultiSelect" name="mata_kuliah_ids[]" multiple required style="height: 120px;" disabled>
-									</select>
-									<small class="text-muted">Tahan Ctrl (Windows) atau Cmd (Mac) untuk pilih beberapa</small>
-								</div>
-								<div class="col-md-1 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</form>
-					</div>
-				</div>
-
-				<!-- Chart Section Multi Subject -->
-				<div id="chartSectionMultiSubject" class="d-none"></div>
-
-				<!-- Empty State Multi Subject -->
-				<div id="emptyStateMultiSubject" class="text-center py-5">
-					<i class="bi bi-books" style="font-size: 4rem; color: #ccc;"></i>
-					<p class="text-muted mt-3">Pilih beberapa mata kuliah untuk membandingkan capaian CPL antar mata kuliah</p>
-				</div>
-			</div>
-
 			<!-- All Subjects Tab (NEW) -->
 			<div class="tab-pane fade" id="allSubjects" role="tabpanel">
 				<!-- Filter Section All Subjects -->
@@ -340,17 +222,13 @@
 <script>
 	let cplChartIndividual = null;
 	let cplChartComparative = null;
-	let cplChartSubject = null;
-	let cplChartMultiSubject = null;
 	let cplChartAllSubjects = null;
 	let currentIndividualData = null;
 	let currentComparativeData = null;
-	let currentSubjectData = null;
 
 	$(document).ready(function() {
 		// Load initial data
 		loadMahasiswa();
-		loadTahunAkademik();
 
 		// Individual Tab Events
 		$('#programStudiSelect, #tahunAngkatanSelect').on('change', function() {
@@ -368,27 +246,7 @@
 			loadComparativeChartData();
 		});
 
-		// Subject Tab Events
-		$('#programStudiSubjectSelect, #tahunAkademikSubjectSelect').on('change', function() {
-			loadSubjects();
-		});
-
-		$('#filterSubjectForm').on('submit', function(e) {
-			e.preventDefault();
-			loadSubjectChartData();
-		});
-
-		// Multi Subject Tab Events
-		$('#programStudiMultiSelect, #tahunAkademikMultiSelect').on('change', function() {
-			loadSubjectsForMulti();
-		});
-
-		$('#filterMultiSubjectForm').on('submit', function(e) {
-			e.preventDefault();
-			loadMultiSubjectChartData();
-		});
-
-		// All Subjects Tab Events (NEW)
+		// All Subjects Tab Events
 		$('#filterAllSubjectsForm').on('submit', function(e) {
 			e.preventDefault();
 			loadAllSubjectsChartData();
@@ -404,30 +262,6 @@
 		});
 	});
 
-	function loadTahunAkademik() {
-		// Load for subject tab
-		$.ajax({
-			url: '<?= base_url("admin/capaian-cpl/subjects-list") ?>',
-			method: 'GET',
-			success: function(response) {
-				const tahunAkademikSet = new Set();
-				response.forEach(function(item) {
-					tahunAkademikSet.add(item.tahun_akademik);
-				});
-
-				const tahunAkademikArray = Array.from(tahunAkademikSet).sort().reverse();
-
-				const selects = ['#tahunAkademikSubjectSelect', '#tahunAkademikMultiSelect'];
-				selects.forEach(function(selector) {
-					const select = $(selector);
-					select.html('<option value="">-- Semua Tahun --</option>');
-					tahunAkademikArray.forEach(function(tahun) {
-						select.append(`<option value="${tahun}">${tahun}</option>`);
-					});
-				});
-			}
-		});
-	}
 
 	function loadMahasiswa() {
 		const programStudi = $('#programStudiSelect').val();
@@ -451,68 +285,6 @@
 					mahasiswaSelect.prop('disabled', false);
 				} else {
 					mahasiswaSelect.prop('disabled', true);
-				}
-			}
-		});
-	}
-
-	function loadSubjects() {
-		const programStudi = $('#programStudiSubjectSelect').val();
-		const tahunAkademik = $('#tahunAkademikSubjectSelect').val();
-
-		$.ajax({
-			url: '<?= base_url("admin/capaian-cpl/subjects-list") ?>',
-			method: 'GET',
-			data: {
-				program_studi: programStudi,
-				tahun_akademik: tahunAkademik
-			},
-			success: function(response) {
-				const jadwalSelect = $('#jadwalSelect');
-				jadwalSelect.html('<option value="">-- Pilih Mata Kuliah --</option>');
-
-				if (response.length > 0) {
-					response.forEach(function(jadwal) {
-						jadwalSelect.append(`<option value="${jadwal.jadwal_id}">${jadwal.kode_mk} - ${jadwal.nama_mk} (Kelas ${jadwal.kelas}, Semester ${jadwal.semester})</option>`);
-					});
-					jadwalSelect.prop('disabled', false);
-				} else {
-					jadwalSelect.prop('disabled', true);
-				}
-			}
-		});
-	}
-
-	function loadSubjectsForMulti() {
-		const programStudi = $('#programStudiMultiSelect').val();
-		const tahunAkademik = $('#tahunAkademikMultiSelect').val();
-
-		$.ajax({
-			url: '<?= base_url("admin/capaian-cpl/subjects-list") ?>',
-			method: 'GET',
-			data: {
-				program_studi: programStudi,
-				tahun_akademik: tahunAkademik
-			},
-			success: function(response) {
-				const select = $('#mataKuliahMultiSelect');
-				select.html('');
-
-				if (response.length > 0) {
-					// Group by mata_kuliah_id to avoid duplicates
-					const grouped = {};
-					response.forEach(function(jadwal) {
-						if (!grouped[jadwal.mata_kuliah_id]) {
-							grouped[jadwal.mata_kuliah_id] = jadwal;
-						}
-					});
-
-					Object.values(grouped).forEach(function(jadwal) {
-						select.append(`<option value="${jadwal.mata_kuliah_id}">${jadwal.kode_mk} - ${jadwal.nama_mk}</option>`);
-					});
-					select.prop('disabled', false);
-				} else {
-					select.prop('disabled', true);
 				}
 			}
 		});
@@ -542,7 +314,6 @@
 					currentIndividualData = response;
 					displayIndividualChart(response);
 					displayIndividualInfo(response);
-					displayIndividualDetailTable(response.chartData.details);
 				} else {
 					showError('emptyStateIndividual', 'chartSectionIndividual', response.message);
 				}
@@ -577,87 +348,12 @@
 					currentComparativeData = response;
 					displayComparativeChart(response);
 					displayComparativeInfo(response);
-					displayComparativeDetailTable(response.chartData.details);
 				} else {
 					showError('emptyStateComparative', 'chartSectionComparative', response.message);
 				}
 			},
 			error: function() {
 				showError('emptyStateComparative', 'chartSectionComparative', 'Terjadi kesalahan saat memuat data');
-			}
-		});
-	}
-
-	function loadSubjectChartData() {
-		const jadwalId = $('#jadwalSelect').val();
-
-		if (!jadwalId) {
-			alert('Silakan pilih mata kuliah terlebih dahulu');
-			return;
-		}
-
-		$('#emptyStateSubject').addClass('d-none');
-		$('#chartSectionSubject').removeClass('d-none').html(getLoadingHTML('warning'));
-
-		$.ajax({
-			url: '<?= base_url("admin/capaian-cpl/subject-data") ?>',
-			method: 'GET',
-			data: {
-				jadwal_id: jadwalId
-			},
-			success: function(response) {
-				if (response.success) {
-					currentSubjectData = response;
-					displaySubjectChart(response);
-					displaySubjectInfo(response);
-					displaySubjectDetailTable(response.chartData.details);
-				} else {
-					showError('emptyStateSubject', 'chartSectionSubject', response.message);
-				}
-			},
-			error: function() {
-				showError('emptyStateSubject', 'chartSectionSubject', 'Terjadi kesalahan saat memuat data');
-			}
-		});
-	}
-
-	function loadMultiSubjectChartData() {
-		const selectedOptions = $('#mataKuliahMultiSelect').val();
-
-		if (!selectedOptions || selectedOptions.length === 0) {
-			alert('Silakan pilih minimal satu mata kuliah');
-			return;
-		}
-
-		if (selectedOptions.length > 5) {
-			alert('Maksimal 5 mata kuliah yang dapat dibandingkan');
-			return;
-		}
-
-		const mataKuliahIds = selectedOptions.join(',');
-		const programStudi = $('#programStudiMultiSelect').val();
-		const tahunAkademik = $('#tahunAkademikMultiSelect').val();
-
-		$('#emptyStateMultiSubject').addClass('d-none');
-		$('#chartSectionMultiSubject').removeClass('d-none').html(getLoadingHTML('info'));
-
-		$.ajax({
-			url: '<?= base_url("admin/capaian-cpl/comparative-subjects") ?>',
-			method: 'GET',
-			data: {
-				mata_kuliah_ids: mataKuliahIds,
-				program_studi: programStudi,
-				tahun_akademik: tahunAkademik
-			},
-			success: function(response) {
-				if (response.success) {
-					displayMultiSubjectChart(response);
-				} else {
-					showError('emptyStateMultiSubject', 'chartSectionMultiSubject', response.message);
-				}
-			},
-			error: function() {
-				showError('emptyStateMultiSubject', 'chartSectionMultiSubject', 'Terjadi kesalahan saat memuat data');
 			}
 		});
 	}
@@ -683,7 +379,6 @@
 				if (response.success) {
 					displayAllSubjectsChart(response);
 					displayAllSubjectsInfo(response);
-					displayAllSubjectsSummaryTable(response.summaryData);
 				} else {
 					showError('emptyStateAllSubjects', 'chartSectionAllSubjects', response.message);
 				}
@@ -733,27 +428,6 @@
 		$('#infoSectionComparative').removeClass('d-none');
 	}
 
-	function displaySubjectInfo(response) {
-		const info = `
-        <div class="row">
-            <div class="col-md-3">
-                <strong>Kode MK:</strong> ${response.jadwal.kode_mk}
-            </div>
-            <div class="col-md-4">
-                <strong>Mata Kuliah:</strong> ${response.jadwal.nama_mk}
-            </div>
-            <div class="col-md-2">
-                <strong>Kelas:</strong> ${response.jadwal.kelas}
-            </div>
-            <div class="col-md-3">
-                <strong>Jumlah Mahasiswa:</strong> ${response.totalMahasiswa} orang
-            </div>
-        </div>
-    `;
-		$('#infoContentSubject').html(info);
-		$('#infoSectionSubject').removeClass('d-none');
-	}
-
 	function displayAllSubjectsInfo(response) {
 		const info = `
         <div class="row">
@@ -771,8 +445,7 @@
 
 	function displayIndividualChart(response) {
 		const chartHTML = createChartHTML('Individual', 'primary', 'cplChartIndividual');
-		const tableHTML = createTableHTML('Individual', true);
-		$('#chartSectionIndividual').html(chartHTML + tableHTML);
+		$('#chartSectionIndividual').html(chartHTML);
 
 		bindExportButton('#exportChartIndividualBtn', cplChartIndividual, 'capaian-cpl-individual.png');
 
@@ -784,8 +457,7 @@
 
 	function displayComparativeChart(response) {
 		const chartHTML = createChartHTML('Comparative', 'success', 'cplChartComparative', 'Rata-rata Capaian CPL (Angkatan)');
-		const tableHTML = createTableHTML('Comparative', false);
-		$('#chartSectionComparative').html(chartHTML + tableHTML);
+		$('#chartSectionComparative').html(chartHTML);
 
 		bindExportButton('#exportChartComparativeBtn', cplChartComparative, 'capaian-cpl-comparative.png');
 
@@ -795,90 +467,6 @@
 		cplChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL (Angkatan)', 'rgba(25, 135, 84, 0.8)', 'rgba(25, 135, 84, 1)');
 	}
 
-	function displaySubjectChart(response) {
-		const chartHTML = createChartHTML('Subject', 'warning', 'cplChartSubject', 'Capaian CPL per Mata Kuliah');
-		const tableHTML = createTableHTML('Subject', false);
-		$('#chartSectionSubject').html(chartHTML + tableHTML);
-
-		bindExportButton('#exportChartSubjectBtn', cplChartSubject, 'capaian-cpl-subject.png');
-
-		const ctx = document.getElementById('cplChartSubject').getContext('2d');
-		if (cplChartSubject) cplChartSubject.destroy();
-
-		cplChartSubject = createBarChart(ctx, response.chartData, 'Capaian CPL per Mata Kuliah', 'rgba(255, 193, 7, 0.8)', 'rgba(255, 193, 7, 1)');
-	}
-
-	function displayMultiSubjectChart(response) {
-		const chartHTML = `
-        <div class="card">
-            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Perbandingan Capaian CPL Antar Mata Kuliah</h5>
-                <button class="btn btn-light btn-sm" id="exportChartMultiSubjectBtn">
-                    <i class="bi bi-download"></i> Export PNG
-                </button>
-            </div>
-            <div class="card-body">
-                <canvas id="cplChartMultiSubject" height="100"></canvas>
-            </div>
-        </div>
-    `;
-		$('#chartSectionMultiSubject').html(chartHTML);
-
-		bindExportButton('#exportChartMultiSubjectBtn', cplChartMultiSubject, 'capaian-cpl-multi-subject.png');
-
-		const ctx = document.getElementById('cplChartMultiSubject').getContext('2d');
-		if (cplChartMultiSubject) cplChartMultiSubject.destroy();
-
-		cplChartMultiSubject = new Chart(ctx, {
-			type: 'bar',
-			data: {
-				labels: response.chartData.labels,
-				datasets: response.chartData.datasets
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					legend: {
-						display: true,
-						position: 'top'
-					},
-					title: {
-						display: true,
-						text: 'Perbandingan Capaian CPL Antar Mata Kuliah',
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
-					},
-					tooltip: {
-						backgroundColor: 'rgba(0, 0, 0, 0.8)',
-						padding: 12,
-						callbacks: {
-							label: function(context) {
-								return context.dataset.label + ': ' + context.parsed.y.toFixed(2);
-							}
-						}
-					}
-				},
-				scales: {
-					y: {
-						beginAtZero: true,
-						max: 100,
-						grid: {
-							display: true,
-							color: 'rgba(0, 0, 0, 0.05)'
-						}
-					},
-					x: {
-						grid: {
-							display: false
-						}
-					}
-				}
-			}
-		});
-	}
 
 	function displayAllSubjectsChart(response) {
 		const chartHTML = `
@@ -891,7 +479,7 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> <strong>Info:</strong> Grafik menampilkan ${response.chartData.datasets.length} mata kuliah dari semua tahun akademik. Lihat tabel di bawah untuk detail tahun akademik setiap mata kuliah.
+                    <i class="bi bi-info-circle"></i> <strong>Info:</strong> Grafik menampilkan ${response.chartData.datasets.length} mata kuliah dari semua tahun akademik.
                 </div>
                 <canvas id="cplChartAllSubjects" height="120"></canvas>
             </div>
@@ -938,7 +526,7 @@
 						padding: 12,
 						callbacks: {
 							label: function(context) {
-								return context.dataset.label + ': ' + context.parsed.y.toFixed(2);
+								return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
 							}
 						}
 					}
@@ -947,12 +535,33 @@
 					y: {
 						beginAtZero: true,
 						max: 100,
+						title: {
+							display: true,
+							text: 'Capaian CPL (%)',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						},
+						ticks: {
+							callback: function(value) {
+								return value + '%';
+							}
+						},
 						grid: {
 							display: true,
 							color: 'rgba(0, 0, 0, 0.05)'
 						}
 					},
 					x: {
+						title: {
+							display: true,
+							text: 'Kode CPL',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						},
 						grid: {
 							display: false
 						}
@@ -980,7 +589,7 @@
                                 <th width="8%" class="text-center">Semester</th>
                                 <th width="12%" class="text-center">Tahun Akademik</th>
                                 <th width="10%" class="text-center">Jumlah Mahasiswa</th>
-                                <th width="10%" class="text-center">Rata-rata CPL</th>
+                                <th width="10%" class="text-center">Rata-rata CPL (%)</th>
                                 <th width="9%" class="text-center">Status</th>
                             </tr>
                         </thead>
@@ -998,7 +607,7 @@
                 <td class="text-center">${item.semester}</td>
                 <td class="text-center"><span class="badge bg-primary">${item.tahun_akademik}</span></td>
                 <td class="text-center">${item.jumlah_mahasiswa}</td>
-                <td class="text-center"><strong>${item.rata_rata_keseluruhan.toFixed(2)}</strong></td>
+                <td class="text-center"><strong>${item.rata_rata_keseluruhan.toFixed(2)}%</strong></td>
                 <td class="text-center">${statusBadge}</td>
             </tr>
         `;
@@ -1026,7 +635,7 @@
                 <td>${item.deskripsi}</td>
                 <td><span class="badge bg-info">${item.jenis_cpl}</span></td>
                 <td class="text-center">${item.jumlah_cpmk}</td>
-                <td class="text-center"><strong>${item.rata_rata.toFixed(2)}</strong></td>
+                <td class="text-center"><strong>${item.rata_rata.toFixed(2)}%</strong></td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-info" onclick="showCplDetail(${item.cpl_id}, '${item.kode_cpl}')">
@@ -1050,32 +659,12 @@
                 <td>${item.deskripsi}</td>
                 <td><span class="badge bg-info">${item.jenis_cpl}</span></td>
                 <td class="text-center">${item.jumlah_mahasiswa}</td>
-                <td class="text-center"><strong>${item.rata_rata.toFixed(2)}</strong></td>
+                <td class="text-center"><strong>${item.rata_rata.toFixed(2)}%</strong></td>
                 <td class="text-center">${statusBadge}</td>
             </tr>
         `;
 		});
 		$('#detailTableBodyComparative').html(html);
-	}
-
-	function displaySubjectDetailTable(details) {
-		let html = '';
-		details.forEach((item, index) => {
-			const statusBadge = getStatusBadge(item.rata_rata);
-			html += `
-            <tr>
-                <td>${index + 1}</td>
-                <td><strong>${item.kode_cpl}</strong></td>
-                <td>${item.deskripsi}</td>
-                <td><span class="badge bg-info">${item.jenis_cpl}</span></td>
-                <td class="text-center">${item.jumlah_mahasiswa}</td>
-                <td class="text-center">${item.jumlah_cpmk}</td>
-                <td class="text-center"><strong>${item.rata_rata.toFixed(2)}</strong></td>
-                <td class="text-center">${statusBadge}</td>
-            </tr>
-        `;
-		});
-		$('#detailTableBodySubject').html(html);
 	}
 
 	function showCplDetail(cplId, kodeCpl) {
@@ -1175,7 +764,7 @@
 			data: {
 				labels: chartData.labels,
 				datasets: [{
-					label: 'Capaian CPL',
+					label: 'Capaian CPL (%)',
 					data: chartData.data,
 					backgroundColor: gradient,
 					borderColor: borderColor,
@@ -1205,7 +794,7 @@
 						padding: 12,
 						callbacks: {
 							label: function(context) {
-								return 'Nilai: ' + context.parsed.y.toFixed(2);
+								return 'Capaian CPL: ' + context.parsed.y.toFixed(2) + '%';
 							}
 						}
 					}
@@ -1214,12 +803,33 @@
 					y: {
 						beginAtZero: true,
 						max: 100,
+						title: {
+							display: true,
+							text: 'Capaian CPL (%)',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						},
+						ticks: {
+							callback: function(value) {
+								return value + '%';
+							}
+						},
 						grid: {
 							display: true,
 							color: 'rgba(0, 0, 0, 0.05)'
 						}
 					},
 					x: {
+						title: {
+							display: true,
+							text: 'Kode CPL',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						},
 						grid: {
 							display: false
 						}
@@ -1264,7 +874,7 @@
                                 <th width="15%">Jenis CPL</th>
                                 <th width="10%" class="text-center">${type === 'Individual' ? 'Jumlah CPMK' : 'Jumlah Mhs'}</th>
                                 ${type === 'Subject' ? '<th width="10%" class="text-center">Jumlah CPMK</th>' : ''}
-                                <th width="10%" class="text-center">Rata-rata</th>
+                                <th width="10%" class="text-center">Capaian (%)</th>
                                 <th width="10%" class="text-center">Status</th>
                                 ${actionHeader}
                             </tr>
