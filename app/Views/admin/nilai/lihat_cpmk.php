@@ -431,8 +431,12 @@
 				datasets: [{
 					label: 'Capaian CPMK (%)',
 					data: cpmkCapaianData.map(d => d.capaian),
-					backgroundColor: 'rgba(102, 126, 234, 0.8)',
-					borderColor: 'rgba(102, 126, 234, 1)',
+					backgroundColor: cpmkCapaianData.map(d =>
+						d.capaian < 60 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
+					),
+					borderColor: cpmkCapaianData.map(d =>
+						d.capaian < 60 ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
+					),
 					borderWidth: 2,
 					borderRadius: 5
 				}]
