@@ -193,24 +193,14 @@
 				<th rowspan="2" style="width: 50px;">No</th>
 				<th rowspan="2" style="width: 120px;">NIM</th>
 				<th rowspan="2" style="width: 250px;">Nama</th>
-				<th rowspan="2" style="width: 80px;">
-					Tugas
-					<?php if (isset($weights['tugas']) && $weights['tugas'] > 0): ?>
-						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['tugas'] ?>%)</small>
-					<?php endif; ?>
-				</th>
-				<th rowspan="2" style="width: 80px;">
-					UTS
-					<?php if (isset($weights['uts']) && $weights['uts'] > 0): ?>
-						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['uts'] ?>%)</small>
-					<?php endif; ?>
-				</th>
-				<th rowspan="2" style="width: 80px;">
-					UAS
-					<?php if (isset($weights['uas']) && $weights['uas'] > 0): ?>
-						<br><small style="font-weight: normal; font-size: 0.85em;">(<?= $weights['uas'] ?>%)</small>
-					<?php endif; ?>
-				</th>
+				<?php foreach ($teknik_list as $teknik_key => $teknik_info): ?>
+					<th rowspan="2" style="width: 80px;">
+						<?= esc($teknik_info['label']) ?>
+						<?php if ($teknik_info['weight'] > 0): ?>
+							<br><small style="font-weight: normal; font-size: 0.85em;">(<?= number_format($teknik_info['weight'], 1) ?>%)</small>
+						<?php endif; ?>
+					</th>
+				<?php endforeach; ?>
 				<th colspan="2" style="width: 150px;">Nilai Akhir</th>
 				<th rowspan="2" style="width: 100px;">Keterangan</th>
 			</tr>
@@ -222,7 +212,7 @@
 		<tbody>
 			<?php if (empty($dpna_data)): ?>
 				<tr>
-					<td colspan="9" style="text-align: center; padding: 30px; color: #999;">
+					<td colspan="<?= 6 + count($teknik_list) ?>" style="text-align: center; padding: 30px; color: #999;">
 						Tidak ada data mahasiswa
 					</td>
 				</tr>
@@ -244,9 +234,9 @@
 						<td><?= $row['no'] ?></td>
 						<td><?= esc($row['nim']) ?></td>
 						<td class="left"><?= esc($row['nama']) ?></td>
-						<td><?= number_format($row['tugas'], 2) ?></td>
-						<td><?= number_format($row['uts'], 2) ?></td>
-						<td><?= number_format($row['uas'], 2) ?></td>
+						<?php foreach ($teknik_list as $teknik_key => $teknik_info): ?>
+							<td><?= number_format($row['teknik_' . $teknik_key], 2) ?></td>
+						<?php endforeach; ?>
 						<td><?= number_format($row['nilai_akhir'], 2) ?></td>
 						<td><strong><?= esc($row['nilai_huruf']) ?></strong></td>
 						<td><?= esc($row['keterangan'] ?? '-') ?></td>

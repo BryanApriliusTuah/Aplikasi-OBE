@@ -183,122 +183,84 @@
 				</div>
 			<?php else: ?>
 				<div class="table-responsive" style="max-height: 70vh; overflow: auto;">
-					<table class="table table-hover table-bordered mb-0 table-sm" id="nilaiTable">
-						<thead class="table-dark sticky-top">
+					<table class="table table-bordered mb-0" id="nilaiTable">
+						<thead>
 							<tr>
-								<th class="text-center align-middle" style="width: 60px; min-width: 60px;" rowspan="2">No</th>
-								<th class="align-middle" style="width: 130px; min-width: 130px;" rowspan="2">
-									<div class="d-flex align-items-center">
-										<i class="bi bi-hash me-2"></i>NIM
-									</div>
-								</th>
-								<th class="align-middle" style="min-width: 200px;" rowspan="2">
-									<div class="d-flex align-items-center">
-										<i class="bi bi-person me-2"></i>Nama Mahasiswa
-									</div>
-								</th>
-								<?php
-								$tahap_count = count($teknik_by_tahap);
-								$tahap_index = 0;
-								?>
-								<?php foreach ($teknik_by_tahap as $tahap => $tahap_data): ?>
-									<?php
-									$tahap_index++;
-									$is_last_tahap = ($tahap_index === $tahap_count);
-									?>
-									<th class="text-center align-middle bg-primary bg-opacity-25 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_data['items']) ?>">
-										<?= esc($tahap) ?>
+								<th rowspan="2" style="width: 50px;">No</th>
+								<th rowspan="2" style="width: 120px;">NIM</th>
+								<th rowspan="2" style="width: 250px;">Nama</th>
+								<?php foreach ($combined_list as $item): ?>
+									<th rowspan="2" style="width: 80px;">
+										<?php
+										// Simplify label by removing text in parentheses
+										$label = $item['teknik_label'];
+										$simplified_label = preg_replace('/\s*\([^)]*\)/', '', $label);
+										echo esc($simplified_label);
+										?>
+										<?php if ($item['total_bobot'] > 0): ?>
+											<br><small style="font-weight: normal; font-size: 0.85em;">(<?= number_format($item['total_bobot'], 1) ?>%)</small>
+										<?php endif; ?>
 									</th>
 								<?php endforeach; ?>
+								<th colspan="2" style="width: 150px;">Nilai Akhir</th>
+								<th rowspan="2" style="width: 100px;">Keterangan</th>
 							</tr>
 							<tr>
-								<?php
-								$tahap_keys = array_keys($teknik_by_tahap);
-								$last_tahap_key = end($tahap_keys);
-								?>
-								<?php foreach ($teknik_by_tahap as $tahap => $tahap_data): ?>
-									<?php
-									$item_count = count($tahap_data['items']);
-									$item_index = 0;
-									$is_last_tahap_group = ($tahap === $last_tahap_key);
-									?>
-									<?php foreach ($tahap_data['items'] as $item): ?>
-										<?php
-										$item_index++;
-										$is_last_in_group = ($item_index === $item_count);
-										$show_border = $is_last_in_group && !$is_last_tahap_group;
-										// Build tooltip with week details
-										$weeks = array_map(function ($rps) {
-											return $rps['minggu'];
-										}, $item['rps_mingguan_ids']);
-										$weeks_display = count($weeks) > 5 ? 'W' . min($weeks) . '-' . max($weeks) : implode(',', $weeks);
-										$tooltip = esc($item['teknik_label']) . " - Minggu " . implode(', ', $weeks) . " (" . number_format($item['total_bobot'], 1) . "%)";
-										?>
-										<th class="text-center align-middle <?= $show_border ? 'tahap-border-right' : '' ?>" style="width: 110px; min-width: 110px;"
-											title="<?= $tooltip ?>"
-											data-bs-toggle="tooltip">
-											<div class="d-flex flex-column align-items-center">
-												<small class="fw-bold" style="font-size: 0.75rem; line-height: 1.2;">
-													<?php
-													// Abbreviate long names
-													$label = $item['teknik_label'];
-													if (strlen($label) > 20) {
-														$label = substr($label, 0, 17) . '...';
-													}
-													echo esc($label);
-													?>
-												</small>
-												<small class="opacity-75" style="font-size: 0.65rem;">
-													Minggu: <?= $weeks_display ?>
-												</small>
-												<span class="badge bg-success" style="font-size: 0.65rem;">
-													<?= number_format($item['total_bobot'], 1) ?>%
-												</span>
-											</div>
-										</th>
-									<?php endforeach; ?>
-								<?php endforeach; ?>
+								<th style="width: 80px;">Angka</th>
+								<th style="width: 70px;">Huruf</th>
 							</tr>
 						</thead>
 						<tbody>
+							<?php
+							// Helper function to calculate keterangan based on grade
+							$getKeterangan = function ($grade) {
+								$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
+								if (in_array(strtoupper($grade), $failingGrades)) {
+									return 'TM'; // Tidak Memenuhi
+								}
+								return 'Lulus';
+							};
+							?>
 							<?php foreach ($mahasiswa_list as $index => $mahasiswa) : ?>
-								<tr class="<?= $index % 2 === 0 ? 'bg-light bg-opacity-50' : '' ?>">
-									<td class="text-center align-middle fw-bold text-muted">
-										<?= $index + 1 ?>
-									</td>
-									<td class="align-middle">
-										<span class="fw-semibold text-primary"><?= esc($mahasiswa['nim']) ?></span>
-									</td>
-									<td class="align-middle">
-										<div class="d-flex align-items-center">
-											<span><?= esc($mahasiswa['nama_lengkap']) ?></span>
-										</div>
-									</td>
-									<?php
-									// Build a map to know which columns are the last in their tahap group (but not the very last group)
-									$last_in_group = [];
-									$tahap_keys = array_keys($teknik_by_tahap);
-									$last_tahap_key = end($tahap_keys);
-									foreach ($teknik_by_tahap as $tahap => $tahap_data) {
-										$items = $tahap_data['items'];
-										if (!empty($items) && $tahap !== $last_tahap_key) {
-											$last_item = end($items);
-											$last_in_group[$last_item['teknik_key']] = true;
-										}
-									}
-									?>
-									<?php foreach ($combined_list as $item) : ?>
-										<?php $is_last = isset($last_in_group[$item['teknik_key']]); ?>
-										<td class="align-middle p-1 <?= $is_last ? 'tahap-border-right' : '' ?>">
-											<input
-												type="text"
-												class="form-control form-control-sm text-center"
-												value="<?= esc($existing_scores[$mahasiswa['id']][$item['teknik_key']] ?? '') ?>"
-												readonly
-												disabled
-												style="min-width: 85px; background-color: #f8f9fa; cursor: not-allowed;">
+								<?php
+								// Get final scores for this student
+								$nilai_akhir = $final_scores_map[$mahasiswa['id']]['nilai_akhir'] ?? 0;
+								$nilai_huruf = $final_scores_map[$mahasiswa['id']]['nilai_huruf'] ?? '-';
+								$keterangan = $getKeterangan($nilai_huruf);
+
+								// Determine background class based on grade
+								$grade_class = '';
+								switch (strtoupper($nilai_huruf)) {
+									case 'A': $grade_class = 'grade-a'; break;
+									case 'AB': $grade_class = 'grade-ab'; break;
+									case 'B': $grade_class = 'grade-b'; break;
+									case 'BC': $grade_class = 'grade-bc'; break;
+									case 'C': $grade_class = 'grade-c'; break;
+									case 'D': $grade_class = 'grade-d'; break;
+									case 'E': $grade_class = 'grade-e'; break;
+								}
+								?>
+								<tr>
+									<td><?= $index + 1 ?></td>
+									<td><?= esc($mahasiswa['nim']) ?></td>
+									<td class="left"><?= esc($mahasiswa['nama_lengkap']) ?></td>
+									<?php foreach ($combined_list as $item): ?>
+										<td>
+											<?php
+											$score = $existing_scores[$mahasiswa['id']][$item['teknik_key']] ?? '';
+											echo $score !== '' ? number_format($score, 2) : '-';
+											?>
 										</td>
 									<?php endforeach; ?>
+									<td class="<?= $grade_class ?>">
+										<?= number_format($nilai_akhir, 2) ?>
+									</td>
+									<td class="<?= $grade_class ?>">
+										<strong><?= esc($nilai_huruf) ?></strong>
+									</td>
+									<td class="<?= $grade_class ?>">
+										<?= esc($keterangan) ?>
+									</td>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
@@ -330,72 +292,80 @@
 
 <?= $this->section('css') ?>
 <style>
-	.sticky-top {
-		position: sticky;
-		top: 0;
-		z-index: 1020;
-	}
-
 	.table-responsive {
 		border: 1px solid #dee2e6;
-		border-radius: 0;
-		overflow-x: auto !important;
-		overflow-y: auto !important;
+		overflow-x: auto;
+		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
-		width: 100%;
-		max-width: 100%;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 
-	/* Prevent table from expanding container */
 	#nilaiTable {
-		width: max-content;
-		max-width: none;
+		width: 100%;
+		border-collapse: collapse;
+		background-color: #fff;
 	}
 
-	/* Sticky first columns for better UX */
-	#nilaiTable thead th:nth-child(1),
-	#nilaiTable thead th:nth-child(2),
-	#nilaiTable thead th:nth-child(3),
-	#nilaiTable tbody td:nth-child(1),
-	#nilaiTable tbody td:nth-child(2),
-	#nilaiTable tbody td:nth-child(3) {
+	/* Table header styling */
+	#nilaiTable thead th {
+		background-color: #2c3e50;
+		color: white;
+		padding: 12px;
+		text-align: center;
+		font-weight: bold;
+		border: 1px solid #34495e;
+		vertical-align: middle;
 		position: sticky;
-		background-color: white;
+		top: 0;
 		z-index: 10;
 	}
 
-	#nilaiTable thead th:nth-child(1),
-	#nilaiTable tbody td:nth-child(1) {
-		left: 0;
+	/* Table cell styling */
+	#nilaiTable tbody td {
+		padding: 10px;
+		border: 1px solid #ddd;
+		text-align: center;
+		vertical-align: middle;
 	}
 
-	#nilaiTable thead th:nth-child(2),
-	#nilaiTable tbody td:nth-child(2) {
-		left: 60px;
+	#nilaiTable tbody td.left {
+		text-align: left;
 	}
 
-	#nilaiTable thead th:nth-child(3),
-	#nilaiTable tbody td:nth-child(3) {
-		left: 190px;
+	/* Zebra striping for rows */
+	#nilaiTable tbody tr:nth-child(even) {
+		background-color: #f9f9f9;
 	}
 
-	#nilaiTable thead th {
-		z-index: 20;
-		background-color: #212529;
+	#nilaiTable tbody tr:hover {
+		background-color: #f0f0f0;
 	}
 
-	#nilaiTable tbody tr:nth-of-type(even) td:nth-child(-n+3) {
-		background-color: rgba(0, 0, 0, 0.05);
+	/* Grade color coding - consistent with DPNA */
+	.grade-a {
+		background-color: #d4edda !important;
+		font-weight: bold;
 	}
-
-	.card {
-		transition: all 0.3s ease;
+	.grade-ab {
+		background-color: #d1ecf1 !important;
 	}
-
-	/* Border to separate tahap penilaian groups */
-	#nilaiTable th.tahap-border-right,
-	#nilaiTable td.tahap-border-right {
-		border-right: 4px solid #ffc107 !important;
+	.grade-b {
+		background-color: #fff3cd !important;
+	}
+	.grade-bc {
+		background-color: #ffe0b2 !important;
+	}
+	.grade-c {
+		background-color: #f8d7da !important;
+	}
+	.grade-d {
+		background-color: #f5c6cb !important;
+		font-weight: bold;
+	}
+	.grade-e {
+		background-color: #f8d7da !important;
+		font-weight: bold;
+		color: #721c24;
 	}
 
 	/* Ensure body doesn't scroll horizontally */
@@ -408,17 +378,21 @@
 			max-height: 60vh;
 		}
 	}
+
+	@media print {
+		.table-responsive {
+			overflow: visible !important;
+			max-height: none !important;
+			box-shadow: none;
+			border: 1px solid #ddd;
+		}
+
+		#nilaiTable thead th {
+			position: static;
+		}
+	}
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		// Initialize tooltips
-		var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-		var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-			return new bootstrap.Tooltip(tooltipTriggerEl);
-		});
-	});
-</script>
 <?= $this->endSection() ?>

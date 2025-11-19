@@ -1721,6 +1721,7 @@ class Nilai extends BaseController
 		$jadwalModel = new MengajarModel();
 		$mahasiswaModel = new MahasiswaModel();
 		$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
 
 		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
 		if (!$jadwal) {
@@ -1774,6 +1775,13 @@ class Nilai extends BaseController
 		// Get existing scores to display
 		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
 
+		// Get final scores (nilai akhir and nilai huruf)
+		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
+		$final_scores_map = [];
+		foreach ($final_scores as $score) {
+			$final_scores_map[$score['mahasiswa_id']] = $score;
+		}
+
 		$data = [
 			'title' => 'Lihat Nilai',
 			'jadwal' => $jadwal,
@@ -1781,6 +1789,7 @@ class Nilai extends BaseController
 			'combined_list' => $combined_data['combined_list'],
 			'teknik_by_tahap' => $combined_data['by_tahap'],
 			'existing_scores' => $existing_scores,
+			'final_scores_map' => $final_scores_map,
 			'readonly' => true, // Flag to indicate read-only mode
 		];
 
@@ -1810,31 +1819,20 @@ class Nilai extends BaseController
 		// Get existing scores
 		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
 
-		// Get combined teknik data to calculate weights
+		// Get combined teknik data to get all available techniques and weights
 		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
 
-		// Calculate weights for Tugas, UTS, and UAS
-		// Also create a weight map for weighted calculation
-		$tugas_weight = 0;
-		$uts_weight = 0;
-		$uas_weight = 0;
+		// Build a map of all available techniques with their weights and labels
+		$teknik_list = [];
 		$teknik_weight_map = [];
 
 		foreach ($combined_data['combined_list'] as $item) {
 			$teknik_key = $item['teknik_key'];
-			$weight = $item['total_bobot'];
-
-			// Store weight for this technique
-			$teknik_weight_map[$teknik_key] = $weight;
-
-			if ($teknik_key === 'tes_tulis_uts') {
-				$uts_weight += $weight;
-			} elseif ($teknik_key === 'tes_tulis_uas') {
-				$uas_weight += $weight;
-			} else {
-				// All other techniques count as "Tugas"
-				$tugas_weight += $weight;
-			}
+			$teknik_list[$teknik_key] = [
+				'label' => $item['teknik_label'],
+				'weight' => $item['total_bobot']
+			];
+			$teknik_weight_map[$teknik_key] = $item['total_bobot'];
 		}
 
 		// Get final scores (nilai akhir and nilai huruf)
@@ -1859,50 +1857,32 @@ class Nilai extends BaseController
 		foreach ($students as $student) {
 			$mahasiswa_id = $student['id'];
 
-			// Calculate Tugas using WEIGHTED AVERAGE (all teknik except UTS and UAS)
-			$tugas_weighted_sum = 0;
-			$tugas_total_weight = 0;
-			$uts_score = 0;
-			$uas_score = 0;
+			// Initialize row with basic data
+			$row = [
+				'no' => $no++,
+				'nim' => $student['nim'],
+				'nama' => $student['nama_lengkap']
+			];
 
-			if (isset($existing_scores[$mahasiswa_id])) {
-				foreach ($existing_scores[$mahasiswa_id] as $teknik_key => $nilai) {
-					if ($nilai !== null && $nilai !== '') {
-						if ($teknik_key === 'tes_tulis_uts') {
-							$uts_score = $nilai;
-						} elseif ($teknik_key === 'tes_tulis_uas') {
-							$uas_score = $nilai;
-						} else {
-							// All other techniques count as "Tugas" - use weighted calculation
-							$weight = $teknik_weight_map[$teknik_key] ?? 0;
-							if ($weight > 0) {
-								$tugas_weighted_sum += ($nilai * $weight);
-								$tugas_total_weight += $weight;
-							}
-						}
-					}
+			// Add scores for each teknik penilaian
+			foreach ($teknik_list as $teknik_key => $teknik_info) {
+				$score = 0;
+				if (isset($existing_scores[$mahasiswa_id][$teknik_key])) {
+					$score = $existing_scores[$mahasiswa_id][$teknik_key];
 				}
+				$row['teknik_' . $teknik_key] = $score;
 			}
-
-			// Calculate weighted average for Tugas
-			$tugas_avg = $tugas_total_weight > 0 ? round($tugas_weighted_sum / $tugas_total_weight, 2) : 0;
 
 			// Get nilai akhir and nilai huruf
 			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
 			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
 			$keterangan = $getKeterangan($nilai_huruf);
 
-			$dpna_data[] = [
-				'no' => $no++,
-				'nim' => $student['nim'],
-				'nama' => $student['nama_lengkap'],
-				'tugas' => $tugas_avg,
-				'uts' => $uts_score,
-				'uas' => $uas_score,
-				'nilai_akhir' => $nilai_akhir,
-				'nilai_huruf' => $nilai_huruf,
-				'keterangan' => $keterangan
-			];
+			$row['nilai_akhir'] = $nilai_akhir;
+			$row['nilai_huruf'] = $nilai_huruf;
+			$row['keterangan'] = $keterangan;
+
+			$dpna_data[] = $row;
 		}
 
 		// Get NIP of dosen ketua
@@ -1920,11 +1900,7 @@ class Nilai extends BaseController
 			'title' => 'DPNA - ' . $jadwal['nama_mk'],
 			'jadwal' => $jadwal,
 			'dpna_data' => $dpna_data,
-			'weights' => [
-				'tugas' => round($tugas_weight, 1),
-				'uts' => round($uts_weight, 1),
-				'uas' => round($uas_weight, 1)
-			],
+			'teknik_list' => $teknik_list,
 			'nip' => $nip
 		];
 
@@ -1953,27 +1929,20 @@ class Nilai extends BaseController
 		// Get existing scores
 		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
 
-		// Get combined teknik data to calculate weights
+		// Get combined teknik data to get all available techniques and weights
 		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
 
-		// Calculate weights for Tugas, UTS, and UAS
-		$tugas_weight = 0;
-		$uts_weight = 0;
-		$uas_weight = 0;
+		// Build a map of all available techniques with their weights and labels
+		$teknik_list = [];
 		$teknik_weight_map = [];
 
 		foreach ($combined_data['combined_list'] as $item) {
 			$teknik_key = $item['teknik_key'];
-			$weight = $item['total_bobot'];
-			$teknik_weight_map[$teknik_key] = $weight;
-
-			if ($teknik_key === 'tes_tulis_uts') {
-				$uts_weight += $weight;
-			} elseif ($teknik_key === 'tes_tulis_uas') {
-				$uas_weight += $weight;
-			} else {
-				$tugas_weight += $weight;
-			}
+			$teknik_list[$teknik_key] = [
+				'label' => $item['teknik_label'],
+				'weight' => $item['total_bobot']
+			];
+			$teknik_weight_map[$teknik_key] = $item['total_bobot'];
 		}
 
 		// Get final scores
@@ -1998,45 +1967,32 @@ class Nilai extends BaseController
 		foreach ($students as $student) {
 			$mahasiswa_id = $student['id'];
 
-			$tugas_weighted_sum = 0;
-			$tugas_total_weight = 0;
-			$uts_score = 0;
-			$uas_score = 0;
+			// Initialize row with basic data
+			$row = [
+				'no' => $no++,
+				'nim' => $student['nim'],
+				'nama' => $student['nama_lengkap']
+			];
 
-			if (isset($existing_scores[$mahasiswa_id])) {
-				foreach ($existing_scores[$mahasiswa_id] as $teknik_key => $nilai) {
-					if ($nilai !== null && $nilai !== '') {
-						if ($teknik_key === 'tes_tulis_uts') {
-							$uts_score = $nilai;
-						} elseif ($teknik_key === 'tes_tulis_uas') {
-							$uas_score = $nilai;
-						} else {
-							$weight = $teknik_weight_map[$teknik_key] ?? 0;
-							if ($weight > 0) {
-								$tugas_weighted_sum += ($nilai * $weight);
-								$tugas_total_weight += $weight;
-							}
-						}
-					}
+			// Add scores for each teknik penilaian
+			foreach ($teknik_list as $teknik_key => $teknik_info) {
+				$score = 0;
+				if (isset($existing_scores[$mahasiswa_id][$teknik_key])) {
+					$score = $existing_scores[$mahasiswa_id][$teknik_key];
 				}
+				$row['teknik_' . $teknik_key] = $score;
 			}
 
-			$tugas_avg = $tugas_total_weight > 0 ? round($tugas_weighted_sum / $tugas_total_weight, 2) : 0;
+			// Get nilai akhir and nilai huruf
 			$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
 			$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
 			$keterangan = $getKeterangan($nilai_huruf);
 
-			$dpna_data[] = [
-				'no' => $no++,
-				'nim' => $student['nim'],
-				'nama' => $student['nama_lengkap'],
-				'tugas' => $tugas_avg,
-				'uts' => $uts_score,
-				'uas' => $uas_score,
-				'nilai_akhir' => $nilai_akhir,
-				'nilai_huruf' => $nilai_huruf,
-				'keterangan' => $keterangan
-			];
+			$row['nilai_akhir'] = $nilai_akhir;
+			$row['nilai_huruf'] = $nilai_huruf;
+			$row['keterangan'] = $keterangan;
+
+			$dpna_data[] = $row;
 		}
 
 		// Create Excel file using PhpSpreadsheet
@@ -2076,28 +2032,45 @@ class Nilai extends BaseController
 		// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
 		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
 
+		// Helper function to convert column index to Excel column letter
+		$getColumnLetter = function($index) {
+			$letter = '';
+			while ($index >= 0) {
+				$letter = chr($index % 26 + 65) . $letter;
+				$index = floor($index / 26) - 1;
+			}
+			return $letter;
+		};
+
+		// Calculate the last column for dynamic layout
+		// Columns: No, NIM, Nama, [teknik_list], Nilai Akhir (Angka), Nilai Akhir (Huruf), Keterangan
+		$totalColumns = 3 + count($teknik_list) + 3; // 3 basic + teknik + 3 final columns
+		$keteranganColIndex = $totalColumns - 1;
+		$lastColLetter = $getColumnLetter($keteranganColIndex);
+		$beforeLastColLetter = $getColumnLetter($keteranganColIndex - 1);
+
 		// Set header - Ministry text (in same row as logo)
 		$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
 		$sheet->setCellValue('B1', $header_text);
-		$sheet->mergeCells('B1:H1');
+		$sheet->mergeCells('B1:' . $beforeLastColLetter . '1');
 		$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
 		$sheet->getStyle('B1')->getAlignment()
 			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
 			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
 			->setWrapText(true);
 
-		// Set DPNA and Semester info on the right side (column I)
+		// Set DPNA and Semester info on the right side (last column)
 		$dpna_text = "DPNA\nSemester " . $semester_type . " " . $tahun;
-		$sheet->setCellValue('I1', $dpna_text);
-		$sheet->getStyle('I1')->getFont()->setBold(true)->setSize(15);
-		$sheet->getStyle('I1')->getAlignment()
+		$sheet->setCellValue($lastColLetter . '1', $dpna_text);
+		$sheet->getStyle($lastColLetter . '1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle($lastColLetter . '1')->getAlignment()
 			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
 			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
 			->setWrapText(true);
 
 		// University text (row 2)
 		$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
-		$sheet->mergeCells('B2:H2');
+		$sheet->mergeCells('B2:' . $beforeLastColLetter . '2');
 		$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
 		$sheet->getStyle('B2')->getAlignment()
 			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
@@ -2120,35 +2093,42 @@ class Nilai extends BaseController
 		// Table header - First row
 		$row += 2;
 		$headerRow = $row;
-		$sheet->setCellValue('A' . $row, 'No');
-		$sheet->setCellValue('B' . $row, 'NIM');
-		$sheet->setCellValue('C' . $row, 'Nama');
-		$tugas_text = "Tugas \n(" . round($tugas_weight, 1) . '%)';
-		$sheet->setCellValue('D' . $row, $tugas_text);
-		$uts_text = "UTS \n(" . round($uts_weight, 1) . '%)';
-		$sheet->setCellValue('E' . $row, $uts_text);
-		$uas_text = "UAS \n(" . round($uas_weight, 1) . '%)';
-		$sheet->setCellValue('F' . $row, $uas_text);
-		$sheet->setCellValue('G' . $row, 'Nilai Akhir');
-		$sheet->mergeCells('G' . $row . ':H' . $row);
-		$sheet->setCellValue('I' . $row, 'Keterangan');
 
-		// Merge cells vertically for columns that span both header rows
+		$col = 0;
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'No');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'NIM');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nama');
+
+		// Merge cells for basic columns (No, NIM, Nama)
 		$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
 		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
 		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
-		$sheet->mergeCells('D' . $row . ':D' . ($row + 1));
-		$sheet->mergeCells('E' . $row . ':E' . ($row + 1));
-		$sheet->mergeCells('F' . $row . ':F' . ($row + 1));
-		$sheet->mergeCells('I' . $row . ':I' . ($row + 1));
+
+		// Add dynamic teknik penilaian columns
+		foreach ($teknik_list as $teknik_key => $teknik_info) {
+			$colLetter = $getColumnLetter($col);
+			$teknik_text = $teknik_info['label'] . "\n(" . number_format($teknik_info['weight'], 1) . '%)';
+			$sheet->setCellValue($colLetter . $row, $teknik_text);
+			$sheet->mergeCells($colLetter . $row . ':' . $colLetter . ($row + 1));
+			$col++;
+		}
+
+		// Nilai Akhir columns (merged header)
+		$nilaiAkhirStartCol = $col;
+		$sheet->setCellValue($getColumnLetter($col) . $row, 'Nilai Akhir');
+		$sheet->mergeCells($getColumnLetter($col) . $row . ':' . $getColumnLetter($col + 1) . $row);
+
+		// Keterangan column (using pre-calculated index)
+		$sheet->setCellValue($lastColLetter . $row, 'Keterangan');
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . ($row + 1));
 
 		// Second header row - Sub-headers for Nilai Akhir
 		$row++;
-		$sheet->setCellValue('G' . $row, 'Angka');
-		$sheet->setCellValue('H' . $row, 'Huruf');
+		$sheet->setCellValue($getColumnLetter($nilaiAkhirStartCol) . $row, 'Angka');
+		$sheet->setCellValue($getColumnLetter($nilaiAkhirStartCol + 1) . $row, 'Huruf');
 
 		// Style both header rows
-		$headerStyle = $sheet->getStyle('A' . $headerRow . ':I' . $row);
+		$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $row);
 		$headerStyle->getFont()->setBold(true);
 		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 			->getStartColor()->setARGB('FF4472C4');
@@ -2160,32 +2140,38 @@ class Nilai extends BaseController
 		// Data rows
 		$row++;
 		foreach ($dpna_data as $data) {
-			$sheet->setCellValue('A' . $row, $data['no']);
-			$sheet->setCellValue('B' . $row, $data['nim']);
-			$sheet->setCellValue('C' . $row, $data['nama']);
-			$sheet->setCellValue('D' . $row, $data['tugas']);
-			$sheet->setCellValue('E' . $row, $data['uts']);
-			$sheet->setCellValue('F' . $row, $data['uas']);
+			$col = 0;
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['no']);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nim']);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nama']);
 
-			// Add background color to cells D, E, F
-			$sheet->getStyle('D' . $row . ':F' . $row)->getFill()
+			// Add teknik penilaian scores
+			$teknikColStart = $col;
+			foreach ($teknik_list as $teknik_key => $teknik_info) {
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['teknik_' . $teknik_key]);
+			}
+			$teknikColEnd = $col - 1;
+
+			// Add background color to teknik penilaian cells
+			$sheet->getStyle($getColumnLetter($teknikColStart) . $row . ':' . $getColumnLetter($teknikColEnd) . $row)->getFill()
 				->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
 				->getStartColor()->setARGB('FFFFFF00'); // Light yellow
 
-			$sheet->setCellValue('G' . $row, $data['nilai_akhir']);
-			$sheet->setCellValue('H' . $row, $data['nilai_huruf']);
-			$sheet->setCellValue('I' . $row, $data['keterangan']);
+			// Add nilai akhir
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nilai_akhir']);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nilai_huruf']);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['keterangan']);
 
 			// Center align for numeric columns
 			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-			$sheet->getStyle('D' . $row . ':I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle($getColumnLetter($teknikColStart) . $row . ':' . $lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
 			$row++;
 		}
 
 		// Add borders to table
 		$lastRow = $row - 1;
-		$sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->applyFromArray([
+		$sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $lastRow)->applyFromArray([
 			'borders' => [
 				'allBorders' => [
 					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -2195,8 +2181,8 @@ class Nilai extends BaseController
 		]);
 
 		// Auto-size columns
-		foreach (range('A', 'I') as $col) {
-			$sheet->getColumnDimension($col)->setAutoSize(true);
+		for ($i = 0; $i <= $keteranganColIndex; $i++) {
+			$sheet->getColumnDimension($getColumnLetter($i))->setAutoSize(true);
 		}
 
 		// Get NIP of dosen ketua
@@ -2214,39 +2200,39 @@ class Nilai extends BaseController
 		$row = $lastRow + 3; // Add some space after the table
 
 		// Date and location on the right side
-		$sheet->setCellValue('I' . $row, 'Palangka Raya, ' . date('d F Y'));
-		$sheet->mergeCells('I' . $row . ':I' . $row);
-		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->setCellValue($lastColLetter . $row, 'Palangka Raya, ' . date('d F Y'));
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		$row++;
 
 		// Mengetahui
-		$sheet->setCellValue('I' . $row, 'Mengetahui');
-		$sheet->mergeCells('I' . $row . ':I' . $row);
-		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->setCellValue($lastColLetter . $row, 'Mengetahui');
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		$row++;
 
 		// Title
-		$sheet->setCellValue('I' . $row, 'Dosen Koordinator Mata Kuliah');
-		$sheet->mergeCells('I' . $row . ':I' . $row);
-		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->setCellValue($lastColLetter . $row, 'Dosen Koordinator Mata Kuliah');
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		// Add empty rows for signature space
 		$row += 4;
 
 		// Dosen name
-		$sheet->setCellValue('I' . $row, $jadwal['dosen_ketua']);
-		$sheet->mergeCells('I' . $row . ':I' . $row);
-		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
-		$sheet->getStyle('I' . $row)->getFont()->setBold(true);
+		$sheet->setCellValue($lastColLetter . $row, $jadwal['dosen_ketua']);
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->getStyle($lastColLetter . $row)->getFont()->setBold(true);
 
 		$row++;
 
 		// NIP line
-		$sheet->setCellValue('I' . $row, 'NIP. ' . $nip);
-		$sheet->mergeCells('I' . $row . ':I' . $row);
-		$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$sheet->setCellValue($lastColLetter . $row, 'NIP. ' . $nip);
+		$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		// Set filename
 		$filename = 'DPNA_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
@@ -2264,8 +2250,9 @@ class Nilai extends BaseController
 
 	/**
 	 * Import scores from Excel file (DPNA format)
-	 * Accepts Excel file with columns: No, NIM, Nama, Tugas, UTS, UAS
-	 * Maps back to individual teknik_penilaian scores
+	 * Accepts Excel file with columns: No, NIM, Nama, [Individual Teknik Penilaian columns], Nilai Akhir, etc.
+	 * Each teknik penilaian (e.g., Partisipasi, Observasi, UTS, UAS, etc.) is imported separately
+	 * Maps to individual teknik_penilaian scores in the database
 	 */
 	public function importNilaiExcel($jadwal_id)
 	{
@@ -2335,7 +2322,7 @@ class Nilai extends BaseController
 			$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
 			$sheet = $spreadsheet->getActiveSheet();
 
-			// Find the header row (should contain "NIM", "Tugas", "UTS", "UAS")
+			// Find the header row (should contain "NIM")
 			$headerRow = null;
 			$highestRow = $sheet->getHighestRow();
 
@@ -2354,28 +2341,82 @@ class Nilai extends BaseController
 				]);
 			}
 
-			// Get column indices for Tugas, UTS, UAS
-			$columns = [];
-			$columnLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+			// Get combined teknik data to identify available techniques
+			$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+			$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
 
-			foreach ($columnLetters as $letter) {
-				$headerValue = strtoupper(trim($sheet->getCell($letter . $headerRow)->getValue()));
-				if (strpos($headerValue, 'NIM') !== false) {
-					$columns['nim'] = $letter;
-				} elseif (strpos($headerValue, 'TUGAS') !== false) {
-					$columns['tugas'] = $letter;
-				} elseif (strpos($headerValue, 'UTS') !== false) {
-					$columns['uts'] = $letter;
-				} elseif (strpos($headerValue, 'UAS') !== false) {
-					$columns['uas'] = $letter;
+			// Build mapping of available techniques with their labels
+			$teknik_list = [];
+			$teknik_mapping = [];
+			foreach ($combined_data['combined_list'] as $item) {
+				$teknik_key = $item['teknik_key'];
+				$teknik_label = strtoupper(trim($item['teknik_label']));
+				$teknik_list[$teknik_key] = [
+					'label' => $teknik_label,
+					'rps_mingguan_ids' => $item['rps_mingguan_ids']
+				];
+				$teknik_mapping[$teknik_label] = $teknik_key;
+			}
+
+			// Helper function to convert column index to Excel column letter
+			$getColumnLetter = function($index) {
+				$letter = '';
+				$index++; // Excel columns are 1-based
+				while ($index > 0) {
+					$index--;
+					$letter = chr($index % 26 + 65) . $letter;
+					$index = floor($index / 26);
+				}
+				return $letter;
+			};
+
+			// Scan header row to find NIM and all teknik penilaian columns
+			$columns = [];
+			$highestColumn = $sheet->getHighestColumn();
+			$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+
+			for ($col = 1; $col <= $highestColumnIndex; $col++) {
+				$colLetter = $getColumnLetter($col - 1);
+				$headerValue = strtoupper(trim($sheet->getCell($colLetter . $headerRow)->getValue()));
+
+				// Remove only the weight percentage from header (e.g., "TES TULIS (UTS) (20%)" -> "TES TULIS (UTS)")
+				// Only removes patterns like (20%), (15.5%), etc., not descriptive text like (UTS) or (PRAKTEK / TUGAS)
+				$headerValue = preg_replace('/\s*\(\s*\d+\.?\d*\s*%\s*\)\s*$/', '', $headerValue);
+				$headerValue = trim($headerValue);
+
+				if ($headerValue === 'NIM') {
+					$columns['nim'] = $colLetter;
+				} elseif (isset($teknik_mapping[$headerValue])) {
+					// Map column to teknik_key
+					$teknik_key = $teknik_mapping[$headerValue];
+					$columns['teknik_' . $teknik_key] = $colLetter;
 				}
 			}
 
-			// Validate required columns
-			if (!isset($columns['nim']) || !isset($columns['tugas']) || !isset($columns['uts']) || !isset($columns['uas'])) {
+			// Validate that NIM column exists
+			if (!isset($columns['nim'])) {
 				return $this->response->setJSON([
 					'status' => 'error',
-					'message' => 'Format file tidak sesuai. Kolom yang diperlukan: NIM, Tugas, UTS, UAS.'
+					'message' => 'Format file tidak sesuai. Kolom NIM tidak ditemukan.'
+				]);
+			}
+
+			// Check if at least one teknik penilaian column is found
+			$found_teknik_count = 0;
+			foreach (array_keys($columns) as $key) {
+				if (strpos($key, 'teknik_') === 0) {
+					$found_teknik_count++;
+				}
+			}
+
+			if ($found_teknik_count === 0) {
+				$available_labels = [];
+				foreach ($teknik_list as $info) {
+					$available_labels[] = $info['label'];
+				}
+				return $this->response->setJSON([
+					'status' => 'error',
+					'message' => 'Format file tidak sesuai. Tidak ada kolom teknik penilaian yang ditemukan. Kolom yang tersedia: ' . implode(', ', $available_labels) . '.'
 				]);
 			}
 
@@ -2388,29 +2429,6 @@ class Nilai extends BaseController
 			$nimToId = [];
 			foreach ($students as $student) {
 				$nimToId[$student['nim']] = $student['id'];
-			}
-
-			// Get combined teknik data to map scores
-			$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
-			$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
-
-			// Build mapping: technique type => [rps_mingguan_ids]
-			$tugas_mapping = [];
-			$uts_mapping = [];
-			$uas_mapping = [];
-
-			foreach ($combined_data['combined_list'] as $item) {
-				$teknik_key = $item['teknik_key'];
-				$rps_ids = $item['rps_mingguan_ids'];
-
-				if ($teknik_key === 'tes_tulis_uts') {
-					$uts_mapping = $rps_ids;
-				} elseif ($teknik_key === 'tes_tulis_uas') {
-					$uas_mapping = $rps_ids;
-				} else {
-					// All other techniques are "Tugas"
-					$tugas_mapping[$teknik_key] = $rps_ids;
-				}
 			}
 
 			// Parse data rows
@@ -2435,65 +2453,59 @@ class Nilai extends BaseController
 				}
 
 				$mahasiswa_id = $nimToId[$nim];
-				$tugas = $sheet->getCell($columns['tugas'] . $row)->getValue();
-				$uts = $sheet->getCell($columns['uts'] . $row)->getValue();
-				$uas = $sheet->getCell($columns['uas'] . $row)->getValue();
+				$hasValidScore = false;
 
-				// Validate scores (0-100)
-				$tugas = is_numeric($tugas) ? floatval($tugas) : null;
-				$uts = is_numeric($uts) ? floatval($uts) : null;
-				$uas = is_numeric($uas) ? floatval($uas) : null;
+				// Read and validate scores for each teknik penilaian
+				$teknik_scores = [];
+				foreach ($columns as $col_key => $col_letter) {
+					// Skip non-teknik columns
+					if (strpos($col_key, 'teknik_') !== 0) {
+						continue;
+					}
 
-				if ($tugas !== null && ($tugas < 0 || $tugas > 100)) {
-					$errors[] = "Baris $row (NIM $nim): Nilai Tugas tidak valid ($tugas). Harus antara 0-100.";
+					// Extract teknik_key from col_key (e.g., "teknik_tes_tulis_uts" -> "tes_tulis_uts")
+					$teknik_key = substr($col_key, 7);
+
+					// Get the score value
+					$score_value = $sheet->getCell($col_letter . $row)->getValue();
+					$score = is_numeric($score_value) ? floatval($score_value) : null;
+
+					// Validate score range
+					if ($score !== null) {
+						if ($score < 0 || $score > 100) {
+							$teknik_label = $teknik_list[$teknik_key]['label'] ?? $teknik_key;
+							$errors[] = "Baris $row (NIM $nim): Nilai $teknik_label tidak valid ($score). Harus antara 0-100.";
+							continue 2; // Skip this student entirely
+						}
+						$hasValidScore = true;
+					}
+
+					$teknik_scores[$teknik_key] = $score;
+				}
+
+				// Skip if no valid scores found
+				if (!$hasValidScore) {
 					continue;
 				}
-				if ($uts !== null && ($uts < 0 || $uts > 100)) {
-					$errors[] = "Baris $row (NIM $nim): Nilai UTS tidak valid ($uts). Harus antara 0-100.";
-					continue;
-				}
-				if ($uas !== null && ($uas < 0 || $uas > 100)) {
-					$errors[] = "Baris $row (NIM $nim): Nilai UAS tidak valid ($uas). Harus antara 0-100.";
-					continue;
-				}
 
-				// Save Tugas scores (distribute to all "Tugas" techniques)
-				foreach ($tugas_mapping as $teknik_key => $rps_ids) {
+				// Save scores for each teknik penilaian
+				foreach ($teknik_scores as $teknik_key => $score) {
+					// Skip if score is null (not provided)
+					if ($score === null) {
+						continue;
+					}
+
+					// Get rps_mingguan_ids for this teknik
+					$rps_ids = $teknik_list[$teknik_key]['rps_mingguan_ids'] ?? [];
+
+					// Save to each rps_mingguan entry
 					foreach ($rps_ids as $rps_info) {
 						$scoreData = [
 							'mahasiswa_id' => $mahasiswa_id,
 							'jadwal_mengajar_id' => $jadwal_id,
 							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
 							'teknik_penilaian_key' => $teknik_key,
-							'nilai' => $tugas,
-						];
-						$nilaiTeknikModel->saveOrUpdate($scoreData);
-					}
-				}
-
-				// Save UTS scores
-				if (!empty($uts_mapping)) {
-					foreach ($uts_mapping as $rps_info) {
-						$scoreData = [
-							'mahasiswa_id' => $mahasiswa_id,
-							'jadwal_mengajar_id' => $jadwal_id,
-							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
-							'teknik_penilaian_key' => 'tes_tulis_uts',
-							'nilai' => $uts,
-						];
-						$nilaiTeknikModel->saveOrUpdate($scoreData);
-					}
-				}
-
-				// Save UAS scores
-				if (!empty($uas_mapping)) {
-					foreach ($uas_mapping as $rps_info) {
-						$scoreData = [
-							'mahasiswa_id' => $mahasiswa_id,
-							'jadwal_mengajar_id' => $jadwal_id,
-							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
-							'teknik_penilaian_key' => 'tes_tulis_uas',
-							'nilai' => $uas,
+							'nilai' => $score,
 						];
 						$nilaiTeknikModel->saveOrUpdate($scoreData);
 					}

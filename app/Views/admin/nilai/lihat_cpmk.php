@@ -200,7 +200,7 @@
 					<p class="small">Silakan lengkapi RPS terlebih dahulu</p>
 				</div>
 			<?php else: ?>
-				<div class="table-responsive">
+				<div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
 					<table class="table table-bordered table-hover mb-0 align-middle">
 						<thead class="table-light sticky-header">
 							<tr>
@@ -208,7 +208,8 @@
 								<th class="sticky-col" rowspan="2" style="min-width: 150px;">NIM</th>
 								<th class="sticky-col" rowspan="2" style="min-width: 200px;">Nama Mahasiswa</th>
 								<th class="text-center" colspan="<?= count($cpmk_list) ?>">Nilai CPMK</th>
-								<th class="text-center" rowspan="2" style="width: 100px;">Nilai Akhir MK</th>
+								<th class="text-center" colspan="2" style="width: 150px;">Nilai Akhir</th>
+								<th class="text-center" rowspan="2" style="width: 100px;">Keterangan</th>
 							</tr>
 							<tr>
 								<?php foreach ($cpmk_list as $cpmk): ?>
@@ -231,6 +232,8 @@
 										<small class="text-muted">(<?= esc($cpmk['bobot_cpmk']) ?>%)</small>
 									</th>
 								<?php endforeach; ?>
+								<th class="text-center" style="width: 80px;">Angka</th>
+								<th class="text-center" style="width: 70px;">Huruf</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -280,13 +283,40 @@
 										</td>
 									<?php endforeach; ?>
 
-									<!-- Calculate sum -->
+									<!-- Calculate sum and grade -->
+									<?php
+									if (count($student_scores) > 0) {
+										$total = array_sum($student_scores);
+
+										// Use dynamic grade configuration from database
+										$gradeConfigModel = new \App\Models\GradeConfigModel();
+										$grade_data = $gradeConfigModel->getGradeByScore($total);
+
+										$nilai_huruf = $grade_data ? $grade_data['grade_letter'] : 'E';
+										$is_passing = $grade_data ? (bool)$grade_data['is_passing'] : false;
+										$keterangan = $is_passing ? 'Lulus' : 'Tidak Lulus';
+									}
+									?>
+									<!-- Nilai Akhir Angka -->
 									<td class="text-center">
 										<?php if (count($student_scores) > 0): ?>
-											<?php $total = array_sum($student_scores); ?>
-											<strong>
-												<?= number_format($total, 2) ?>
-											</strong>
+											<strong><?= number_format($total, 2) ?></strong>
+										<?php else: ?>
+											<span class="text-muted">-</span>
+										<?php endif; ?>
+									</td>
+									<!-- Nilai Akhir Huruf -->
+									<td class="text-center">
+										<?php if (count($student_scores) > 0): ?>
+											<strong><?= esc($nilai_huruf) ?></strong>
+										<?php else: ?>
+											<span class="text-muted">-</span>
+										<?php endif; ?>
+									</td>
+									<!-- Keterangan -->
+									<td class="text-center">
+										<?php if (count($student_scores) > 0): ?>
+											<?= esc($keterangan) ?>
 										<?php else: ?>
 											<span class="text-muted">-</span>
 										<?php endif; ?>
