@@ -149,6 +149,18 @@
 		</div>
 	<?php endif; ?>
 
+	<!-- Grade Distribution Chart -->
+	<?php if (!empty($mahasiswa_list) && !empty($combined_list)): ?>
+		<div class="card border-0 shadow-sm mb-4">
+			<div class="card-header bg-light py-3">
+				<h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Distribusi Nilai Huruf Mahasiswa</h5>
+			</div>
+			<div class="card-body">
+				<canvas id="gradeDistributionChart" style="max-height: 400px;"></canvas>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<div class="card border-0 shadow-sm" style="overflow: hidden;">
 		<div class="card-header bg-info text-white py-3">
 			<div class="d-flex justify-content-between align-items-center">
@@ -231,13 +243,27 @@
 								// Determine background class based on grade
 								$grade_class = '';
 								switch (strtoupper($nilai_huruf)) {
-									case 'A': $grade_class = 'grade-a'; break;
-									case 'AB': $grade_class = 'grade-ab'; break;
-									case 'B': $grade_class = 'grade-b'; break;
-									case 'BC': $grade_class = 'grade-bc'; break;
-									case 'C': $grade_class = 'grade-c'; break;
-									case 'D': $grade_class = 'grade-d'; break;
-									case 'E': $grade_class = 'grade-e'; break;
+									case 'A':
+										$grade_class = 'grade-a';
+										break;
+									case 'AB':
+										$grade_class = 'grade-ab';
+										break;
+									case 'B':
+										$grade_class = 'grade-b';
+										break;
+									case 'BC':
+										$grade_class = 'grade-bc';
+										break;
+									case 'C':
+										$grade_class = 'grade-c';
+										break;
+									case 'D':
+										$grade_class = 'grade-d';
+										break;
+									case 'E':
+										$grade_class = 'grade-e';
+										break;
 								}
 								?>
 								<tr>
@@ -297,7 +323,7 @@
 		overflow-x: auto;
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 
 	#nilaiTable {
@@ -346,22 +372,28 @@
 		background-color: #d4edda !important;
 		font-weight: bold;
 	}
+
 	.grade-ab {
 		background-color: #d1ecf1 !important;
 	}
+
 	.grade-b {
 		background-color: #fff3cd !important;
 	}
+
 	.grade-bc {
 		background-color: #ffe0b2 !important;
 	}
+
 	.grade-c {
 		background-color: #f8d7da !important;
 	}
+
 	.grade-d {
 		background-color: #f5c6cb !important;
 		font-weight: bold;
 	}
+
 	.grade-e {
 		background-color: #f8d7da !important;
 		font-weight: bold;
@@ -390,9 +422,174 @@
 		#nilaiTable thead th {
 			position: static;
 		}
+
+		canvas {
+			display: none !important;
+		}
+
+		.btn {
+			display: none !important;
+		}
 	}
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+<script>
+	// Prepare data for Grade Distribution Chart
+	<?php
+	// Calculate grade distribution from the existing data
+	$grade_distribution = [];
+	if (!empty($mahasiswa_list) && !empty($final_scores_map)) {
+		foreach ($mahasiswa_list as $mahasiswa) {
+			$nilai_huruf = $final_scores_map[$mahasiswa['id']]['nilai_huruf'] ?? null;
+			if ($nilai_huruf && $nilai_huruf !== '-') {
+				if (!isset($grade_distribution[$nilai_huruf])) {
+					$grade_distribution[$nilai_huruf] = 0;
+				}
+				$grade_distribution[$nilai_huruf]++;
+			}
+		}
+	}
+
+	// Get grade order from database
+	$gradeConfigModel = new \App\Models\GradeConfigModel();
+	$all_grades = $gradeConfigModel->orderBy('min_score', 'DESC')->findAll();
+	$grade_order = array_column($all_grades, 'grade_letter');
+
+	$sorted_grades = [];
+	foreach ($grade_order as $grade) {
+		if (isset($grade_distribution[$grade])) {
+			$sorted_grades[$grade] = $grade_distribution[$grade];
+		}
+	}
+	// Add any other grades not in the database configuration
+	foreach ($grade_distribution as $grade => $count) {
+		if (!in_array($grade, $grade_order)) {
+			$sorted_grades[$grade] = $count;
+		}
+	}
+
+	// Generate dynamic colors based on grade configuration
+	// Create a color map from grade data (green for high scores, red for low scores)
+	$grade_colors = [];
+	$total_grades = count($all_grades);
+	foreach ($all_grades as $index => $grade_config) {
+		// Calculate color position (0 = best grade, 1 = worst grade)
+		$position = $total_grades > 1 ? $index / ($total_grades - 1) : 0;
+
+		// Interpolate between green (good) and red (bad)
+		// Green: rgb(40, 167, 69), Yellow: rgb(255, 193, 7), Red: rgb(220, 53, 69)
+		if ($position < 0.5) {
+			// Green to Yellow
+			$factor = $position * 2;
+			$r = (int)(40 + ($factor * (255 - 40)));
+			$g = (int)(167 + ($factor * (193 - 167)));
+			$b = (int)(69 + ($factor * (7 - 69)));
+		} else {
+			// Yellow to Red
+			$factor = ($position - 0.5) * 2;
+			$r = (int)(255 + ($factor * (220 - 255)));
+			$g = (int)(193 + ($factor * (53 - 193)));
+			$b = (int)(7 + ($factor * (69 - 7)));
+		}
+
+		$grade_colors[$grade_config['grade_letter']] = "rgba($r, $g, $b, 0.8)";
+	}
+	?>
+
+	const gradeLabels = <?= json_encode(array_keys($sorted_grades)) ?>;
+	const gradeCounts = <?= json_encode(array_values($sorted_grades)) ?>;
+	const gradeColors = <?= json_encode($grade_colors) ?>;
+
+	// Grade Distribution Chart
+	const ctxGrade = document.getElementById('gradeDistributionChart');
+	if (ctxGrade && gradeLabels.length > 0) {
+		const backgroundColor = gradeLabels.map(grade => gradeColors[grade] || 'rgba(102, 126, 234, 0.8)');
+		const borderColor = gradeLabels.map(grade => {
+			const bgColor = gradeColors[grade] || 'rgba(102, 126, 234, 0.8)';
+			return bgColor.replace('0.8', '1');
+		});
+
+		new Chart(ctxGrade, {
+			type: 'bar',
+			data: {
+				labels: gradeLabels,
+				datasets: [{
+					label: 'Jumlah Mahasiswa',
+					data: gradeCounts,
+					backgroundColor: backgroundColor,
+					borderColor: borderColor,
+					borderWidth: 2,
+					borderRadius: 8
+				}]
+			},
+			plugins: [ChartDataLabels],
+			options: {
+				responsive: true,
+				maintainAspectRatio: true,
+				plugins: {
+					legend: {
+						display: false
+					},
+					title: {
+						display: true,
+						text: 'Distribusi Nilai Huruf Mahasiswa',
+						font: {
+							size: 16,
+							weight: 'bold'
+						}
+					},
+					datalabels: {
+						anchor: 'end',
+						align: 'top',
+						formatter: function(value, context) {
+							return value;
+						},
+						font: {
+							weight: 'bold',
+							size: 12
+						},
+						color: '#333'
+					}
+				},
+				scales: {
+					y: {
+						beginAtZero: true,
+						ticks: {
+							stepSize: 1,
+							callback: function(value) {
+								if (Number.isInteger(value)) {
+									return value;
+								}
+							}
+						},
+						title: {
+							display: true,
+							text: 'Jumlah Mahasiswa',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						}
+					},
+					x: {
+						title: {
+							display: true,
+							text: 'Nilai Huruf',
+							font: {
+								size: 14,
+								weight: 'bold'
+							}
+						}
+					}
+				}
+			}
+		});
+	}
+</script>
 <?= $this->endSection() ?>
