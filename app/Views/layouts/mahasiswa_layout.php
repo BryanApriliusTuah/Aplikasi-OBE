@@ -68,13 +68,13 @@
 					</a>
 				</li>
 
-				<li class="nav-item">
+				<!-- <li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'mahasiswa/jadwal' ? ' active' : '' ?>"
 						href="<?= base_url('mahasiswa/jadwal') ?>"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat jadwal kuliah Anda">
 						<i class="bi bi-calendar-event"></i> Jadwal Kuliah
 					</a>
-				</li>
+				</li> -->
 
 				<li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'mahasiswa/profil-cpl' ? ' active' : '' ?>"
@@ -84,13 +84,13 @@
 					</a>
 				</li>
 
-				<li class="nav-item">
+				<!-- <li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'mahasiswa/mbkm' ? ' active' : '' ?>"
 						href="<?= base_url('mahasiswa/mbkm') ?>"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat kegiatan MBKM Anda">
 						<i class="bi bi-backpack"></i> Kegiatan MBKM
 					</a>
-				</li>
+				</li> -->
 
 				<li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'mahasiswa/profil' ? ' active' : '' ?>"

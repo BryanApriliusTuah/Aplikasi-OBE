@@ -9,7 +9,7 @@
 
 <!-- Statistics Cards -->
 <div class="row g-4 mb-4">
-	<div class="col-md-3">
+	<div class="col-md-4">
 		<div class="card stat-card primary">
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center">
@@ -25,7 +25,7 @@
 		</div>
 	</div>
 
-	<div class="col-md-3">
+	<div class="col-md-4">
 		<div class="card stat-card success">
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center">
@@ -41,23 +41,7 @@
 		</div>
 	</div>
 
-	<div class="col-md-3">
-		<div class="card stat-card info">
-			<div class="card-body">
-				<div class="d-flex justify-content-between align-items-center">
-					<div>
-						<h6 class="text-muted mb-2">Rata-rata Nilai</h6>
-						<h2 class="mb-0"><?= number_format($avgNilai, 2) ?></h2>
-					</div>
-					<div class="text-info" style="font-size: 2.5rem;">
-						<i class="bi bi-graph-up-arrow"></i>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div class="col-md-3">
+	<div class="col-md-4">
 		<div class="card stat-card warning">
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center">

@@ -137,38 +137,6 @@
 					</tbody>
 				</table>
 			</div>
-
-			<!-- Summary Statistics -->
-			<div class="row mt-4">
-				<div class="col-md-12">
-					<div class="alert alert-info">
-						<div class="row">
-							<div class="col-md-3">
-								<strong><i class="bi bi-book"></i> Total Mata Kuliah:</strong><br>
-								<?= count($nilaiList) ?> Mata Kuliah
-							</div>
-							<div class="col-md-3">
-								<strong><i class="bi bi-check-circle"></i> SKS Lulus:</strong><br>
-								<?= $sksLulus ?> SKS
-							</div>
-							<div class="col-md-3">
-								<strong><i class="bi bi-graph-up"></i> IPK:</strong><br>
-								<?= $totalSks > 0 ? number_format($totalNilai / $totalSks, 2) : '0.00' ?>
-							</div>
-							<div class="col-md-3">
-								<strong><i class="bi bi-award"></i> Predikat:</strong><br>
-								<?php
-								$ipk = $totalSks > 0 ? $totalNilai / $totalSks : 0;
-								if ($ipk >= 3.51) echo '<span class="badge bg-success">Cum Laude</span>';
-								elseif ($ipk >= 3.00) echo '<span class="badge bg-primary">Sangat Memuaskan</span>';
-								elseif ($ipk >= 2.75) echo '<span class="badge bg-info">Memuaskan</span>';
-								else echo '<span class="badge bg-secondary">-</span>';
-								?>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
 		<?php endif; ?>
 	</div>
 </div>
