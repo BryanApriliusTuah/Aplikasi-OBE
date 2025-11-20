@@ -243,15 +243,82 @@ class MahasiswaController extends BaseController
 		$mahasiswaId = session('mahasiswa_id');
 		$db = \Config\Database::connect();
 
-		// Get all CPL with their values based on student's CPMK scores
-		$builder = $db->table('cpl');
-		$builder->select('cpl.*, 
-			COALESCE(AVG(ncm.nilai_cpmk), 0) as nilai_cpl');
-		$builder->join('cpl_cpmk cc', 'cpl.id = cc.cpl_id', 'left');
-		$builder->join('nilai_cpmk_mahasiswa ncm', 'cc.cpmk_id = ncm.cpmk_id AND ncm.mahasiswa_id = ' . $mahasiswaId, 'left');
-		$builder->groupBy('cpl.id');
-		$builder->orderBy('cpl.kode_cpl', 'ASC');
-		$cplList = $builder->get()->getResultArray();
+		// Get all CPL
+		$cplList = $db->table('cpl')
+			->orderBy('kode_cpl', 'ASC')
+			->get()
+			->getResultArray();
+
+		// Calculate CPL achievement for the student
+		// Formula: Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) * 100
+		$calculatedCplList = [];
+
+		foreach ($cplList as $cpl) {
+			// Get all CPMK linked to this CPL
+			$cpmkLinked = $db->table('cpl_cpmk')
+				->select('cpmk_id')
+				->where('cpl_id', $cpl['id'])
+				->get()
+				->getResultArray();
+
+			if (empty($cpmkLinked)) {
+				$cpl['nilai_cpl'] = 0;
+				$cpl['capaian_cpl'] = 0;
+				$calculatedCplList[] = $cpl;
+				continue;
+			}
+
+			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
+
+			// Get all nilai_cpmk for this student for these CPMK
+			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id')
+				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->where('ncm.mahasiswa_id', $mahasiswaId)
+				->whereIn('ncm.cpmk_id', $cpmkIds)
+				->get()
+				->getResultArray();
+
+			// Calculate CPL using formula:
+			// Nilai CPL = Σ(CPMK scores) - note: nilai_cpmk is already weighted (raw × bobot / 100)
+			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+			$nilaiCpl = 0;
+			$totalBobot = 0;
+
+			foreach ($nilaiList as $nilai) {
+				// Get bobot from rps_mingguan
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				$bobot = 0;
+				if ($rps) {
+					// Sum bobot across all weeks for this CPMK
+					$bobotResult = $db->table('rps_mingguan')
+						->selectSum('bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $nilai['cpmk_id'])
+						->get()
+						->getRowArray();
+
+					$bobot = $bobotResult['bobot'] ?? 0;
+				}
+
+				// Sum CPMK scores and bobot
+				if ($bobot > 0) {
+					$nilaiCpl += $nilai['nilai_cpmk'];
+					$totalBobot += $bobot;
+				}
+			}
+
+			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+			$cpl['nilai_cpl'] = round($nilaiCpl, 2);
+			$cpl['capaian_cpl'] = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+			$calculatedCplList[] = $cpl;
+		}
 
 		// Group by jenis_cpl
 		$cplByType = [
@@ -265,33 +332,32 @@ class MahasiswaController extends BaseController
 		$countCPL = 0;
 		$cplTercapai = 0;
 
-		foreach ($cplList as $cpl) {
-			$nilai = round($cpl['nilai_cpl'], 2);
-			$status = $nilai >= 70 ? 'Tercapai' : 'Progress';
+		foreach ($calculatedCplList as $cpl) {
+			$capaian = round($cpl['capaian_cpl'], 2);
 
 			$cplByType[$cpl['jenis_cpl']][] = [
+				'id' => $cpl['id'],
 				'kode' => $cpl['kode_cpl'],
 				'deskripsi' => $cpl['deskripsi'],
-				'nilai' => $nilai,
-				'status' => $status
+				'nilai' => $capaian
 			];
 
-			if ($nilai > 0) {
-				$totalNilai += $nilai;
+			if ($capaian > 0) {
+				$totalNilai += $capaian;
 				$countCPL++;
-				if ($status == 'Tercapai') {
+				if ($capaian >= 70) {
 					$cplTercapai++;
 				}
 			}
 		}
 
 		$avgCPL = $countCPL > 0 ? round($totalNilai / $countCPL, 2) : 0;
-		$totalCPLCount = count($cplList);
+		$totalCPLCount = count($calculatedCplList);
 		$percentComplete = $totalCPLCount > 0 ? round(($cplTercapai / $totalCPLCount) * 100) : 0;
 
 		$data = [
 			'title' => 'Profil CPL',
-			'cplList' => $cplList,
+			'cplList' => $calculatedCplList,
 			'cplByType' => $cplByType,
 			'avgCPL' => $avgCPL,
 			'cplTercapai' => $cplTercapai,
@@ -300,6 +366,199 @@ class MahasiswaController extends BaseController
 		];
 
 		return view('mahasiswa/profil_cpl', $data);
+	}
+
+	/**
+	 * Mahasiswa - Get CPL Detail (CPMK breakdown)
+	 */
+	public function getCplDetail()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+		}
+
+		$mahasiswaId = session('mahasiswa_id');
+		$cplId = $this->request->getGet('cpl_id');
+
+		if (!$cplId) {
+			return $this->response->setJSON(['success' => false, 'message' => 'CPL ID required']);
+		}
+
+		$db = \Config\Database::connect();
+
+		// Get CPL info
+		$cpl = $db->table('cpl')->where('id', $cplId)->get()->getRowArray();
+		if (!$cpl) {
+			return $this->response->setJSON(['success' => false, 'message' => 'CPL tidak ditemukan']);
+		}
+
+		// Get all CPMK linked to this CPL
+		$cpmkLinked = $db->table('cpl_cpmk')
+			->select('cpmk.id, cpmk.kode_cpmk, cpmk.deskripsi')
+			->join('cpmk', 'cpmk.id = cpl_cpmk.cpmk_id')
+			->where('cpl_cpmk.cpl_id', $cplId)
+			->orderBy('cpmk.kode_cpmk', 'ASC')
+			->get()
+			->getResultArray();
+
+		if (empty($cpmkLinked)) {
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => [],
+				'cpl' => $cpl,
+				'message' => 'Tidak ada CPMK yang terkait dengan CPL ini'
+			]);
+		}
+
+		// Get nilai for each CPMK
+		$detailData = [];
+		$totalNilaiCpl = 0;
+		$totalBobotCpl = 0;
+
+		foreach ($cpmkLinked as $cpmk) {
+			// Get all nilai_cpmk for this CPMK and mahasiswa (grouped by jadwal)
+			$nilaiCpmkList = $db->table('nilai_cpmk_mahasiswa')
+				->select('nilai_cpmk_mahasiswa.nilai_cpmk, nilai_cpmk_mahasiswa.jadwal_mengajar_id, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal_mengajar.mata_kuliah_id')
+				->join('jadwal_mengajar', 'jadwal_mengajar.id = nilai_cpmk_mahasiswa.jadwal_mengajar_id')
+				->join('mata_kuliah', 'mata_kuliah.id = jadwal_mengajar.mata_kuliah_id')
+				->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
+				->where('nilai_cpmk_mahasiswa.cpmk_id', $cpmk['id'])
+				->get()
+				->getResultArray();
+
+			// For each jadwal, get the teknik penilaian breakdown
+			$detailMk = [];
+			foreach ($nilaiCpmkList as $nilaiCpmk) {
+				$jadwalId = $nilaiCpmk['jadwal_mengajar_id'];
+
+				// Get rps_mingguan for this CPMK
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $nilaiCpmk['mata_kuliah_id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				$teknikBreakdown = [];
+				$totalWeighted = 0;
+				$totalBobot = 0;
+
+				if ($rps) {
+					// Get rps_mingguan entries for this CPMK
+					$rpsMingguanList = $db->table('rps_mingguan')
+						->select('id, teknik_penilaian, bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $cpmk['id'])
+						->get()
+						->getResultArray();
+
+					$teknikLabels = [
+						'partisipasi' => 'Partisipasi',
+						'observasi' => 'Observasi',
+						'unjuk_kerja' => 'Unjuk Kerja',
+						'proyek' => 'Proyek',
+						'tes_tulis_uts' => 'UTS',
+						'tes_tulis_uas' => 'UAS',
+						'tes_lisan' => 'Tes Lisan'
+					];
+
+					foreach ($rpsMingguanList as $rpsMingguan) {
+						$teknikData = json_decode($rpsMingguan['teknik_penilaian'], true);
+
+						if (is_array($teknikData)) {
+							foreach ($teknikData as $teknikKey => $bobot) {
+								if ($bobot > 0) {
+									// Get the score for this teknik
+									$nilaiTeknik = $db->table('nilai_teknik_penilaian')
+										->select('nilai')
+										->where('mahasiswa_id', $mahasiswaId)
+										->where('jadwal_mengajar_id', $jadwalId)
+										->where('rps_mingguan_id', $rpsMingguan['id'])
+										->where('teknik_penilaian_key', $teknikKey)
+										->get()
+										->getRowArray();
+
+									$score = $nilaiTeknik['nilai'] ?? 0;
+									$weighted = ($score * $bobot) / 100;
+									$totalWeighted += $weighted;
+									$totalBobot += $bobot;
+
+									$teknikBreakdown[] = [
+										'teknik' => $teknikLabels[$teknikKey] ?? $teknikKey,
+										'bobot' => $bobot,
+										'nilai' => $score,
+										'weighted' => round($weighted, 2)
+									];
+								}
+							}
+						}
+					}
+				}
+
+				$detailMk[] = [
+					'kode_mk' => $nilaiCpmk['kode_mk'],
+					'nama_mk' => $nilaiCpmk['nama_mk'],
+					'nilai_cpmk' => $nilaiCpmk['nilai_cpmk'],
+					'total_bobot' => $totalBobot,
+					'teknik_breakdown' => $teknikBreakdown
+				];
+			}
+
+			// Calculate CPMK score and get bobot
+			$nilaiCpmkTotal = 0;
+			$bobotCpmk = 0;
+			$countNilai = count($nilaiCpmkList);
+
+			foreach ($nilaiCpmkList as $n) {
+				$nilaiCpmkTotal += $n['nilai_cpmk'];
+
+				// Get bobot for this CPMK from rps_mingguan
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $n['mata_kuliah_id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				if ($rps) {
+					$bobotResult = $db->table('rps_mingguan')
+						->selectSum('bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $cpmk['id'])
+						->get()
+						->getRowArray();
+
+					$bobotCpmk += $bobotResult['bobot'] ?? 0;
+				}
+			}
+
+			// Add to CPL totals
+			$totalNilaiCpl += $nilaiCpmkTotal;
+			$totalBobotCpl += $bobotCpmk;
+
+			$detailData[] = [
+				'kode_cpmk' => $cpmk['kode_cpmk'],
+				'deskripsi_cpmk' => $cpmk['deskripsi'],
+				'nilai_cpmk' => round($nilaiCpmkTotal, 2),
+				'bobot' => $bobotCpmk,
+				'jumlah_nilai' => $countNilai,
+				'detail_mk' => $detailMk
+			];
+		}
+
+		// Calculate Capaian CPL (%)
+		$capaianCpl = $totalBobotCpl > 0 ? round(($totalNilaiCpl / $totalBobotCpl) * 100, 2) : 0;
+
+		return $this->response->setJSON([
+			'success' => true,
+			'data' => $detailData,
+			'cpl' => $cpl,
+			'summary' => [
+				'nilai_cpl' => round($totalNilaiCpl, 2),
+				'total_bobot' => $totalBobotCpl,
+				'capaian_cpl' => $capaianCpl
+			]
+		]);
 	}
 
 	/**

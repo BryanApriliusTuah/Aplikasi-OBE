@@ -115,9 +115,11 @@ class CapaianCpl extends BaseController
 				->get()
 				->getResultArray();
 
-			// Calculate weighted CPL
-			$totalWeightedScore = 0;
-			$totalWeight = 0;
+			// Calculate CPL using formula:
+			// Nilai CPL = Σ(CPMK scores) - note: nilai_cpmk is already weighted (raw × bobot / 100)
+			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+			$nilaiCpl = 0;
+			$totalBobot = 0;
 			$distinctCpmk = [];
 			$distinctMk = [];
 
@@ -132,27 +134,29 @@ class CapaianCpl extends BaseController
 
 				$bobot = 0;
 				if ($rps) {
-					$rpsMingguan = $db->table('rps_mingguan')
-						->select('bobot')
+					// Sum bobot across all weeks for this CPMK
+					$bobotResult = $db->table('rps_mingguan')
+						->selectSum('bobot')
 						->where('rps_id', $rps['id'])
 						->where('cpmk_id', $nilai['cpmk_id'])
 						->get()
 						->getRowArray();
 
-					$bobot = $rpsMingguan['bobot'] ?? 0;
+					$bobot = $bobotResult['bobot'] ?? 0;
 				}
 
-				// If bobot is 0, use weight of 1 to avoid division by zero
-				$weight = $bobot > 0 ? $bobot : 1;
-
-				$totalWeightedScore += $nilai['nilai_cpmk'] * $weight;
-				$totalWeight += $weight;
+				// Sum CPMK scores and bobot
+				if ($bobot > 0) {
+					$nilaiCpl += $nilai['nilai_cpmk'];
+					$totalBobot += $bobot;
+				}
 
 				$distinctCpmk[$nilai['cpmk_id']] = true;
 				$distinctMk[$nilai['jadwal_mengajar_id']] = true;
 			}
 
-			$average = $totalWeight > 0 ? round($totalWeightedScore / $totalWeight, 2) : 0;
+			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+			$average = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
 			$jumlahCpmk = count($distinctCpmk);
 			$jumlahMk = count($distinctMk);
 
@@ -352,7 +356,8 @@ class CapaianCpl extends BaseController
 				->get()
 				->getResultArray();
 
-			// Calculate weighted CPL for each student, then average
+			// Calculate CPL for each student using formula:
+			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
 			$studentScores = [];
 
 			foreach ($nilaiList as $nilai) {
@@ -366,38 +371,40 @@ class CapaianCpl extends BaseController
 
 				$bobot = 0;
 				if ($rps) {
-					$rpsMingguan = $db->table('rps_mingguan')
-						->select('bobot')
+					// Sum bobot across all weeks for this CPMK
+					$bobotResult = $db->table('rps_mingguan')
+						->selectSum('bobot')
 						->where('rps_id', $rps['id'])
 						->where('cpmk_id', $nilai['cpmk_id'])
 						->get()
 						->getRowArray();
 
-					$bobot = $rpsMingguan['bobot'] ?? 0;
+					$bobot = $bobotResult['bobot'] ?? 0;
 				}
-
-				// If bobot is 0, use weight of 1
-				$weight = $bobot > 0 ? $bobot : 1;
 
 				$mhsId = $nilai['mahasiswa_id'];
 				if (!isset($studentScores[$mhsId])) {
 					$studentScores[$mhsId] = [
-						'totalWeightedScore' => 0,
-						'totalWeight' => 0
+						'nilaiCpl' => 0,
+						'totalBobot' => 0
 					];
 				}
 
-				$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
-				$studentScores[$mhsId]['totalWeight'] += $weight;
+				// Sum CPMK scores and bobot
+				if ($bobot > 0) {
+					$studentScores[$mhsId]['nilaiCpl'] += $nilai['nilai_cpmk'];
+					$studentScores[$mhsId]['totalBobot'] += $bobot;
+				}
 			}
 
-			// Calculate average across all students
+			// Calculate average Capaian CPL (%) across all students
 			$totalCplScore = 0;
 			$studentCount = 0;
 
 			foreach ($studentScores as $mhsId => $scores) {
-				if ($scores['totalWeight'] > 0) {
-					$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+				if ($scores['totalBobot'] > 0) {
+					// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+					$cplScore = ($scores['nilaiCpl'] / $scores['totalBobot']) * 100;
 					$totalCplScore += $cplScore;
 					$studentCount++;
 				}
@@ -822,7 +829,8 @@ class CapaianCpl extends BaseController
 					->get()
 					->getResultArray();
 
-				// Calculate weighted CPL for each student, then average
+				// Calculate CPL for each student using formula:
+				// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
 				$studentScores = [];
 
 				foreach ($nilaiList as $nilai) {
@@ -836,38 +844,40 @@ class CapaianCpl extends BaseController
 
 					$bobot = 0;
 					if ($rps) {
-						$rpsMingguan = $db->table('rps_mingguan')
-							->select('bobot')
+						// Sum bobot across all weeks for this CPMK
+						$bobotResult = $db->table('rps_mingguan')
+							->selectSum('bobot')
 							->where('rps_id', $rps['id'])
 							->where('cpmk_id', $nilai['cpmk_id'])
 							->get()
 							->getRowArray();
 
-						$bobot = $rpsMingguan['bobot'] ?? 0;
+						$bobot = $bobotResult['bobot'] ?? 0;
 					}
-
-					// If bobot is 0, use weight of 1
-					$weight = $bobot > 0 ? $bobot : 1;
 
 					$mhsId = $nilai['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = [
-							'totalWeightedScore' => 0,
-							'totalWeight' => 0
+							'nilaiCpl' => 0,
+							'totalBobot' => 0
 						];
 					}
 
-					$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
-					$studentScores[$mhsId]['totalWeight'] += $weight;
+					// Sum CPMK scores and bobot
+					if ($bobot > 0) {
+						$studentScores[$mhsId]['nilaiCpl'] += $nilai['nilai_cpmk'];
+						$studentScores[$mhsId]['totalBobot'] += $bobot;
+					}
 				}
 
-				// Calculate average across all students
+				// Calculate average Capaian CPL (%) across all students
 				$totalCplScore = 0;
 				$studentCount = 0;
 
 				foreach ($studentScores as $mhsId => $scores) {
-					if ($scores['totalWeight'] > 0) {
-						$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+					if ($scores['totalBobot'] > 0) {
+						// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+						$cplScore = ($scores['nilaiCpl'] / $scores['totalBobot']) * 100;
 						$totalCplScore += $cplScore;
 						$studentCount++;
 					}
@@ -915,7 +925,8 @@ class CapaianCpl extends BaseController
 						->get()
 						->getResultArray();
 
-					// Calculate weighted CPL for each student, then average
+					// Calculate CPL for each student using formula:
+					// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
 					$studentScores = [];
 
 					foreach ($nilaiList as $nilai) {
@@ -929,38 +940,40 @@ class CapaianCpl extends BaseController
 
 						$bobot = 0;
 						if ($rps) {
-							$rpsMingguan = $db->table('rps_mingguan')
-								->select('bobot')
+							// Sum bobot across all weeks for this CPMK
+							$bobotResult = $db->table('rps_mingguan')
+								->selectSum('bobot')
 								->where('rps_id', $rps['id'])
 								->where('cpmk_id', $nilai['cpmk_id'])
 								->get()
 								->getRowArray();
 
-							$bobot = $rpsMingguan['bobot'] ?? 0;
+							$bobot = $bobotResult['bobot'] ?? 0;
 						}
-
-						// If bobot is 0, use weight of 1
-						$weight = $bobot > 0 ? $bobot : 1;
 
 						$mhsId = $nilai['mahasiswa_id'];
 						if (!isset($studentScores[$mhsId])) {
 							$studentScores[$mhsId] = [
-								'totalWeightedScore' => 0,
-								'totalWeight' => 0
+								'nilaiCpl' => 0,
+								'totalBobot' => 0
 							];
 						}
 
-						$studentScores[$mhsId]['totalWeightedScore'] += $nilai['nilai_cpmk'] * $weight;
-						$studentScores[$mhsId]['totalWeight'] += $weight;
+						// Sum CPMK scores and bobot
+						if ($bobot > 0) {
+							$studentScores[$mhsId]['nilaiCpl'] += $nilai['nilai_cpmk'];
+							$studentScores[$mhsId]['totalBobot'] += $bobot;
+						}
 					}
 
-					// Calculate average across all students
+					// Calculate average Capaian CPL (%) across all students
 					$totalCplScore = 0;
 					$studentCount = 0;
 
 					foreach ($studentScores as $mhsId => $scores) {
-						if ($scores['totalWeight'] > 0) {
-							$cplScore = $scores['totalWeightedScore'] / $scores['totalWeight'];
+						if ($scores['totalBobot'] > 0) {
+							// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+							$cplScore = ($scores['nilaiCpl'] / $scores['totalBobot']) * 100;
 							$totalCplScore += $cplScore;
 							$studentCount++;
 						}

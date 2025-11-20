@@ -278,6 +278,7 @@ $routes->group('mahasiswa', ['filter' => 'auth'], function ($routes) {
 
 	// Profil CPL Routes (if needed)
 	$routes->get('profil-cpl', 'MahasiswaController::profilCpl');
+	$routes->get('profil-cpl/detail', 'MahasiswaController::getCplDetail');
 
 	// MBKM Routes (if needed)
 	$routes->get('mbkm', 'MahasiswaController::mbkm');
