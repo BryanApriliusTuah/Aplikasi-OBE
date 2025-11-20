@@ -787,6 +787,10 @@ class Nilai extends BaseController
 			];
 		}
 
+		// Get dynamic passing threshold from grade configuration
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+
 		$data = [
 			'title' => 'Lihat Nilai CPMK',
 			'jadwal' => $jadwal,
@@ -794,6 +798,7 @@ class Nilai extends BaseController
 			'cpmk_list' => $cpmk_list,
 			'existing_scores' => $existing_scores,
 			'cpmk_stats' => $cpmk_stats,
+			'passing_threshold' => $passingThreshold,
 		];
 
 		return view('admin/nilai/lihat_cpmk', $data);
@@ -974,6 +979,10 @@ class Nilai extends BaseController
 			}
 		}
 
+		// Get dynamic passing threshold from grade configuration
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+
 		$data = [
 			'title' => 'Lihat Nilai CPL',
 			'jadwal' => $jadwal,
@@ -981,6 +990,7 @@ class Nilai extends BaseController
 			'cpl_list' => $cpl_list,
 			'cpl_stats' => $cpl_stats,
 			'cpl_mahasiswa_scores' => $cpl_mahasiswa_scores ?? [],
+			'passing_threshold' => $passingThreshold,
 		];
 
 		return view('admin/nilai/lihat_cpl', $data);

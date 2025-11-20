@@ -112,23 +112,19 @@ class MbkmModel extends Model
 		return round($totalNilai, 2);
 	}
 
-	// Convert numeric score to letter grade
+	// Convert numeric score to letter grade using dynamic grade configuration
 	public function konversiNilaiHuruf($nilai_angka)
 	{
-		if ($nilai_angka >= 85) return 'A';
-		if ($nilai_angka >= 80) return 'AB';
-		if ($nilai_angka >= 75) return 'B';
-		if ($nilai_angka >= 70) return 'BC';
-		if ($nilai_angka >= 65) return 'C';
-		if ($nilai_angka >= 50) return 'D';
-		return 'E';
+		$gradeConfigModel = new GradeConfigModel();
+		return $gradeConfigModel->getGradeLetter((float)$nilai_angka);
 	}
 
 	// Save or update final score
 	public function simpanNilaiAkhir($kegiatan_id, $nilai_angka, $catatan = null)
 	{
-		$nilai_huruf = $this->konversiNilaiHuruf($nilai_angka);
-		$status_kelulusan = $nilai_angka >= 65 ? 'Lulus' : 'Tidak Lulus';
+		$gradeConfigModel = new GradeConfigModel();
+		$nilai_huruf = $gradeConfigModel->getGradeLetter((float)$nilai_angka);
+		$status_kelulusan = $gradeConfigModel->isPassing((float)$nilai_angka) ? 'Lulus' : 'Tidak Lulus';
 
 		$data = [
 			'kegiatan_id' => $kegiatan_id,

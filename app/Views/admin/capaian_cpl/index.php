@@ -220,6 +220,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+	// Dynamic passing threshold from grade configuration
+	const passingThreshold = <?= json_encode($passing_threshold ?? 65) ?>;
+
 	let cplChartIndividual = null;
 	let cplChartComparative = null;
 	let cplChartAllSubjects = null;
@@ -723,7 +726,9 @@
         `;
 
 			data.forEach((item, index) => {
-				const badgeClass = item.rata_rata >= 75 ? 'success' : (item.rata_rata >= 60 ? 'warning' : 'danger');
+				// Use dynamic threshold: passing+10 for "good", passing for "fair"
+			const goodThreshold = passingThreshold + 10;
+			const badgeClass = item.rata_rata >= goodThreshold ? 'success' : (item.rata_rata >= passingThreshold ? 'warning' : 'danger');
 
 				let detailMk = '<ul class="mb-0" style="font-size: 0.85rem;">';
 				if (item.detail_mk.length === 0) {
@@ -889,8 +894,10 @@
 	}
 
 	function getStatusBadge(nilai) {
-		if (nilai >= 75) return '<span class="badge bg-success">Baik</span>';
-		if (nilai >= 60) return '<span class="badge bg-warning">Cukup</span>';
+		// Use dynamic threshold: passing+10 for "good", passing for "fair"
+		const goodThreshold = passingThreshold + 10;
+		if (nilai >= goodThreshold) return '<span class="badge bg-success">Baik</span>';
+		if (nilai >= passingThreshold) return '<span class="badge bg-warning">Cukup</span>';
 		return '<span class="badge bg-danger">Kurang</span>';
 	}
 

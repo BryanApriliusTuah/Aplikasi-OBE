@@ -189,15 +189,29 @@
 							<li>Nilai akhir dihitung dari: Σ (Nilai × Bobot / 100)</li>
 							<li>Rentang nilai: 0 - 100</li>
 							<li>Konversi nilai huruf:
-								<span class="badge bg-success">A (≥85)</span>
-								<span class="badge bg-success">AB (80-84)</span>
-								<span class="badge bg-info">B (75-79)</span>
-								<span class="badge bg-info">BC (70-74)</span>
-								<span class="badge bg-warning">C (65-69)</span>
-								<span class="badge bg-danger">D (50-64)</span>
-								<span class="badge bg-danger">E (<50)< /span>
+								<?php if (!empty($grade_config)): ?>
+									<?php foreach ($grade_config as $grade): ?>
+										<?php
+										$badgeClass = $grade['is_passing'] ? ($grade['min_score'] >= 75 ? 'bg-success' : ($grade['min_score'] >= 65 ? 'bg-info' : 'bg-warning')) : 'bg-danger';
+										$rangeText = $grade['grade_letter'] . ' (' . number_format($grade['min_score'], 0) . '-' . number_format($grade['max_score'], 0) . ')';
+										?>
+										<span class="badge <?= $badgeClass ?>"><?= esc($rangeText) ?></span>
+									<?php endforeach; ?>
+								<?php else: ?>
+									<span class="text-muted">Konfigurasi nilai tidak tersedia</span>
+								<?php endif; ?>
 							</li>
-							<li>Minimum kelulusan: C (65)</li>
+							<?php
+							$minPassing = 65;
+							if (!empty($grade_config)) {
+								foreach ($grade_config as $grade) {
+									if ($grade['is_passing']) {
+										$minPassing = $grade['min_score'];
+									}
+								}
+							}
+							?>
+							<li>Minimum kelulusan: <?= number_format($minPassing, 0) ?></li>
 						</ul>
 					</div>
 
@@ -250,7 +264,36 @@
 
 <?= $this->section('js') ?>
 <script>
+	// Dynamic grade configuration from database
+	const gradeConfig = <?= json_encode($grade_config ?? []) ?>;
+
 	document.addEventListener('DOMContentLoaded', function() {
+		// Function to get grade info from dynamic configuration
+		function getGradeInfo(score) {
+			if (gradeConfig && gradeConfig.length > 0) {
+				for (let i = 0; i < gradeConfig.length; i++) {
+					const grade = gradeConfig[i];
+					const minScore = parseFloat(grade.min_score);
+					const maxScore = parseFloat(grade.max_score);
+
+					if (score > minScore && score <= maxScore) {
+						return {
+							letter: grade.grade_letter,
+							isPassing: grade.is_passing == 1,
+							description: grade.description || ''
+						};
+					}
+				}
+			}
+
+			// Fallback if no match found
+			return {
+				letter: 'E',
+				isPassing: false,
+				description: 'Gagal'
+			};
+		}
+
 		// Function to calculate scores
 		function hitungNilai() {
 			let totalNilai = 0;
@@ -275,40 +318,11 @@
 			document.getElementById('nilaiAkhir').textContent = totalNilai.toFixed(2);
 			document.getElementById('previewNilaiAngka').textContent = totalNilai.toFixed(2);
 
-			// Konversi ke nilai huruf
-			let nilaiHuruf = '-';
-			let status = '-';
-			let keterangan = '-';
-
-			if (totalNilai >= 85) {
-				nilaiHuruf = 'A';
-				status = 'Lulus';
-				keterangan = 'Sangat Baik';
-			} else if (totalNilai >= 80) {
-				nilaiHuruf = 'AB';
-				status = 'Lulus';
-				keterangan = 'Baik Sekali';
-			} else if (totalNilai >= 75) {
-				nilaiHuruf = 'B';
-				status = 'Lulus';
-				keterangan = 'Baik';
-			} else if (totalNilai >= 70) {
-				nilaiHuruf = 'BC';
-				status = 'Lulus';
-				keterangan = 'Cukup Baik';
-			} else if (totalNilai >= 65) {
-				nilaiHuruf = 'C';
-				status = 'Lulus';
-				keterangan = 'Cukup';
-			} else if (totalNilai >= 50) {
-				nilaiHuruf = 'D';
-				status = 'Tidak Lulus';
-				keterangan = 'Kurang';
-			} else {
-				nilaiHuruf = 'E';
-				status = 'Tidak Lulus';
-				keterangan = 'Gagal';
-			}
+			// Konversi ke nilai huruf using dynamic configuration
+			const gradeInfo = getGradeInfo(totalNilai);
+			const nilaiHuruf = gradeInfo.letter;
+			const status = gradeInfo.isPassing ? 'Lulus' : 'Tidak Lulus';
+			const keterangan = gradeInfo.description || (gradeInfo.isPassing ? 'Baik' : 'Kurang');
 
 			document.getElementById('previewNilaiHuruf').textContent = nilaiHuruf;
 			document.getElementById('previewStatus').textContent = status;

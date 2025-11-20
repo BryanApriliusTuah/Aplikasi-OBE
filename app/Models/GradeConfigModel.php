@@ -171,4 +171,37 @@ class GradeConfigModel extends Model
     {
         return $this->orderBy('order_number', 'ASC')->findAll();
     }
+
+    /**
+     * Get the minimum passing score threshold
+     *
+     * @return float
+     */
+    public function getMinPassingScore(): float
+    {
+        $grades = $this->where('is_active', 1)
+                       ->where('is_passing', 1)
+                       ->orderBy('min_score', 'ASC')
+                       ->first();
+
+        return $grades ? (float)$grades['min_score'] : 65.0;
+    }
+
+    /**
+     * Get passing threshold for percentage-based achievement (like CPL)
+     * Returns the minimum score required for "passing" status
+     *
+     * @return float
+     */
+    public function getPassingThreshold(): float
+    {
+        // Get the lowest grade that is still passing
+        $lowestPassingGrade = $this->where('is_active', 1)
+                                    ->where('is_passing', 1)
+                                    ->orderBy('min_score', 'ASC')
+                                    ->first();
+
+        // Return the minimum score for passing, default to 65 if not found
+        return $lowestPassingGrade ? (float)$lowestPassingGrade['min_score'] : 65.0;
+    }
 }

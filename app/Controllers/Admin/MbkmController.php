@@ -387,11 +387,16 @@ class MbkmController extends BaseController
 			$nilai_map[$n['komponen_id']] = $n;
 		}
 
+		// Get grade configuration for dynamic grading
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$grade_config = $gradeConfigModel->getActiveGrades();
+
 		$data = [
 			'kegiatan' => $kegiatan,
 			'mahasiswa' => $mahasiswa,
 			'komponen' => $komponen,
-			'nilai_map' => $nilai_map
+			'nilai_map' => $nilai_map,
+			'grade_config' => $grade_config
 		];
 
 		return view('admin/mbkm/input_nilai', $data);

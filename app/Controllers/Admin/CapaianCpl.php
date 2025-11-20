@@ -27,11 +27,16 @@ class CapaianCpl extends BaseController
 			return redirect()->to('/')->with('error', 'Akses ditolak.');
 		}
 
+		// Get grade configuration for dynamic thresholds
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+
 		$data = [
 			'title' => 'Capaian CPL',
 			'programStudi' => ['Teknik Informatika', 'Sistem Informasi', 'Teknik Komputer'],
 			'tahunAngkatan' => $this->getTahunAngkatan(),
-			'mahasiswa' => [] // Will be loaded via AJAX
+			'mahasiswa' => [], // Will be loaded via AJAX
+			'passing_threshold' => $passingThreshold
 		];
 
 		return view('admin/capaian_cpl/index', $data);

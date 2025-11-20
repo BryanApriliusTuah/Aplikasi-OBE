@@ -254,9 +254,9 @@
 										// Determine cell color based on score
 										$cell_class = '';
 										if ($score !== null && $score !== '') {
-											if ($score >= 75) {
+											if ($score >= (($passing_threshold ?? 65) + 10)) {
 												$cell_class = 'score-good';
-											} elseif ($score >= 60) {
+											} elseif ($score >= ($passing_threshold ?? 65)) {
 												$cell_class = 'score-medium';
 											} else {
 												$cell_class = 'score-low';

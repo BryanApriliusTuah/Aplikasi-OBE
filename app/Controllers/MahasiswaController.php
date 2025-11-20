@@ -8,6 +8,7 @@ use App\Models\NilaiMahasiswaModel;
 use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\MataKuliahModel;
 use App\Models\NilaiTeknikPenilaianModel;
+use App\Models\GradeConfigModel;
 
 class MahasiswaController extends BaseController
 {
@@ -344,6 +345,10 @@ class MahasiswaController extends BaseController
 		$countCPL = 0;
 		$cplTercapai = 0;
 
+		// Get dynamic passing threshold from grade configuration
+		$gradeConfigModel = new GradeConfigModel();
+		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+
 		foreach ($calculatedCplList as $cpl) {
 			$capaian = round($cpl['capaian_cpl'], 2);
 
@@ -357,7 +362,7 @@ class MahasiswaController extends BaseController
 			if ($capaian > 0) {
 				$totalNilai += $capaian;
 				$countCPL++;
-				if ($capaian >= 70) {
+				if ($capaian >= $passingThreshold) {
 					$cplTercapai++;
 				}
 			}

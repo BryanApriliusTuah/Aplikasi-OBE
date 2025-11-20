@@ -232,9 +232,9 @@
 											// Determine cell color based on CPL percentage
 											$cell_class = '';
 											if ($cpl_percentage !== null) {
-												if ($cpl_percentage >= 75) {
+												if ($cpl_percentage >= (($passing_threshold ?? 65) + 10)) {
 													$cell_class = 'score-good';
-												} elseif ($cpl_percentage >= 60) {
+												} elseif ($cpl_percentage >= ($passing_threshold ?? 65)) {
 													$cell_class = 'score-medium';
 												} else {
 													$cell_class = 'score-low';

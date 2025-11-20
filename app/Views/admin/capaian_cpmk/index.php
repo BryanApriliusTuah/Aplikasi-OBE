@@ -221,6 +221,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+	// Dynamic passing threshold from grade configuration
+	const passingThreshold = <?= json_encode($passing_threshold ?? 65) ?>;
+
 	let cpmkChart = null;
 	let cpmkChartMulti = null;
 	let cpmkChartAll = null;
@@ -677,8 +680,8 @@
 	function displayDetailTable(details) {
 		let html = '';
 		details.forEach((item, index) => {
-			const statusClass = item.rata_rata >= 75 ? 'success' : (item.rata_rata >= 60 ? 'warning' : 'danger');
-			const statusText = item.rata_rata >= 75 ? 'Baik' : (item.rata_rata >= 60 ? 'Cukup' : 'Kurang');
+			const statusClass = item.rata_rata >= (passingThreshold + 10) ? 'success' : (item.rata_rata >= passingThreshold ? 'warning' : 'danger');
+			const statusText = item.rata_rata >= (passingThreshold + 10) ? 'Baik' : (item.rata_rata >= passingThreshold ? 'Cukup' : 'Kurang');
 
 			html += `
             <tr>
@@ -725,8 +728,8 @@
     `;
 
 		summaryData.forEach((item, index) => {
-			const statusClass = item.rata_rata >= 75 ? 'success' : (item.rata_rata >= 60 ? 'warning' : 'danger');
-			const statusText = item.rata_rata >= 75 ? 'Baik' : (item.rata_rata >= 60 ? 'Cukup' : 'Kurang');
+			const statusClass = item.rata_rata >= (passingThreshold + 10) ? 'success' : (item.rata_rata >= passingThreshold ? 'warning' : 'danger');
+			const statusText = item.rata_rata >= (passingThreshold + 10) ? 'Baik' : (item.rata_rata >= passingThreshold ? 'Cukup' : 'Kurang');
 
 			html += `
             <tr>
@@ -809,7 +812,7 @@
         `;
 		} else {
 			data.forEach((item, index) => {
-				const badgeClass = item.nilai_cpmk >= 75 ? 'success' : (item.nilai_cpmk >= 60 ? 'warning' : 'danger');
+				const badgeClass = item.nilai_cpmk >= (passingThreshold + 10) ? 'success' : (item.nilai_cpmk >= passingThreshold ? 'warning' : 'danger');
 				html += `
                 <tr>
                     <td>${index + 1}</td>

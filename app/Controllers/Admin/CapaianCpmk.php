@@ -30,10 +30,15 @@ class CapaianCpmk extends BaseController
 			return redirect()->to('/')->with('error', 'Akses ditolak.');
 		}
 
+		// Get dynamic passing threshold from grade configuration
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+
 		$data = [
 			'title' => 'Capaian CPMK',
 			'mataKuliah' => $this->mataKuliahModel->findAll(),
-			'tahunAkademik' => $this->getTahunAkademik()
+			'tahunAkademik' => $this->getTahunAkademik(),
+			'passing_threshold' => $passingThreshold
 		];
 
 		return view('admin/capaian_cpmk/index', $data);
