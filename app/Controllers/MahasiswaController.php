@@ -7,6 +7,7 @@ use App\Models\MahasiswaModel;
 use App\Models\NilaiMahasiswaModel;
 use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\MataKuliahModel;
+use App\Models\NilaiTeknikPenilaianModel;
 
 class MahasiswaController extends BaseController
 {
@@ -14,6 +15,7 @@ class MahasiswaController extends BaseController
 	protected $nilaiMahasiswaModel;
 	protected $nilaiCpmkMahasiswaModel;
 	protected $mataKuliahModel;
+	protected $nilaiTeknikPenilaianModel;
 
 	public function __construct()
 	{
@@ -21,6 +23,7 @@ class MahasiswaController extends BaseController
 		$this->nilaiMahasiswaModel = new NilaiMahasiswaModel();
 		$this->nilaiCpmkMahasiswaModel = new NilaiCpmkMahasiswaModel();
 		$this->mataKuliahModel = new MataKuliahModel();
+		$this->nilaiTeknikPenilaianModel = new NilaiTeknikPenilaianModel();
 	}
 
 	/**
@@ -109,7 +112,7 @@ class MahasiswaController extends BaseController
 	}
 
 	/**
-	 * Mahasiswa - View detail scores including CPMK
+	 * Mahasiswa - View detail scores including teknik penilaian
 	 */
 	public function nilaiDetail($jadwalId)
 	{
@@ -134,7 +137,14 @@ class MahasiswaController extends BaseController
 			return redirect()->to('mahasiswa/nilai');
 		}
 
-		// Get CPMK scores
+		// Get teknik penilaian structure grouped by tahap
+		$teknikPenilaianData = $this->nilaiTeknikPenilaianModel->getCombinedTeknikPenilaianByJadwal($jadwalId);
+
+		// Get student's scores for teknik penilaian
+		$studentScores = $this->nilaiTeknikPenilaianModel->getCombinedScoresForInput($jadwalId);
+		$mahasiswaScores = $studentScores[$mahasiswaId] ?? [];
+
+		// Get CPMK scores (keep for reference)
 		$nilaiCpmk = $this->nilaiCpmkMahasiswaModel
 			->select('nilai_cpmk_mahasiswa.*, cpmk.kode_cpmk, cpmk.deskripsi')
 			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
@@ -146,7 +156,9 @@ class MahasiswaController extends BaseController
 		$data = [
 			'title' => 'Detail Nilai - ' . $nilai['nama_mk'],
 			'nilai' => $nilai,
-			'nilaiCpmk' => $nilaiCpmk
+			'nilaiCpmk' => $nilaiCpmk,
+			'teknikPenilaianByTahap' => $teknikPenilaianData['by_tahap'] ?? [],
+			'mahasiswaScores' => $mahasiswaScores
 		];
 
 		return view('mahasiswa/nilai/detail', $data);
