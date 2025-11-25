@@ -1833,24 +1833,21 @@ class Nilai extends BaseController
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 
-		// Get existing scores
-		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
+		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 
-		// Get combined teknik data to get all available techniques and weights
-		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
-
-		// Build a map of all available techniques with their weights and labels
-		$teknik_list = [];
-		$teknik_weight_map = [];
-
-		foreach ($combined_data['combined_list'] as $item) {
-			$teknik_key = $item['teknik_key'];
-			$teknik_list[$teknik_key] = [
-				'label' => $item['teknik_label'],
-				'weight' => $item['total_bobot']
-			];
-			$teknik_weight_map[$teknik_key] = $item['total_bobot'];
+		// Group teknik_list by tahap for organized display
+		$teknik_by_tahap = [];
+		foreach ($teknik_list as $item) {
+			$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+			if (!isset($teknik_by_tahap[$tahap])) {
+				$teknik_by_tahap[$tahap] = [];
+			}
+			$teknik_by_tahap[$tahap][] = $item;
 		}
+
+		// Get existing scores to pre-fill the form (individual per week)
+		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
 		// Get final scores (nilai akhir and nilai huruf)
 		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
@@ -1881,13 +1878,16 @@ class Nilai extends BaseController
 				'nama' => $student['nama_lengkap']
 			];
 
-			// Add scores for each teknik penilaian
-			foreach ($teknik_list as $teknik_key => $teknik_info) {
+			// Add scores for each teknik penilaian (separated by week/rps_mingguan_id)
+			foreach ($teknik_list as $item) {
+				$rps_mingguan_id = $item['rps_mingguan_id'];
+				$teknik_key = $item['teknik_key'];
+
 				$score = 0;
-				if (isset($existing_scores[$mahasiswa_id][$teknik_key])) {
-					$score = $existing_scores[$mahasiswa_id][$teknik_key];
+				if (isset($existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key])) {
+					$score = $existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key];
 				}
-				$row['teknik_' . $teknik_key] = $score;
+				$row['teknik_' . $rps_mingguan_id . '_' . $teknik_key] = $score;
 			}
 
 			// Get nilai akhir and nilai huruf
@@ -1918,6 +1918,7 @@ class Nilai extends BaseController
 			'jadwal' => $jadwal,
 			'dpna_data' => $dpna_data,
 			'teknik_list' => $teknik_list,
+			'teknik_by_tahap' => $teknik_by_tahap,
 			'nip' => $nip
 		];
 
@@ -1943,24 +1944,21 @@ class Nilai extends BaseController
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 
-		// Get existing scores
-		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
+		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 
-		// Get combined teknik data to get all available techniques and weights
-		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
-
-		// Build a map of all available techniques with their weights and labels
-		$teknik_list = [];
-		$teknik_weight_map = [];
-
-		foreach ($combined_data['combined_list'] as $item) {
-			$teknik_key = $item['teknik_key'];
-			$teknik_list[$teknik_key] = [
-				'label' => $item['teknik_label'],
-				'weight' => $item['total_bobot']
-			];
-			$teknik_weight_map[$teknik_key] = $item['total_bobot'];
+		// Group teknik_list by tahap for organized display
+		$teknik_by_tahap = [];
+		foreach ($teknik_list as $item) {
+			$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+			if (!isset($teknik_by_tahap[$tahap])) {
+				$teknik_by_tahap[$tahap] = [];
+			}
+			$teknik_by_tahap[$tahap][] = $item;
 		}
+
+		// Get existing scores to pre-fill the form (individual per week)
+		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
 		// Get final scores
 		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
@@ -1991,13 +1989,16 @@ class Nilai extends BaseController
 				'nama' => $student['nama_lengkap']
 			];
 
-			// Add scores for each teknik penilaian
-			foreach ($teknik_list as $teknik_key => $teknik_info) {
+			// Add scores for each teknik penilaian (separated by week/rps_mingguan_id)
+			foreach ($teknik_list as $item) {
+				$rps_mingguan_id = $item['rps_mingguan_id'];
+				$teknik_key = $item['teknik_key'];
+
 				$score = 0;
-				if (isset($existing_scores[$mahasiswa_id][$teknik_key])) {
-					$score = $existing_scores[$mahasiswa_id][$teknik_key];
+				if (isset($existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key])) {
+					$score = $existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key];
 				}
-				$row['teknik_' . $teknik_key] = $score;
+				$row['teknik_' . $rps_mingguan_id . '_' . $teknik_key] = $score;
 			}
 
 			// Get nilai akhir and nilai huruf
@@ -2121,17 +2122,33 @@ class Nilai extends BaseController
 		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
 		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
 
-		// Add dynamic teknik penilaian columns
-		foreach ($teknik_list as $teknik_key => $teknik_info) {
+		// Add dynamic teknik penilaian columns (separated by week)
+		// First row: Tahap headers
+		$tahapStartCols = [];
+		foreach ($teknik_by_tahap as $tahap => $tahap_items) {
+			$tahapStartCol = $col;
+			$tahapEndCol = $col + count($tahap_items) - 1;
+			$sheet->setCellValue($getColumnLetter($col) . $row, $tahap);
+			if ($tahapEndCol > $tahapStartCol) {
+				$sheet->mergeCells($getColumnLetter($tahapStartCol) . $row . ':' . $getColumnLetter($tahapEndCol) . $row);
+			}
+			$col = $tahapEndCol + 1;
+		}
+
+		// Second row: Individual teknik with minggu and CPMK
+		$col = 3; // Reset to after Nama column
+		$row++;
+		foreach ($teknik_list as $item) {
 			$colLetter = $getColumnLetter($col);
-			$teknik_text = $teknik_info['label'] . "\n(" . number_format($teknik_info['weight'], 1) . '%)';
+			$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
+			$teknik_text = $item['teknik_label'] . "\nMinggu: " . $item['minggu'] . "\n" . $cpmk_display . " (" . number_format($item['bobot'], 1) . '%)';
 			$sheet->setCellValue($colLetter . $row, $teknik_text);
-			$sheet->mergeCells($colLetter . $row . ':' . $colLetter . ($row + 1));
 			$col++;
 		}
 
 		// Nilai Akhir columns (merged header)
 		$nilaiAkhirStartCol = $col;
+		$row--; // Go back to first header row
 		$sheet->setCellValue($getColumnLetter($col) . $row, 'Nilai Akhir');
 		$sheet->mergeCells($getColumnLetter($col) . $row . ':' . $getColumnLetter($col + 1) . $row);
 
@@ -2162,10 +2179,12 @@ class Nilai extends BaseController
 			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nim']);
 			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nama']);
 
-			// Add teknik penilaian scores
+			// Add teknik penilaian scores (separated by week)
 			$teknikColStart = $col;
-			foreach ($teknik_list as $teknik_key => $teknik_info) {
-				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['teknik_' . $teknik_key]);
+			foreach ($teknik_list as $item) {
+				$rps_mingguan_id = $item['rps_mingguan_id'];
+				$teknik_key = $item['teknik_key'];
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['teknik_' . $rps_mingguan_id . '_' . $teknik_key]);
 			}
 			$teknikColEnd = $col - 1;
 
@@ -2340,6 +2359,7 @@ class Nilai extends BaseController
 			$sheet = $spreadsheet->getActiveSheet();
 
 			// Find the header row (should contain "NIM")
+			// Note: The DPNA export has TWO header rows - we need to find both
 			$headerRow = null;
 			$highestRow = $sheet->getHighestRow();
 
@@ -2358,21 +2378,37 @@ class Nilai extends BaseController
 				]);
 			}
 
-			// Get combined teknik data to identify available techniques
-			$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
-			$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+			// The actual teknik penilaian headers are in the row AFTER the NIM row (second header row)
+			// Row 1: No, NIM, Nama, [Tahap groups], Nilai Akhir, Keterangan
+			// Row 2: (merged No/NIM/Nama), [Individual teknik], Angka, Huruf, (merged Keterangan)
+			$teknikHeaderRow = $headerRow + 1;
 
-			// Build mapping of available techniques with their labels
-			$teknik_list = [];
+			// Get SEPARATED teknik data to identify available techniques (NOT grouped/combined)
+			$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
+			$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
+
+			// Build mapping of column headers to teknik items
+			// Column format in Excel: "Teknik Label\nMinggu: X\nCPMK (Weight%)"
 			$teknik_mapping = [];
-			foreach ($combined_data['combined_list'] as $item) {
+			foreach ($teknik_list as $item) {
+				$rps_mingguan_id = $item['rps_mingguan_id'];
 				$teknik_key = $item['teknik_key'];
-				$teknik_label = strtoupper(trim($item['teknik_label']));
-				$teknik_list[$teknik_key] = [
+				$teknik_label = $item['teknik_label'];
+				$minggu = $item['minggu'];
+				$cpmk = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
+
+				// Build header pattern to match Excel export format
+				// The header in Excel will be like: "UTS\nMinggu: 7\nCPMK2 (20%)"
+				// We'll match against a simplified version for flexibility
+				$header_key = strtoupper($teknik_label) . '_MINGGU_' . $minggu . '_' . strtoupper($cpmk);
+
+				$teknik_mapping[$header_key] = [
+					'rps_mingguan_id' => $rps_mingguan_id,
+					'teknik_key' => $teknik_key,
 					'label' => $teknik_label,
-					'rps_mingguan_ids' => $item['rps_mingguan_ids']
+					'minggu' => $minggu,
+					'cpmk' => $cpmk
 				];
-				$teknik_mapping[$teknik_label] = $teknik_key;
 			}
 
 			// Helper function to convert column index to Excel column letter
@@ -2387,26 +2423,72 @@ class Nilai extends BaseController
 				return $letter;
 			};
 
-			// Scan header row to find NIM and all teknik penilaian columns
+			// Scan header rows to find NIM and all teknik penilaian columns
 			$columns = [];
 			$highestColumn = $sheet->getHighestColumn();
 			$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
 
+			// First, get NIM column from the first header row
 			for ($col = 1; $col <= $highestColumnIndex; $col++) {
 				$colLetter = $getColumnLetter($col - 1);
-				$headerValue = strtoupper(trim($sheet->getCell($colLetter . $headerRow)->getValue()));
+				$headerValue = trim($sheet->getCell($colLetter . $headerRow)->getValue());
 
-				// Remove only the weight percentage from header (e.g., "TES TULIS (UTS) (20%)" -> "TES TULIS (UTS)")
-				// Only removes patterns like (20%), (15.5%), etc., not descriptive text like (UTS) or (PRAKTEK / TUGAS)
-				$headerValue = preg_replace('/\s*\(\s*\d+\.?\d*\s*%\s*\)\s*$/', '', $headerValue);
-				$headerValue = trim($headerValue);
-
-				if ($headerValue === 'NIM') {
+				if (strtoupper($headerValue) === 'NIM') {
 					$columns['nim'] = $colLetter;
-				} elseif (isset($teknik_mapping[$headerValue])) {
-					// Map column to teknik_key
-					$teknik_key = $teknik_mapping[$headerValue];
-					$columns['teknik_' . $teknik_key] = $colLetter;
+					break;
+				}
+			}
+
+			// Then, scan the SECOND header row for teknik penilaian columns
+			for ($col = 1; $col <= $highestColumnIndex; $col++) {
+				$colLetter = $getColumnLetter($col - 1);
+				$headerValue = trim($sheet->getCell($colLetter . $teknikHeaderRow)->getValue());
+
+				// Skip empty cells (merged cells from row 1 like No, NIM, Nama, Keterangan)
+				if (empty($headerValue)) {
+					continue;
+				}
+
+				// Skip "Angka" and "Huruf" sub-headers under "Nilai Akhir"
+				if (in_array(strtoupper($headerValue), ['ANGKA', 'HURUF'])) {
+					continue;
+				}
+
+				// Parse separated format header: "Teknik Label\nMinggu: X\nCPMK (Weight%)"
+				// The header might have multiple lines separated by newlines
+				$lines = preg_split('/[\r\n]+/', $headerValue);
+
+				if (count($lines) >= 3) {
+					// Extract components
+					$teknik_label = strtoupper(trim($lines[0]));
+
+					// Extract week number from "Minggu: X" or "Minggu X"
+					$minggu_line = trim($lines[1]);
+					$minggu = null;
+					if (preg_match('/minggu[:\s]*(\d+)/i', $minggu_line, $matches)) {
+						$minggu = $matches[1];
+					}
+
+					// Extract CPMK from line like "CPMK1 (20%)" or just "CPMK1"
+					$cpmk_line = strtoupper(trim($lines[2]));
+					$cpmk = preg_replace('/\s*\(.*?\)\s*/', '', $cpmk_line); // Remove weight in parentheses
+					$cpmk = trim($cpmk);
+
+					if ($minggu !== null && !empty($cpmk)) {
+						// Build the key to match against teknik_mapping
+						$header_key = $teknik_label . '_MINGGU_' . $minggu . '_' . $cpmk;
+
+						if (isset($teknik_mapping[$header_key])) {
+							$mapped = $teknik_mapping[$header_key];
+							$unique_key = 'teknik_' . $mapped['rps_mingguan_id'] . '_' . $mapped['teknik_key'];
+							$columns[$unique_key] = [
+								'col' => $colLetter,
+								'rps_mingguan_id' => $mapped['rps_mingguan_id'],
+								'teknik_key' => $mapped['teknik_key'],
+								'label' => $mapped['label']
+							];
+						}
+					}
 				}
 			}
 
@@ -2428,12 +2510,44 @@ class Nilai extends BaseController
 
 			if ($found_teknik_count === 0) {
 				$available_labels = [];
-				foreach ($teknik_list as $info) {
-					$available_labels[] = $info['label'];
+				foreach ($teknik_list as $item) {
+					$label = $item['teknik_label'] . ' - Minggu ' . $item['minggu'] . ' - ' . ($item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A');
+					$available_labels[] = $label;
 				}
+
+				// Debug: Show what headers were actually found in the uploaded file (from second header row)
+				$found_headers = [];
+				for ($col = 1; $col <= $highestColumnIndex; $col++) {
+					$colLetter = $getColumnLetter($col - 1);
+					$headerValue = trim($sheet->getCell($colLetter . $teknikHeaderRow)->getValue());
+					if (!empty($headerValue) && !in_array(strtoupper($headerValue), ['NIM', 'NAMA', 'NO', 'ANGKA', 'HURUF'])) {
+						// Replace newlines with " | " for display
+						$displayHeader = str_replace(["\r\n", "\r", "\n"], " | ", $headerValue);
+						$found_headers[] = $displayHeader;
+					}
+				}
+
+				$error_msg = 'Format file tidak sesuai. Tidak ada kolom teknik penilaian yang ditemukan. ';
+				$error_msg .= 'PENTING: Anda HARUS menggunakan template TERBARU dari tombol "Export ke Excel" atau "Unduh DPNA". ';
+				$error_msg .= 'Jangan gunakan file Excel lama! ';
+
+				if (!empty($found_headers)) {
+					$error_msg .= 'Kolom yang ditemukan di file Anda: ' . implode(', ', array_slice($found_headers, 0, 5));
+					if (count($found_headers) > 5) {
+						$error_msg .= ' (dan ' . (count($found_headers) - 5) . ' lainnya)';
+					}
+					$error_msg .= '. ';
+				}
+
+				$error_msg .= 'Kolom yang diharapkan: ' . implode(', ', array_slice($available_labels, 0, 3));
+				if (count($available_labels) > 3) {
+					$error_msg .= ' (dan ' . (count($available_labels) - 3) . ' lainnya)';
+				}
+				$error_msg .= '.';
+
 				return $this->response->setJSON([
 					'status' => 'error',
-					'message' => 'Format file tidak sesuai. Tidak ada kolom teknik penilaian yang ditemukan. Kolom yang tersedia: ' . implode(', ', $available_labels) . '.'
+					'message' => $error_msg
 				]);
 			}
 
@@ -2455,7 +2569,8 @@ class Nilai extends BaseController
 
 			$db->transStart();
 
-			for ($row = $headerRow + 1; $row <= $highestRow; $row++) {
+			// Data rows start after BOTH header rows (skip row 1 with tahap groups and row 2 with teknik details)
+			for ($row = $teknikHeaderRow + 1; $row <= $highestRow; $row++) {
 				$nim = trim($sheet->getCell($columns['nim'] . $row)->getValue());
 
 				// Skip empty rows
@@ -2472,32 +2587,33 @@ class Nilai extends BaseController
 				$mahasiswa_id = $nimToId[$nim];
 				$hasValidScore = false;
 
-				// Read and validate scores for each teknik penilaian
+				// Read and validate scores for each teknik penilaian (separated by week/rps)
 				$teknik_scores = [];
-				foreach ($columns as $col_key => $col_letter) {
+				foreach ($columns as $col_key => $col_info) {
 					// Skip non-teknik columns
 					if (strpos($col_key, 'teknik_') !== 0) {
 						continue;
 					}
 
-					// Extract teknik_key from col_key (e.g., "teknik_tes_tulis_uts" -> "tes_tulis_uts")
-					$teknik_key = substr($col_key, 7);
-
 					// Get the score value
-					$score_value = $sheet->getCell($col_letter . $row)->getValue();
+					$score_value = $sheet->getCell($col_info['col'] . $row)->getValue();
 					$score = is_numeric($score_value) ? floatval($score_value) : null;
 
 					// Validate score range
 					if ($score !== null) {
 						if ($score < 0 || $score > 100) {
-							$teknik_label = $teknik_list[$teknik_key]['label'] ?? $teknik_key;
-							$errors[] = "Baris $row (NIM $nim): Nilai $teknik_label tidak valid ($score). Harus antara 0-100.";
+							$errors[] = "Baris $row (NIM $nim): Nilai " . $col_info['label'] . " tidak valid ($score). Harus antara 0-100.";
 							continue 2; // Skip this student entirely
 						}
 						$hasValidScore = true;
 					}
 
-					$teknik_scores[$teknik_key] = $score;
+					// Store with rps_mingguan_id and teknik_key
+					$teknik_scores[] = [
+						'rps_mingguan_id' => $col_info['rps_mingguan_id'],
+						'teknik_key' => $col_info['teknik_key'],
+						'score' => $score
+					];
 				}
 
 				// Skip if no valid scores found
@@ -2505,27 +2621,21 @@ class Nilai extends BaseController
 					continue;
 				}
 
-				// Save scores for each teknik penilaian
-				foreach ($teknik_scores as $teknik_key => $score) {
+				// Save scores for each teknik penilaian (individual per week, NO distribution)
+				foreach ($teknik_scores as $score_info) {
 					// Skip if score is null (not provided)
-					if ($score === null) {
+					if ($score_info['score'] === null) {
 						continue;
 					}
 
-					// Get rps_mingguan_ids for this teknik
-					$rps_ids = $teknik_list[$teknik_key]['rps_mingguan_ids'] ?? [];
-
-					// Save to each rps_mingguan entry
-					foreach ($rps_ids as $rps_info) {
-						$scoreData = [
-							'mahasiswa_id' => $mahasiswa_id,
-							'jadwal_mengajar_id' => $jadwal_id,
-							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
-							'teknik_penilaian_key' => $teknik_key,
-							'nilai' => $score,
-						];
-						$nilaiTeknikModel->saveOrUpdate($scoreData);
-					}
+					$scoreData = [
+						'mahasiswa_id' => $mahasiswa_id,
+						'jadwal_mengajar_id' => $jadwal_id,
+						'rps_mingguan_id' => $score_info['rps_mingguan_id'],
+						'teknik_penilaian_key' => $score_info['teknik_key'],
+						'nilai' => $score_info['score'],
+					];
+					$nilaiTeknikModel->saveOrUpdate($scoreData);
 				}
 
 				$imported_count++;
