@@ -297,8 +297,9 @@
 											$item_index++;
 											$is_last_in_group = ($item_index === $item_count);
 											$show_border = $is_last_in_group && !$is_last_tahap_group;
-											// Build tooltip with week and bobot
-											$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " (" . number_format($item['bobot'], 1) . "%)";
+											// Build tooltip with week, CPMK, and bobot
+											$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
+											$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " - CPMK: " . esc($cpmk_display) . " (" . number_format($item['bobot'], 1) . "%)";
 											?>
 											<th class="text-center align-middle <?= $show_border ? 'tahap-border-right' : '' ?>" style="width: 110px; min-width: 110px;"
 												title="<?= $tooltip ?>"
@@ -315,7 +316,8 @@
 														?>
 													</small>
 													<small class="opacity-75" style="font-size: 0.65rem;">
-														Minggu: <?= $item['minggu'] ?>
+														Minggu: <?= $item['minggu'] ?><br />
+														<?= esc($item['kode_cpmk'] ?? $item['cpmk_code'] ?? '') ?>
 													</small>
 													<span class="badge bg-success" style="font-size: 0.65rem;">
 														<?= number_format($item['bobot'], 1) ?>%
