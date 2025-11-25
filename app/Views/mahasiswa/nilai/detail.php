@@ -128,7 +128,7 @@
 			?>
 
 			<?php foreach ($tahapOrder as $tahapName): ?>
-				<?php if (isset($teknikPenilaianByTahap[$tahapName]) && !empty($teknikPenilaianByTahap[$tahapName]['items'])): ?>
+				<?php if (isset($teknikPenilaianByTahap[$tahapName]) && !empty($teknikPenilaianByTahap[$tahapName])): ?>
 					<div class="mb-4">
 						<h6 class="text-primary mb-3">
 							<i class="bi bi-bookmark-fill"></i> <?= esc($tahapName) ?>
@@ -138,17 +138,20 @@
 								<thead class="table-light">
 									<tr>
 										<th>Teknik Penilaian</th>
+										<th class="text-center" style="width: 80px;">Minggu</th>
 										<th class="text-center" style="width: 100px;">Bobot (%)</th>
 										<th class="text-center" style="width: 100px;">Nilai</th>
 										<th class="text-center" style="width: 120px;">Nilai x Bobot</th>
 									</tr>
 								</thead>
 								<tbody>
-									<?php foreach ($teknikPenilaianByTahap[$tahapName]['items'] as $teknik): ?>
+									<?php foreach ($teknikPenilaianByTahap[$tahapName] as $teknik): ?>
 										<?php
 										$teknikKey = $teknik['teknik_key'];
-										$bobot = $teknik['total_bobot'];
-										$nilaiTeknik = $mahasiswaScores[$teknikKey] ?? null;
+										$rpsMingguan = $teknik['rps_mingguan_id'];
+										$minggu = $teknik['minggu'];
+										$bobot = $teknik['bobot'];
+										$nilaiTeknik = $mahasiswaScores[$rpsMingguan][$teknikKey] ?? null;
 										$weighted = ($nilaiTeknik !== null && $bobot > 0) ? ($nilaiTeknik * $bobot / 100) : 0;
 
 										$totalBobot += $bobot;
@@ -159,6 +162,7 @@
 										?>
 										<tr>
 											<td><?= esc($teknik['teknik_label']) ?></td>
+											<td class="text-center"><span class="badge bg-secondary">M<?= esc($minggu) ?></span></td>
 											<td class="text-center"><?= number_format($bobot, 1) ?>%</td>
 											<td class="text-center">
 												<?php if ($nilaiTeknik !== null): ?>

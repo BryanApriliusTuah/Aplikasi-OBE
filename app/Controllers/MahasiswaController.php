@@ -138,11 +138,21 @@ class MahasiswaController extends BaseController
 			return redirect()->to('mahasiswa/nilai');
 		}
 
-		// Get teknik penilaian structure grouped by tahap
-		$teknikPenilaianData = $this->nilaiTeknikPenilaianModel->getCombinedTeknikPenilaianByJadwal($jadwalId);
+		// Get teknik penilaian structure (separated by week)
+		$teknik_list = $this->nilaiTeknikPenilaianModel->getTeknikPenilaianByJadwal($jadwalId);
 
-		// Get student's scores for teknik penilaian
-		$studentScores = $this->nilaiTeknikPenilaianModel->getCombinedScoresForInput($jadwalId);
+		// Group teknik_list by tahap for organized display
+		$teknik_by_tahap = [];
+		foreach ($teknik_list as $item) {
+			$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+			if (!isset($teknik_by_tahap[$tahap])) {
+				$teknik_by_tahap[$tahap] = [];
+			}
+			$teknik_by_tahap[$tahap][] = $item;
+		}
+
+		// Get student's scores for teknik penilaian (separated per week)
+		$studentScores = $this->nilaiTeknikPenilaianModel->getScoresByJadwalForInput($jadwalId);
 		$mahasiswaScores = $studentScores[$mahasiswaId] ?? [];
 
 		// Get CPMK scores (keep for reference)
@@ -158,7 +168,8 @@ class MahasiswaController extends BaseController
 			'title' => 'Detail Nilai - ' . $nilai['nama_mk'],
 			'nilai' => $nilai,
 			'nilaiCpmk' => $nilaiCpmk,
-			'teknikPenilaianByTahap' => $teknikPenilaianData['by_tahap'] ?? [],
+			'teknikPenilaianByTahap' => $teknik_by_tahap,
+			'teknik_list' => $teknik_list,
 			'mahasiswaScores' => $mahasiswaScores
 		];
 

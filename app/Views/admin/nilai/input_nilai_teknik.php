@@ -115,17 +115,17 @@
 							<i class="bi bi-lightbulb-fill text-info fs-5"></i>
 						</div>
 						<div>
-							<h6 class="fw-bold mb-1">Penilaian Otomatis (Combined Mode)</h6>
+							<h6 class="fw-bold mb-1">Penilaian Otomatis (Separated Mode)</h6>
 							<small class="text-muted">
-								Sistem menghitung <strong>Nilai CPMK = Σ(Bobot × Nilai)</strong> dari <?= count($combined_list) ?> teknik penilaian (digabung) dalam <?= count($teknik_by_tahap) ?> tahap
+								Sistem menghitung <strong>Nilai CPMK = Σ(Bobot × Nilai)</strong> dari <?= count($teknik_list) ?> teknik penilaian (per minggu) dalam <?= count($teknik_by_tahap) ?> tahap
 							</small>
 						</div>
 					</div>
 					<div class="d-flex gap-2 flex-shrink-0">
 						<?php
-						// Get RPS ID from the first combined teknik item
+						// Get RPS ID from the first teknik item
 						$db = \Config\Database::connect();
-						$first_rps_mingguan_id = $combined_list[0]['rps_mingguan_ids'][0]['rps_mingguan_id'] ?? null;
+						$first_rps_mingguan_id = $teknik_list[0]['rps_mingguan_id'] ?? null;
 						$rps_id = null;
 						if ($first_rps_mingguan_id) {
 							$first_rps_mingguan = $db->table('rps_mingguan')
@@ -158,25 +158,25 @@
 		</div>
 	<?php endif; ?>
 
-	<div class="card border-0 shadow-sm" style="overflow: hidden;">
+	<div class="card border-0 shadow-sm">
 		<div class="card-header bg-primary text-white py-3">
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
 					<h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Form Input Nilai Teknik Penilaian</h5>
 					<small class="opacity-75">Masukkan nilai antara 0-100 untuk setiap teknik penilaian</small>
 				</div>
-				<?php if (!empty($mahasiswa_list) && !empty($combined_list)): ?>
+				<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
 					<div class="text-end">
 						<small class="opacity-75">
-							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($combined_list) ?> Teknik Penilaian (Combined)
+							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian (Separated)
 						</small>
 					</div>
 				<?php endif; ?>
 			</div>
 		</div>
 
-		<div class="card-body p-0" style="overflow: hidden;">
-			<?php if (empty($mahasiswa_list) || empty($combined_list)): ?>
+		<div class="card-body p-0">
+			<?php if (empty($mahasiswa_list) || empty($teknik_list)): ?>
 				<div class="text-center py-5">
 					<div class="mb-4">
 						<i class="bi bi-exclamation-triangle display-1 text-warning opacity-25"></i>
@@ -242,7 +242,7 @@
 						</div>
 					</div>
 
-					<div class="table-responsive" style="max-height: 70vh; overflow: auto;">
+					<div class="table-responsive" style="max-height: 70vh; overflow-x: auto; overflow-y: auto;">
 						<table class="table table-hover table-bordered mb-0 table-sm" id="nilaiTable">
 							<thead class="table-dark sticky-top">
 								<tr>
@@ -261,12 +261,12 @@
 									$tahap_count = count($teknik_by_tahap);
 									$tahap_index = 0;
 									?>
-									<?php foreach ($teknik_by_tahap as $tahap => $tahap_data): ?>
+									<?php foreach ($teknik_by_tahap as $tahap => $tahap_items): ?>
 										<?php
 										$tahap_index++;
 										$is_last_tahap = ($tahap_index === $tahap_count);
 										?>
-										<th class="text-center align-middle bg-primary bg-opacity-25 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_data['items']) ?>">
+										<th class="text-center align-middle bg-primary bg-opacity-25 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_items) ?>">
 											<?= esc($tahap) ?>
 										</th>
 									<?php endforeach; ?>
@@ -286,23 +286,19 @@
 									$tahap_keys = array_keys($teknik_by_tahap);
 									$last_tahap_key = end($tahap_keys);
 									?>
-									<?php foreach ($teknik_by_tahap as $tahap => $tahap_data): ?>
+									<?php foreach ($teknik_by_tahap as $tahap => $tahap_items): ?>
 										<?php
-										$item_count = count($tahap_data['items']);
+										$item_count = count($tahap_items);
 										$item_index = 0;
 										$is_last_tahap_group = ($tahap === $last_tahap_key);
 										?>
-										<?php foreach ($tahap_data['items'] as $item): ?>
+										<?php foreach ($tahap_items as $item): ?>
 											<?php
 											$item_index++;
 											$is_last_in_group = ($item_index === $item_count);
 											$show_border = $is_last_in_group && !$is_last_tahap_group;
-											// Build tooltip with week details
-											$weeks = array_map(function ($rps) {
-												return $rps['minggu'];
-											}, $item['rps_mingguan_ids']);
-											$weeks_display = count($weeks) > 5 ? 'W' . min($weeks) . '-' . max($weeks) : implode(',', $weeks);
-											$tooltip = esc($item['teknik_label']) . " - Minggu " . implode(', ', $weeks) . " (" . number_format($item['total_bobot'], 1) . "%)";
+											// Build tooltip with week and bobot
+											$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " (" . number_format($item['bobot'], 1) . "%)";
 											?>
 											<th class="text-center align-middle <?= $show_border ? 'tahap-border-right' : '' ?>" style="width: 110px; min-width: 110px;"
 												title="<?= $tooltip ?>"
@@ -319,10 +315,10 @@
 														?>
 													</small>
 													<small class="opacity-75" style="font-size: 0.65rem;">
-														Minggu: <?= $weeks_display ?>
+														Minggu: <?= $item['minggu'] ?>
 													</small>
 													<span class="badge bg-success" style="font-size: 0.65rem;">
-														<?= number_format($item['total_bobot'], 1) ?>%
+														<?= number_format($item['bobot'], 1) ?>%
 													</span>
 												</div>
 											</th>
@@ -349,26 +345,30 @@
 										$last_in_group = [];
 										$tahap_keys = array_keys($teknik_by_tahap);
 										$last_tahap_key = end($tahap_keys);
-										foreach ($teknik_by_tahap as $tahap => $tahap_data) {
-											$items = $tahap_data['items'];
-											if (!empty($items) && $tahap !== $last_tahap_key) {
-												$last_item = end($items);
-												$last_in_group[$last_item['teknik_key']] = true;
+										foreach ($teknik_by_tahap as $tahap => $tahap_items) {
+											if (!empty($tahap_items) && $tahap !== $last_tahap_key) {
+												$last_item = end($tahap_items);
+												// Use rps_mingguan_id + teknik_key as unique identifier
+												$last_in_group[$last_item['rps_mingguan_id'] . '_' . $last_item['teknik_key']] = true;
 											}
 										}
 										?>
-										<?php foreach ($combined_list as $item) : ?>
-											<?php $is_last = isset($last_in_group[$item['teknik_key']]); ?>
+										<?php foreach ($teknik_list as $item) : ?>
+											<?php
+											$unique_key = $item['rps_mingguan_id'] . '_' . $item['teknik_key'];
+											$is_last = isset($last_in_group[$unique_key]);
+											?>
 											<td class="align-middle p-1 <?= $is_last ? 'tahap-border-right' : '' ?>">
 												<input
 													type="text"
 													inputmode="decimal"
 													class="form-control form-control-sm text-center nilai-input"
-													name="nilai[<?= $mahasiswa['id'] ?>][<?= $item['teknik_key'] ?>]"
-													value="<?= esc($existing_scores[$mahasiswa['id']][$item['teknik_key']] ?? '') ?>"
+													name="nilai[<?= $mahasiswa['id'] ?>][<?= $item['rps_mingguan_id'] ?>][<?= $item['teknik_key'] ?>]"
+													value="<?= esc($existing_scores[$mahasiswa['id']][$item['rps_mingguan_id']][$item['teknik_key']] ?? '') ?>"
 													data-mahasiswa="<?= $mahasiswa['id'] ?>"
+													data-rps="<?= $item['rps_mingguan_id'] ?>"
 													data-teknik="<?= $item['teknik_key'] ?>"
-													data-bobot="<?= $item['total_bobot'] ?>"
+													data-bobot="<?= $item['bobot'] ?>"
 													placeholder="0-100"
 													style="min-width: 85px;"
 													<?= (!$canEdit) ? 'readonly' : '' ?>>
@@ -396,7 +396,7 @@
 								<div class="d-flex align-items-center gap-3">
 									<small class="text-muted">
 										<i class="bi bi-info-circle me-1"></i>
-										Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($combined_list) ?> teknik penilaian (combined mode)
+										Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($teknik_list) ?> teknik penilaian (separated mode - per minggu)
 									</small>
 									<small class="text-muted" id="saveStatus"></small>
 								</div>

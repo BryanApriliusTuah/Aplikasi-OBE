@@ -77,33 +77,32 @@ class Nilai extends BaseController
 					continue;
 				}
 
-				// Get combined teknik penilaian for this jadwal
+				// Get separated teknik penilaian for this jadwal
 				$nilaiTeknikModel = new NilaiTeknikPenilaianModel();
-				$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+				$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 
-				if (empty($combined_data['combined_list'])) {
+				if (empty($teknik_list)) {
 					$score_completion[$jadwal_id] = ['completed' => 0, 'total' => $total_students];
 					continue;
 				}
 
-				$teknik_keys = array_column($combined_data['combined_list'], 'teknik_key');
-				$total_teknik = count($teknik_keys);
+				// Count total unique (rps_mingguan_id, teknik_penilaian_key) combinations
+				$total_entries = count($teknik_list);
 
 				// Count students with complete scores
 				$completed_students = 0;
 				foreach ($students as $student) {
-					// Check if this student has all teknik scores
+					// Check if this student has all teknik scores for all weeks
 					$student_scores = $db->table('nilai_teknik_penilaian')
-						->select('teknik_penilaian_key, nilai')
+						->select('rps_mingguan_id, teknik_penilaian_key')
 						->where('mahasiswa_id', $student['id'])
 						->where('jadwal_mengajar_id', $jadwal_id)
-						->whereIn('teknik_penilaian_key', $teknik_keys)
 						->where('nilai IS NOT NULL')
 						->get()
 						->getResultArray();
 
-					// Student is complete if they have scores for all teknik
-					if (count($student_scores) >= $total_teknik) {
+					// Student is complete if they have scores for all entries
+					if (count($student_scores) >= $total_entries) {
 						$completed_students++;
 					}
 				}
@@ -469,15 +468,25 @@ class Nilai extends BaseController
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 
-		// Get COMBINED teknik_penilaian list (grouped by type, not by week)
-		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
+		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 
-		if (empty($combined_data['combined_list'])) {
+		if (empty($teknik_list)) {
 			return redirect()->back()->with('error', 'Tidak ada teknik penilaian yang terdefinisi pada RPS untuk mata kuliah ini. Silakan lengkapi RPS terlebih dahulu.');
 		}
 
-		// Get existing scores to pre-fill the form (combined view)
-		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+		// Group teknik_list by tahap for organized display
+		$teknik_by_tahap = [];
+		foreach ($teknik_list as $item) {
+			$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+			if (!isset($teknik_by_tahap[$tahap])) {
+				$teknik_by_tahap[$tahap] = [];
+			}
+			$teknik_by_tahap[$tahap][] = $item;
+		}
+
+		// Get existing scores to pre-fill the form (individual per week)
+		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
 		// Get dynamic grade configuration from database
 		$gradeConfigModel = new \App\Models\GradeConfigModel();
@@ -487,8 +496,8 @@ class Nilai extends BaseController
 			'title' => 'Input Nilai Berdasarkan Teknik Penilaian',
 			'jadwal' => $jadwal,
 			'mahasiswa_list' => $students,
-			'combined_list' => $combined_data['combined_list'],
-			'teknik_by_tahap' => $combined_data['by_tahap'],
+			'teknik_list' => $teknik_list,
+			'teknik_by_tahap' => $teknik_by_tahap,
 			'existing_scores' => $existing_scores,
 			'grade_config' => $grades,
 		];
@@ -497,7 +506,7 @@ class Nilai extends BaseController
 	}
 
 	/**
-	 * Save scores by teknik_penilaian (combined mode) and auto-calculate CPMK scores
+	 * Save scores by teknik_penilaian (separated mode) and auto-calculate CPMK scores
 	 */
 	public function saveNilaiByTeknikPenilaian($jadwal_id)
 	{
@@ -535,30 +544,18 @@ class Nilai extends BaseController
 		$db = \Config\Database::connect();
 		$db->transStart();
 
-		// Get combined data to map teknik_key to all rps_mingguan_ids
-		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
-		$teknik_mapping = [];
-
-		// Build mapping: teknik_key => [rps_mingguan_id, ...]
-		foreach ($combined_data['combined_list'] as $item) {
-			$teknik_mapping[$item['teknik_key']] = $item['rps_mingguan_ids'];
-		}
-
-		// 1. Save teknik_penilaian scores (distribute to all matching rps_mingguan_ids)
-		foreach ($nilai_data as $mahasiswa_id => $teknik_scores) {
-			foreach ($teknik_scores as $teknik_key => $score) {
-				// Get all rps_mingguan_ids that use this teknik_key
-				if (isset($teknik_mapping[$teknik_key])) {
-					foreach ($teknik_mapping[$teknik_key] as $rps_info) {
-						$scoreData = [
-							'mahasiswa_id' => $mahasiswa_id,
-							'jadwal_mengajar_id' => $jadwal_id,
-							'rps_mingguan_id' => $rps_info['rps_mingguan_id'],
-							'teknik_penilaian_key' => $teknik_key,
-							'nilai' => empty($score) ? null : $score,
-						];
-						$nilaiTeknikModel->saveOrUpdate($scoreData);
-					}
+		// 1. Save teknik_penilaian scores (individual per week, NO distribution)
+		foreach ($nilai_data as $mahasiswa_id => $rps_data) {
+			foreach ($rps_data as $rps_mingguan_id => $teknik_scores) {
+				foreach ($teknik_scores as $teknik_key => $score) {
+					$scoreData = [
+						'mahasiswa_id' => $mahasiswa_id,
+						'jadwal_mengajar_id' => $jadwal_id,
+						'rps_mingguan_id' => $rps_mingguan_id,
+						'teknik_penilaian_key' => $teknik_key,
+						'nilai' => empty($score) ? null : $score,
+					];
+					$nilaiTeknikModel->saveOrUpdate($scoreData);
 				}
 			}
 		}
@@ -1775,15 +1772,25 @@ class Nilai extends BaseController
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
 
-		// Get COMBINED teknik_penilaian list
-		$combined_data = $nilaiTeknikModel->getCombinedTeknikPenilaianByJadwal($jadwal_id);
+		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
+		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 
-		if (empty($combined_data['combined_list'])) {
+		if (empty($teknik_list)) {
 			return redirect()->back()->with('error', 'Tidak ada teknik penilaian yang terdefinisi pada RPS untuk mata kuliah ini.');
 		}
 
-		// Get existing scores to display
-		$existing_scores = $nilaiTeknikModel->getCombinedScoresForInput($jadwal_id);
+		// Group teknik_list by tahap for organized display
+		$teknik_by_tahap = [];
+		foreach ($teknik_list as $item) {
+			$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+			if (!isset($teknik_by_tahap[$tahap])) {
+				$teknik_by_tahap[$tahap] = [];
+			}
+			$teknik_by_tahap[$tahap][] = $item;
+		}
+
+		// Get existing scores to display (individual per week)
+		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
 		// Get final scores (nilai akhir and nilai huruf)
 		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
@@ -1796,8 +1803,8 @@ class Nilai extends BaseController
 			'title' => 'Lihat Nilai',
 			'jadwal' => $jadwal,
 			'mahasiswa_list' => $students,
-			'combined_list' => $combined_data['combined_list'],
-			'teknik_by_tahap' => $combined_data['by_tahap'],
+			'teknik_list' => $teknik_list,
+			'teknik_by_tahap' => $teknik_by_tahap,
 			'existing_scores' => $existing_scores,
 			'final_scores_map' => $final_scores_map,
 			'readonly' => true, // Flag to indicate read-only mode
