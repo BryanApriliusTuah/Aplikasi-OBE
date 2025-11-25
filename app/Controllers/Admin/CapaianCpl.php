@@ -464,6 +464,123 @@ class CapaianCpl extends BaseController
 		return $labels[$jenis] ?? $jenis;
 	}
 
+	public function getDetailCalculation()
+	{
+		$mahasiswaId = $this->request->getGet('mahasiswa_id');
+		$cplId = $this->request->getGet('cpl_id');
+
+		if (!$mahasiswaId || !$cplId) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Parameter tidak lengkap'
+			]);
+		}
+
+		$db = \Config\Database::connect();
+
+		// Get CPL info
+		$cpl = $this->cplModel->find($cplId);
+		if (!$cpl) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'CPL tidak ditemukan'
+			]);
+		}
+
+		// Get all CPMK linked to this CPL
+		$cpmkLinked = $db->table('cpl_cpmk')
+			->select('cpmk_id')
+			->where('cpl_id', $cplId)
+			->get()
+			->getResultArray();
+
+		if (empty($cpmkLinked)) {
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => [],
+				'summary' => [
+					'nilai_cpl' => 0,
+					'total_bobot' => 0,
+					'capaian_cpl' => 0
+				],
+				'message' => 'Tidak ada CPMK yang terkait dengan CPL ini'
+			]);
+		}
+
+		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
+
+		// Get all nilai_cpmk for this student for these CPMK with detailed info
+		$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id, jm.tahun_akademik, jm.kelas, mk.kode_mk, mk.nama_mk, cpmk.kode_cpmk')
+			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+			->join('cpmk', 'cpmk.id = ncm.cpmk_id')
+			->where('ncm.mahasiswa_id', $mahasiswaId)
+			->whereIn('ncm.cpmk_id', $cpmkIds)
+			->orderBy('cpmk.kode_cpmk', 'ASC')
+			->orderBy('jm.tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Calculate CPL and prepare detailed data
+		$detailData = [];
+		$nilaiCpl = 0;
+		$totalBobot = 0;
+
+		foreach ($nilaiList as $nilai) {
+			// Get bobot from rps_mingguan
+			$rps = $db->table('rps')
+				->select('id')
+				->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
+				->orderBy('created_at', 'DESC')
+				->get()
+				->getRowArray();
+
+			$bobot = 0;
+			if ($rps) {
+				// Sum bobot across all weeks for this CPMK
+				$bobotResult = $db->table('rps_mingguan')
+					->selectSum('bobot')
+					->where('rps_id', $rps['id'])
+					->where('cpmk_id', $nilai['cpmk_id'])
+					->get()
+					->getRowArray();
+
+				$bobot = $bobotResult['bobot'] ?? 0;
+			}
+
+			// Add to detail data
+			$detailData[] = [
+				'kode_cpmk' => $nilai['kode_cpmk'],
+				'kode_mk' => $nilai['kode_mk'],
+				'nama_mk' => $nilai['nama_mk'],
+				'tahun_akademik' => $nilai['tahun_akademik'],
+				'kelas' => $nilai['kelas'],
+				'nilai_cpmk' => $nilai['nilai_cpmk'],
+				'bobot' => $bobot
+			];
+
+			// Sum for calculation
+			if ($bobot > 0) {
+				$nilaiCpl += $nilai['nilai_cpmk'];
+				$totalBobot += $bobot;
+			}
+		}
+
+		// Calculate Capaian CPL (%)
+		$capaianCpl = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+
+		return $this->response->setJSON([
+			'success' => true,
+			'data' => $detailData,
+			'summary' => [
+				'nilai_cpl' => $nilaiCpl,
+				'total_bobot' => $totalBobot,
+				'capaian_cpl' => $capaianCpl
+			]
+		]);
+	}
+
 	// New
 	public function getSubjectsList()
 	{

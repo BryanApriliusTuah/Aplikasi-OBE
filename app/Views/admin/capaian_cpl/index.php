@@ -15,12 +15,12 @@
 			</li>
 			<li class="nav-item" role="presentation">
 				<button class="nav-link" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" type="button" role="tab">
-					<i class="bi bi-people"></i> Komparatif (Angkatan)
+					<i class="bi bi-people"></i> Angkatan
 				</button>
 			</li>
 			<li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
-					<i class="bi bi-grid-3x3"></i> Semua Mata Kuliah
+					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
 				</button>
 			</li>
 		</ul>
@@ -79,6 +79,18 @@
 
 				<!-- Chart Section Individual -->
 				<div id="chartSectionIndividual" class="d-none"></div>
+
+				<!-- Detailed Calculation Table Individual -->
+				<div id="detailCalculationIndividual" class="d-none">
+					<div class="card mt-4">
+						<div class="card-header bg-secondary text-white">
+							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL per Mahasiswa</h5>
+						</div>
+						<div class="card-body">
+							<div id="detailCalculationContent"></div>
+						</div>
+					</div>
+				</div>
 
 				<!-- Empty State Individual -->
 				<div id="emptyStateIndividual" class="text-center py-5">
@@ -302,6 +314,8 @@
 		}
 
 		$('#emptyStateIndividual').addClass('d-none');
+		$('#calculationExplanationIndividual').addClass('d-none');
+		$('#detailCalculationIndividual').addClass('d-none');
 		$('#chartSectionIndividual').removeClass('d-none').html(getLoadingHTML());
 
 		$.ajax({
@@ -456,6 +470,156 @@
 		if (cplChartIndividual) cplChartIndividual.destroy();
 
 		cplChartIndividual = createBarChart(ctx, response.chartData, 'Capaian CPL Mahasiswa', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+
+		// Show calculation explanation
+		$('#calculationExplanationIndividual').removeClass('d-none');
+
+		// Display detailed calculation breakdown
+		displayDetailedCalculation(response);
+	}
+
+	function displayDetailedCalculation(response) {
+		const mahasiswaId = $('#mahasiswaSelect').val();
+
+		if (!response.chartData || !response.chartData.details) {
+			$('#detailCalculationIndividual').addClass('d-none');
+			return;
+		}
+
+		let html = '';
+		response.chartData.details.forEach((cpl, index) => {
+			html += `
+				<div class="card mb-3 ${index > 0 ? 'mt-3' : ''}">
+					<div class="card-header bg-light">
+						<h6 class="mb-0">
+							<strong>${cpl.kode_cpl}</strong> - ${cpl.deskripsi}
+							<span class="badge bg-info float-end">${cpl.jenis_cpl}</span>
+						</h6>
+					</div>
+					<div class="card-body">
+						<button class="btn btn-sm btn-primary mb-3" onclick="loadCplCalculationDetail(${cpl.cpl_id}, '${cpl.kode_cpl}')">
+							<i class="bi bi-eye"></i> Lihat Detail Perhitungan
+						</button>
+						<div id="cplCalcDetail_${cpl.cpl_id}"></div>
+
+						<div class="row mt-3">
+							<div class="col-md-12">
+								<table class="table table-sm table-bordered">
+									<tr class="table-light">
+										<td width="40%"><strong>Jumlah CPMK Terkait</strong></td>
+										<td width="60%">${cpl.jumlah_cpmk} CPMK dari ${cpl.jumlah_mk} Mata Kuliah</td>
+									</tr>
+									<tr class="table-success">
+										<td><strong>Capaian CPL (%)</strong></td>
+										<td><h5 class="mb-0">${cpl.rata_rata.toFixed(2)}%</h5></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+		});
+
+		$('#detailCalculationContent').html(html);
+		$('#detailCalculationIndividual').removeClass('d-none');
+	}
+
+	function loadCplCalculationDetail(cplId, kodeCpl) {
+		const mahasiswaId = $('#mahasiswaSelect').val();
+		const targetDiv = $(`#cplCalcDetail_${cplId}`);
+
+		// Check if already loaded
+		if (targetDiv.html().trim() !== '') {
+			targetDiv.html(''); // Toggle hide
+			return;
+		}
+
+		targetDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail...</div>');
+
+		$.ajax({
+			url: '<?= base_url("admin/capaian-cpl/detail-calculation") ?>',
+			method: 'GET',
+			data: {
+				mahasiswa_id: mahasiswaId,
+				cpl_id: cplId
+			},
+			success: function(response) {
+				if (response.success) {
+					displayCplCalculationDetail(cplId, response.data, response.summary);
+				} else {
+					targetDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+				}
+			},
+			error: function() {
+				targetDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+			}
+		});
+	}
+
+	function displayCplCalculationDetail(cplId, data, summary) {
+		let html = `
+			<div class="table-responsive">
+				<table class="table table-bordered table-sm mb-0">
+					<thead class="table-primary">
+						<tr>
+							<th width="5%" class="text-center">No</th>
+							<th width="15%">Kode CPMK</th>
+							<th width="25%">Mata Kuliah</th>
+							<th width="12%" class="text-center">Tahun Akademik</th>
+							<th width="10%" class="text-center">Kelas</th>
+							<th width="10%" class="text-center">Nilai CPMK</th>
+							<th width="10%" class="text-center">Bobot (%)</th>
+							<th width="13%" class="text-center">Kontribusi</th>
+						</tr>
+					</thead>
+					<tbody>
+		`;
+
+		if (data.length === 0) {
+			html += `
+				<tr>
+					<td colspan="8" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
+				</tr>
+			`;
+		} else {
+			data.forEach((item, index) => {
+				const kontribusi = item.bobot > 0 ? (item.nilai_cpmk * item.bobot / 100) : 0;
+				html += `
+					<tr>
+						<td class="text-center">${index + 1}</td>
+						<td><strong>${item.kode_cpmk}</strong></td>
+						<td><small>${item.kode_mk} - ${item.nama_mk}</small></td>
+						<td class="text-center">${item.tahun_akademik}</td>
+						<td class="text-center">${item.kelas}</td>
+						<td class="text-center"><span class="badge bg-info">${parseFloat(item.nilai_cpmk).toFixed(2)}</span></td>
+						<td class="text-center">${parseFloat(item.bobot).toFixed(0)}%</td>
+						<td class="text-center"><strong>${kontribusi.toFixed(2)}</strong></td>
+					</tr>
+				`;
+			});
+		}
+
+		// Summary row
+		html += `
+					</tbody>
+					<tfoot class="table-light">
+						<tr>
+							<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+							<td class="text-center"><strong>Σ Nilai CPMK</strong></td>
+							<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
+							<td class="text-center"><strong>${summary.nilai_cpl.toFixed(2)}</strong></td>
+						</tr>
+						<tr class="table-success">
+							<td colspan="7" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
+							<td class="text-center"><h6 class="mb-0"><strong>${summary.capaian_cpl.toFixed(2)}%</strong></h6></td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		`;
+
+		$(`#cplCalcDetail_${cplId}`).html(html);
 	}
 
 	function displayComparativeChart(response) {
@@ -727,8 +891,8 @@
 
 			data.forEach((item, index) => {
 				// Use dynamic threshold: passing+10 for "good", passing for "fair"
-			const goodThreshold = passingThreshold + 10;
-			const badgeClass = item.rata_rata >= goodThreshold ? 'success' : (item.rata_rata >= passingThreshold ? 'warning' : 'danger');
+				const goodThreshold = passingThreshold + 10;
+				const badgeClass = item.rata_rata >= goodThreshold ? 'success' : (item.rata_rata >= passingThreshold ? 'warning' : 'danger');
 
 				let detailMk = '<ul class="mb-0" style="font-size: 0.85rem;">';
 				if (item.detail_mk.length === 0) {
@@ -924,6 +1088,8 @@
 
 	function showError(emptyStateId, chartSectionId, message) {
 		$(`#${chartSectionId}`).addClass('d-none');
+		$('#calculationExplanationIndividual').addClass('d-none');
+		$('#detailCalculationIndividual').addClass('d-none');
 		$(`#${emptyStateId}`).removeClass('d-none').html(`
         <i class="bi bi-exclamation-circle" style="font-size: 4rem; color: #dc3545;"></i>
         <p class="text-danger mt-3">${message}</p>
