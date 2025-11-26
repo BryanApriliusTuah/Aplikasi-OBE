@@ -18,11 +18,11 @@
 					<i class="bi bi-people"></i> Angkatan
 				</button>
 			</li>
-			<li class="nav-item" role="presentation">
+			<!-- <li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
 					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
 				</button>
-			</li>
+			</li> -->
 		</ul>
 
 		<!-- Tab Content -->
