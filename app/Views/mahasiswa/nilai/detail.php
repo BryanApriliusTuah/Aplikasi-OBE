@@ -93,7 +93,8 @@
 				<div class="border rounded p-3">
 					<small class="text-muted d-block mb-1">Status</small>
 					<?php if ($nilai['status_kelulusan'] == 'Lulus'): ?>
-						<span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Lulus</span>
+						<span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i>
+						</span>
 					<?php elseif ($nilai['status_kelulusan'] == 'Tidak Lulus'): ?>
 						<span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> Tidak Lulus</span>
 					<?php else: ?>
@@ -105,102 +106,88 @@
 	</div>
 </div>
 
-<!-- Teknik Penilaian Scores Card -->
+<!-- Nilai CPMK Card -->
 <div class="card">
 	<div class="card-header">
-		<h5 class="mb-0">Nilai Teknik Penilaian</h5>
+		<h5 class="mb-0">Nilai CPMK</h5>
 	</div>
 	<div class="card-body">
-		<?php if (empty($teknikPenilaianByTahap)): ?>
+		<?php if (empty($nilaiCpmk)): ?>
 			<div class="text-center py-4 text-muted">
 				<i class="bi bi-inbox" style="font-size: 3rem;"></i>
-				<p class="mt-2 mb-0">Belum ada data teknik penilaian</p>
-				<small>Data akan muncul setelah RPS mata kuliah dibuat</small>
+				<p class="mt-2 mb-0">Belum ada data nilai CPMK</p>
+				<small>Data akan muncul setelah nilai diinput oleh dosen</small>
 			</div>
 		<?php else: ?>
-			<?php
-			$totalNilai = 0;
-			$totalBobot = 0;
-			$totalWeighted = 0;
+			<div class="table-responsive">
+				<table class="table table-bordered table-hover mb-0 align-middle">
+					<thead class="table-light">
+						<tr>
+							<th class="text-center" style="width: 50px;">No</th>
+							<th style="min-width: 120px;">Kode CPMK</th>
+							<th style="min-width: 250px;">Deskripsi</th>
+							<th class="text-center" style="width: 120px;">Nilai CPMK</th>
+							<th class="text-center" style="width: 120px;">Capaian CPMK</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$totalNilaiCpmk = 0;
+						$countCpmk = 0;
+						foreach ($nilaiCpmk as $index => $cpmk):
+							// Get bobot from teknik_list for this CPMK
+							$bobotCpmk = 0;
+							foreach ($teknik_list as $teknik) {
+								if ($teknik['cpmk_id'] == $cpmk['cpmk_id']) {
+									$bobotCpmk += $teknik['bobot'];
+								}
+							}
 
-			// Define tahap order for display
-			$tahapOrder = ['Perkuliahan', 'Tengah Semester', 'Akhir Semester'];
-			?>
+							// Calculate capaian percentage
+							$capaianPersen = $bobotCpmk > 0 ? ($cpmk['nilai_cpmk'] / $bobotCpmk) * 100 : 0;
 
-			<?php foreach ($tahapOrder as $tahapName): ?>
-				<?php if (isset($teknikPenilaianByTahap[$tahapName]) && !empty($teknikPenilaianByTahap[$tahapName])): ?>
-					<div class="mb-4">
-						<h6 class="text-primary mb-3">
-							<i class="bi bi-bookmark-fill"></i> <?= esc($tahapName) ?>
-						</h6>
-						<div class="table-responsive">
-							<table class="table table-hover table-bordered">
-								<thead class="table-light">
-									<tr>
-										<th>Teknik Penilaian</th>
-										<th class="text-center" style="width: 80px;">Minggu</th>
-										<th class="text-center" style="width: 100px;">Bobot (%)</th>
-										<th class="text-center" style="width: 100px;">Nilai</th>
-										<th class="text-center" style="width: 120px;">Nilai x Bobot</th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php foreach ($teknikPenilaianByTahap[$tahapName] as $teknik): ?>
-										<?php
-										$teknikKey = $teknik['teknik_key'];
-										$rpsMingguan = $teknik['rps_mingguan_id'];
-										$minggu = $teknik['minggu'];
-										$bobot = $teknik['bobot'];
-										$nilaiTeknik = $mahasiswaScores[$rpsMingguan][$teknikKey] ?? null;
-										$weighted = ($nilaiTeknik !== null && $bobot > 0) ? ($nilaiTeknik * $bobot / 100) : 0;
+							if ($cpmk['nilai_cpmk'] > 0) {
+								$totalNilaiCpmk += $cpmk['nilai_cpmk'];
+								$countCpmk++;
+							}
 
-										$totalBobot += $bobot;
-										if ($nilaiTeknik !== null) {
-											$totalNilai++;
-											$totalWeighted += $weighted;
-										}
-										?>
-										<tr>
-											<td><?= esc($teknik['teknik_label']) ?></td>
-											<td class="text-center"><span class="badge bg-secondary">M<?= esc($minggu) ?></span></td>
-											<td class="text-center"><?= number_format($bobot, 1) ?>%</td>
-											<td class="text-center">
-												<?php if ($nilaiTeknik !== null): ?>
-													<strong><?= number_format($nilaiTeknik, 2) ?></strong>
-												<?php else: ?>
-													<span class="text-muted">-</span>
-												<?php endif; ?>
-											</td>
-											<td class="text-center">
-												<?php if ($nilaiTeknik !== null): ?>
-													<?= number_format($weighted, 2) ?>
-												<?php else: ?>
-													<span class="text-muted">-</span>
-												<?php endif; ?>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				<?php endif; ?>
-			<?php endforeach; ?>
+							// Determine badge color based on capaian
+							$badgeClass = $capaianPersen >= 60 ? 'bg-success' : 'bg-danger';
+						?>
+							<tr>
+								<td class="text-center"><?= $index + 1 ?></td>
+								<td class="text-center">
+									<strong class="text-primary"><?= esc($cpmk['kode_cpmk']) ?></strong>
+								</td>
+								<td>
+									<small class="text-dark"><?= esc($cpmk['deskripsi']) ?></small>
+								</td>
+								<td class="text-center">
+									<strong><?= number_format($cpmk['nilai_cpmk'], 2) ?></strong>
+								</td>
+								<td class="text-center">
+									<span class="badge <?= $badgeClass ?> fs-6">
+										<?= number_format($capaianPersen, 2) ?>%
+									</span>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
 
-			<!-- Summary -->
+			<!-- Legend -->
 			<div class="mt-3 p-3 bg-light rounded">
-				<div class="row text-center">
-					<div class="col-md-4">
-						<small class="text-muted">Total Bobot</small>
-						<div class="fw-bold"><?= number_format($totalBobot, 1) ?>%</div>
+				<h6 class="mb-2"><i class="bi bi-info-circle"></i> Keterangan Capaian:</h6>
+				<div class="d-flex flex-wrap gap-3">
+					<div>
+						<span class="badge bg-success">≥ 60%</span>
+						<small class="text-muted ms-1"> . </small>
 					</div>
-					<div class="col-md-4">
-						<small class="text-muted">Total Nilai x Bobot</small>
-						<div class="fw-bold"><?= number_format($totalWeighted, 2) ?></div>
-					</div>
-					<div class="col-md-4">
-						<small class="text-muted">Komponen Dinilai</small>
-						<div class="fw-bold"><?= $totalNilai ?> komponen</div>
+					<div>
+						<span class="badge bg-danger">
+							< 60%</span>
+								<small class="text-muted ms-1"> . </small>
 					</div>
 				</div>
 			</div>
