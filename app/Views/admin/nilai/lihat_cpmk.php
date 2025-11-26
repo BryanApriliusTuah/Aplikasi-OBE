@@ -486,7 +486,7 @@
 				scales: {
 					y: {
 						beginAtZero: true,
-						max: 120,
+						max: 100,
 						ticks: {
 							callback: function(value) {
 								return value + '%';

@@ -13,11 +13,11 @@
 					<i class="bi bi-person"></i> Mahasiswa
 				</button>
 			</li>
-			<li class="nav-item" role="presentation">
+			<!-- <li class="nav-item" role="presentation">
 				<button class="nav-link" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" type="button" role="tab">
 					<i class="bi bi-people"></i> Angkatan
 				</button>
-			</li>
+			</li> -->
 			<!-- <li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
 					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
@@ -230,6 +230,7 @@
 
 <?= $this->section('js') ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <script>
 	// Dynamic passing threshold from grade configuration
@@ -665,6 +666,7 @@
 				labels: response.chartData.labels,
 				datasets: response.chartData.datasets
 			},
+			plugins: [ChartDataLabels],
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -696,6 +698,18 @@
 								return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
 							}
 						}
+					},
+					datalabels: {
+						anchor: 'end',
+						align: 'top',
+						formatter: function(value) {
+							return value.toFixed(2) + '%';
+						},
+						font: {
+							weight: 'bold',
+							size: 10
+						},
+						color: '#333'
 					}
 				},
 				scales: {
@@ -924,9 +938,13 @@
 
 	// Helper Functions
 	function createBarChart(ctx, chartData, title, backgroundColor, borderColor) {
-		const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-		gradient.addColorStop(0, backgroundColor);
-		gradient.addColorStop(1, backgroundColor.replace('0.8', '0.2'));
+		// Create conditional colors based on passing threshold
+		const backgroundColors = chartData.data.map(value =>
+			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
+		);
+		const borderColors = chartData.data.map(value =>
+			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
+		);
 
 		return new Chart(ctx, {
 			type: 'bar',
@@ -935,13 +953,13 @@
 				datasets: [{
 					label: 'Capaian CPL (%)',
 					data: chartData.data,
-					backgroundColor: gradient,
-					borderColor: borderColor,
+					backgroundColor: backgroundColors,
+					borderColor: borderColors,
 					borderWidth: 2,
-					borderRadius: 5,
-					barThickness: 40
+					borderRadius: 5
 				}]
 			},
+			plugins: [ChartDataLabels],
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -966,6 +984,18 @@
 								return 'Capaian CPL: ' + context.parsed.y.toFixed(2) + '%';
 							}
 						}
+					},
+					datalabels: {
+						anchor: 'end',
+						align: 'top',
+						formatter: function(value) {
+							return value.toFixed(2) + '%';
+						},
+						font: {
+							weight: 'bold',
+							size: 12
+						},
+						color: '#333'
 					}
 				},
 				scales: {
