@@ -10,7 +10,7 @@
 		<ul class="nav nav-tabs mb-4" id="cplTabs" role="tablist">
 			<li class="nav-item" role="presentation">
 				<button class="nav-link active" id="individual-tab" data-bs-toggle="tab" data-bs-target="#individual" type="button" role="tab">
-					<i class="bi bi-person"></i> Individual
+					<i class="bi bi-person"></i> Mahasiswa
 				</button>
 			</li>
 			<li class="nav-item" role="presentation">
@@ -42,7 +42,7 @@
 									<select class="form-select" id="programStudiSelect" name="program_studi">
 										<option value="">-- Semua Program Studi --</option>
 										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>"><?= esc($prodi) ?></option>
+											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
@@ -114,7 +114,7 @@
 									<select class="form-select" id="programStudiComparativeSelect" name="program_studi" required>
 										<option value="">-- Pilih Program Studi --</option>
 										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>"><?= esc($prodi) ?></option>
+											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
