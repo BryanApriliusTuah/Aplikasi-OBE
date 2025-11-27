@@ -232,6 +232,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 	// Dynamic passing threshold from grade configuration
 	const passingThreshold = <?= json_encode($passing_threshold ?? 65) ?>;
@@ -243,6 +250,57 @@
 	let currentComparativeData = null;
 
 	$(document).ready(function() {
+		// Initialize Select2 on Program Studi dropdown
+		$('#programStudiSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Angkatan dropdown
+		$('#tahunAngkatanSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on mahasiswa dropdown
+		$('#mahasiswaSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Mahasiswa --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Mahasiswa tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				},
+				inputTooShort: function() {
+					return "Ketik untuk mencari...";
+				}
+			}
+		});
+
 		// Load initial data
 		loadMahasiswa();
 
@@ -292,6 +350,8 @@
 			},
 			success: function(response) {
 				const mahasiswaSelect = $('#mahasiswaSelect');
+
+				// Clear existing options
 				mahasiswaSelect.html('<option value="">-- Pilih Mahasiswa --</option>');
 
 				if (response.length > 0) {
@@ -302,6 +362,9 @@
 				} else {
 					mahasiswaSelect.prop('disabled', true);
 				}
+
+				// Refresh Select2 after updating options
+				mahasiswaSelect.trigger('change.select2');
 			}
 		});
 	}
