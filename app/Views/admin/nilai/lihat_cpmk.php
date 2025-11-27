@@ -123,7 +123,7 @@
 	<!-- CPMK Statistics -->
 	<div class="card shadow-sm mb-4">
 		<div class="card-header bg-light">
-			<h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Statistik CPMK</h5>
+			<h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Nilai CPMK Mata Kuliah (<?= esc($jadwal['nama_mk']) ?>)</h5>
 		</div>
 		<div class="card-body p-0">
 			<div class="table-responsive">
@@ -134,8 +134,7 @@
 							<th style="min-width: 120px;">Kode CPMK</th>
 							<th style="min-width: 250px;">Deskripsi</th>
 							<th class="text-center" style="width: 100px;">Bobot</th>
-							<th class="text-center" style="width: 120px;">Rata-rata</th>
-							<th class="text-center" style="width: 120px;">Capaian</th>
+							<th class="text-center" style="width: 200px;">Rata-Rata Capaian</th>
 							<th class="text-center" style="width: 100px;">Terisi</th>
 						</tr>
 					</thead>
@@ -151,11 +150,8 @@
 								<td class="text-center">
 									<span class="badge bg-primary text-white me-1 mb-1"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
 								</td>
-								<td class="text-center">
-									<strong><?= $cpmk_stats[$cpmk['id']]['avg'] ?></strong>
-								</td>
-								<td class="text-center">
-									<strong><?= number_format($avg_capaian, 2) ?>%</strong>
+								<td class="text-center <?= number_format($avg_capaian, 2) < 60 ? 'text-danger fw-bold' : '' ?>">
+									<?= number_format($avg_capaian, 2) ?>%
 								</td>
 								<td class="text-center">
 									<strong><?= $cpmk_stats[$cpmk['id']]['count'] ?></strong> / <?= count($mahasiswa_list) ?>
@@ -173,7 +169,7 @@
 		<div class="col-12">
 			<div class="card shadow-sm">
 				<div class="card-header bg-light">
-					<h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Grafik Capaian CPMK</h5>
+					<h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Grafik Capaian CPMK (<?= esc($jadwal['nama_mk']) ?>)</h5>
 				</div>
 				<div class="card-body">
 					<canvas id="cpmkCapaianChart" style="max-height: 400px;"></canvas>
@@ -185,7 +181,7 @@
 	<!-- CPMK Scores Table -->
 	<div class="card shadow-sm">
 		<div class="card-header bg-light">
-			<h5 class="mb-0"><i class="bi bi-table"></i> Tabel Nilai CPMK</h5>
+			<h5 class="mb-0"><i class="bi bi-table"></i> Nilai CPMK Mahasiswa (<?= esc($jadwal['nama_mk']) ?>)</h5>
 		</div>
 		<div class="card-body p-0">
 			<?php if (empty($mahasiswa_list)): ?>
