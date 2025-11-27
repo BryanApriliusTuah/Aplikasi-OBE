@@ -13,11 +13,16 @@
 					<i class="bi bi-person"></i> Mahasiswa
 				</button>
 			</li>
-			<!-- <li class="nav-item" role="presentation">
+			<li class="nav-item" role="presentation">
 				<button class="nav-link" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" type="button" role="tab">
 					<i class="bi bi-people"></i> Angkatan
 				</button>
-			</li> -->
+			</li>
+		<li class="nav-item" role="presentation">
+			<button class="nav-link" id="keseluruhan-tab" data-bs-toggle="tab" data-bs-target="#keseluruhan" type="button" role="tab">
+				<i class="bi bi-bar-chart-line"></i> Keseluruhan
+			</button>
+		</li>
 			<!-- <li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
 					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
@@ -146,12 +151,82 @@
 				<!-- Chart Section Comparative -->
 				<div id="chartSectionComparative" class="d-none"></div>
 
+				<!-- Detailed Calculation Table Comparative -->
+				<div id="detailCalculationComparative" class="d-none">
+					<div class="card mt-4">
+						<div class="card-header bg-secondary text-white">
+							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL per Angkatan</h5>
+						</div>
+						<div class="card-body">
+							<div id="detailCalculationComparativeContent"></div>
+						</div>
+					</div>
+				</div>
+
 				<!-- Empty State Comparative -->
 				<div id="emptyStateComparative" class="text-center py-5">
 					<i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
 					<p class="text-muted mt-3">Pilih program studi dan tahun angkatan untuk melihat grafik rata-rata capaian CPL</p>
 				</div>
 			</div>
+
+		<!-- Keseluruhan Tab -->
+		<div class="tab-pane fade" id="keseluruhan" role="tabpanel">
+			<!-- Filter Section Keseluruhan -->
+			<div class="card mb-4">
+				<div class="card-header bg-light">
+					<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter</h5>
+				</div>
+				<div class="card-body">
+					<form id="filterKeseluruhanForm">
+						<div class="row g-3">
+							<div class="col-md-10">
+								<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
+								<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
+									<option value="">-- Pilih Program Studi --</option>
+									<?php foreach ($programStudi as $prodi): ?>
+										<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+									<?php endforeach; ?>
+								</select>
+								<small class="text-muted">Menampilkan rata-rata CPL dari semua mahasiswa aktif di semua angkatan</small>
+							</div>
+							<div class="col-md-2 d-flex align-items-end">
+								<button type="submit" class="btn btn-primary w-100">
+									<i class="bi bi-search"></i> Tampilkan
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Info Section Keseluruhan -->
+			<div id="infoSectionKeseluruhan" class="alert alert-info d-none">
+				<h6 class="mb-2"><strong>Informasi:</strong></h6>
+				<div id="infoContentKeseluruhan"></div>
+			</div>
+
+			<!-- Chart Section Keseluruhan -->
+			<div id="chartSectionKeseluruhan" class="d-none"></div>
+
+			<!-- Detailed Calculation Table Keseluruhan -->
+			<div id="detailCalculationKeseluruhan" class="d-none">
+				<div class="card mt-4">
+					<div class="card-header bg-secondary text-white">
+						<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL Keseluruhan</h5>
+					</div>
+					<div class="card-body">
+						<div id="detailCalculationKeseluruhanContent"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Empty State Keseluruhan -->
+			<div id="emptyStateKeseluruhan" class="text-center py-5">
+				<i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #ccc;"></i>
+				<p class="text-muted mt-3">Pilih program studi untuk melihat grafik rata-rata capaian CPL dari semua angkatan</p>
+			</div>
+		</div>
 
 			<!-- All Subjects Tab (NEW) -->
 			<div class="tab-pane fade" id="allSubjects" role="tabpanel">
@@ -245,9 +320,11 @@
 
 	let cplChartIndividual = null;
 	let cplChartComparative = null;
+	let cplChartKeseluruhan = null;
 	let cplChartAllSubjects = null;
 	let currentIndividualData = null;
 	let currentComparativeData = null;
+	let currentKeseluruhanData = null;
 
 	$(document).ready(function() {
 		// Initialize Select2 on Program Studi dropdown
@@ -319,6 +396,12 @@
 			e.preventDefault();
 			loadComparativeChartData();
 		});
+
+	// Keseluruhan Tab Events
+	$('#filterKeseluruhanForm').on('submit', function(e) {
+		e.preventDefault();
+		loadKeseluruhanChartData();
+	});
 
 		// All Subjects Tab Events
 		$('#filterAllSubjectsForm').on('submit', function(e) {
@@ -415,6 +498,7 @@
 		}
 
 		$('#emptyStateComparative').addClass('d-none');
+		$('#detailCalculationComparative').addClass('d-none');
 		$('#chartSectionComparative').removeClass('d-none').html(getLoadingHTML('success'));
 
 		$.ajax({
@@ -435,6 +519,38 @@
 			},
 			error: function() {
 				showError('emptyStateComparative', 'chartSectionComparative', 'Terjadi kesalahan saat memuat data');
+			}
+		});
+	}
+	function loadKeseluruhanChartData() {
+		const programStudi = $('#programStudiKeseluruhanSelect').val();
+
+		if (!programStudi) {
+			alert('Silakan pilih program studi');
+			return;
+		}
+
+		$('#emptyStateKeseluruhan').addClass('d-none');
+		$('#detailCalculationKeseluruhan').addClass('d-none');
+		$('#chartSectionKeseluruhan').removeClass('d-none').html(getLoadingHTML('info'));
+
+		$.ajax({
+			url: '<?= base_url("admin/capaian-cpl/keseluruhan-data") ?>',
+			method: 'GET',
+			data: {
+				program_studi: programStudi
+			},
+			success: function(response) {
+				if (response.success) {
+					currentKeseluruhanData = response;
+					displayKeseluruhanChart(response);
+					displayKeseluruhanInfo(response);
+				} else {
+					showError('emptyStateKeseluruhan', 'chartSectionKeseluruhan', response.message);
+				}
+			},
+			error: function() {
+				showError('emptyStateKeseluruhan', 'chartSectionKeseluruhan', 'Terjadi kesalahan saat memuat data');
 			}
 		});
 	}
@@ -507,6 +623,25 @@
     `;
 		$('#infoContentComparative').html(info);
 		$('#infoSectionComparative').removeClass('d-none');
+	}
+
+	function displayKeseluruhanInfo(response) {
+		const angkatanStr = response.angkatanList.join(', ');
+		const info = `
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Program Studi:</strong> ${response.programStudi}
+            </div>
+            <div class="col-md-4">
+                <strong>Total Mahasiswa:</strong> ${response.totalMahasiswa} orang
+            </div>
+            <div class="col-md-4">
+                <strong>Angkatan:</strong> ${angkatanStr}
+            </div>
+        </div>
+    `;
+		$('#infoContentKeseluruhan').html(info);
+		$('#infoSectionKeseluruhan').removeClass('d-none');
 	}
 
 	function displayAllSubjectsInfo(response) {
@@ -696,6 +831,381 @@
 		if (cplChartComparative) cplChartComparative.destroy();
 
 		cplChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL (Angkatan)', 'rgba(25, 135, 84, 0.8)', 'rgba(25, 135, 84, 1)');
+
+		// Display detailed calculation
+		displayComparativeDetailedCalculation(response);
+	}
+
+	function displayKeseluruhanChart(response) {
+		const chartHTML = createChartHTML('Keseluruhan', 'info', 'cplChartKeseluruhan', 'Rata-rata Capaian CPL Keseluruhan (Semua Angkatan)');
+		$('#chartSectionKeseluruhan').html(chartHTML);
+
+		bindExportButton('#exportChartKeseluruhanBtn', cplChartKeseluruhan, 'capaian-cpl-keseluruhan.png');
+
+		const ctx = document.getElementById('cplChartKeseluruhan').getContext('2d');
+		if (cplChartKeseluruhan) cplChartKeseluruhan.destroy();
+
+		cplChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL Keseluruhan', 'rgba(13, 202, 240, 0.8)', 'rgba(13, 202, 240, 1)');
+
+		// Display detailed calculation
+		displayKeseluruhanDetailedCalculation(response);
+	}
+
+	function displayKeseluruhanDetailedCalculation(response) {
+		if (!response.chartData || !response.chartData.details) {
+			$('#detailCalculationKeseluruhan').addClass('d-none');
+			return;
+		}
+
+		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		html += '<thead class="table-light">';
+		html += '<tr>';
+		html += '<th width="5%" class="text-center">No</th>';
+		html += '<th width="12%">Kode CPL</th>';
+		html += '<th width="43%">Deskripsi CPL</th>';
+		html += '<th width="12%" class="text-center">Jenis CPL</th>';
+		html += '<th width="10%" class="text-center">Jumlah Mahasiswa</th>';
+		html += '<th width="11%" class="text-center">Rata-rata (%)</th>';
+		html += '<th width="7%" class="text-center">Aksi</th>';
+		html += '</tr>';
+		html += '</thead>';
+		html += '<tbody>';
+
+		let totalCplScore = 0;
+		let totalMahasiswa = 0;
+
+		response.chartData.details.forEach((cpl, index) => {
+			html += `
+				<tr>
+					<td class="text-center" rowspan="1">${index + 1}</td>
+					<td rowspan="1"><strong>${cpl.kode_cpl}</strong></td>
+					<td rowspan="1">${cpl.deskripsi}</td>
+					<td class="text-center" rowspan="1"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
+					<td class="text-center" rowspan="1">${cpl.jumlah_mahasiswa}</td>
+					<td class="text-center" rowspan="1"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
+					<td class="text-center" rowspan="1">
+						<button class="btn btn-sm btn-primary" onclick="loadKeseluruhanCplDetail(${cpl.cpl_id}, '${cpl.kode_cpl}', ${index})">
+							<i class="bi bi-eye"></i> Lihat Detail
+						</button>
+					</td>
+				</tr>
+				<tr id="cplKeseluruhanDetail_${index}" style="display: none;">
+					<td colspan="7" class="bg-light">
+						<div id="cplKeseluruhanDetailContent_${index}"></div>
+					</td>
+				</tr>
+			`;
+
+			totalCplScore += cpl.rata_rata;
+			if (cpl.jumlah_mahasiswa > totalMahasiswa) {
+				totalMahasiswa = cpl.jumlah_mahasiswa;
+			}
+		});
+
+		html += '</tbody>';
+		html += '</table></div>';
+
+		// Add explanation
+		html += '<div class="alert alert-info mt-3">';
+		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
+		html += '<p class="mb-1">Setiap nilai CPL dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata-rata CPL = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> di program studi <strong>${response.programStudi}</strong> dari semua angkatan (${response.angkatanList.join(', ')}).</p>`;
+		html += '</div>';
+
+		$('#detailCalculationKeseluruhanContent').html(html);
+		$('#detailCalculationKeseluruhan').removeClass('d-none');
+	}
+
+	function loadKeseluruhanCplDetail(cplId, kodeCpl, index) {
+		const targetDiv = $('#cplKeseluruhanDetail_' + index);
+		const contentDiv = $('#cplKeseluruhanDetailContent_' + index);
+
+		// Toggle visibility
+		if (targetDiv.is(':visible')) {
+			targetDiv.hide();
+			return;
+		}
+
+		const programStudi = $('#programStudiKeseluruhanSelect').val();
+
+		targetDiv.show();
+		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
+
+		$.ajax({
+			url: '<?= base_url("admin/capaian-cpl/keseluruhan-detail-calculation") ?>',
+			method: 'GET',
+			data: {
+				cpl_id: cplId,
+				program_studi: programStudi
+			},
+			success: function(response) {
+				if (response.success) {
+					displayKeseluruhanCplCalculationDetail(index, kodeCpl, response.data, response.summary);
+				} else {
+					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+				}
+			},
+			error: function() {
+				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+			}
+		});
+	}
+
+	function displayKeseluruhanCplCalculationDetail(index, kodeCpl, data, summary) {
+		let html = `
+			<div class="card mb-0 border-0">
+				<div class="card-header bg-info text-white">
+					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpl} - Per Mahasiswa (Semua Angkatan)</h6>
+				</div>
+				<div class="card-body">
+		`;
+
+		if (data.length === 0) {
+			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
+		} else {
+			html += `
+				<div class="table-responsive">
+					<table class="table table-bordered table-sm table-hover mb-0">
+						<thead class="table-primary">
+							<tr>
+								<th width="8%" class="text-center">No</th>
+								<th width="15%">NIM</th>
+								<th width="40%">Nama Mahasiswa</th>
+								<th width="12%" class="text-center">Angkatan</th>
+								<th width="25%" class="text-center">Capaian CPL (%)</th>
+							</tr>
+						</thead>
+						<tbody>
+			`;
+
+			data.forEach((mhs, idx) => {
+				html += `
+					<tr>
+						<td class="text-center">${idx + 1}</td>
+						<td>${mhs.nim}</td>
+						<td>${mhs.nama_lengkap}</td>
+						<td class="text-center"><span class="badge bg-secondary">${mhs.tahun_angkatan}</span></td>
+						<td class="text-center"><strong>${mhs.capaian_cpl.toFixed(2)}%</strong></td>
+					</tr>
+				`;
+			});
+
+			html += `
+						</tbody>
+						<tfoot class="table-light">
+							<tr>
+								<td colspan="4" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa (semua angkatan):</strong></td>
+								<td class="text-center"><strong>${summary.total_cpl.toFixed(2)}%</strong></td>
+							</tr>
+							<tr class="table-success">
+								<td colspan="4" class="text-end"><strong>Rata-rata CPL = ${summary.total_cpl.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
+								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+			`;
+
+			// Add calculation explanation
+			html += `
+				<div class="alert alert-info mt-3 mb-0">
+					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
+					<ol class="mb-0">
+						<li><strong>Capaian CPL per Mahasiswa</strong> = (Nilai CPL / Total Bobot) × 100%</li>
+						<li><strong>Rata-rata Keseluruhan</strong> = (Σ Capaian CPL semua mahasiswa dari semua angkatan) / Jumlah mahasiswa</li>
+						<li>Rata-rata = (${data.slice(0, 3).map(m => m.capaian_cpl.toFixed(2)).join(' + ')} ${data.length > 3 ? '+ ... (' + (data.length - 3) + ' mahasiswa lainnya)' : ''}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
+					</ol>
+				</div>
+			`;
+		}
+
+		html += `
+				</div>
+			</div>
+		`;
+
+		$('#cplKeseluruhanDetailContent_' + index).html(html);
+	}
+
+	function displayComparativeDetailedCalculation(response) {
+		if (!response.chartData || !response.chartData.details) {
+			$('#detailCalculationComparative').addClass('d-none');
+			return;
+		}
+
+		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		html += '<thead class="table-light">';
+		html += '<tr>';
+		html += '<th width="5%" class="text-center">No</th>';
+		html += '<th width="12%">Kode CPL</th>';
+		html += '<th width="35%">Deskripsi CPL</th>';
+		html += '<th width="12%" class="text-center">Jenis CPL</th>';
+		html += '<th width="10%" class="text-center">Jumlah Mahasiswa</th>';
+		html += '<th width="13%" class="text-center">Rata-rata (%)</th>';
+		html += '<th width="13%" class="text-center">Aksi</th>';
+		html += '</tr>';
+		html += '</thead>';
+		html += '<tbody>';
+
+		let totalCplScore = 0;
+		let totalMahasiswa = 0;
+
+		response.chartData.details.forEach((cpl, index) => {
+			const statusBadge = getStatusBadge(cpl.rata_rata);
+
+			html += `
+				<tr>
+					<td class="text-center" rowspan="1">${index + 1}</td>
+					<td rowspan="1"><strong>${cpl.kode_cpl}</strong></td>
+					<td rowspan="1">${cpl.deskripsi}</td>
+					<td class="text-center" rowspan="1"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
+					<td class="text-center" rowspan="1">${cpl.jumlah_mahasiswa}</td>
+					<td class="text-center" rowspan="1"><strong>${cpl.rata_rata.toFixed(2)}%
+					<td class="text-center" rowspan="1">
+						<button class="btn btn-sm btn-primary" onclick="loadComparativeCplDetail(${cpl.cpl_id}, '${cpl.kode_cpl}', ${index})">
+							<i class="bi bi-eye"></i> Lihat Detail
+						</button>
+					</td>
+				</tr>
+				<tr id="cplComparativeDetail_${index}" style="display: none;">
+					<td colspan="7" class="bg-light">
+						<div id="cplComparativeDetailContent_${index}"></div>
+					</td>
+				</tr>
+			`;
+
+			totalCplScore += cpl.rata_rata;
+			if (cpl.jumlah_mahasiswa > totalMahasiswa) {
+				totalMahasiswa = cpl.jumlah_mahasiswa;
+			}
+		});
+
+		// Add summary row
+		const averageOverall = response.chartData.details.length > 0 ?
+			(totalCplScore / response.chartData.details.length).toFixed(2) : 0;
+
+		// Add explanation
+		html += '<div class="alert alert-info mt-3">';
+		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
+		html += '<p class="mb-1">Setiap nilai CPL dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata-rata CPL = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> pada angkatan <strong>${response.tahunAngkatan}</strong> program studi <strong>${response.programStudi}</strong>.</p>`;
+		html += '</div>';
+
+		$('#detailCalculationComparativeContent').html(html);
+		$('#detailCalculationComparative').removeClass('d-none');
+	}
+
+	function loadComparativeCplDetail(cplId, kodeCpl, index) {
+		const targetDiv = $(`#cplComparativeDetail_${index}`);
+		const contentDiv = $(`#cplComparativeDetailContent_${index}`);
+
+		// Toggle visibility
+		if (targetDiv.is(':visible')) {
+			targetDiv.hide();
+			return;
+		}
+
+		const programStudi = $('#programStudiComparativeSelect').val();
+		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
+
+		targetDiv.show();
+		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
+
+		$.ajax({
+			url: '<?= base_url("admin/capaian-cpl/comparative-detail-calculation") ?>',
+			method: 'GET',
+			data: {
+				cpl_id: cplId,
+				program_studi: programStudi,
+				tahun_angkatan: tahunAngkatan
+			},
+			success: function(response) {
+				if (response.success) {
+					displayComparativeCplCalculationDetail(index, kodeCpl, response.data, response.summary);
+				} else {
+					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+				}
+			},
+			error: function() {
+				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+			}
+		});
+	}
+
+	function displayComparativeCplCalculationDetail(index, kodeCpl, data, summary) {
+		let html = `
+			<div class="card mb-0 border-0">
+				<div class="card-header bg-info text-white">
+					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpl} - Per Mahasiswa</h6>
+				</div>
+				<div class="card-body">
+		`;
+
+		if (data.length === 0) {
+			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
+		} else {
+			html += `
+				<div class="table-responsive">
+					<table class="table table-bordered table-sm table-hover mb-0">
+						<thead class="table-primary">
+							<tr>
+								<th width="10%" class="text-center">No</th>
+								<th width="20%">NIM</th>
+								<th width="50%">Nama Mahasiswa</th>
+								<th width="20%" class="text-center">Capaian CPL (%)</th>
+							</tr>
+						</thead>
+						<tbody>
+			`;
+
+			data.forEach((mhs, idx) => {
+				html += `
+					<tr>
+						<td class="text-center">${idx + 1}</td>
+						<td>${mhs.nim}</td>
+						<td>${mhs.nama_lengkap}</td>
+						<td class="text-center"><strong>${mhs.capaian_cpl.toFixed(2)}%</strong></td>
+					</tr>
+				`;
+			});
+
+			html += `
+						</tbody>
+						<tfoot class="table-light">
+							<tr>
+								<td colspan="3" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa:</strong></td>
+								<td class="text-center"><strong>${summary.total_cpl.toFixed(2)}%</strong></td>
+							</tr>
+							<tr class="table-success">
+								<td colspan="3" class="text-end"><strong>Rata-rata CPL = ${summary.total_cpl.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
+								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+			`;
+
+			// Add calculation explanation
+			html += `
+				<div class="alert alert-info mt-3 mb-0">
+					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
+					<ol class="mb-0">
+						<li><strong>Capaian CPL per Mahasiswa</strong> = (Nilai CPL / Total Bobot) × 100%</li>
+						<li><strong>Rata-rata Angkatan</strong> = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</li>
+						<li>Rata-rata = (${data.map(m => m.capaian_cpl.toFixed(2)).join(' + ')}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
+					</ol>
+				</div>
+			`;
+		}
+
+		html += `
+				</div>
+			</div>
+		`;
+
+		$(`#cplComparativeDetailContent_${index}`).html(html);
 	}
 
 
@@ -1183,6 +1693,7 @@
 		$(`#${chartSectionId}`).addClass('d-none');
 		$('#calculationExplanationIndividual').addClass('d-none');
 		$('#detailCalculationIndividual').addClass('d-none');
+		$('#detailCalculationComparative').addClass('d-none');
 		$(`#${emptyStateId}`).removeClass('d-none').html(`
         <i class="bi bi-exclamation-circle" style="font-size: 4rem; color: #dc3545;"></i>
         <p class="text-danger mt-3">${message}</p>
