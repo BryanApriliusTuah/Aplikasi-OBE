@@ -248,13 +248,12 @@
 				<li class="nav-item sidebar-dropdown<?= $isProfilCplOpen ? ' open' : '' ?>">
 					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat rekapitulasi penilaian dan asesmen">
-						<span><i class="bi bi-file-earmark-text"></i> Profil CPL Mahasiswa </span>
+						<span><i class="bi bi-file-earmark-text"></i> Profil Capaian </span>
 						<span class="caret"></span>
 					</a>
 					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isProfilCplOpen ? ' show' : '' ?>">
 						<!-- <li><a class="nav-link <?= uri_string() == 'admin/capaian-cpmk' ? 'active' : '' ?>" href="<?= base_url('admin/capaian-cpmk') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Rekapitulasi teknik penilaian untuk setiap CPMK">Capaian CPMK</a></li> -->
 						<li><a class="nav-link <?= uri_string() == 'admin/capaian-cpl' ? 'active' : '' ?>" href="<?= base_url('admin/capaian-cpl') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Detail tahapan dan mekanisme penilaian">Capaian CPL</a></li>
-
 					</ul>
 				</li>
 
