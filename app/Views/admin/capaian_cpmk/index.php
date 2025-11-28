@@ -1128,10 +1128,10 @@
 	function createBarChart(ctx, chartData, title, backgroundColor, borderColor) {
 		// Create conditional colors based on passing threshold
 		const backgroundColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
+			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : backgroundColor
 		);
 		const borderColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
+			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : borderColor
 		);
 
 		return new Chart(ctx, {
