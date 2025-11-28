@@ -213,6 +213,13 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('capaian-cpmk/get-kelas', 'CapaianCpmk::getKelasByMataKuliah');
 	$routes->get('capaian-cpmk/comparative-subjects', 'CapaianCpmk::getComparativeSubjects');
 	$routes->get('capaian-cpmk/all-subjects-data', 'CapaianCpmk::getAllSubjectsData');
+	$routes->get('capaian-cpmk/mahasiswa', 'CapaianCpmk::mahasiswa');
+	$routes->get('capaian-cpmk/chartDataIndividual', 'CapaianCpmk::chartDataIndividual');
+	$routes->get('capaian-cpmk/comparativeData', 'CapaianCpmk::comparativeData');
+	$routes->get('capaian-cpmk/keseluruhanData', 'CapaianCpmk::keseluruhanData');
+	$routes->get('capaian-cpmk/comparativeDetailCalculation', 'CapaianCpmk::comparativeDetailCalculation');
+	$routes->get('capaian-cpmk/keseluruhanDetailCalculation', 'CapaianCpmk::keseluruhanDetailCalculation');
+	$routes->get('capaian-cpmk/individualCpmkDetailCalculation', 'CapaianCpmk::individualCpmkDetailCalculation');
 
 	//capaian cpl
 	$routes->get('capaian-cpl', 'CapaianCpl::index');
