@@ -4,7 +4,7 @@
 
 <div class="card">
 	<div class="card-body">
-		<h2 class="mb-4">Capaian CPL Mahasiswa</h2>
+		<h2 class="mb-4">Capaian CPL</h2>
 
 		<!-- Tab Navigation -->
 		<ul class="nav nav-tabs mb-4" id="cplTabs" role="tablist">
@@ -18,11 +18,11 @@
 					<i class="bi bi-people"></i> Angkatan
 				</button>
 			</li>
-		<li class="nav-item" role="presentation">
-			<button class="nav-link" id="keseluruhan-tab" data-bs-toggle="tab" data-bs-target="#keseluruhan" type="button" role="tab">
-				<i class="bi bi-bar-chart-line"></i> Keseluruhan
-			</button>
-		</li>
+			<li class="nav-item" role="presentation">
+				<button class="nav-link" id="keseluruhan-tab" data-bs-toggle="tab" data-bs-target="#keseluruhan" type="button" role="tab">
+					<i class="bi bi-bar-chart-line"></i> Keseluruhan
+				</button>
+			</li>
 			<!-- <li class="nav-item" role="presentation">
 				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
 					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
@@ -170,63 +170,63 @@
 				</div>
 			</div>
 
-		<!-- Keseluruhan Tab -->
-		<div class="tab-pane fade" id="keseluruhan" role="tabpanel">
-			<!-- Filter Section Keseluruhan -->
-			<div class="card mb-4">
-				<div class="card-header bg-light">
-					<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter</h5>
-				</div>
-				<div class="card-body">
-					<form id="filterKeseluruhanForm">
-						<div class="row g-3">
-							<div class="col-md-10">
-								<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
-								<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
-									<option value="">-- Pilih Program Studi --</option>
-									<?php foreach ($programStudi as $prodi): ?>
-										<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
-									<?php endforeach; ?>
-								</select>
-								<small class="text-muted">Menampilkan rata-rata CPL dari semua mahasiswa aktif di semua angkatan</small>
-							</div>
-							<div class="col-md-2 d-flex align-items-end">
-								<button type="submit" class="btn btn-primary w-100">
-									<i class="bi bi-search"></i> Tampilkan
-								</button>
-							</div>
-						</div>
-					</form>
-				</div>
-			</div>
-
-			<!-- Info Section Keseluruhan -->
-			<div id="infoSectionKeseluruhan" class="alert alert-info d-none">
-				<h6 class="mb-2"><strong>Informasi:</strong></h6>
-				<div id="infoContentKeseluruhan"></div>
-			</div>
-
-			<!-- Chart Section Keseluruhan -->
-			<div id="chartSectionKeseluruhan" class="d-none"></div>
-
-			<!-- Detailed Calculation Table Keseluruhan -->
-			<div id="detailCalculationKeseluruhan" class="d-none">
-				<div class="card mt-4">
-					<div class="card-header bg-secondary text-white">
-						<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL Keseluruhan</h5>
+			<!-- Keseluruhan Tab -->
+			<div class="tab-pane fade" id="keseluruhan" role="tabpanel">
+				<!-- Filter Section Keseluruhan -->
+				<div class="card mb-4">
+					<div class="card-header bg-light">
+						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter</h5>
 					</div>
 					<div class="card-body">
-						<div id="detailCalculationKeseluruhanContent"></div>
+						<form id="filterKeseluruhanForm">
+							<div class="row g-3">
+								<div class="col-md-10">
+									<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
+									<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
+										<option value="">-- Pilih Program Studi --</option>
+										<?php foreach ($programStudi as $prodi): ?>
+											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+										<?php endforeach; ?>
+									</select>
+									<small class="text-muted">Menampilkan rata-rata CPL dari semua mahasiswa aktif di semua angkatan</small>
+								</div>
+								<div class="col-md-2 d-flex align-items-end">
+									<button type="submit" class="btn btn-primary w-100">
+										<i class="bi bi-search"></i> Tampilkan
+									</button>
+								</div>
+							</div>
+						</form>
 					</div>
 				</div>
-			</div>
 
-			<!-- Empty State Keseluruhan -->
-			<div id="emptyStateKeseluruhan" class="text-center py-5">
-				<i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #ccc;"></i>
-				<p class="text-muted mt-3">Pilih program studi untuk melihat grafik rata-rata capaian CPL dari semua angkatan</p>
+				<!-- Info Section Keseluruhan -->
+				<div id="infoSectionKeseluruhan" class="alert alert-info d-none">
+					<h6 class="mb-2"><strong>Informasi:</strong></h6>
+					<div id="infoContentKeseluruhan"></div>
+				</div>
+
+				<!-- Chart Section Keseluruhan -->
+				<div id="chartSectionKeseluruhan" class="d-none"></div>
+
+				<!-- Detailed Calculation Table Keseluruhan -->
+				<div id="detailCalculationKeseluruhan" class="d-none">
+					<div class="card mt-4">
+						<div class="card-header bg-secondary text-white">
+							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL Keseluruhan</h5>
+						</div>
+						<div class="card-body">
+							<div id="detailCalculationKeseluruhanContent"></div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Empty State Keseluruhan -->
+				<div id="emptyStateKeseluruhan" class="text-center py-5">
+					<i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #ccc;"></i>
+					<p class="text-muted mt-3">Pilih program studi untuk melihat grafik rata-rata capaian CPL dari semua angkatan</p>
+				</div>
 			</div>
-		</div>
 
 			<!-- All Subjects Tab (NEW) -->
 			<div class="tab-pane fade" id="allSubjects" role="tabpanel">
@@ -397,11 +397,20 @@
 			loadComparativeChartData();
 		});
 
-	// Keseluruhan Tab Events
-	$('#filterKeseluruhanForm').on('submit', function(e) {
-		e.preventDefault();
-		loadKeseluruhanChartData();
-	});
+		// Keseluruhan Tab Events
+		$('#filterKeseluruhanForm').on('submit', function(e) {
+			e.preventDefault();
+			loadKeseluruhanChartData();
+		});
+
+		// Auto-load data when Keseluruhan tab is shown
+		$('#keseluruhan-tab').on('shown.bs.tab', function() {
+			const programStudi = $('#programStudiKeseluruhanSelect').val();
+			// If a program studi is already selected (default is Teknik Informatika), load the data automatically
+			if (programStudi) {
+				loadKeseluruhanChartData();
+			}
+		});
 
 		// All Subjects Tab Events
 		$('#filterAllSubjectsForm').on('submit', function(e) {
@@ -522,6 +531,7 @@
 			}
 		});
 	}
+
 	function loadKeseluruhanChartData() {
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
 
@@ -769,7 +779,6 @@
 							<th width="10%" class="text-center">Kelas</th>
 							<th width="10%" class="text-center">Nilai CPMK</th>
 							<th width="10%" class="text-center">Bobot (%)</th>
-							<th width="13%" class="text-center">Kontribusi</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -791,9 +800,8 @@
 						<td><small>${item.kode_mk} - ${item.nama_mk}</small></td>
 						<td class="text-center">${item.tahun_akademik}</td>
 						<td class="text-center">${item.kelas}</td>
-						<td class="text-center"><span class="badge bg-info">${parseFloat(item.nilai_cpmk).toFixed(2)}</span></td>
+						<td class="text-center">${parseFloat(item.nilai_cpmk).toFixed(2)}</td>
 						<td class="text-center">${parseFloat(item.bobot).toFixed(0)}%</td>
-						<td class="text-center"><strong>${kontribusi.toFixed(2)}</strong></td>
 					</tr>
 				`;
 			});
@@ -805,12 +813,11 @@
 					<tfoot class="table-light">
 						<tr>
 							<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
-							<td class="text-center"><strong>Σ Nilai CPMK</strong></td>
-							<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
 							<td class="text-center"><strong>${summary.nilai_cpl.toFixed(2)}</strong></td>
+							<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
 						</tr>
 						<tr class="table-success">
-							<td colspan="7" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
+							<td colspan="6" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
 							<td class="text-center"><h6 class="mb-0"><strong>${summary.capaian_cpl.toFixed(2)}%</strong></h6></td>
 						</tr>
 					</tfoot>
@@ -822,7 +829,7 @@
 	}
 
 	function displayComparativeChart(response) {
-		const chartHTML = createChartHTML('Comparative', 'success', 'cplChartComparative', 'Rata-rata Capaian CPL (Angkatan)');
+		const chartHTML = createChartHTML('Comparative', 'primary', 'cplChartComparative');
 		$('#chartSectionComparative').html(chartHTML);
 
 		bindExportButton('#exportChartComparativeBtn', cplChartComparative, 'capaian-cpl-comparative.png');
@@ -830,14 +837,14 @@
 		const ctx = document.getElementById('cplChartComparative').getContext('2d');
 		if (cplChartComparative) cplChartComparative.destroy();
 
-		cplChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL (Angkatan)', 'rgba(25, 135, 84, 0.8)', 'rgba(25, 135, 84, 1)');
+		cplChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL (Angkatan)', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
 
 		// Display detailed calculation
 		displayComparativeDetailedCalculation(response);
 	}
 
 	function displayKeseluruhanChart(response) {
-		const chartHTML = createChartHTML('Keseluruhan', 'info', 'cplChartKeseluruhan', 'Rata-rata Capaian CPL Keseluruhan (Semua Angkatan)');
+		const chartHTML = createChartHTML('Keseluruhan', 'primary', 'cplChartKeseluruhan');
 		$('#chartSectionKeseluruhan').html(chartHTML);
 
 		bindExportButton('#exportChartKeseluruhanBtn', cplChartKeseluruhan, 'capaian-cpl-keseluruhan.png');
@@ -845,7 +852,7 @@
 		const ctx = document.getElementById('cplChartKeseluruhan').getContext('2d');
 		if (cplChartKeseluruhan) cplChartKeseluruhan.destroy();
 
-		cplChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL Keseluruhan', 'rgba(13, 202, 240, 0.8)', 'rgba(13, 202, 240, 1)');
+		cplChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL Keseluruhan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
 
 		// Display detailed calculation
 		displayKeseluruhanDetailedCalculation(response);
@@ -908,8 +915,8 @@
 		// Add explanation
 		html += '<div class="alert alert-info mt-3">';
 		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap nilai CPL dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata CPL = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += '<p class="mb-1">Setiap Capaian CPL dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata-rata Capaian CPL = (Σ Capaian CPL setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
 		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> di program studi <strong>${response.programStudi}</strong> dari semua angkatan (${response.angkatanList.join(', ')}).</p>`;
 		html += '</div>';
 
@@ -1012,7 +1019,6 @@
 				<div class="alert alert-info mt-3 mb-0">
 					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
 					<ol class="mb-0">
-						<li><strong>Capaian CPL per Mahasiswa</strong> = (Nilai CPL / Total Bobot) × 100%</li>
 						<li><strong>Rata-rata Keseluruhan</strong> = (Σ Capaian CPL semua mahasiswa dari semua angkatan) / Jumlah mahasiswa</li>
 						<li>Rata-rata = (${data.slice(0, 3).map(m => m.capaian_cpl.toFixed(2)).join(' + ')} ${data.length > 3 ? '+ ... (' + (data.length - 3) + ' mahasiswa lainnya)' : ''}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
 					</ol>
@@ -1088,8 +1094,8 @@
 		// Add explanation
 		html += '<div class="alert alert-info mt-3">';
 		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap nilai CPL dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata CPL = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += '<p class="mb-1">Setiap Capaian CPL dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata - rata Capaian CPL = (Σ Capaian CPL setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
 		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> pada angkatan <strong>${response.tahunAngkatan}</strong> program studi <strong>${response.programStudi}</strong>.</p>`;
 		html += '</div>';
 
@@ -1192,7 +1198,6 @@
 				<div class="alert alert-info mt-3 mb-0">
 					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
 					<ol class="mb-0">
-						<li><strong>Capaian CPL per Mahasiswa</strong> = (Nilai CPL / Total Bobot) × 100%</li>
 						<li><strong>Rata-rata Angkatan</strong> = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</li>
 						<li>Rata-rata = (${data.map(m => m.capaian_cpl.toFixed(2)).join(' + ')}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
 					</ol>
@@ -1513,10 +1518,10 @@
 	function createBarChart(ctx, chartData, title, backgroundColor, borderColor) {
 		// Create conditional colors based on passing threshold
 		const backgroundColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
+			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : backgroundColor
 		);
 		const borderColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
+			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : borderColor
 		);
 
 		return new Chart(ctx, {
@@ -1524,7 +1529,7 @@
 			data: {
 				labels: chartData.labels,
 				datasets: [{
-					label: 'Capaian CPL (%)',
+					label: 'Capaian CPL',
 					data: chartData.data,
 					backgroundColor: backgroundColors,
 					borderColor: borderColors,
@@ -1539,7 +1544,41 @@
 				plugins: {
 					legend: {
 						display: true,
-						position: 'top'
+						position: 'top',
+						labels: {
+							generateLabels: function(chart) {
+								const data = chart.data.datasets[0].data;
+								const labels = [];
+
+								// Check if there are values >= threshold (blue bars)
+								const hasAboveThreshold = data.some(value => value >= passingThreshold);
+								if (hasAboveThreshold) {
+									labels.push({
+										text: `Capaian ≥ ${passingThreshold}%`,
+										fillStyle: 'rgba(13, 110, 253, 0.8)',
+										strokeStyle: 'rgba(13, 110, 253, 1)',
+										lineWidth: 2,
+										hidden: false,
+										index: 0
+									});
+								}
+
+								// Check if there are values < threshold (red bars)
+								const hasBelowThreshold = data.some(value => value < passingThreshold);
+								if (hasBelowThreshold) {
+									labels.push({
+										text: `Capaian < ${passingThreshold}%`,
+										fillStyle: 'rgba(220, 53, 69, 0.8)',
+										strokeStyle: 'rgba(220, 53, 69, 1)',
+										lineWidth: 2,
+										hidden: false,
+										index: 1
+									});
+								}
+
+								return labels;
+							}
+						}
 					},
 					title: {
 						display: true,

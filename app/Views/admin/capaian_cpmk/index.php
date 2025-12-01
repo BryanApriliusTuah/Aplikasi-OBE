@@ -788,7 +788,7 @@
 	}
 
 	function displayComparativeChart(response) {
-		const chartHTML = createChartHTML('Comparative', 'success', 'cpmkChartComparative', 'Rata-rata Capaian CPMK Angkatan');
+		const chartHTML = createChartHTML('Comparative', 'primary', 'cpmkChartComparative');
 		$('#chartSectionComparative').html(chartHTML);
 
 		bindExportButton('#exportChartComparativeBtn', cpmkChartComparative, 'capaian-cpmk-comparative.png');
@@ -796,14 +796,14 @@
 		const ctx = document.getElementById('cpmkChartComparative').getContext('2d');
 		if (cpmkChartComparative) cpmkChartComparative.destroy();
 
-		cpmkChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Angkatan', 'rgba(25, 135, 84, 0.8)', 'rgba(25, 135, 84, 1)');
+		cpmkChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Angkatan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
 
 		// Display detailed calculation
 		displayComparativeDetailedCalculation(response);
 	}
 
 	function displayKeseluruhanChart(response) {
-		const chartHTML = createChartHTML('Keseluruhan', 'info', 'cpmkChartKeseluruhan', 'Rata-rata Capaian CPMK Keseluruhan (Semua Angkatan)');
+		const chartHTML = createChartHTML('Keseluruhan', 'primary', 'cpmkChartKeseluruhan');
 		$('#chartSectionKeseluruhan').html(chartHTML);
 
 		bindExportButton('#exportChartKeseluruhanBtn', cpmkChartKeseluruhan, 'capaian-cpmk-keseluruhan.png');
@@ -811,7 +811,7 @@
 		const ctx = document.getElementById('cpmkChartKeseluruhan').getContext('2d');
 		if (cpmkChartKeseluruhan) cpmkChartKeseluruhan.destroy();
 
-		cpmkChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Keseluruhan', 'rgba(13, 202, 240, 0.8)', 'rgba(13, 202, 240, 1)');
+		cpmkChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Keseluruhan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
 
 		// Display detailed calculation
 		displayKeseluruhanDetailedCalculation(response);
@@ -1163,7 +1163,41 @@
 				plugins: {
 					legend: {
 						display: true,
-						position: 'top'
+						position: 'top',
+						labels: {
+							generateLabels: function(chart) {
+								const data = chart.data.datasets[0].data;
+								const labels = [];
+
+								// Check if there are values >= threshold (blue bars)
+								const hasAboveThreshold = data.some(value => value >= passingThreshold);
+								if (hasAboveThreshold) {
+									labels.push({
+										text: `Capaian ≥ ${passingThreshold}%`,
+										fillStyle: 'rgba(13, 110, 253, 0.8)',
+										strokeStyle: 'rgba(13, 110, 253, 1)',
+										lineWidth: 2,
+										hidden: false,
+										index: 0
+									});
+								}
+
+								// Check if there are values < threshold (red bars)
+								const hasBelowThreshold = data.some(value => value < passingThreshold);
+								if (hasBelowThreshold) {
+									labels.push({
+										text: `Capaian < ${passingThreshold}%`,
+										fillStyle: 'rgba(220, 53, 69, 0.8)',
+										strokeStyle: 'rgba(220, 53, 69, 1)',
+										lineWidth: 2,
+										hidden: false,
+										index: 1
+									});
+								}
+
+								return labels;
+							}
+						}
 					},
 					title: {
 						display: true,
