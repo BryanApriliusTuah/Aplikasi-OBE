@@ -350,6 +350,15 @@
 			e.preventDefault();
 			loadKeseluruhanChartData();
 		});
+
+		// Auto-load data when Keseluruhan tab is shown
+		$('#keseluruhan-tab').on('shown.bs.tab', function() {
+			const programStudi = $('#programStudiKeseluruhanSelect').val();
+			// If a program studi is already selected (default is Teknik Informatika), load the data automatically
+			if (programStudi) {
+				loadKeseluruhanChartData();
+			}
+		});
 	});
 
 	function loadMahasiswa() {
@@ -855,8 +864,8 @@
 		// Add explanation
 		html += '<div class="alert alert-info mt-3">';
 		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap nilai CPMK dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata CPMK = (Σ Nilai CPMK semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += '<p class="mb-1">Setiap Capaian CPMK dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata-rata Capaian CPMK = (Σ Capaian CPMK semua mahasiswa) / Jumlah mahasiswa</strong></p>';
 		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPMK dari <strong>${response.totalMahasiswa} mahasiswa</strong> pada angkatan <strong>${response.tahunAngkatan}</strong> program studi <strong>${response.programStudi}</strong>.</p>`;
 		html += '</div>';
 
@@ -911,8 +920,8 @@
 		// Add explanation
 		html += '<div class="alert alert-info mt-3">';
 		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap nilai CPMK dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata CPMK = (Σ Nilai CPMK semua mahasiswa) / Jumlah mahasiswa</strong></p>';
+		html += '<p class="mb-1">Setiap Capaian CPMK dihitung dengan rumus:</p>';
+		html += '<p class="mb-1"><strong>Rata-rata Capaian CPMK = (Σ Capaian CPMK setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
 		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPMK dari <strong>${response.totalMahasiswa} mahasiswa</strong> di program studi <strong>${response.programStudi}</strong> dari semua angkatan (${response.angkatanList.join(', ')}).</p>`;
 		html += '</div>';
 
@@ -980,7 +989,7 @@
 								<th width="10%" class="text-center">No</th>
 								<th width="20%">NIM</th>
 								<th width="50%">Nama Mahasiswa</th>
-								<th width="20%" class="text-center">Nilai CPMK</th>
+								<th width="20%" class="text-center">Capaian CPMK (%)</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -992,7 +1001,7 @@
 						<td class="text-center">${idx + 1}</td>
 						<td>${mhs.nim}</td>
 						<td>${mhs.nama_lengkap}</td>
-						<td class="text-center"><strong>${mhs.nilai_cpmk.toFixed(2)}</strong></td>
+						<td class="text-center"><strong>${mhs.nilai_cpmk.toFixed(2)}%</strong></td>
 					</tr>
 				`;
 			});
@@ -1002,11 +1011,11 @@
 						<tfoot class="table-light">
 							<tr>
 								<td colspan="3" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa:</strong></td>
-								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}</strong></td>
+								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}%</strong></td>
 							</tr>
 							<tr class="table-success">
-								<td colspan="3" class="text-end"><strong>Rata-rata = ${summary.total_nilai.toFixed(2)} / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
-								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}</strong></h6></td>
+								<td colspan="3" class="text-end"><strong>Rata - rata  = ${summary.total_nilai.toFixed(2)} / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
+								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
 						</tfoot>
 					</table>
@@ -1081,7 +1090,7 @@
 								<th width="15%">NIM</th>
 								<th width="40%">Nama Mahasiswa</th>
 								<th width="12%" class="text-center">Angkatan</th>
-								<th width="25%" class="text-center">Nilai CPMK</th>
+								<th width="25%" class="text-center">Capaian CPMK</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -1094,7 +1103,7 @@
 						<td>${mhs.nim}</td>
 						<td>${mhs.nama_lengkap}</td>
 						<td class="text-center"><span class="badge bg-secondary">${mhs.tahun_angkatan}</span></td>
-						<td class="text-center"><strong>${mhs.nilai_cpmk.toFixed(2)}</strong></td>
+						<td class="text-center"><strong>${mhs.nilai_cpmk.toFixed(2)}%</strong></td>
 					</tr>
 				`;
 			});
@@ -1104,11 +1113,11 @@
 						<tfoot class="table-light">
 							<tr>
 								<td colspan="4" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa (semua angkatan):</strong></td>
-								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}</strong></td>
+								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}%</strong></td>
 							</tr>
 							<tr class="table-success">
-								<td colspan="4" class="text-end"><strong>Rata-rata = ${summary.total_nilai.toFixed(2)} / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
-								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}</strong></h6></td>
+								<td colspan="4" class="text-end"><strong>Rata - rata = ${summary.total_nilai.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
+								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
 						</tfoot>
 					</table>
