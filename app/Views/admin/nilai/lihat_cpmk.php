@@ -448,7 +448,7 @@
 					},
 					title: {
 						display: true,
-						text: 'Rata-rata Capaian CPMK (Nilai / Bobot × 100%)',
+						text: 'Rata-rata Capaian CPMK (Jumlah Persentase Capaian CPMK / Jumlah Mahasiswa)',
 						font: {
 							size: 16,
 							weight: 'bold'
@@ -459,9 +459,7 @@
 							label: function(context) {
 								const data = cpmkCapaianData[context.dataIndex];
 								return [
-									`Capaian: ${data.capaian.toFixed(2)}%`,
-									`Rata-rata Nilai: ${data.avgScore}`,
-									`Bobot: ${data.bobot}%`
+									`Capaian: ${data.capaian.toFixed(2)}%`
 								];
 							}
 						}
