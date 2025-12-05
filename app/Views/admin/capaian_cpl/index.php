@@ -76,12 +76,6 @@
 					</div>
 				</div>
 
-				<!-- Info Section Individual -->
-				<div id="infoSectionIndividual" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi Mahasiswa:</strong></h6>
-					<div id="infoContentIndividual"></div>
-				</div>
-
 				<!-- Chart Section Individual -->
 				<div id="chartSectionIndividual" class="d-none"></div>
 
@@ -142,12 +136,6 @@
 					</div>
 				</div>
 
-				<!-- Info Section Comparative -->
-				<div id="infoSectionComparative" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi:</strong></h6>
-					<div id="infoContentComparative"></div>
-				</div>
-
 				<!-- Chart Section Comparative -->
 				<div id="chartSectionComparative" class="d-none"></div>
 
@@ -198,12 +186,6 @@
 							</div>
 						</form>
 					</div>
-				</div>
-
-				<!-- Info Section Keseluruhan -->
-				<div id="infoSectionKeseluruhan" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi:</strong></h6>
-					<div id="infoContentKeseluruhan"></div>
 				</div>
 
 				<!-- Chart Section Keseluruhan -->
@@ -258,12 +240,6 @@
 					</div>
 				</div>
 
-				<!-- Info Section All Subjects -->
-				<div id="infoSectionAllSubjects" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi:</strong></h6>
-					<div id="infoContentAllSubjects"></div>
-				</div>
-
 				<!-- Chart Section All Subjects -->
 				<div id="chartSectionAllSubjects" class="d-none"></div>
 
@@ -311,8 +287,15 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+<!-- DataTables CSS -->
+<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 	// Dynamic passing threshold from grade configuration
@@ -374,6 +357,54 @@
 				},
 				inputTooShort: function() {
 					return "Ketik untuk mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Program Studi dropdown (Comparative Tab)
+		$('#programStudiComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Angkatan dropdown (Comparative Tab)
+		$('#tahunAngkatanComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Angkatan --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Program Studi dropdown (Keseluruhan Tab)
+		$('#programStudiKeseluruhanSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
 				}
 			}
 		});
@@ -695,56 +726,82 @@
 			return;
 		}
 
-		let html = '';
+		let html = '<div class="table-responsive"><table id="individualDetailTable" class="table table-bordered table-hover">';
+		html += '<thead class="table-light">';
+		html += '<tr>';
+		html += '<th width="5%" class="text-center">No</th>';
+		html += '<th width="12%">Kode CPL</th>';
+		html += '<th width="35%">Deskripsi CPL</th>';
+		html += '<th width="12%" class="text-center">Jenis CPL</th>';
+		html += '<th width="10%" class="text-center">Jumlah CPMK</th>';
+		html += '<th width="10%" class="text-center">Jumlah MK</th>';
+		html += '<th width="10%" class="text-center">Capaian (%)</th>';
+		html += '<th width="6%" class="text-center">Aksi</th>';
+		html += '</tr>';
+		html += '</thead>';
+		html += '<tbody>';
+
 		response.chartData.details.forEach((cpl, index) => {
 			html += `
-				<div class="card mb-3 ${index > 0 ? 'mt-3' : ''}">
-					<div class="card-header bg-light">
-						<h6 class="mb-0">
-							<strong>${cpl.kode_cpl}</strong> - ${cpl.deskripsi}
-							<span class="badge bg-info float-end">${cpl.jenis_cpl}</span>
-						</h6>
-					</div>
-					<div class="card-body">
-						<button class="btn btn-sm btn-primary mb-3" onclick="loadCplCalculationDetail(${cpl.cpl_id}, '${cpl.kode_cpl}')">
-							<i class="bi bi-eye"></i> Lihat Detail Perhitungan
+				<tr>
+					<td class="text-center">${index + 1}</td>
+					<td><strong>${cpl.kode_cpl}</strong></td>
+					<td>${cpl.deskripsi}</td>
+					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
+					<td class="text-center">${cpl.jumlah_cpmk}</td>
+					<td class="text-center">${cpl.jumlah_mk}</td>
+					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
+					<td class="text-center">
+						<button class="btn btn-sm btn-primary" onclick="loadCplCalculationDetail(${cpl.cpl_id}, '${cpl.kode_cpl}')">
+							<i class="bi bi-eye"></i>
 						</button>
-						<div id="cplCalcDetail_${cpl.cpl_id}"></div>
-
-						<div class="row mt-3">
-							<div class="col-md-12">
-								<table class="table table-sm table-bordered">
-									<tr class="table-light">
-										<td width="40%"><strong>Jumlah CPMK Terkait</strong></td>
-										<td width="60%">${cpl.jumlah_cpmk} CPMK dari ${cpl.jumlah_mk} Mata Kuliah</td>
-									</tr>
-									<tr class="table-success">
-										<td><strong>Capaian CPL (%)</strong></td>
-										<td><h5 class="mb-0">${cpl.rata_rata.toFixed(2)}%</h5></td>
-									</tr>
-								</table>
-							</div>
-						</div>
-					</div>
-				</div>
+					</td>
+				</tr>
 			`;
 		});
 
+		html += '</tbody></table></div>';
+
 		$('#detailCalculationContent').html(html);
 		$('#detailCalculationIndividual').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#individualDetailTable')) {
+			$('#individualDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		$('#individualDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function loadCplCalculationDetail(cplId, kodeCpl) {
 		const mahasiswaId = $('#mahasiswaSelect').val();
-		const targetDiv = $(`#cplCalcDetail_${cplId}`);
 
-		// Check if already loaded
-		if (targetDiv.html().trim() !== '') {
-			targetDiv.html(''); // Toggle hide
-			return;
-		}
+		// Set modal title
+		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl}`);
 
-		targetDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail...</div>');
+		// Show loading state in modal
+		$('#detailCplModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
+
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCplModal'));
+		modal.show();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/detail-calculation") ?>',
@@ -755,18 +812,18 @@
 			},
 			success: function(response) {
 				if (response.success) {
-					displayCplCalculationDetail(cplId, response.data, response.summary);
+					displayCplCalculationDetail(kodeCpl, response.data, response.summary);
 				} else {
-					targetDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+					$('#detailCplModalContent').html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
 				}
 			},
 			error: function() {
-				targetDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+				$('#detailCplModalContent').html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
 			}
 		});
 	}
 
-	function displayCplCalculationDetail(cplId, data, summary) {
+	function displayCplCalculationDetail(kodeCpl, data, summary) {
 		let html = `
 			<div class="table-responsive">
 				<table class="table table-bordered table-sm mb-0">
@@ -787,12 +844,11 @@
 		if (data.length === 0) {
 			html += `
 				<tr>
-					<td colspan="8" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
+					<td colspan="7" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
 				</tr>
 			`;
 		} else {
 			data.forEach((item, index) => {
-				const kontribusi = item.bobot > 0 ? (item.nilai_cpmk * item.bobot / 100) : 0;
 				html += `
 					<tr>
 						<td class="text-center">${index + 1}</td>
@@ -825,7 +881,7 @@
 			</div>
 		`;
 
-		$(`#cplCalcDetail_${cplId}`).html(html);
+		$('#detailCplModalContent').html(html);
 	}
 
 	function displayComparativeChart(response) {
@@ -864,7 +920,7 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		let html = '<div class="table-responsive"><table id="keseluruhanDetailTable" class="table table-bordered table-hover">';
 		html += '<thead class="table-light">';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
@@ -878,66 +934,66 @@
 		html += '</thead>';
 		html += '<tbody>';
 
-		let totalCplScore = 0;
-		let totalMahasiswa = 0;
-
 		response.chartData.details.forEach((cpl, index) => {
 			html += `
 				<tr>
-					<td class="text-center" rowspan="1">${index + 1}</td>
-					<td rowspan="1"><strong>${cpl.kode_cpl}</strong></td>
-					<td rowspan="1">${cpl.deskripsi}</td>
-					<td class="text-center" rowspan="1"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
-					<td class="text-center" rowspan="1">${cpl.jumlah_mahasiswa}</td>
-					<td class="text-center" rowspan="1"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
-					<td class="text-center" rowspan="1">
+					<td class="text-center">${index + 1}</td>
+					<td><strong>${cpl.kode_cpl}</strong></td>
+					<td>${cpl.deskripsi}</td>
+					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
+					<td class="text-center">${cpl.jumlah_mahasiswa}</td>
+					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
+					<td class="text-center">
 						<button class="btn btn-sm btn-primary" onclick="loadKeseluruhanCplDetail(${cpl.cpl_id}, '${cpl.kode_cpl}', ${index})">
-							<i class="bi bi-eye"></i> Lihat Detail
+							<i class="bi bi-eye"></i>
 						</button>
 					</td>
 				</tr>
-				<tr id="cplKeseluruhanDetail_${index}" style="display: none;">
-					<td colspan="7" class="bg-light">
-						<div id="cplKeseluruhanDetailContent_${index}"></div>
-					</td>
-				</tr>
 			`;
-
-			totalCplScore += cpl.rata_rata;
-			if (cpl.jumlah_mahasiswa > totalMahasiswa) {
-				totalMahasiswa = cpl.jumlah_mahasiswa;
-			}
 		});
 
-		html += '</tbody>';
-		html += '</table></div>';
-
-		// Add explanation
-		html += '<div class="alert alert-info mt-3">';
-		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap Capaian CPL dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata Capaian CPL = (Σ Capaian CPL setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
-		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> di program studi <strong>${response.programStudi}</strong> dari semua angkatan (${response.angkatanList.join(', ')}).</p>`;
-		html += '</div>';
+		html += '</tbody></table></div>';
 
 		$('#detailCalculationKeseluruhanContent').html(html);
 		$('#detailCalculationKeseluruhan').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#keseluruhanDetailTable')) {
+			$('#keseluruhanDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		$('#keseluruhanDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function loadKeseluruhanCplDetail(cplId, kodeCpl, index) {
-		const targetDiv = $('#cplKeseluruhanDetail_' + index);
-		const contentDiv = $('#cplKeseluruhanDetailContent_' + index);
-
-		// Toggle visibility
-		if (targetDiv.is(':visible')) {
-			targetDiv.hide();
-			return;
-		}
-
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
 
-		targetDiv.show();
-		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
+		// Set modal title
+		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Semua Angkatan`);
+
+		// Show loading state in modal
+		$('#detailCplModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
+
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCplModal'));
+		modal.show();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/keseluruhan-detail-calculation") ?>',
@@ -950,30 +1006,24 @@
 				if (response.success) {
 					displayKeseluruhanCplCalculationDetail(index, kodeCpl, response.data, response.summary);
 				} else {
-					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+					$('#detailCplModalContent').html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
 				}
 			},
 			error: function() {
-				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+				$('#detailCplModalContent').html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
 			}
 		});
 	}
 
 	function displayKeseluruhanCplCalculationDetail(index, kodeCpl, data, summary) {
-		let html = `
-			<div class="card mb-0 border-0">
-				<div class="card-header bg-info text-white">
-					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpl} - Per Mahasiswa (Semua Angkatan)</h6>
-				</div>
-				<div class="card-body">
-		`;
+		let html = ``;
 
 		if (data.length === 0) {
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
 		} else {
 			html += `
 				<div class="table-responsive">
-					<table class="table table-bordered table-sm table-hover mb-0">
+					<table id="keseluruhanCplDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
 						<thead class="table-primary">
 							<tr>
 								<th width="8%" class="text-center">No</th>
@@ -1013,25 +1063,24 @@
 					</table>
 				</div>
 			`;
-
-			// Add calculation explanation
-			html += `
-				<div class="alert alert-info mt-3 mb-0">
-					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
-					<ol class="mb-0">
-						<li><strong>Rata-rata Keseluruhan</strong> = (Σ Capaian CPL semua mahasiswa dari semua angkatan) / Jumlah mahasiswa</li>
-						<li>Rata-rata = (${data.slice(0, 3).map(m => m.capaian_cpl.toFixed(2)).join(' + ')} ${data.length > 3 ? '+ ... (' + (data.length - 3) + ' mahasiswa lainnya)' : ''}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
-					</ol>
-				</div>
-			`;
 		}
 
-		html += `
-				</div>
-			</div>
-		`;
+		$('#detailCplModalContent').html(html);
 
-		$('#cplKeseluruhanDetailContent_' + index).html(html);
+		// Initialize DataTable with pagination
+		if (data.length > 0) {
+			// Destroy existing DataTable if it exists
+			if ($.fn.DataTable.isDataTable(`#keseluruhanCplDetailTable_${index}`)) {
+				$(`#keseluruhanCplDetailTable_${index}`).DataTable().destroy();
+			}
+
+			$(`#keseluruhanCplDetailTable_${index}`).DataTable({
+				pageLength: 10,
+				language: {
+					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+				}
+			});
+		}
 	}
 
 	function displayComparativeDetailedCalculation(response) {
@@ -1040,84 +1089,81 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		let html = '<div class="table-responsive"><table id="comparativeDetailTable" class="table table-bordered table-hover">';
 		html += '<thead class="table-light">';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
-		html += '<th width="35%">Deskripsi CPL</th>';
+		html += '<th width="38%">Deskripsi CPL</th>';
 		html += '<th width="12%" class="text-center">Jenis CPL</th>';
 		html += '<th width="10%" class="text-center">Jumlah Mahasiswa</th>';
 		html += '<th width="13%" class="text-center">Rata-rata (%)</th>';
-		html += '<th width="13%" class="text-center">Aksi</th>';
+		html += '<th width="10%" class="text-center">Aksi</th>';
 		html += '</tr>';
 		html += '</thead>';
 		html += '<tbody>';
 
-		let totalCplScore = 0;
-		let totalMahasiswa = 0;
-
 		response.chartData.details.forEach((cpl, index) => {
-			const statusBadge = getStatusBadge(cpl.rata_rata);
-
 			html += `
 				<tr>
-					<td class="text-center" rowspan="1">${index + 1}</td>
-					<td rowspan="1"><strong>${cpl.kode_cpl}</strong></td>
-					<td rowspan="1">${cpl.deskripsi}</td>
-					<td class="text-center" rowspan="1"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
-					<td class="text-center" rowspan="1">${cpl.jumlah_mahasiswa}</td>
-					<td class="text-center" rowspan="1"><strong>${cpl.rata_rata.toFixed(2)}%
-					<td class="text-center" rowspan="1">
+					<td class="text-center">${index + 1}</td>
+					<td><strong>${cpl.kode_cpl}</strong></td>
+					<td>${cpl.deskripsi}</td>
+					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
+					<td class="text-center">${cpl.jumlah_mahasiswa}</td>
+					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
+					<td class="text-center">
 						<button class="btn btn-sm btn-primary" onclick="loadComparativeCplDetail(${cpl.cpl_id}, '${cpl.kode_cpl}', ${index})">
-							<i class="bi bi-eye"></i> Lihat Detail
+							<i class="bi bi-eye"></i>
 						</button>
 					</td>
 				</tr>
-				<tr id="cplComparativeDetail_${index}" style="display: none;">
-					<td colspan="7" class="bg-light">
-						<div id="cplComparativeDetailContent_${index}"></div>
-					</td>
-				</tr>
 			`;
-
-			totalCplScore += cpl.rata_rata;
-			if (cpl.jumlah_mahasiswa > totalMahasiswa) {
-				totalMahasiswa = cpl.jumlah_mahasiswa;
-			}
 		});
 
-		// Add summary row
-		const averageOverall = response.chartData.details.length > 0 ?
-			(totalCplScore / response.chartData.details.length).toFixed(2) : 0;
-
-		// Add explanation
-		html += '<div class="alert alert-info mt-3">';
-		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap Capaian CPL dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata - rata Capaian CPL = (Σ Capaian CPL setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
-		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPL dari <strong>${response.totalMahasiswa} mahasiswa</strong> pada angkatan <strong>${response.tahunAngkatan}</strong> program studi <strong>${response.programStudi}</strong>.</p>`;
-		html += '</div>';
+		html += '</tbody></table></div>';
 
 		$('#detailCalculationComparativeContent').html(html);
 		$('#detailCalculationComparative').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#comparativeDetailTable')) {
+			$('#comparativeDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		$('#comparativeDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function loadComparativeCplDetail(cplId, kodeCpl, index) {
-		const targetDiv = $(`#cplComparativeDetail_${index}`);
-		const contentDiv = $(`#cplComparativeDetailContent_${index}`);
-
-		// Toggle visibility
-		if (targetDiv.is(':visible')) {
-			targetDiv.hide();
-			return;
-		}
-
 		const programStudi = $('#programStudiComparativeSelect').val();
 		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
 
-		targetDiv.show();
-		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
+		// Set modal title
+		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Angkatan`);
+
+		// Show loading state in modal
+		$('#detailCplModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
+
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCplModal'));
+		modal.show();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/comparative-detail-calculation") ?>',
@@ -1131,30 +1177,24 @@
 				if (response.success) {
 					displayComparativeCplCalculationDetail(index, kodeCpl, response.data, response.summary);
 				} else {
-					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+					$('#detailCplModalContent').html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
 				}
 			},
 			error: function() {
-				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+				$('#detailCplModalContent').html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
 			}
 		});
 	}
 
 	function displayComparativeCplCalculationDetail(index, kodeCpl, data, summary) {
-		let html = `
-			<div class="card mb-0 border-0">
-				<div class="card-header bg-info text-white">
-					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpl} - Per Mahasiswa</h6>
-				</div>
-				<div class="card-body">
-		`;
+		let html = ``;
 
 		if (data.length === 0) {
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
 		} else {
 			html += `
 				<div class="table-responsive">
-					<table class="table table-bordered table-sm table-hover mb-0">
+					<table id="comparativeCplDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
 						<thead class="table-primary">
 							<tr>
 								<th width="10%" class="text-center">No</th>
@@ -1192,25 +1232,24 @@
 					</table>
 				</div>
 			`;
-
-			// Add calculation explanation
-			html += `
-				<div class="alert alert-info mt-3 mb-0">
-					<h6 class="mb-2"><i class="bi bi-info-circle"></i> Rumus Perhitungan:</h6>
-					<ol class="mb-0">
-						<li><strong>Rata-rata Angkatan</strong> = (Σ Capaian CPL semua mahasiswa) / Jumlah mahasiswa</li>
-						<li>Rata-rata = (${data.map(m => m.capaian_cpl.toFixed(2)).join(' + ')}) / ${summary.jumlah_mahasiswa} = <strong>${summary.rata_rata.toFixed(2)}%</strong></li>
-					</ol>
-				</div>
-			`;
 		}
 
-		html += `
-				</div>
-			</div>
-		`;
+		$('#detailCplModalContent').html(html);
 
-		$(`#cplComparativeDetailContent_${index}`).html(html);
+		// Initialize DataTable with pagination
+		if (data.length > 0) {
+			// Destroy existing DataTable if it exists
+			if ($.fn.DataTable.isDataTable(`#comparativeCplDetailTable_${index}`)) {
+				$(`#comparativeCplDetailTable_${index}`).DataTable().destroy();
+			}
+
+			$(`#comparativeCplDetailTable_${index}`).DataTable({
+				pageLength: 10,
+				language: {
+					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+				}
+			});
+		}
 	}
 
 

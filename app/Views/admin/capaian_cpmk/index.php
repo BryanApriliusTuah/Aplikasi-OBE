@@ -71,12 +71,6 @@
 					</div>
 				</div>
 
-				<!-- Info Section Individual -->
-				<div id="infoSectionIndividual" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi Mahasiswa:</strong></h6>
-					<div id="infoContentIndividual"></div>
-				</div>
-
 				<!-- Chart Section Individual -->
 				<div id="chartSectionIndividual" class="d-none"></div>
 
@@ -137,12 +131,6 @@
 					</div>
 				</div>
 
-				<!-- Info Section Comparative -->
-				<div id="infoSectionComparative" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi:</strong></h6>
-					<div id="infoContentComparative"></div>
-				</div>
-
 				<!-- Chart Section Comparative -->
 				<div id="chartSectionComparative" class="d-none"></div>
 
@@ -183,7 +171,6 @@
 											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 										<?php endforeach; ?>
 									</select>
-									<small class="text-muted">Menampilkan rata-rata CPMK dari semua mahasiswa aktif di semua angkatan</small>
 								</div>
 								<div class="col-md-2 d-flex align-items-end">
 									<button type="submit" class="btn btn-primary w-100">
@@ -193,12 +180,6 @@
 							</div>
 						</form>
 					</div>
-				</div>
-
-				<!-- Info Section Keseluruhan -->
-				<div id="infoSectionKeseluruhan" class="alert alert-info d-none">
-					<h6 class="mb-2"><strong>Informasi:</strong></h6>
-					<div id="infoContentKeseluruhan"></div>
 				</div>
 
 				<!-- Chart Section Keseluruhan -->
@@ -260,8 +241,15 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
+<!-- DataTables CSS -->
+<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 	// Dynamic passing threshold from grade configuration
@@ -275,7 +263,7 @@
 	let currentKeseluruhanData = null;
 
 	$(document).ready(function() {
-		// Initialize Select2 on Program Studi dropdown
+		// Initialize Select2 on Program Studi dropdown (Individual Tab)
 		$('#programStudiSelect').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Semua Program Studi --',
@@ -291,7 +279,7 @@
 			}
 		});
 
-		// Initialize Select2 on Tahun Angkatan dropdown
+		// Initialize Select2 on Tahun Angkatan dropdown (Individual Tab)
 		$('#tahunAngkatanSelect').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Semua Tahun --',
@@ -307,7 +295,7 @@
 			}
 		});
 
-		// Initialize Select2 on mahasiswa dropdown
+		// Initialize Select2 on mahasiswa dropdown (Individual Tab)
 		$('#mahasiswaSelect').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Mahasiswa --',
@@ -322,6 +310,54 @@
 				},
 				inputTooShort: function() {
 					return "Ketik untuk mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Program Studi dropdown (Comparative Tab)
+		$('#programStudiComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Angkatan dropdown (Comparative Tab)
+		$('#tahunAngkatanComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Angkatan --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Program Studi dropdown (Keseluruhan Tab)
+		$('#programStudiKeseluruhanSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
 				}
 			}
 		});
@@ -614,7 +650,7 @@
 			cpmkValues[label] = response.chartData.data[index];
 		});
 
-		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		let html = '<div class="table-responsive"><table id="individualDetailTable" class="table table-bordered table-hover">';
 		html += '<thead class="table-light">';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
@@ -634,7 +670,7 @@
 			const statusBadge = getStatusBadge(nilai);
 
 			html += `
-				<tr>
+				<tr data-row-index="${rowIndex}">
 					<td class="text-center">${rowIndex + 1}</td>
 					<td><strong>${cpmk.kode_cpmk}</strong></td>
 					<td><small>${cpmk.deskripsi}</small></td>
@@ -646,16 +682,6 @@
 						</button>
 					</td>
 				</tr>
-				<tr id="individualCpmkDetail_${rowIndex}" style="display: none;">
-					<td colspan="7" class="bg-light">
-						<div class="p-3" id="individualCpmkDetailContent_${rowIndex}">
-							<div class="text-center py-3">
-								<div class="spinner-border spinner-border-sm" role="status"></div>
-								<span class="ms-2">Memuat detail perhitungan...</span>
-							</div>
-						</div>
-					</td>
-				</tr>
 			`;
 			rowIndex++;
 		});
@@ -664,23 +690,42 @@
 
 		$('#detailCalculationContent').html(html);
 		$('#detailCalculationIndividual').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#individualDetailTable')) {
+			$('#individualDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		window.individualDetailTable = $('#individualDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function loadIndividualCpmkDetail(kodeCpmk, index) {
-		const detailRow = $(`#individualCpmkDetail_${index}`);
-		const contentDiv = $(`#individualCpmkDetailContent_${index}`);
-		const button = detailRow.prev().find('button');
+		// Set modal title
+		$('#detailCpmkModalTitle').text(`Detail Perhitungan ${kodeCpmk}`);
 
-		// If already visible, just toggle
-		if (detailRow.is(':visible')) {
-			detailRow.hide();
-			button.html('<i class="bi bi-calculator"></i> Detail');
-			return;
-		}
+		// Show loading state in modal
+		$('#detailCpmkModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
 
-		// Show loading state
-		detailRow.show();
-		button.html('<i class="bi bi-x-circle"></i> Tutup');
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCpmkModal'));
+		modal.show();
 
 		const mahasiswaId = $('#mahasiswaSelect').val();
 
@@ -695,7 +740,7 @@
 				if (response.success) {
 					displayIndividualCpmkCalculationDetail(index, response);
 				} else {
-					contentDiv.html(`
+					$('#detailCpmkModalContent').html(`
 						<div class="alert alert-warning mb-0">
 							<i class="bi bi-exclamation-triangle"></i> ${response.message || 'Gagal memuat detail perhitungan'}
 						</div>
@@ -704,7 +749,7 @@
 			},
 			error: function(xhr, status, error) {
 				console.error('Error loading detail:', error);
-				contentDiv.html(`
+				$('#detailCpmkModalContent').html(`
 					<div class="alert alert-danger mb-0">
 						<i class="bi bi-x-circle"></i> Terjadi kesalahan saat memuat detail perhitungan
 					</div>
@@ -714,7 +759,6 @@
 	}
 
 	function displayIndividualCpmkCalculationDetail(index, data) {
-		const contentDiv = $(`#individualCpmkDetailContent_${index}`);
 
 		let html = ``;
 
@@ -777,14 +821,14 @@
 
 		// Display formula and final capaian
 		html += `
-			<div class="alert alert-info mb-0">
+			<div class="alert alert-primary mb-0">
 				<h6 class="mb-2"><i class="bi bi-calculator"></i> Capaian ${data.kode_cpmk}:</h6>
 				<p class="mb-1"><strong>Capaian CPMK</strong> = ${data.summary.grand_total_weighted} / ${data.summary.grand_total_bobot} × 100 = ${data.summary.capaian}%</p>
 
 			</div>
 		`;
 
-		contentDiv.html(html);
+		$('#detailCpmkModalContent').html(html);
 	}
 
 	function displayComparativeChart(response) {
@@ -823,7 +867,7 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		let html = '<div class="table-responsive"><table id="comparativeDetailTable" class="table table-bordered table-hover">';
 		html += '<thead class="table-light">';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
@@ -839,7 +883,7 @@
 		response.chartData.details.forEach((cpmk, index) => {
 			const statusBadge = getStatusBadge(cpmk.rata_rata);
 			html += `
-				<tr>
+				<tr data-row-index="${index}" data-cpmk-id="${cpmk.cpmk_id}" data-kode-cpmk="${cpmk.kode_cpmk}">
 					<td class="text-center">${index + 1}</td>
 					<td><strong>${cpmk.kode_cpmk}</strong></td>
 					<td><small>${cpmk.deskripsi}</small></td>
@@ -851,26 +895,30 @@
 						</button>
 					</td>
 				</tr>
-				<tr id="cpmkComparativeDetail_${index}" style="display: none;">
-					<td colspan="6" class="bg-light">
-						<div id="cpmkComparativeDetailContent_${index}"></div>
-					</td>
-				</tr>
 			`;
 		});
 
 		html += '</tbody></table></div>';
 
-		// Add explanation
-		html += '<div class="alert alert-info mt-3">';
-		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap Capaian CPMK dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata Capaian CPMK = (Σ Capaian CPMK semua mahasiswa) / Jumlah mahasiswa</strong></p>';
-		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPMK dari <strong>${response.totalMahasiswa} mahasiswa</strong> pada angkatan <strong>${response.tahunAngkatan}</strong> program studi <strong>${response.programStudi}</strong>.</p>`;
-		html += '</div>';
-
 		$('#detailCalculationComparativeContent').html(html);
 		$('#detailCalculationComparative').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#comparativeDetailTable')) {
+			$('#comparativeDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		window.comparativeDetailTable = $('#comparativeDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function displayKeseluruhanDetailedCalculation(response) {
@@ -879,7 +927,7 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table class="table table-bordered table-hover">';
+		let html = '<div class="table-responsive"><table id="keseluruhanDetailTable" class="table table-bordered table-hover">';
 		html += '<thead class="table-light">';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
@@ -895,7 +943,7 @@
 		response.chartData.details.forEach((cpmk, index) => {
 			const statusBadge = getStatusBadge(cpmk.rata_rata);
 			html += `
-				<tr>
+				<tr data-row-index="${index}" data-cpmk-id="${cpmk.cpmk_id}" data-kode-cpmk="${cpmk.kode_cpmk}">
 					<td class="text-center">${index + 1}</td>
 					<td><strong>${cpmk.kode_cpmk}</strong></td>
 					<td><small>${cpmk.deskripsi}</small></td>
@@ -907,46 +955,52 @@
 						</button>
 					</td>
 				</tr>
-				<tr id="cpmkKeseluruhanDetail_${index}" style="display: none;">
-					<td colspan="6" class="bg-light">
-						<div id="cpmkKeseluruhanDetailContent_${index}"></div>
-					</td>
-				</tr>
 			`;
 		});
 
 		html += '</tbody></table></div>';
 
-		// Add explanation
-		html += '<div class="alert alert-info mt-3">';
-		html += '<h6 class="mb-2"><i class="bi bi-info-circle"></i> Penjelasan Perhitungan:</h6>';
-		html += '<p class="mb-1">Setiap Capaian CPMK dihitung dengan rumus:</p>';
-		html += '<p class="mb-1"><strong>Rata-rata Capaian CPMK = (Σ Capaian CPMK setiap mahasiswa) / Jumlah mahasiswa</strong></p>';
-		html += `<p class="mb-0">Data ini menunjukkan rata-rata capaian untuk setiap CPMK dari <strong>${response.totalMahasiswa} mahasiswa</strong> di program studi <strong>${response.programStudi}</strong> dari semua angkatan (${response.angkatanList.join(', ')}).</p>`;
-		html += '</div>';
-
 		$('#detailCalculationKeseluruhanContent').html(html);
 		$('#detailCalculationKeseluruhan').removeClass('d-none');
+
+		// Destroy existing DataTable if it exists
+		if ($.fn.DataTable.isDataTable('#keseluruhanDetailTable')) {
+			$('#keseluruhanDetailTable').DataTable().destroy();
+		}
+
+		// Initialize DataTable with pagination
+		window.keseluruhanDetailTable = $('#keseluruhanDetailTable').DataTable({
+			pageLength: 10,
+			language: {
+				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+			},
+			columnDefs: [{
+				orderable: false,
+				targets: -1
+			}]
+		});
 	}
 
 	function loadComparativeCpmkDetail(cpmkId, kodeCpmk, index) {
-		const targetDiv = $(`#cpmkComparativeDetail_${index}`);
-		const contentDiv = $(`#cpmkComparativeDetailContent_${index}`);
-		const button = targetDiv.prev().find('button');
+		// Set modal title
+		$('#detailCpmkModalTitle').text(`Detail Perhitungan ${kodeCpmk} - Angkatan`);
 
-		// Toggle visibility
-		if (targetDiv.is(':visible')) {
-			targetDiv.hide();
-			button.html('<i class="bi bi-eye"></i> Detail');
-			return;
-		}
+		// Show loading state in modal
+		$('#detailCpmkModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
+
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCpmkModal'));
+		modal.show();
 
 		const programStudi = $('#programStudiComparativeSelect').val();
 		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
-
-		targetDiv.show();
-		button.html('<i class="bi bi-eye-slash"></i> Tutup');
-		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpmk/comparativeDetailCalculation") ?>',
@@ -960,30 +1014,24 @@
 				if (response.success) {
 					displayComparativeCpmkCalculationDetail(index, kodeCpmk, response.data, response.summary);
 				} else {
-					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+					$('#detailCpmkModalContent').html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
 				}
 			},
 			error: function() {
-				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+				$('#detailCpmkModalContent').html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
 			}
 		});
 	}
 
 	function displayComparativeCpmkCalculationDetail(index, kodeCpmk, data, summary) {
-		let html = `
-			<div class="card mb-0 border-0">
-				<div class="card-header bg-info text-white">
-					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpmk}</h6>
-				</div>
-				<div class="card-body">
-		`;
+		let html = ``;
 
 		if (data.length === 0) {
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPMK ini</div>';
 		} else {
 			html += `
 				<div class="table-responsive">
-					<table class="table table-bordered table-sm table-hover mb-0">
+					<table id="comparativeCpmkDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
 						<thead class="table-primary">
 							<tr>
 								<th width="10%" class="text-center">No</th>
@@ -1023,31 +1071,43 @@
 			`;
 		}
 
-		html += `
-				</div>
-			</div>
-		`;
+		$('#detailCpmkModalContent').html(html);
 
-		$(`#cpmkComparativeDetailContent_${index}`).html(html);
+		// Initialize DataTable with pagination
+		if (data.length > 0) {
+			// Destroy existing DataTable if it exists
+			if ($.fn.DataTable.isDataTable(`#comparativeCpmkDetailTable_${index}`)) {
+				$(`#comparativeCpmkDetailTable_${index}`).DataTable().destroy();
+			}
+
+			$(`#comparativeCpmkDetailTable_${index}`).DataTable({
+				pageLength: 10,
+				language: {
+					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+				}
+			});
+		}
 	}
 
 	function loadKeseluruhanCpmkDetail(cpmkId, kodeCpmk, index) {
-		const targetDiv = $('#cpmkKeseluruhanDetail_' + index);
-		const contentDiv = $('#cpmkKeseluruhanDetailContent_' + index);
-		const button = targetDiv.prev().find('button');
+		// Set modal title
+		$('#detailCpmkModalTitle').text(`Detail Perhitungan ${kodeCpmk} - Semua Angkatan`);
 
-		// Toggle visibility
-		if (targetDiv.is(':visible')) {
-			targetDiv.hide();
-			button.html('<i class="bi bi-eye"></i> Detail');
-			return;
-		}
+		// Show loading state in modal
+		$('#detailCpmkModalContent').html(`
+			<div class="text-center py-4">
+				<div class="spinner-border text-primary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
+			</div>
+		`);
+
+		// Show modal
+		const modal = new bootstrap.Modal(document.getElementById('detailCpmkModal'));
+		modal.show();
 
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
-
-		targetDiv.show();
-		button.html('<i class="bi bi-eye-slash"></i> Tutup');
-		contentDiv.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"></div> Memuat detail perhitungan...</div>');
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpmk/keseluruhanDetailCalculation") ?>',
@@ -1060,30 +1120,24 @@
 				if (response.success) {
 					displayKeseluruhanCpmkCalculationDetail(index, kodeCpmk, response.data, response.summary);
 				} else {
-					contentDiv.html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
+					$('#detailCpmkModalContent').html('<div class="alert alert-warning mb-0">' + (response.message || 'Tidak ada data') + '</div>');
 				}
 			},
 			error: function() {
-				contentDiv.html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
+				$('#detailCpmkModalContent').html('<div class="alert alert-danger mb-0">Terjadi kesalahan saat memuat data</div>');
 			}
 		});
 	}
 
 	function displayKeseluruhanCpmkCalculationDetail(index, kodeCpmk, data, summary) {
-		let html = `
-			<div class="card mb-0 border-0">
-				<div class="card-header bg-info text-white">
-					<h6 class="mb-0"><i class="bi bi-calculator"></i> Detail Perhitungan ${kodeCpmk} - Per Mahasiswa (Semua Angkatan)</h6>
-				</div>
-				<div class="card-body">
-		`;
+		let html = ``;
 
 		if (data.length === 0) {
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPMK ini</div>';
 		} else {
 			html += `
 				<div class="table-responsive">
-					<table class="table table-bordered table-sm table-hover mb-0">
+					<table id="keseluruhanCpmkDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
 						<thead class="table-primary">
 							<tr>
 								<th width="8%" class="text-center">No</th>
@@ -1125,12 +1179,22 @@
 			`;
 		}
 
-		html += `
-				</div>
-			</div>
-		`;
+		$('#detailCpmkModalContent').html(html);
 
-		$('#cpmkKeseluruhanDetailContent_' + index).html(html);
+		// Initialize DataTable with pagination
+		if (data.length > 0) {
+			// Destroy existing DataTable if it exists
+			if ($.fn.DataTable.isDataTable(`#keseluruhanCpmkDetailTable_${index}`)) {
+				$(`#keseluruhanCpmkDetailTable_${index}`).DataTable().destroy();
+			}
+
+			$(`#keseluruhanCpmkDetailTable_${index}`).DataTable({
+				pageLength: 10,
+				language: {
+					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+				}
+			});
+		}
 	}
 
 	// Helper Functions
