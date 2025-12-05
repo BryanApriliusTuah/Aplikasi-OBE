@@ -33,7 +33,7 @@ class CapaianCpl extends BaseController
 
 		$data = [
 			'title' => 'Capaian CPL',
-			'programStudi' => ['Teknik Informatika', 'Sistem Informasi', 'Teknik Komputer'],
+			'programStudi' => $this->getProgramStudi(),
 			'tahunAngkatan' => $this->getTahunAngkatan(),
 			'mahasiswa' => [], // Will be loaded via AJAX
 			'passing_threshold' => $passingThreshold
@@ -437,6 +437,20 @@ class CapaianCpl extends BaseController
 			'tahunAngkatan' => $tahunAngkatan,
 			'totalMahasiswa' => count($mahasiswaList)
 		]);
+	}
+
+	private function getProgramStudi()
+	{
+		$db = \Config\Database::connect();
+		$result = $db->table('mahasiswa')
+			->select('program_studi')
+			->distinct()
+			->where('status_mahasiswa', 'Aktif')
+			->orderBy('program_studi', 'ASC')
+			->get()
+			->getResultArray();
+
+		return array_column($result, 'program_studi');
 	}
 
 	private function getTahunAngkatan()
