@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GradeConfigModel;
+use App\Models\StandarMinimalCapaianModel;
 
 class Settings extends BaseController
 {
@@ -16,8 +17,11 @@ class Settings extends BaseController
             return redirect()->to('/admin/dashboard')->with('error', 'Anda tidak memiliki hak akses ke menu ini.');
         }
 
-        $model = new GradeConfigModel();
-        $data['grades'] = $model->getAllGradesForDisplay();
+        $gradeModel = new GradeConfigModel();
+        $standarModel = new StandarMinimalCapaianModel();
+
+        $data['grades'] = $gradeModel->getAllGradesForDisplay();
+        $data['standar_cpmk'] = $standarModel->getPersentase();
         $data['title'] = 'Pengaturan Sistem Penilaian';
 
         return view('admin/settings/index', $data);
@@ -289,5 +293,36 @@ class Settings extends BaseController
         $builder->insertBatch($defaultGrades);
 
         return redirect()->to('/admin/settings')->with('success', 'Konfigurasi nilai berhasil direset ke default.');
+    }
+
+    /**
+     * Update CPMK passing threshold
+     */
+    public function updateStandarCpmk()
+    {
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/admin/settings')->with('error', 'Anda tidak memiliki hak akses.');
+        }
+
+        $persentase = $this->request->getPost('persentase');
+
+        // Validate percentage
+        if ($persentase === null || $persentase === '') {
+            return redirect()->back()->with('error', 'Persentase harus diisi.');
+        }
+
+        $persentase = (float)$persentase;
+
+        if ($persentase < 0 || $persentase > 100) {
+            return redirect()->back()->with('error', 'Persentase harus antara 0 sampai 100.');
+        }
+
+        $standarModel = new StandarMinimalCapaianModel();
+
+        if ($standarModel->updatePersentase($persentase)) {
+            return redirect()->to('/admin/settings')->with('success', 'Standar Minimal Capaian CPMK berhasil diperbarui.');
+        } else {
+            return redirect()->back()->with('error', 'Gagal memperbarui Standar Minimal Capaian CPMK.');
+        }
     }
 }
