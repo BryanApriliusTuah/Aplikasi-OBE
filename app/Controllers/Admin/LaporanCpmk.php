@@ -72,6 +72,44 @@ class LaporanCpmk extends BaseController
 		return view('admin/laporan_cpmk/portfolio', $data);
 	}
 
+	public function generatePdf()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return redirect()->to('/')->with('error', 'Akses ditolak.');
+		}
+
+		$mataKuliahId = $this->request->getGet('mata_kuliah_id');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$programStudi = $this->request->getGet('program_studi');
+		$documents = $this->request->getGet('documents');
+
+		if (!$mataKuliahId || !$tahunAkademik) {
+			return redirect()->to('admin/laporan-cpmk')->with('error', 'Pilih mata kuliah dan tahun akademik terlebih dahulu.');
+		}
+
+		// Get course portfolio data
+		$portfolioData = $this->getPortfolioData($mataKuliahId, $tahunAkademik, $programStudi);
+
+		if (!$portfolioData) {
+			return redirect()->to('admin/laporan-cpmk')->with('error', 'Data tidak ditemukan untuk mata kuliah dan tahun akademik yang dipilih.');
+		}
+
+		// Parse selected documents
+		$selectedDocuments = [];
+		if (!empty($documents)) {
+			$selectedDocuments = explode(',', $documents);
+		}
+
+		$data = [
+			'portfolio' => $portfolioData,
+			'selectedDocuments' => $selectedDocuments
+		];
+
+		// Return PDF-optimized view
+		return view('admin/laporan_cpmk/portfolio_pdf', $data);
+	}
+
 	private function getPortfolioData($mataKuliahId, $tahunAkademik, $programStudi = null)
 	{
 		// 1. Get Course Identity (Identitas Mata Kuliah)
@@ -544,6 +582,942 @@ class LaporanCpmk extends BaseController
 			['program_studi' => 'Teknik Komputer']
 		];
 	}
+
+	public function exportZip()
+	{
+		try {
+			// Check user role
+			if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+				return redirect()->to('/')->with('error', 'Akses ditolak.');
+			}
+
+			$mataKuliahId = $this->request->getGet('mata_kuliah_id');
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+			$programStudi = $this->request->getGet('program_studi');
+			$documents = $this->request->getGet('documents');
+
+			// Log the request parameters
+			log_message('info', 'Export ZIP requested - MK: ' . $mataKuliahId . ', TA: ' . $tahunAkademik . ', Docs: ' . $documents);
+
+			if (!$mataKuliahId || !$tahunAkademik) {
+				return redirect()->to('admin/laporan-cpmk')->with('error', 'Pilih mata kuliah dan tahun akademik terlebih dahulu.');
+			}
+
+			// Get course portfolio data
+			$portfolioData = $this->getPortfolioData($mataKuliahId, $tahunAkademik, $programStudi);
+
+			if (!$portfolioData) {
+				log_message('error', 'Portfolio data not found for MK: ' . $mataKuliahId . ', TA: ' . $tahunAkademik);
+				return redirect()->to('admin/laporan-cpmk')->with('error', 'Data tidak ditemukan untuk mata kuliah dan tahun akademik yang dipilih.');
+			}
+
+			// Parse selected documents
+			$selectedDocuments = [];
+			if (!empty($documents)) {
+				$selectedDocuments = explode(',', $documents);
+			}
+
+			// Get jadwal_mengajar ID for nilai exports
+			$builder = $this->db->table('jadwal_mengajar');
+			$builder->where('mata_kuliah_id', $mataKuliahId);
+			$builder->where('tahun_akademik', $tahunAkademik);
+			if ($programStudi) {
+				$builder->where('program_studi', $programStudi);
+			}
+			$jadwalMengajar = $builder->get()->getFirstRow();
+			$jadwalMengajarId = $jadwalMengajar ? $jadwalMengajar->id : null;
+
+			// Get RPS ID
+			$rpsBuilder = $this->db->table('rps');
+			$rpsBuilder->where('mata_kuliah_id', $mataKuliahId);
+			$rpsBuilder->orderBy('id', 'DESC');
+			$rpsData = $rpsBuilder->get()->getFirstRow();
+			$rpsId = $rpsData ? $rpsData->id : null;
+
+			// Create ZIP file
+			$zip = new \ZipArchive();
+			$zipFilename = 'Portofolio_' . str_replace(' ', '_', $portfolioData['identitas']['kode_mata_kuliah']) . '_' . time() . '.zip';
+			$zipPath = WRITEPATH . 'uploads/' . $zipFilename;
+
+			// Ensure uploads directory exists
+			if (!is_dir(WRITEPATH . 'uploads')) {
+				mkdir(WRITEPATH . 'uploads', 0755, true);
+			}
+
+			if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+				log_message('error', 'Failed to create ZIP file at: ' . $zipPath);
+				return redirect()->to('admin/laporan-cpmk')->with('error', 'Gagal membuat file ZIP.');
+			}
+
+			$tempFiles = [];
+
+			// 1. Generate and add Portfolio DOC
+			$docData = [
+				'portfolio' => $portfolioData,
+				'selectedDocuments' => $selectedDocuments
+			];
+			$portfolioHtml = view('admin/laporan_cpmk/portfolio_pdf', $docData);
+
+			// Wrap in Word-compatible HTML structure
+			$wordHtml = '
+			<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+			<head>
+				<meta charset="UTF-8">
+				<xml>
+					<w:WordDocument>
+						<w:View>Print</w:View>
+						<w:Zoom>100</w:Zoom>
+					</w:WordDocument>
+				</xml>
+				<style>
+					body { font-family: Arial, sans-serif; font-size: 11pt; padding: 30px; }
+					h2 { font-size: 18pt; font-weight: bold; margin-bottom: 10px; text-align: center; }
+					h5 { font-size: 14pt; font-weight: bold; margin-bottom: 10px; }
+					p, li { font-size: 11pt; line-height: 1.4; }
+					table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+					table th, table td { padding: 8px; border: 1px solid #000; word-wrap: break-word; vertical-align: top; }
+					table thead th { background-color: #f8f9fa; font-weight: bold; }
+					.section { margin-bottom: 25px; page-break-inside: avoid; }
+					.text-center { text-align: center; }
+					.fw-bold { font-weight: bold; }
+					.text-success { color: #198754; }
+					.text-danger { color: #dc3545; }
+					.text-muted { color: #6c757d; }
+					.bg-light { background-color: #f8f9fa; padding: 10px; }
+					ul { margin: 0; padding-left: 20px; }
+					.list-unstyled { list-style: none; padding-left: 0; }
+					@page { margin: 2cm; }
+				</style>
+			</head>
+			<body>';
+
+			// Extract body content from the portfolio HTML
+			if (preg_match('/<body>(.*?)<\/body>/s', $portfolioHtml, $matches)) {
+				$wordHtml .= $matches[1];
+			} else {
+				$wordHtml .= $portfolioHtml;
+			}
+
+			$wordHtml .= '</body></html>';
+
+			// Save as .doc file
+			$docFilename = 'Portofolio_Mata_Kuliah.doc';
+			$tempDocPath = WRITEPATH . 'uploads/temp_portfolio_' . time() . '.doc';
+			file_put_contents($tempDocPath, $wordHtml);
+			$zip->addFile($tempDocPath, $docFilename);
+			$tempFiles[] = $tempDocPath;
+
+			// 2. Add supporting documents based on selection
+			foreach ($selectedDocuments as $docType) {
+				$fileAdded = $this->addDocumentToZip($zip, $docType, $rpsId, $jadwalMengajarId, $tempFiles);
+				if (!$fileAdded) {
+					log_message('warning', 'Failed to add document type: ' . $docType);
+				}
+			}
+
+			$zip->close();
+
+			// Download the ZIP file using CodeIgniter's download response
+			$data = file_get_contents($zipPath);
+
+			// Clean up temporary files
+			foreach ($tempFiles as $tempFile) {
+				if (file_exists($tempFile)) {
+					@unlink($tempFile);
+				}
+			}
+
+			// Return the download response
+			$response = $this->response->download($zipFilename, $data);
+
+			// Clean up the ZIP file after sending
+			@unlink($zipPath);
+
+			return $response;
+		} catch (\Exception $e) {
+			log_message('error', 'Error in exportZip: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+			return redirect()->to('admin/laporan-cpmk')->with('error', 'Terjadi kesalahan saat membuat file ZIP: ' . $e->getMessage());
+		}
+	}
+
+	private function addDocumentToZip(&$zip, $docType, $rpsId, $jadwalMengajarId, &$tempFiles)
+	{
+		try {
+			log_message('info', 'Adding document type: ' . $docType . ' (RPS ID: ' . $rpsId . ', Jadwal ID: ' . $jadwalMengajarId . ')');
+
+			switch ($docType) {
+				case 'rps':
+					if (!$rpsId) {
+						log_message('warning', 'RPS ID is null, skipping RPS document');
+						return false;
+					}
+
+					log_message('info', 'Generating RPS DOC for RPS ID: ' . $rpsId);
+
+					// Generate RPS DOC using preview data
+					$rpsService = new \App\Services\RpsPreviewService();
+					$rpsData = $rpsService->getData($rpsId);
+
+					// Render just the content section without the layout
+					$rpsData['for_doc'] = true; // Flag to indicate DOC generation
+
+					// Get the view content and extract only the #rps-content div
+					$fullHtml = view('rps/preview', $rpsData);
+
+					// Extract only the content within #rps-content div using DOMDocument
+					libxml_use_internal_errors(true);
+					$dom = new \DOMDocument();
+					$dom->loadHTML('<?xml encoding="UTF-8">' . $fullHtml);
+					libxml_clear_errors();
+
+					$xpath = new \DOMXPath($dom);
+					$contentNode = $xpath->query("//*[@id='rps-content']")->item(0);
+
+					if ($contentNode) {
+						// Get the inner HTML of rps-content
+						$cleanHtml = '';
+						foreach ($contentNode->childNodes as $child) {
+							$cleanHtml .= $dom->saveHTML($child);
+						}
+
+						// Wrap in a Word-compatible HTML structure
+						$rpsHtml = '
+						<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+						<head>
+							<meta charset="UTF-8">
+							<xml>
+								<w:WordDocument>
+									<w:View>Print</w:View>
+									<w:Zoom>100</w:Zoom>
+								</w:WordDocument>
+							</xml>
+							<style>
+								body { font-family: Arial, sans-serif; font-size: 11pt; }
+								table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+								table, th, td { border: 1px solid #222; }
+								th, td { padding: 8px; }
+								.text-center { text-align: center; }
+								@page { margin: 2cm; }
+							</style>
+						</head>
+						<body>' . $cleanHtml . '</body>
+						</html>';
+					} else {
+						// Fallback: use full HTML
+						$rpsHtml = $fullHtml;
+					}
+
+					// Save as .doc file (HTML format that Word can open)
+					$tempRpsPath = WRITEPATH . 'uploads/temp_rps_' . time() . '_' . mt_rand() . '.doc';
+					file_put_contents($tempRpsPath, $rpsHtml);
+
+					if (file_exists($tempRpsPath) && filesize($tempRpsPath) > 0) {
+						$zip->addFile($tempRpsPath, 'RPS.doc');
+						$tempFiles[] = $tempRpsPath;
+						log_message('info', 'Successfully added RPS DOC to ZIP');
+						return true;
+					} else {
+						log_message('error', 'RPS DOC file not created or empty: ' . $tempRpsPath);
+						return false;
+					}
+
+				case 'nilai':
+					if (!$jadwalMengajarId) {
+						log_message('warning', 'Jadwal Mengajar ID is null, skipping DPNA document');
+						return false;
+					}
+
+					log_message('info', 'Generating DPNA Excel for Jadwal ID: ' . $jadwalMengajarId);
+					// Generate DPNA Excel file directly
+					$tempNilaiPath = WRITEPATH . 'uploads/temp_dpna_' . time() . '_' . mt_rand() . '.xlsx';
+
+					// Use the Nilai controller's logic to generate Excel
+					$result = $this->generateDpnaExcel($jadwalMengajarId, $tempNilaiPath);
+
+					if ($result && file_exists($tempNilaiPath) && filesize($tempNilaiPath) > 0) {
+						$zip->addFile($tempNilaiPath, 'Daftar_Nilai_Mahasiswa.xlsx');
+						$tempFiles[] = $tempNilaiPath;
+						log_message('info', 'Successfully added DPNA Excel to ZIP');
+						return true;
+					} else {
+						log_message('error', 'DPNA Excel file not created or empty: ' . $tempNilaiPath);
+						return false;
+					}
+
+				case 'rekapitulasi':
+					if (!$jadwalMengajarId) {
+						log_message('warning', 'Jadwal Mengajar ID is null, skipping CPMK Rekapitulasi document');
+						return false;
+					}
+
+					log_message('info', 'Generating CPMK Excel for Jadwal ID: ' . $jadwalMengajarId);
+					// Generate CPMK Excel file directly
+					$tempRekapPath = WRITEPATH . 'uploads/temp_cpmk_' . time() . '_' . mt_rand() . '.xlsx';
+
+					// Use the Nilai controller's logic to generate Excel
+					$result = $this->generateCpmkExcel($jadwalMengajarId, $tempRekapPath);
+
+					if ($result && file_exists($tempRekapPath) && filesize($tempRekapPath) > 0) {
+						$zip->addFile($tempRekapPath, 'Rekapitulasi_Nilai_CPMK.xlsx');
+						$tempFiles[] = $tempRekapPath;
+						log_message('info', 'Successfully added CPMK Excel to ZIP');
+						return true;
+					} else {
+						log_message('error', 'CPMK Excel file not created or empty: ' . $tempRekapPath);
+						return false;
+					}
+			}
+		} catch (\Exception $e) {
+			log_message('error', 'Error adding document to ZIP: ' . $e->getMessage());
+			return false;
+		}
+
+		return false;
+	}
+
+	private function generateDpnaExcel($jadwalId, $outputPath)
+	{
+		try {
+			// Import required models
+			$jadwalModel = new \App\Models\MengajarModel();
+			$mahasiswaModel = new \App\Models\MahasiswaModel();
+			$nilaiTeknikModel = new \App\Models\NilaiTeknikPenilaianModel();
+			$nilaiMahasiswaModel = new \App\Models\NilaiMahasiswaModel();
+
+			// Get jadwal details
+			$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwalId], true);
+			if (!$jadwal) {
+				log_message('error', 'Jadwal not found for ID: ' . $jadwalId);
+				return false;
+			}
+
+			// Get students for this class
+			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+			// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
+			$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwalId);
+
+			// Group teknik_list by tahap for organized display
+			$teknik_by_tahap = [];
+			foreach ($teknik_list as $item) {
+				$tahap = $item['tahap_penilaian'] ?? 'Perkuliahan';
+				if (!isset($teknik_by_tahap[$tahap])) {
+					$teknik_by_tahap[$tahap] = [];
+				}
+				$teknik_by_tahap[$tahap][] = $item;
+			}
+
+			// Get existing scores to pre-fill the form (individual per week)
+			$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwalId);
+
+			// Get final scores
+			$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwalId);
+			$final_scores_map = [];
+			foreach ($final_scores as $score) {
+				$final_scores_map[$score['mahasiswa_id']] = $score;
+			}
+
+			// Helper function to calculate keterangan based on grade
+			$getKeterangan = function ($grade) {
+				$failingGrades = ['B', 'BC', 'C', 'D', 'E'];
+				if (in_array(strtoupper($grade), $failingGrades)) {
+					return 'TM'; // Tidak Memenuhi
+				}
+				return 'Lulus';
+			};
+
+			// Prepare DPNA data
+			$dpna_data = [];
+			$no = 1;
+			foreach ($students as $student) {
+				$mahasiswa_id = $student['id'];
+
+				// Initialize row with basic data
+				$row_data = [
+					'no' => $no++,
+					'nim' => $student['nim'],
+					'nama' => $student['nama_lengkap']
+				];
+
+				// Add scores for each teknik penilaian (separated by week/rps_mingguan_id)
+				foreach ($teknik_list as $item) {
+					$rps_mingguan_id = $item['rps_mingguan_id'];
+					$teknik_key = $item['teknik_key'];
+
+					$score = 0;
+					if (isset($existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key])) {
+						$score = $existing_scores[$mahasiswa_id][$rps_mingguan_id][$teknik_key];
+					}
+					$row_data['teknik_' . $rps_mingguan_id . '_' . $teknik_key] = $score;
+				}
+
+				// Get nilai akhir and nilai huruf
+				$nilai_akhir = $final_scores_map[$mahasiswa_id]['nilai_akhir'] ?? 0;
+				$nilai_huruf = $final_scores_map[$mahasiswa_id]['nilai_huruf'] ?? '-';
+				$keterangan = $getKeterangan($nilai_huruf);
+
+				$row_data['nilai_akhir'] = $nilai_akhir;
+				$row_data['nilai_huruf'] = $nilai_huruf;
+				$row_data['keterangan'] = $keterangan;
+
+				$dpna_data[] = $row_data;
+			}
+
+			// Create Excel file using PhpSpreadsheet
+			$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+			$sheet = $spreadsheet->getActiveSheet();
+
+			// Set document properties
+			$spreadsheet->getProperties()
+				->setCreator('OBE System')
+				->setTitle('DPNA - ' . $jadwal['nama_mk'])
+				->setSubject('Daftar Penilaian Nilai Akhir');
+
+			// Set row height for header
+			$sheet->getRowDimension(1)->setRowHeight(50);
+			$sheet->getRowDimension(2)->setRowHeight(20);
+
+			// Add logo if exists
+			$logoPath = FCPATH . 'img/Logo UPR.png';
+			if (file_exists($logoPath)) {
+				$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+				$drawing->setName('Logo');
+				$drawing->setDescription('Logo');
+				$drawing->setPath($logoPath);
+				$drawing->setCoordinates('A1');
+				$drawing->setHeight(50);
+				$drawing->setOffsetX(10);
+				$drawing->setOffsetY(5);
+				$drawing->setWorksheet($sheet);
+			}
+
+			// Determine semester type (Genap/Ganjil) based on semester number
+			$semester_type = '';
+			if (isset($jadwal['semester'])) {
+				$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+			}
+
+			// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+			$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+
+			// Helper function to convert column index to Excel column letter
+			$getColumnLetter = function ($index) {
+				$letter = '';
+				while ($index >= 0) {
+					$letter = chr($index % 26 + 65) . $letter;
+					$index = floor($index / 26) - 1;
+				}
+				return $letter;
+			};
+
+			// Calculate the last column for dynamic layout
+			// Columns: No, NIM, Nama, [teknik_list], Nilai Akhir (Angka), Nilai Akhir (Huruf), Keterangan
+			$totalColumns = 3 + count($teknik_list) + 3; // 3 basic + teknik + 3 final columns
+			$keteranganColIndex = $totalColumns - 1;
+			$lastColLetter = $getColumnLetter($keteranganColIndex);
+			$beforeLastColLetter = $getColumnLetter($keteranganColIndex - 1);
+
+			// Set header - Ministry text (in same row as logo)
+			$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
+			$sheet->setCellValue('B1', $header_text);
+			$sheet->mergeCells('B1:' . $beforeLastColLetter . '1');
+			$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle('B1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// Set DPNA and Semester info on the right side (last column)
+			$dpna_text = "DPNA\nSemester " . $semester_type . " " . $tahun;
+			$sheet->setCellValue($lastColLetter . '1', $dpna_text);
+			$sheet->getStyle($lastColLetter . '1')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle($lastColLetter . '1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// University text (row 2)
+			$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+			$sheet->mergeCells('B2:' . $beforeLastColLetter . '2');
+			$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle('B2')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+			// Course information
+			$row = 4;
+			$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
+
+			// Style course information (bold and bigger)
+			$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
+
+			// Table header - First row
+			$row += 2;
+			$headerRow = $row;
+
+			$col = 0;
+			$sheet->setCellValue($getColumnLetter($col++) . $row, 'No');
+			$sheet->setCellValue($getColumnLetter($col++) . $row, 'NIM');
+			$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nama');
+
+			// Merge cells for basic columns (No, NIM, Nama)
+			$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+			$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+			$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+
+			// Add dynamic teknik penilaian columns (separated by week)
+			// First row: Tahap headers
+			$tahapStartCols = [];
+			foreach ($teknik_by_tahap as $tahap => $tahap_items) {
+				$tahapStartCol = $col;
+				$tahapEndCol = $col + count($tahap_items) - 1;
+				$sheet->setCellValue($getColumnLetter($col) . $row, $tahap);
+				if ($tahapEndCol > $tahapStartCol) {
+					$sheet->mergeCells($getColumnLetter($tahapStartCol) . $row . ':' . $getColumnLetter($tahapEndCol) . $row);
+				}
+				$col = $tahapEndCol + 1;
+			}
+
+			// Second row: Individual teknik with minggu and CPMK
+			$col = 3; // Reset to after Nama column
+			$row++;
+			foreach ($teknik_list as $item) {
+				$colLetter = $getColumnLetter($col);
+				$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
+				$teknik_text = $item['teknik_label'] . "\nMinggu: " . $item['minggu'] . "\n" . $cpmk_display . " (" . number_format($item['bobot'], 1) . '%)';
+				$sheet->setCellValue($colLetter . $row, $teknik_text);
+				$col++;
+			}
+
+			// Nilai Akhir columns (merged header)
+			$nilaiAkhirStartCol = $col;
+			$row--; // Go back to first header row
+			$sheet->setCellValue($getColumnLetter($col) . $row, 'Nilai Akhir');
+			$sheet->mergeCells($getColumnLetter($col) . $row . ':' . $getColumnLetter($col + 1) . $row);
+
+			// Keterangan column (using pre-calculated index)
+			$sheet->setCellValue($lastColLetter . $row, 'Keterangan');
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . ($row + 1));
+
+			// Second header row - Sub-headers for Nilai Akhir
+			$row++;
+			$sheet->setCellValue($getColumnLetter($nilaiAkhirStartCol) . $row, 'Angka');
+			$sheet->setCellValue($getColumnLetter($nilaiAkhirStartCol + 1) . $row, 'Huruf');
+
+			// Style both header rows
+			$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $row);
+			$headerStyle->getFont()->setBold(true);
+			$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FF4472C4');
+			$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+			$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+			$headerStyle->getAlignment()->setWrapText(true);
+
+			// Data rows
+			$row++;
+			foreach ($dpna_data as $data) {
+				$col = 0;
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['no']);
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nim']);
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nama']);
+
+				// Add teknik penilaian scores (separated by week)
+				$teknikColStart = $col;
+				foreach ($teknik_list as $item) {
+					$rps_mingguan_id = $item['rps_mingguan_id'];
+					$teknik_key = $item['teknik_key'];
+					$sheet->setCellValue($getColumnLetter($col++) . $row, $data['teknik_' . $rps_mingguan_id . '_' . $teknik_key]);
+				}
+				$teknikColEnd = $col - 1;
+
+				// Add background color to teknik penilaian cells
+				$sheet->getStyle($getColumnLetter($teknikColStart) . $row . ':' . $getColumnLetter($teknikColEnd) . $row)->getFill()
+					->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+					->getStartColor()->setARGB('FFFFFF00'); // Light yellow
+
+				// Add nilai akhir
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nilai_akhir']);
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nilai_huruf']);
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $data['keterangan']);
+
+				// Center align for numeric columns
+				$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+				$sheet->getStyle($getColumnLetter($teknikColStart) . $row . ':' . $lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+				$row++;
+			}
+
+			// Add borders to table
+			$lastRow = $row - 1;
+			$sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $lastRow)->applyFromArray([
+				'borders' => [
+					'allBorders' => [
+						'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+						'color' => ['argb' => 'FF000000'],
+					],
+				],
+			]);
+
+			// Auto-size columns
+			for ($i = 0; $i <= $keteranganColIndex; $i++) {
+				$sheet->getColumnDimension($getColumnLetter($i))->setAutoSize(true);
+			}
+
+			// Get NIP of dosen ketua
+			$db = \Config\Database::connect();
+			$dosenKetuaNip = $db->table('jadwal_dosen jd')
+				->select('d.nip')
+				->join('dosen d', 'd.id = jd.dosen_id')
+				->where('jd.jadwal_mengajar_id', $jadwalId)
+				->where('jd.role', 'leader')
+				->get()
+				->getRowArray();
+			$nip = $dosenKetuaNip['nip'] ?? '';
+
+			// Add signature section
+			$row = $lastRow + 3; // Add some space after the table
+
+			// Date and location on the right side
+			$sheet->setCellValue($lastColLetter . $row, 'Palangka Raya, ' . date('d F Y'));
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+			$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			$row++;
+
+			// Mengetahui
+			$sheet->setCellValue($lastColLetter . $row, 'Mengetahui');
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+			$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			$row++;
+
+			// Title
+			$sheet->setCellValue($lastColLetter . $row, 'Dosen Koordinator Mata Kuliah');
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+			$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			// Add empty rows for signature space
+			$row += 4;
+
+			// Dosen name
+			$sheet->setCellValue($lastColLetter . $row, $jadwal['dosen_ketua']);
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+			$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+			$sheet->getStyle($lastColLetter . $row)->getFont()->setBold(true);
+
+			$row++;
+
+			// NIP line
+			$sheet->setCellValue($lastColLetter . $row, 'NIP. ' . $nip);
+			$sheet->mergeCells($lastColLetter . $row . ':' . $lastColLetter . $row);
+			$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			// Save to file
+			$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+			$writer->save($outputPath);
+
+			log_message('info', 'DPNA Excel generated successfully: ' . $outputPath);
+			return true;
+		} catch (\Exception $e) {
+			log_message('error', 'Error generating DPNA Excel: ' . $e->getMessage());
+			return false;
+		}
+	}
+
+	private function generateCpmkExcel($jadwalId, $outputPath)
+	{
+		try {
+			// Import required models
+			$jadwalModel = new \App\Models\MengajarModel();
+			$mahasiswaModel = new \App\Models\MahasiswaModel();
+			$cpmkModel = new \App\Models\CpmkModel();
+			$nilaiCpmkModel = new \App\Models\NilaiCpmkMahasiswaModel();
+
+			// Get jadwal details
+			$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwalId], true);
+			if (!$jadwal) {
+				log_message('error', 'Jadwal not found for ID: ' . $jadwalId);
+				return false;
+			}
+
+			// Get students for this class
+			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+			// Get CPMK list for this jadwal
+			$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwalId);
+
+			// Get all CPMK scores for all students
+			$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwalId);
+
+			// Create Excel file using PhpSpreadsheet
+			$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+			$sheet = $spreadsheet->getActiveSheet();
+
+			// Set document properties
+			$spreadsheet->getProperties()
+				->setCreator('OBE System')
+				->setTitle('Nilai CPMK - ' . $jadwal['nama_mk'])
+				->setSubject('Nilai CPMK');
+
+			// Set row height for header
+			$sheet->getRowDimension(1)->setRowHeight(50);
+			$sheet->getRowDimension(2)->setRowHeight(20);
+
+			// Add logo if exists
+			$logoPath = FCPATH . 'img/Logo UPR.png';
+			if (file_exists($logoPath)) {
+				$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+				$drawing->setName('Logo');
+				$drawing->setDescription('Logo');
+				$drawing->setPath($logoPath);
+				$drawing->setCoordinates('A1');
+				$drawing->setHeight(50);
+				$drawing->setOffsetX(10);
+				$drawing->setOffsetY(5);
+				$drawing->setWorksheet($sheet);
+			}
+
+			// Determine semester type (Genap/Ganjil) based on semester number
+			$semester_type = '';
+			if (isset($jadwal['semester'])) {
+				$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+			}
+
+			// Extract year from tahun_akademik (e.g., "2023/2024 Ganjil" -> "2023/2024")
+			$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
+
+			// Calculate total columns for proper header width
+			$totalColumns = 3 + (count($cpmk_list) * 2) + 1; // No, NIM, Nama + (CPMK Score + Capaian) * count + Nilai Akhir
+			$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+
+			// Set header - Ministry text (in same row as logo)
+			$header_text = "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI";
+			$sheet->setCellValue('B1', $header_text);
+			$header_end_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns - 1);
+			$sheet->mergeCells('B1:' . $header_end_col . '1');
+			$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle('B1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// Set CPMK and Semester info on the right side (last column)
+			$cpmk_text = "NILAI CPMK\nSemester " . $semester_type . " " . $tahun;
+			$sheet->setCellValue($lastColumn . '1', $cpmk_text);
+			$sheet->getStyle($lastColumn . '1')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle($lastColumn . '1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// University text (row 2)
+			$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+			$sheet->mergeCells('B2:' . $header_end_col . '2');
+			$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+			$sheet->getStyle('B2')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+			// Course information
+			$row = 4;
+			$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
+
+			// Style course information (bold and bigger)
+			$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
+
+			// Table header - First row
+			$row += 2;
+			$headerRow = $row;
+			$col = 1;
+
+			// Basic columns - First row
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
+
+			// CPMK columns - merged headers with sub-cells
+			foreach ($cpmk_list as $cpmk) {
+				$startCol = $col;
+				$endCol = $col + 1;
+				$startColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startCol);
+				$endColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($endCol);
+
+				// Merge cells for CPMK header
+				$sheet->setCellValue($startColLetter . $row, $cpmk['kode_cpmk']);
+				$sheet->mergeCells($startColLetter . $row . ':' . $endColLetter . $row);
+
+				$col += 2;
+			}
+
+			// Nilai Akhir MK column
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, 'Nilai Akhir MK');
+
+			// Merge cells vertically for columns that span both header rows
+			$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+			$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+			$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+			$nilaiAkhirCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+			$sheet->mergeCells($nilaiAkhirCol . $row . ':' . $nilaiAkhirCol . ($row + 1));
+
+			// Second header row - Sub-headers for CPMK
+			$row++;
+			$col = 4; // Start after No, NIM, Nama
+			foreach ($cpmk_list as $cpmk) {
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Skor');
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Capaian (%)');
+			}
+
+			// Style both header rows
+			$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $row);
+			$headerStyle->getFont()->setBold(true);
+			$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FF4472C4');
+			$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+			$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+			$headerStyle->getAlignment()->setWrapText(true);
+
+			// Data rows
+			$row++;
+			$no = 1;
+			foreach ($students as $student) {
+				$col = 1;
+				$mahasiswa_id = $student['id'];
+
+				// Basic info
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $no++);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nim']);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nama_lengkap']);
+
+				// CPMK scores and capaian
+				$student_scores = [];
+				foreach ($cpmk_list as $cpmk) {
+					$score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+
+					// Score column
+					if ($score !== null && $score !== '') {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $score);
+						$student_scores[] = (float)$score;
+
+						// Capaian column
+						$capaian = ($score / $cpmk['bobot_cpmk']) * 100;
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($capaian, 2));
+					} else {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					}
+				}
+
+				// Nilai Akhir MK
+				if (count($student_scores) > 0) {
+					$total = array_sum($student_scores);
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, number_format($total, 2));
+				} else {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, '-');
+				}
+
+				// Center align for all data columns
+				$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+				$sheet->getStyle('D' . $row . ':' . $lastColumn . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+				$row++;
+			}
+
+			// Add borders to table
+			$lastRow = $row - 1;
+			$sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $lastRow)->applyFromArray([
+				'borders' => [
+					'allBorders' => [
+						'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+						'color' => ['argb' => 'FF000000'],
+					],
+				],
+			]);
+
+			// Auto-size all columns
+			foreach (range(1, $totalColumns) as $col) {
+				$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+				$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+			}
+
+			// Get NIP of dosen ketua
+			$db = \Config\Database::connect();
+			$dosenKetuaNip = $db->table('jadwal_dosen jd')
+				->select('d.nip')
+				->join('dosen d', 'd.id = jd.dosen_id')
+				->where('jd.jadwal_mengajar_id', $jadwalId)
+				->where('jd.role', 'leader')
+				->get()
+				->getRowArray();
+			$nip = $dosenKetuaNip['nip'] ?? '';
+
+			// Add signature section
+			$row = $lastRow + 3; // Add some space after the table
+
+			// Date and location on the right side
+			$signatureStartCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+			$signatureEndCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+			$sheet->setCellValue($signatureStartCol . $row, 'Palangka Raya, ' . date('d F Y'));
+			$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+			$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			$row++;
+
+			// Mengetahui
+			$sheet->setCellValue($signatureStartCol . $row, 'Mengetahui');
+			$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+			$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			$row++;
+
+			// Title
+			$sheet->setCellValue($signatureStartCol . $row, 'Dosen Koordinator Mata Kuliah');
+			$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+			$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			// Add empty rows for signature space
+			$row += 4;
+
+			// Dosen name
+			$sheet->setCellValue($signatureStartCol . $row, $jadwal['dosen_ketua']);
+			$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+			$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+			$sheet->getStyle($signatureStartCol . $row)->getFont()->setBold(true);
+
+			$row++;
+
+			// NIP line
+			$sheet->setCellValue($signatureStartCol . $row, 'NIP. ' . $nip);
+			$sheet->mergeCells($signatureStartCol . $row . ':' . $signatureEndCol . $row);
+			$sheet->getStyle($signatureStartCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+			// Save to file
+			$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+			$writer->save($outputPath);
+
+			log_message('info', 'CPMK Excel generated successfully: ' . $outputPath);
+			return true;
+		} catch (\Exception $e) {
+			log_message('error', 'Error generating CPMK Excel: ' . $e->getMessage());
+			return false;
+		}
+	}
+
 
 	public function saveAnalysis()
 	{
