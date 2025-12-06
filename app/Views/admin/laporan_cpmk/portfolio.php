@@ -13,7 +13,7 @@
                     <i class="bi bi-printer"></i> Cetak
                 </button>
                 <button type="button" class="btn btn-success" onclick="exportToPDF()">
-                    <i class="bi bi-file-pdf"></i> Export PDF
+                    <i class="bi bi-file-earmark-zip"></i> Download ZIP
                 </button>
             </div>
         </div>
@@ -25,7 +25,6 @@
             <!-- Header -->
             <div class="text-center mb-5">
                 <h2 class="fw-bold">PORTOFOLIO MATA KULIAH</h2>
-                <p class="mb-0">(Diisi oleh Dosen)</p>
             </div>
 
             <!-- 1. Identitas Mata Kuliah -->
@@ -271,38 +270,45 @@
             <!-- 6. Dokumen Pendukung -->
             <div class="section mb-4">
                 <h5 class="fw-bold mb-3">6. Dokumen Pendukung</h5>
-                <p class="mb-2">(Lampirkan dalam satu file atau folder terorganisir)</p>
-                <ul>
-                    <li>RPS (Rencana Pembelajaran Semester)</li>
-                    <li>Rubrik penilaian</li>
-                    <li>Contoh soal dan jawaban ujian/tugas</li>
-                    <li>Daftar nilai mahasiswa</li>
-                    <li>Rekapitulasi nilai per CPMK</li>
-                    <li>Notulen rapat evaluasi mata kuliah (jika ada)</li>
-                </ul>
-            </div>
+                <p class="mb-2 no-print">(Pilih dokumen yang akan disertakan dalam unduhan)</p>
+                <p class="mb-2 d-none d-print-block">(Lampirkan dalam satu file atau folder terorganisir)</p>
 
-            <!-- Footer -->
-            <div class="mt-5 pt-4 border-top">
-                <div class="row">
-                    <div class="col-6">
-                        <p class="mb-1">Disusun oleh:</p>
-                        <?php if (!empty($portfolio['identitas']['dosen_pengampu'])): ?>
-                            <?php
-                            $dosenLeader = array_filter($portfolio['identitas']['dosen_pengampu'], function ($d) {
-                                return $d['role'] === 'leader';
-                            });
-                            $dosenLeader = !empty($dosenLeader) ? reset($dosenLeader) : $portfolio['identitas']['dosen_pengampu'][0];
-                            ?>
-                            <p class="mb-0 fw-bold"><?= esc($dosenLeader['nama_lengkap']) ?></p>
-                            <p class="mb-0">NIP: <?= esc($dosenLeader['nip']) ?></p>
-                        <?php endif; ?>
+                <div class="no-print">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllDocuments()">
+                            <i class="bi bi-check-square"></i> Pilih Semua
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllDocuments()">
+                            <i class="bi bi-square"></i> Hapus Semua
+                        </button>
                     </div>
-                    <div class="col-6 text-end">
-                        <p class="mb-1">Tanggal:</p>
-                        <p class="mb-0"><?= date('d F Y') ?></p>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input document-checkbox" type="checkbox" value="rps" id="doc_rps" data-label="RPS (Rencana Pembelajaran Semester)" checked onchange="updatePrintDocuments()">
+                        <label class="form-check-label" for="doc_rps">
+                            RPS (Rencana Pembelajaran Semester)
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input document-checkbox" type="checkbox" value="nilai" id="doc_nilai" data-label="Daftar nilai mahasiswa" checked onchange="updatePrintDocuments()">
+                        <label class="form-check-label" for="doc_nilai">
+                            Daftar nilai mahasiswa
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input document-checkbox" type="checkbox" value="rekapitulasi" id="doc_rekapitulasi" data-label="Rekapitulasi nilai per CPMK" checked onchange="updatePrintDocuments()">
+                        <label class="form-check-label" for="doc_rekapitulasi">
+                            Rekapitulasi nilai per CPMK
+                        </label>
                     </div>
                 </div>
+
+                <!-- Print version (dynamically updated based on selection) -->
+                <ul id="print-documents-list" class="d-none d-print-block">
+                    <li>RPS (Rencana Pembelajaran Semester)</li>
+                    <li>Daftar nilai mahasiswa</li>
+                    <li>Rekapitulasi nilai per CPMK</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -347,28 +353,85 @@
 
 <?= $this->section('js') ?>
 <script>
-    function exportToPDF() {
-        const element = document.getElementById('portfolio-content');
-        const opt = {
-            margin: 1,
-            filename: 'Portofolio_Mata_Kuliah_<?= str_replace(' ', '_', $portfolio['identitas']['kode_mata_kuliah']) ?>.pdf',
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            html2canvas: {
-                scale: 2,
-                useCORS: true
-            },
-            jsPDF: {
-                unit: 'in',
-                format: 'a4',
-                orientation: 'portrait'
-            }
-        };
+    function getSelectedDocuments() {
+        const selected = [];
+        document.querySelectorAll('input[id^="doc_"]:checked').forEach(checkbox => {
+            selected.push(checkbox.value);
+        });
+        return selected;
+    }
 
-        // Use html2pdf library (already loaded in admin_layout.php)
-        html2pdf().set(opt).from(element).save();
+    function selectAllDocuments() {
+        document.querySelectorAll('.document-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updatePrintDocuments();
+    }
+
+    function deselectAllDocuments() {
+        document.querySelectorAll('.document-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updatePrintDocuments();
+    }
+
+    function updatePrintDocuments() {
+        const printList = document.getElementById('print-documents-list');
+        const checkedBoxes = document.querySelectorAll('.document-checkbox:checked');
+
+        // Clear the list
+        printList.innerHTML = '';
+
+        // Add only selected documents
+        checkedBoxes.forEach(checkbox => {
+            const li = document.createElement('li');
+            li.textContent = checkbox.getAttribute('data-label');
+            printList.appendChild(li);
+        });
+
+        // If no documents selected, show a message
+        if (checkedBoxes.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'Tidak ada dokumen yang dipilih';
+            li.className = 'text-muted';
+            printList.appendChild(li);
+        }
+    }
+
+    function exportToPDF() {
+        // Collect selected documents
+        const selectedDocs = getSelectedDocuments();
+
+        if (selectedDocs.length === 0) {
+            alert('Silakan pilih minimal satu dokumen pendukung untuk disertakan dalam export.');
+            return;
+        }
+
+        // Build URL for ZIP export with same parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Add selected documents to URL
+        urlParams.set('documents', selectedDocs.join(','));
+
+        const exportUrl = '<?= base_url('admin/laporan-cpmk/export-zip') ?>?' + urlParams.toString();
+
+        // Show loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.id = 'zip-loading';
+        loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;z-index:9999;font-size:16px;';
+        loadingMsg.innerHTML = '<i class="bi bi-hourglass-split"></i> Menyiapkan dokumen...';
+        document.body.appendChild(loadingMsg);
+
+        // Use window.location to trigger download
+        window.location.href = exportUrl;
+
+        // Remove loading indicator after a short delay
+        setTimeout(() => {
+            const loading = document.getElementById('zip-loading');
+            if (loading) {
+                document.body.removeChild(loading);
+            }
+        }, 3000);
     }
 
     function toggleEditAnalysis() {
