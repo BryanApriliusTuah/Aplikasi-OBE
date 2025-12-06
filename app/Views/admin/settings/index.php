@@ -35,6 +35,46 @@
             </div>
         <?php endif; ?>
 
+        <!-- CPMK Threshold Configuration -->
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-clipboard-check"></i> Standar Minimal Capaian CPMK
+                </h5>
+                <p class="text-muted small mb-3">
+                    Standar persentase minimal untuk menentukan apakah CPMK tercapai atau tidak dalam laporan portofolio mata kuliah.
+                </p>
+                <form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
+                    <?= csrf_field() ?>
+                    <div class="col-md-4">
+                        <label for="persentase" class="form-label fw-semibold">Persentase Minimal</label>
+                        <div class="input-group">
+                            <input type="number"
+                                   class="form-control"
+                                   id="persentase"
+                                   name="persentase"
+                                   value="<?= esc($standar_cpmk) ?>"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">Nilai antara 0 - 100</div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <h5 class="mb-3">Konfigurasi Sistem Penilaian Mahasiswa</h5>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
