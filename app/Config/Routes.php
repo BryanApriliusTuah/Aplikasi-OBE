@@ -240,6 +240,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	//laporan cpmk (portofolio mata kuliah)
 	$routes->get('laporan-cpmk', 'LaporanCpmk::index');
 	$routes->get('laporan-cpmk/generate', 'LaporanCpmk::generate');
+	$routes->get('laporan-cpmk/generate-pdf', 'LaporanCpmk::generatePdf');
+	$routes->get('laporan-cpmk/export-zip', 'LaporanCpmk::exportZip');
 	$routes->post('laporan-cpmk/save-analysis', 'LaporanCpmk::saveAnalysis');
 
 	// MBKM Management Routes
