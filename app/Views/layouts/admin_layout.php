@@ -257,6 +257,27 @@
 					</ul>
 				</li>
 
+				<?php
+				$laporanCapaianUris = [
+					'admin/laporan-cpmk',
+					'admin/laporan-cpmk/generate',
+					'admin/laporan-cpl'
+				];
+				$isLaporanCapaianOpen = in_array(uri_string(), $laporanCapaianUris);
+				?>
+
+				<li class="nav-item sidebar-dropdown<?= $isLaporanCapaianOpen ? ' open' : '' ?>">
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat laporan capaian pembelajaran">
+						<span><i class="bi bi-file-earmark-bar-graph"></i> Laporan Capaian </span>
+						<span class="caret"></span>
+					</a>
+					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isLaporanCapaianOpen ? ' show' : '' ?>">
+						<li><a class="nav-link <?= in_array(uri_string(), ['admin/laporan-cpmk', 'admin/laporan-cpmk/generate']) ? 'active' : '' ?>" href="<?= base_url('admin/laporan-cpmk') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian Pembelajaran Mata Kuliah">Laporan CPMK</a></li>
+						<li><a class="nav-link <?= uri_string() == 'admin/laporan-cpl' ? 'active' : '' ?>" href="<?= base_url('admin/laporan-cpl') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian Pembelajaran Lulusan">Laporan CPL</a></li>
+					</ul>
+				</li>
+
 				<?php if (session('role') === 'admin'): ?>
 					<li class="nav-item">
 						<a class="nav-link<?= uri_string() == 'admin/settings' ? ' active' : '' ?>" href="<?= base_url('admin/settings') ?>"
