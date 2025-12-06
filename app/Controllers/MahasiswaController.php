@@ -390,7 +390,8 @@ class MahasiswaController extends BaseController
 			'avgCPL' => $avgCPL,
 			'cplTercapai' => $cplTercapai,
 			'totalCPLCount' => $totalCPLCount,
-			'percentComplete' => $percentComplete
+			'percentComplete' => $percentComplete,
+			'passing_threshold' => $passingThreshold
 		];
 
 		return view('mahasiswa/profil_cpl', $data);
