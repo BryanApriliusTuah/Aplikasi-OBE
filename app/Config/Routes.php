@@ -205,6 +205,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('settings/delete/(:num)', 'Settings::delete/$1');
 	$routes->get('settings/toggle/(:num)', 'Settings::toggle/$1');
 	$routes->get('settings/reset-to-default', 'Settings::resetToDefault');
+	$routes->post('settings/update-standar-cpmk', 'Settings::updateStandarCpmk');
 
 	//capaian cpmk
 	$routes->get('capaian-cpmk', 'CapaianCpmk::index');
@@ -235,6 +236,11 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('capaian-cpl/subjects-list', 'CapaianCpl::getSubjectsList');
 	$routes->get('capaian-cpl/comparative-subjects', 'CapaianCpl::getComparativeSubjects');
 	$routes->get('capaian-cpl/all-subjects-data', 'CapaianCpl::getAllSubjectsData');
+
+	//laporan cpmk (portofolio mata kuliah)
+	$routes->get('laporan-cpmk', 'LaporanCpmk::index');
+	$routes->get('laporan-cpmk/generate', 'LaporanCpmk::generate');
+	$routes->post('laporan-cpmk/save-analysis', 'LaporanCpmk::saveAnalysis');
 
 	// MBKM Management Routes
 	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {
