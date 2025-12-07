@@ -244,6 +244,12 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('laporan-cpmk/export-zip', 'LaporanCpmk::exportZip');
 	$routes->post('laporan-cpmk/save-analysis', 'LaporanCpmk::saveAnalysis');
 
+	//laporan cpl (laporan pemenuhan capaian pembelajaran lulusan)
+	$routes->get('laporan-cpl', 'LaporanCpl::index');
+	$routes->get('laporan-cpl/generate', 'LaporanCpl::generate');
+	$routes->get('laporan-cpl/generate-pdf', 'LaporanCpl::generatePdf');
+	$routes->get('laporan-cpl/get-angkatan', 'LaporanCpl::getAngkatanByFilter');
+
 	// MBKM Management Routes
 	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {
 		// Main CRUD operations
