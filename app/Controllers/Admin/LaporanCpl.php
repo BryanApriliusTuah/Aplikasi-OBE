@@ -314,12 +314,13 @@ class LaporanCpl extends BaseController
 				}
 			}
 
-			// Calculate CPL achievement using the formula from CapaianCpl
+			// Calculate CPL achievement using the three formulas
 			$nilaiCpl = 0;
-			$capaianCpl = 0;
 			$totalBobot = 0;
 			$cpmkContributors = [];
-			$totalCombinations = 0; // Track total student-CPMK combinations for CPL calculation
+
+			// Store CPMK scores per student for CPL calculation (Formula 1)
+			$mahasiswaCplScores = []; // Will store CPL score for each mahasiswa
 
 			foreach ($cpmkDetails as $cpmkDetail) {
 				// Get all teknik penilaian scores for this CPMK across all students
@@ -362,20 +363,24 @@ class LaporanCpl extends BaseController
 					}
 				}
 				
-				// Calculate average CPMK score across all students
-				// Formula: (Σ CPMK score of each mahasiswa / total mahasiswa) * 100
+				// Calculate average CPMK score across all students for display
 				$totalCpmkScore = 0;
 				$countMahasiswa = 0;
 				foreach ($mahasiswaCpmkScores as $mahasiswaId => $scores) {
 					if ($scores['total_bobot'] > 0) {
-						$totalCpmkScore += $scores['total_weighted']; // Σ CPMK of each mahasiswa
-						$capaianCpl += $scores['total_weighted'] / $scores['total_bobot'] * 100; // For Capaian CPL calculation
-						$countMahasiswa++; // Count total mahasiswa with scores
-						$totalCombinations++; // Count each student-CPMK combination for CPL percentage calculation
+						$cpmkScore = $scores['total_weighted'];
+						$totalCpmkScore += $cpmkScore;
+						$countMahasiswa++;
+
+						// Formula 1: Accumulate CPMK scores to CPL score for each mahasiswa
+						if (!isset($mahasiswaCplScores[$mahasiswaId])) {
+							$mahasiswaCplScores[$mahasiswaId] = 0;
+						}
+						$mahasiswaCplScores[$mahasiswaId] += $cpmkScore; // CPL = Σ CPMK
 					}
 				}
 
-				$avgCpmkScore = $countMahasiswa > 0 ? $totalCpmkScore / $countMahasiswa : 0; // Average Capaian CPMK
+				$avgCpmkScore = $countMahasiswa > 0 ? $totalCpmkScore / $countMahasiswa : 0;
 
 				// Calculate total bobot from ALL RPS for all mata kuliah
 				$bobot = 0;
@@ -404,22 +409,35 @@ class LaporanCpl extends BaseController
 					$bobot = $cpmkDetail['bobot_cpmk'];
 				}
 
-				// CPL (total bobot)
+				// Accumulate for CPL
 				if ($bobot > 0 && $countMahasiswa > 0) {
-					$nilaiCpl += ($totalCpmkScore); // Accumulate to CPL score
-					$totalBobot += $bobot; // Accumulate total bobot
+					$nilaiCpl += $totalCpmkScore; // Sum for average display
+					$totalBobot += $bobot; // Total weight of all CPMK contributing to this CPL
 
 					$cpmkContributors[] = [
 						'kode_cpmk' => $cpmkDetail['kode_cpmk'],
-						'mata_kuliah_names' => $cpmkDetail['mata_kuliah_names'], // Array of all mata kuliah
+						'mata_kuliah_names' => $cpmkDetail['mata_kuliah_names'],
 						'capaian_rata_rata' => round($avgCpmkScore, 2),
 						'bobot' => $bobot
 					];
 				}
 			}
 
-			// Calculate CPL percentage: average across all student-CPMK combinations
-			$capaianCplPersen = $totalCombinations > 0 ? ($capaianCpl / $totalCombinations): 0;
+			// Formula 2 & 3: Calculate capaian CPL (%) for each mahasiswa, then average them
+			$totalCapaianCplPersen = 0;
+			$countMahasiswaWithCpl = 0;
+
+			foreach ($mahasiswaCplScores as $mahasiswaId => $cplScore) {
+				if ($totalBobot > 0) {
+					// Formula 2: capaian CPL (%) = (CPL score / total weight) × 100
+					$capaianCplMahasiswa = ($cplScore / $totalBobot) * 100;
+					$totalCapaianCplPersen += $capaianCplMahasiswa;
+					$countMahasiswaWithCpl++;
+				}
+			}
+
+			// Formula 3: Average capaian CPL (%) = Σ capaian CPL (%) / total mahasiswa
+			$capaianCplPersen = $countMahasiswaWithCpl > 0 ? ($totalCapaianCplPersen / $countMahasiswaWithCpl) : 0;
 
 			$achievementData[] = [
 				'kode_cpl' => $cpl['kode_cpl'],
@@ -427,11 +445,11 @@ class LaporanCpl extends BaseController
 				'capaian_rata_rata_cpmk' => round($nilaiCpl, 2),
 				'capaian_cpl' => round($nilaiCpl, 2),
 				'total_bobot' => $totalBobot,
-				'capaian_cpl_persen' => $capaianCplPersen
+				'total_mahasiswa' => $countMahasiswaWithCpl,
+				'total_capaian_cpl_persen' => round($totalCapaianCplPersen, 2),
+				'capaian_cpl_persen' => round($capaianCplPersen, 2)
 			];
 		}
-
-		// DD($achievementData);
 
 		return $achievementData;
 	}
