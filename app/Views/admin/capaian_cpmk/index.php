@@ -36,8 +36,8 @@
 					</div>
 					<div class="card-body">
 						<form id="filterIndividualForm">
-							<div class="row g-3">
-								<div class="col-md-4">
+							<div class="row g-3 mb-3">
+								<div class="col-md-6">
 									<label for="programStudiSelect" class="form-label">Program Studi</label>
 									<select class="form-select" id="programStudiSelect" name="program_studi">
 										<option value="">-- Semua Program Studi --</option>
@@ -46,7 +46,7 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-3">
+								<div class="col-md-6">
 									<label for="tahunAngkatanSelect" class="form-label">Tahun Angkatan</label>
 									<select class="form-select" id="tahunAngkatanSelect" name="tahun_angkatan">
 										<option value="">-- Semua Tahun --</option>
@@ -55,15 +55,37 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-4">
+							</div>
+							<div class="row g-3 mb-3">
+								<div class="col-md-6">
+									<label for="semesterSelect" class="form-label">Semester</label>
+									<select class="form-select" id="semesterSelect" name="semester">
+										<option value="">-- Semua Semester --</option>
+										<?php foreach ($semesterList as $semester): ?>
+											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="col-md-6">
+									<label for="tahunAkademikSelect" class="form-label">Tahun Akademik</label>
+									<select class="form-select" id="tahunAkademikSelect" name="tahun_akademik_filter">
+										<option value="">-- Semua Tahun --</option>
+										<?php foreach ($tahunAkademikList as $ta): ?>
+											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+							</div>
+							<div class="row g-3">
+								<div class="col-md-10">
 									<label for="mahasiswaSelect" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
 									<select class="form-select" id="mahasiswaSelect" name="mahasiswa_id">
 										<option value="">-- Pilih Mahasiswa --</option>
 									</select>
 								</div>
-								<div class="col-md-1 d-flex align-items-end">
+								<div class="col-md-2 d-flex align-items-end">
 									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i>
+										<i class="bi bi-search"></i> Tampilkan
 									</button>
 								</div>
 							</div>
@@ -102,8 +124,8 @@
 					</div>
 					<div class="card-body">
 						<form id="filterComparativeForm">
-							<div class="row g-3">
-								<div class="col-md-5">
+							<div class="row g-3 mb-3">
+								<div class="col-md-6">
 									<label for="programStudiComparativeSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
 									<select class="form-select" id="programStudiComparativeSelect" name="program_studi" required>
 										<option value="">-- Pilih Program Studi --</option>
@@ -112,7 +134,7 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-5">
+								<div class="col-md-6">
 									<label for="tahunAngkatanComparativeSelect" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
 									<select class="form-select" id="tahunAngkatanComparativeSelect" name="tahun_angkatan" required>
 										<option value="">-- Pilih Tahun Angkatan --</option>
@@ -121,7 +143,27 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-2 d-flex align-items-end">
+							</div>
+							<div class="row g-3">
+								<div class="col-md-4">
+									<label for="semesterComparativeSelect" class="form-label">Semester</label>
+									<select class="form-select" id="semesterComparativeSelect" name="semester">
+										<option value="">-- Semua Semester --</option>
+										<?php foreach ($semesterList as $semester): ?>
+											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="col-md-4">
+									<label for="tahunAkademikComparativeSelect" class="form-label">Tahun Akademik</label>
+									<select class="form-select" id="tahunAkademikComparativeSelect" name="tahun_akademik_filter">
+										<option value="">-- Semua Tahun --</option>
+										<?php foreach ($tahunAkademikList as $ta): ?>
+											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="col-md-4 d-flex align-items-end">
 									<button type="submit" class="btn btn-primary w-100">
 										<i class="bi bi-search"></i> Tampilkan
 									</button>
@@ -162,8 +204,8 @@
 					</div>
 					<div class="card-body">
 						<form id="filterKeseluruhanForm">
-							<div class="row g-3">
-								<div class="col-md-10">
+							<div class="row g-3 mb-3">
+								<div class="col-md-12">
 									<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
 									<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
 										<option value="">-- Pilih Program Studi --</option>
@@ -172,7 +214,27 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-2 d-flex align-items-end">
+							</div>
+							<div class="row g-3">
+								<div class="col-md-4">
+									<label for="semesterKeseluruhanSelect" class="form-label">Semester</label>
+									<select class="form-select" id="semesterKeseluruhanSelect" name="semester">
+										<option value="">-- Semua Semester --</option>
+										<?php foreach ($semesterList as $semester): ?>
+											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="col-md-4">
+									<label for="tahunAkademikKeseluruhanSelect" class="form-label">Tahun Akademik</label>
+									<select class="form-select" id="tahunAkademikKeseluruhanSelect" name="tahun_akademik_filter">
+										<option value="">-- Semua Tahun --</option>
+										<?php foreach ($tahunAkademikList as $ta): ?>
+											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="col-md-4 d-flex align-items-end">
 									<button type="submit" class="btn btn-primary w-100">
 										<i class="bi bi-search"></i> Tampilkan
 									</button>
@@ -295,6 +357,38 @@
 			}
 		});
 
+		// Initialize Select2 on Semester dropdown (Individual Tab)
+		$('#semesterSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Semester --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Semester tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Akademik dropdown (Individual Tab)
+		$('#tahunAkademikSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun akademik tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
 		// Initialize Select2 on mahasiswa dropdown (Individual Tab)
 		$('#mahasiswaSelect').select2({
 			theme: 'bootstrap-5',
@@ -346,6 +440,38 @@
 			}
 		});
 
+		// Initialize Select2 on Semester dropdown (Comparative Tab)
+		$('#semesterComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Semester --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Semester tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Akademik dropdown (Comparative Tab)
+		$('#tahunAkademikComparativeSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun akademik tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
 		// Initialize Select2 on Program Studi dropdown (Keseluruhan Tab)
 		$('#programStudiKeseluruhanSelect').select2({
 			theme: 'bootstrap-5',
@@ -362,11 +488,43 @@
 			}
 		});
 
+		// Initialize Select2 on Semester dropdown (Keseluruhan Tab)
+		$('#semesterKeseluruhanSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Semester --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Semester tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 on Tahun Akademik dropdown (Keseluruhan Tab)
+		$('#tahunAkademikKeseluruhanSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun akademik tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
 		// Load initial data
 		loadMahasiswa();
 
 		// Individual Tab Events
-		$('#programStudiSelect, #tahunAngkatanSelect').on('change', function() {
+		$('#programStudiSelect, #tahunAngkatanSelect, #semesterSelect, #tahunAkademikSelect').on('change', function() {
 			loadMahasiswa();
 		});
 
@@ -400,10 +558,14 @@
 	function loadMahasiswa() {
 		const programStudi = $('#programStudiSelect').val();
 		const tahunAngkatan = $('#tahunAngkatanSelect').val();
+		const semester = $('#semesterSelect').val();
+		const tahunAkademik = $('#tahunAkademikSelect').val();
 
 		console.log('Loading mahasiswa with filters:', {
 			programStudi,
-			tahunAngkatan
+			tahunAngkatan,
+			semester,
+			tahunAkademik
 		});
 
 		$.ajax({
@@ -411,7 +573,9 @@
 			method: 'GET',
 			data: {
 				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan
+				tahun_angkatan: tahunAngkatan,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				console.log('Mahasiswa response:', response);
@@ -464,7 +628,9 @@
 			data: {
 				mahasiswa_id: mahasiswaId,
 				program_studi: $('#programStudiSelect').val(),
-				tahun_angkatan: $('#tahunAngkatanSelect').val()
+				tahun_angkatan: $('#tahunAngkatanSelect').val(),
+				semester: $('#semesterSelect').val(),
+				tahun_akademik: $('#tahunAkademikSelect').val()
 			},
 			success: function(response) {
 				if (response.success) {
@@ -484,6 +650,8 @@
 	function loadComparativeChartData() {
 		const programStudi = $('#programStudiComparativeSelect').val();
 		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
+		const semester = $('#semesterComparativeSelect').val();
+		const tahunAkademik = $('#tahunAkademikComparativeSelect').val();
 
 		if (!programStudi || !tahunAngkatan) {
 			alert('Silakan pilih program studi dan tahun angkatan');
@@ -499,7 +667,9 @@
 			method: 'GET',
 			data: {
 				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan
+				tahun_angkatan: tahunAngkatan,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				if (response.success) {
@@ -518,6 +688,8 @@
 
 	function loadKeseluruhanChartData() {
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
+		const semester = $('#semesterKeseluruhanSelect').val();
+		const tahunAkademik = $('#tahunAkademikKeseluruhanSelect').val();
 
 		if (!programStudi) {
 			alert('Silakan pilih program studi');
@@ -532,7 +704,9 @@
 			url: '<?= base_url("admin/capaian-cpmk/keseluruhanData") ?>',
 			method: 'GET',
 			data: {
-				program_studi: programStudi
+				program_studi: programStudi,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				if (response.success) {
@@ -728,13 +902,17 @@
 		modal.show();
 
 		const mahasiswaId = $('#mahasiswaSelect').val();
+		const semester = $('#semesterSelect').val();
+		const tahunAkademik = $('#tahunAkademikSelect').val();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpmk/individualCpmkDetailCalculation") ?>',
 			method: 'GET',
 			data: {
 				mahasiswa_id: mahasiswaId,
-				kode_cpmk: kodeCpmk
+				kode_cpmk: kodeCpmk,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1001,6 +1179,8 @@
 
 		const programStudi = $('#programStudiComparativeSelect').val();
 		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
+		const semester = $('#semesterComparativeSelect').val();
+		const tahunAkademik = $('#tahunAkademikComparativeSelect').val();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpmk/comparativeDetailCalculation") ?>',
@@ -1008,7 +1188,9 @@
 			data: {
 				cpmk_id: cpmkId,
 				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan
+				tahun_angkatan: tahunAngkatan,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1108,13 +1290,17 @@
 		modal.show();
 
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
+		const semester = $('#semesterKeseluruhanSelect').val();
+		const tahunAkademik = $('#tahunAkademikKeseluruhanSelect').val();
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpmk/keseluruhanDetailCalculation") ?>',
 			method: 'GET',
 			data: {
 				cpmk_id: cpmkId,
-				program_studi: programStudi
+				program_studi: programStudi,
+				semester: semester,
+				tahun_akademik: tahunAkademik
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1276,7 +1462,7 @@
 						padding: 12,
 						callbacks: {
 							label: function(context) {
-								return 'Capaian CPMK: ' + context.parsed.y.toFixed(2);
+								return 'Capaian CPMK: ' + context.parsed.y.toFixed(2) + '%';
 							}
 						}
 					},
@@ -1284,7 +1470,7 @@
 						anchor: 'end',
 						align: 'top',
 						formatter: function(value) {
-							return value.toFixed(2);
+							return value.toFixed(2) + '%';
 						},
 						font: {
 							weight: 'bold',
@@ -1299,7 +1485,7 @@
 						max: 100,
 						title: {
 							display: true,
-							text: 'Nilai CPMK',
+							text: 'Capaian CPMK',
 							font: {
 								size: 14,
 								weight: 'bold'
@@ -1307,7 +1493,7 @@
 						},
 						ticks: {
 							callback: function(value) {
-								return value;
+								return value + '%';
 							}
 						},
 						grid: {
