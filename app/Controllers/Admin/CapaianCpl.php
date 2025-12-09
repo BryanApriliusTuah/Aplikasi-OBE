@@ -35,6 +35,8 @@ class CapaianCpl extends BaseController
 			'title' => 'Capaian CPL',
 			'programStudi' => $this->getProgramStudi(),
 			'tahunAngkatan' => $this->getTahunAngkatan(),
+			'semesterList' => $this->getSemesterList(),
+			'tahunAkademikList' => $this->getTahunAkademikList(),
 			'mahasiswa' => [], // Will be loaded via AJAX
 			'passing_threshold' => $passingThreshold
 		];
@@ -47,6 +49,8 @@ class CapaianCpl extends BaseController
 		$mahasiswaId = $this->request->getGet('mahasiswa_id');
 		$programStudi = $this->request->getGet('program_studi');
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$mahasiswaId) {
 			return $this->response->setJSON([
@@ -112,13 +116,22 @@ class CapaianCpl extends BaseController
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 			// Get all nilai_cpmk for this student for these CPMK
-			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id')
 				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 				->where('ncm.mahasiswa_id', $mahasiswaId)
-				->whereIn('ncm.cpmk_id', $cpmkIds)
-				->get()
-				->getResultArray();
+				->whereIn('ncm.cpmk_id', $cpmkIds);
+
+			// Apply semester and tahun akademik filters
+			if ($semester && $tahunAkademik) {
+				$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+			} elseif ($semester) {
+				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+			} elseif ($tahunAkademik) {
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			}
+
+			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Calculate CPL using formula:
 			// Nilai CPL = Σ(CPMK scores) - note: nilai_cpmk is already weighted (raw × bobot / 100)
@@ -267,22 +280,61 @@ class CapaianCpl extends BaseController
 	{
 		$programStudi = $this->request->getGet('program_studi');
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
-		$builder = $this->mahasiswaModel
-			->select('id, nim, nama_lengkap, program_studi, tahun_angkatan')
-			->where('status_mahasiswa', 'Aktif');
+		$db = \Config\Database::connect();
 
-		if ($programStudi) {
-			$builder->where('program_studi', $programStudi);
+		// If semester or tahun_akademik filters are applied, we need to filter mahasiswa who have grades in matching jadwal
+		if ($semester || $tahunAkademik) {
+			$builder = $db->table('mahasiswa m')
+				->select('DISTINCT m.id, m.nim, m.nama_lengkap, m.program_studi, m.tahun_angkatan')
+				->join('nilai_cpmk_mahasiswa ncm', 'ncm.mahasiswa_id = m.id')
+				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->where('m.status_mahasiswa', 'Aktif');
+
+			if ($programStudi) {
+				$builder->where('m.program_studi', $programStudi);
+			}
+
+			if ($tahunAngkatan) {
+				$builder->where('m.tahun_angkatan', $tahunAngkatan);
+			}
+
+			// Filter by semester and/or tahun akademik in jadwal_mengajar
+			if ($semester && $tahunAkademik) {
+				// Both filters: tahun_akademik should be "YYYY/YYYY Semester"
+				$builder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+			} elseif ($semester) {
+				// Only semester: tahun_akademik should end with " Semester"
+				$builder->like('jm.tahun_akademik', $semester, 'after');
+			} elseif ($tahunAkademik) {
+				// Only tahun akademik: tahun_akademik should start with "YYYY/YYYY"
+				$builder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			}
+
+			$mahasiswa = $builder
+				->orderBy('m.nama_lengkap', 'ASC')
+				->get()
+				->getResultArray();
+		} else {
+			// No semester/tahun_akademik filter, use simple query
+			$builder = $this->mahasiswaModel
+				->select('id, nim, nama_lengkap, program_studi, tahun_angkatan')
+				->where('status_mahasiswa', 'Aktif');
+
+			if ($programStudi) {
+				$builder->where('program_studi', $programStudi);
+			}
+
+			if ($tahunAngkatan) {
+				$builder->where('tahun_angkatan', $tahunAngkatan);
+			}
+
+			$mahasiswa = $builder
+				->orderBy('nama_lengkap', 'ASC')
+				->findAll();
 		}
-
-		if ($tahunAngkatan) {
-			$builder->where('tahun_angkatan', $tahunAngkatan);
-		}
-
-		$mahasiswa = $builder
-			->orderBy('nama_lengkap', 'ASC')
-			->findAll();
 
 		return $this->response->setJSON($mahasiswa);
 	}
@@ -291,6 +343,8 @@ class CapaianCpl extends BaseController
 	{
 		$programStudi = $this->request->getGet('program_studi');
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$programStudi || !$tahunAngkatan) {
 			return $this->response->setJSON([
@@ -341,6 +395,7 @@ class CapaianCpl extends BaseController
 				$chartData['labels'][] = $cpl['kode_cpl'];
 				$chartData['data'][] = 0;
 				$chartData['details'][] = [
+					'cpl_id' => $cpl['id'],
 					'kode_cpl' => $cpl['kode_cpl'],
 					'deskripsi' => $cpl['deskripsi'],
 					'jenis_cpl' => $this->getJenisCplLabel($cpl['jenis_cpl']),
@@ -353,13 +408,22 @@ class CapaianCpl extends BaseController
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 			// Get all nilai_cpmk for all students for these CPMK
-			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
 				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 				->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-				->whereIn('ncm.cpmk_id', $cpmkIds)
-				->get()
-				->getResultArray();
+				->whereIn('ncm.cpmk_id', $cpmkIds);
+
+			// Apply semester and tahun akademik filters
+			if ($semester && $tahunAkademik) {
+				$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+			} elseif ($semester) {
+				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+			} elseif ($tahunAkademik) {
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			}
+
+			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Calculate CPL for each student using formula:
 			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
@@ -479,11 +543,58 @@ class CapaianCpl extends BaseController
 		return $labels[$jenis] ?? $jenis;
 	}
 
+	private function getSemesterList()
+	{
+		$db = \Config\Database::connect();
+		$builder = $db->table('jadwal_mengajar');
+		$result = $builder
+			->select('tahun_akademik')
+			->distinct()
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Extract semester part (e.g., "Ganjil" or "Genap" from "2024/2025 Ganjil")
+		$semesterList = [];
+		foreach ($result as $row) {
+			$semesterList[] = $row['tahun_akademik'];	
+		}
+
+		return $semesterList;
+	}
+
+	private function getTahunAkademikList()
+	{
+		$db = \Config\Database::connect();
+		$builder = $db->table('jadwal_mengajar');
+		$result = $builder
+			->select('tahun_akademik')
+			->distinct()
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Extract just the year part (e.g., "2024/2025" from "2024/2025 Ganjil")
+		$tahunAkademikList = [];
+		foreach ($result as $row) {
+			$tahunAkademik = $row['tahun_akademik'];
+			// Remove " Ganjil" or " Genap" from the end
+			$yearOnly = preg_replace('/ (Ganjil|Genap)$/', '', $tahunAkademik);
+			if (!in_array($yearOnly, $tahunAkademikList)) {
+				$tahunAkademikList[] = $yearOnly;
+			}
+		}
+
+		return $tahunAkademikList;
+	}
+
 	public function getComparativeDetailCalculation()
 	{
 		$cplId = $this->request->getGet('cpl_id');
 		$programStudi = $this->request->getGet('program_studi');
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$cplId || !$programStudi || !$tahunAngkatan) {
 			return $this->response->setJSON([
@@ -544,13 +655,22 @@ class CapaianCpl extends BaseController
 		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 		// Get all nilai_cpmk for all students for these CPMK
-		$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
 			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 			->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-			->whereIn('ncm.cpmk_id', $cpmkIds)
-			->get()
-			->getResultArray();
+			->whereIn('ncm.cpmk_id', $cpmkIds);
+
+		// Apply semester and tahun akademik filters
+		if ($semester && $tahunAkademik) {
+			$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+		} elseif ($semester) {
+			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+		} elseif ($tahunAkademik) {
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+		}
+
+		$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 		// Calculate CPL for each student
 		$studentScores = [];
@@ -636,6 +756,8 @@ class CapaianCpl extends BaseController
 	{
 		$mahasiswaId = $this->request->getGet('mahasiswa_id');
 		$cplId = $this->request->getGet('cpl_id');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$mahasiswaId || !$cplId) {
 			return $this->response->setJSON([
@@ -678,13 +800,24 @@ class CapaianCpl extends BaseController
 		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 		// Get all nilai_cpmk for this student for these CPMK with detailed info
-		$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id, jm.tahun_akademik, jm.kelas, mk.kode_mk, mk.nama_mk, cpmk.kode_cpmk')
 			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->join('cpmk', 'cpmk.id = ncm.cpmk_id')
 			->where('ncm.mahasiswa_id', $mahasiswaId)
-			->whereIn('ncm.cpmk_id', $cpmkIds)
+			->whereIn('ncm.cpmk_id', $cpmkIds);
+
+		// Apply semester and tahun akademik filters
+		if ($semester && $tahunAkademik) {
+			$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+		} elseif ($semester) {
+			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+		} elseif ($tahunAkademik) {
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+		}
+
+		$nilaiList = $nilaiBuilder
 			->orderBy('cpmk.kode_cpmk', 'ASC')
 			->orderBy('jm.tahun_akademik', 'DESC')
 			->get()
@@ -1031,6 +1164,8 @@ class CapaianCpl extends BaseController
 	public function getKeseluruhanData()
 	{
 		$programStudi = $this->request->getGet('program_studi');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$programStudi) {
 			return $this->response->setJSON([
@@ -1093,13 +1228,22 @@ class CapaianCpl extends BaseController
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 			// Get all nilai_cpmk for all students for these CPMK
-			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
 				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 				->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-				->whereIn('ncm.cpmk_id', $cpmkIds)
-				->get()
-				->getResultArray();
+				->whereIn('ncm.cpmk_id', $cpmkIds);
+
+			// Apply semester and tahun akademik filters
+			if ($semester && $tahunAkademik) {
+				$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+			} elseif ($semester) {
+				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+			} elseif ($tahunAkademik) {
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			}
+
+			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Calculate CPL for each student using formula:
 			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
@@ -1187,6 +1331,8 @@ class CapaianCpl extends BaseController
 	{
 		$cplId = $this->request->getGet('cpl_id');
 		$programStudi = $this->request->getGet('program_studi');
+		$semester = $this->request->getGet('semester');
+		$tahunAkademik = $this->request->getGet('tahun_akademik');
 
 		if (!$cplId || !$programStudi) {
 			return $this->response->setJSON([
@@ -1247,13 +1393,22 @@ class CapaianCpl extends BaseController
 		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
 		// Get all nilai_cpmk for all students for these CPMK
-		$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
+		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
 			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 			->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-			->whereIn('ncm.cpmk_id', $cpmkIds)
-			->get()
-			->getResultArray();
+			->whereIn('ncm.cpmk_id', $cpmkIds);
+
+		// Apply semester and tahun akademik filters
+		if ($semester && $tahunAkademik) {
+			$nilaiBuilder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
+		} elseif ($semester) {
+			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
+		} elseif ($tahunAkademik) {
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+		}
+
+		$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 		// Calculate CPL for each student
 		$studentScores = [];
