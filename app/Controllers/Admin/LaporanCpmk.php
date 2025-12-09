@@ -13,6 +13,7 @@ class LaporanCpmk extends BaseController
 	protected $nilaiCpmkMahasiswaModel;
 	protected $standarMinimalCapaianModel;
 	protected $analysisCpmkModel;
+	protected $cqiModel;
 
 	public function __construct()
 	{
@@ -23,6 +24,7 @@ class LaporanCpmk extends BaseController
 		$this->nilaiCpmkMahasiswaModel = new \App\Models\NilaiCpmkMahasiswaModel();
 		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
 		$this->analysisCpmkModel = new \App\Models\AnalysisCpmkModel();
+		$this->cqiModel = new \App\Models\CqiModel();
 	}
 
 	public function index()
@@ -150,6 +152,10 @@ class LaporanCpmk extends BaseController
 		$passingThreshold = $this->standarMinimalCapaianModel->getPersentase();
 		$analysis = $this->getAnalysisData($assessmentData, $passingThreshold, $mataKuliahId, $tahunAkademik, $programStudi);
 
+		// 5. Get CQI data
+		$jadwalMengajarId = $jadwalMengajar[0]['id'] ?? null;
+		$cqiData = $jadwalMengajarId ? $this->getCqiData($jadwalMengajarId) : [];
+
 		return [
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
@@ -164,7 +170,9 @@ class LaporanCpmk extends BaseController
 			'assessment' => $assessmentData,
 			'analysis' => $analysis,
 			'passing_threshold' => $passingThreshold,
-			'mata_kuliah_id' => $mataKuliahId
+			'mata_kuliah_id' => $mataKuliahId,
+			'jadwal_mengajar_id' => $jadwalMengajarId,
+			'cqi_data' => $cqiData
 		];
 	}
 
@@ -1561,6 +1569,75 @@ class LaporanCpmk extends BaseController
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Gagal menyimpan analisis: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	private function getCqiData($jadwalMengajarId)
+	{
+		$cqiList = $this->cqiModel->getCqiCpmkList($jadwalMengajarId);
+
+		// Convert to associative array with kode_cpmk as key
+		$cqiByKodeCpmk = [];
+		foreach ($cqiList as $cqi) {
+			$cqiByKodeCpmk[$cqi['kode_cpmk']] = $cqi;
+		}
+
+		return $cqiByKodeCpmk;
+	}
+
+	public function saveCqi()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$cqiDataJson = $this->request->getPost('cqi_data');
+
+		if (!$jadwalMengajarId || !$cqiDataJson) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Decode JSON string to array
+			$cqiData = json_decode($cqiDataJson, true);
+
+			if (!is_array($cqiData)) {
+				throw new \Exception('Format data CQI tidak valid.');
+			}
+
+			// Save each CQI record
+			foreach ($cqiData as $cqi) {
+				if (!empty($cqi['kode_cpmk'])) {
+					$data = [
+						'jadwal_mengajar_id' => $jadwalMengajarId,
+						'kode_cpmk' => $cqi['kode_cpmk'],
+						'masalah' => $cqi['masalah'] ?? null,
+						'rencana_perbaikan' => $cqi['rencana_perbaikan'] ?? null,
+						'penanggung_jawab' => $cqi['penanggung_jawab'] ?? null,
+						'jadwal_pelaksanaan' => $cqi['jadwal_pelaksanaan'] ?? null
+					];
+
+					$this->cqiModel->saveCqiCpmk($data);
+				}
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Data CQI berhasil disimpan.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menyimpan data CQI: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}

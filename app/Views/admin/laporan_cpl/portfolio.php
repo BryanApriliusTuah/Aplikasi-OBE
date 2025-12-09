@@ -287,8 +287,15 @@
 
             <!-- 6. Tindak Lanjut dan Rencana Perbaikan (CQI) -->
             <div class="section mb-5">
-                <h5 class="fw-bold mb-3">6. Tindak Lanjut dan Rencana Perbaikan (CQI)</h5>
-                <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">6. Tindak Lanjut dan Rencana Perbaikan (CQI)</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="toggleEditCqi()">
+                        <i class="bi bi-pencil"></i> Edit CQI
+                    </button>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="cqi-display" class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
@@ -302,12 +309,15 @@
                         <tbody>
                             <?php if (!empty($report['analysis']['cpl_tidak_tercapai'])): ?>
                                 <?php foreach ($report['analysis']['cpl_tidak_tercapai'] as $cpl): ?>
+                                    <?php
+                                    $cqiData = $report['cqi_data'][$cpl['kode_cpl']] ?? null;
+                                    ?>
                                     <tr>
                                         <td><?= esc($cpl['kode_cpl']) ?></td>
-                                        <td>Nilai CPL < <?= $report['analysis']['passing_threshold'] ?>%</td>
-                                        <td>Evaluasi mata kuliah kontributor, perbaikan metode pembelajaran dan asesmen, penambahan latihan dan studi kasus</td>
-                                        <td>Tim Kurikulum & Dosen MK</td>
-                                        <td>Semester Berikutnya</td>
+                                        <td><?= $cqiData ? esc($cqiData['masalah']) : 'Nilai CPL < ' . $report['analysis']['passing_threshold'] . '%' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['rencana_perbaikan']) : 'Evaluasi mata kuliah kontributor, perbaikan metode pembelajaran dan asesmen, penambahan latihan dan studi kasus' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['penanggung_jawab']) : 'Tim Kurikulum & Dosen MK' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['jadwal_pelaksanaan']) : 'Semester Berikutnya' ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -319,6 +329,63 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Edit Mode -->
+                <div id="cqi-edit" class="border rounded bg-white p-3" style="display: none;">
+                    <?php if (!empty($report['analysis']['cpl_tidak_tercapai'])): ?>
+                        <?php foreach ($report['analysis']['cpl_tidak_tercapai'] as $index => $cpl): ?>
+                            <?php
+                            $cqiData = $report['cqi_data'][$cpl['kode_cpl']] ?? null;
+                            ?>
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>CPL: <?= esc($cpl['kode_cpl']) ?></strong> (Capaian: <?= number_format($cpl['capaian'], 2) ?>%)
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="cqi[<?= $index ?>][kode_cpl]" value="<?= esc($cpl['kode_cpl']) ?>">
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Masalah Utama:</label>
+                                        <textarea class="form-control" name="cqi[<?= $index ?>][masalah]" rows="3" placeholder="Jelaskan masalah utama yang menyebabkan CPL tidak tercapai..."><?= $cqiData ? esc($cqiData['masalah']) : 'Nilai CPL < ' . $report['analysis']['passing_threshold'] . '%' ?></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Rencana Tindakan:</label>
+                                        <textarea class="form-control" name="cqi[<?= $index ?>][rencana_perbaikan]" rows="3" placeholder="Jelaskan rencana tindakan yang akan dilakukan..."><?= $cqiData ? esc($cqiData['rencana_perbaikan']) : 'Evaluasi mata kuliah kontributor, perbaikan metode pembelajaran dan asesmen, penambahan latihan dan studi kasus' ?></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Penanggung Jawab:</label>
+                                            <input type="text" class="form-control" name="cqi[<?= $index ?>][penanggung_jawab]" placeholder="Contoh: Tim Kurikulum & Dosen MK" value="<?= $cqiData ? esc($cqiData['penanggung_jawab']) : 'Tim Kurikulum & Dosen MK' ?>">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Waktu Pelaksanaan:</label>
+                                            <input type="text" class="form-control" name="cqi[<?= $index ?>][jadwal_pelaksanaan]" placeholder="Contoh: Semester Berikutnya" value="<?= $cqiData ? esc($cqiData['jadwal_pelaksanaan']) : 'Semester Berikutnya' ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-success" onclick="saveCqi()">
+                                <i class="bi bi-save"></i> Simpan
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelEditCqi()">
+                                Batal
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-center text-muted mb-0">Tidak ada CPL yang belum tercapai. Tidak perlu tindakan perbaikan.</p>
+                        <div class="mt-3 text-center">
+                            <button type="button" class="btn btn-secondary" onclick="cancelEditCqi()">
+                                Tutup
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -604,6 +671,81 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Terjadi kesalahan saat menyimpan analisis.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        });
+    }
+
+    function toggleEditCqi() {
+        document.getElementById('cqi-display').style.display = 'none';
+        document.getElementById('cqi-edit').style.display = 'block';
+    }
+
+    function cancelEditCqi() {
+        document.getElementById('cqi-display').style.display = 'block';
+        document.getElementById('cqi-edit').style.display = 'none';
+    }
+
+    function saveCqi() {
+        // Show loading
+        const saveBtn = event.target;
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+        // Get current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Collect CQI data from form
+        const cqiData = [];
+        const cqiEditDiv = document.getElementById('cqi-edit');
+        const cqiInputs = cqiEditDiv.querySelectorAll('input[type="hidden"][name*="[kode_cpl]"]');
+
+        cqiInputs.forEach((input, index) => {
+            const kodeCpl = input.value;
+            const masalah = cqiEditDiv.querySelector(`textarea[name="cqi[${index}][masalah]"]`)?.value || '';
+            const rencanaPerbaikan = cqiEditDiv.querySelector(`textarea[name="cqi[${index}][rencana_perbaikan]"]`)?.value || '';
+            const penanggungJawab = cqiEditDiv.querySelector(`input[name="cqi[${index}][penanggung_jawab]"]`)?.value || '';
+            const jadwalPelaksanaan = cqiEditDiv.querySelector(`input[name="cqi[${index}][jadwal_pelaksanaan]"]`)?.value || '';
+
+            cqiData.push({
+                kode_cpl: kodeCpl,
+                masalah: masalah,
+                rencana_perbaikan: rencanaPerbaikan,
+                penanggung_jawab: penanggungJawab,
+                jadwal_pelaksanaan: jadwalPelaksanaan
+            });
+        });
+
+        // Prepare data
+        const formData = new FormData();
+        formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+        formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+        formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+        formData.append('cqi_data', JSON.stringify(cqiData));
+
+        // Send AJAX request
+        fetch('<?= base_url('admin/laporan-cpl/save-cqi') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Data CQI berhasil disimpan! Halaman akan dimuat ulang.');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan: ' + data.message);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan data CQI.');
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalText;
         });

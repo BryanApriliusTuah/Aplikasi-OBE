@@ -228,42 +228,105 @@
 
             <!-- 5. Tindak Lanjut & CQI (Continuous Quality Improvement) -->
             <div class="section mb-5">
-                <h5 class="fw-bold mb-3">5. Tindak Lanjut & CQI (Continuous Quality Improvement)</h5>
-                <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">5. Tindak Lanjut & CQI (Continuous Quality Improvement)</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="toggleEditCqi()">
+                        <i class="bi bi-pencil"></i> Edit CQI
+                    </button>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="cqi-display" class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
+                                <th style="width: 15%;">Kode CPMK</th>
                                 <th style="width: 25%;">Masalah</th>
                                 <th style="width: 35%;">Rencana Perbaikan</th>
-                                <th style="width: 20%;">Penanggung Jawab</th>
-                                <th style="width: 20%;">Jadwal Implementasi</th>
+                                <th style="width: 15%;">Penanggung Jawab</th>
+                                <th style="width: 10%;">Jadwal Implementasi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($portfolio['analysis']['cpmk_tidak_tercapai'])): ?>
                                 <?php foreach ($portfolio['analysis']['cpmk_tidak_tercapai'] as $cpmk): ?>
+                                    <?php
+                                    $cqiData = $portfolio['cqi_data'][$cpmk] ?? null;
+                                    ?>
                                     <tr>
-                                        <td><?= esc($cpmk) ?> tidak tercapai</td>
-                                        <td>Revisi metode pengajaran dengan pendekatan yang lebih kontekstual dan interaktif</td>
-                                        <td>Dosen pengampu</td>
-                                        <td>Semester depan</td>
+                                        <td><?= esc($cpmk) ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['masalah']) : esc($cpmk) . ' tidak tercapai' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['rencana_perbaikan']) : 'Revisi metode pengajaran dengan pendekatan yang lebih kontekstual dan interaktif' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['penanggung_jawab']) : 'Dosen pengampu' ?></td>
+                                        <td><?= $cqiData ? esc($cqiData['jadwal_pelaksanaan']) : 'Semester depan' ?></td>
                                     </tr>
                                 <?php endforeach; ?>
-                                <tr>
-                                    <td>Kurangnya latihan praktis</td>
-                                    <td>Tambahan sesi tutorial dan praktikum berbasis proyek</td>
-                                    <td>Koordinator MK</td>
-                                    <td>Semester depan</td>
-                                </tr>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">
+                                    <td colspan="5" class="text-center text-muted">
                                         Tidak ada masalah yang teridentifikasi. Pertahankan kualitas pembelajaran yang ada.
                                     </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Edit Mode -->
+                <div id="cqi-edit" class="border rounded bg-white p-3" style="display: none;">
+                    <?php if (!empty($portfolio['analysis']['cpmk_tidak_tercapai'])): ?>
+                        <?php foreach ($portfolio['analysis']['cpmk_tidak_tercapai'] as $index => $cpmk): ?>
+                            <?php
+                            $cqiData = $portfolio['cqi_data'][$cpmk] ?? null;
+                            ?>
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>CPMK: <?= esc($cpmk) ?></strong>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="cqi[<?= $index ?>][kode_cpmk]" value="<?= esc($cpmk) ?>">
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Masalah:</label>
+                                        <textarea class="form-control" name="cqi[<?= $index ?>][masalah]" rows="3" placeholder="Jelaskan masalah yang menyebabkan CPMK tidak tercapai..."><?= $cqiData ? esc($cqiData['masalah']) : esc($cpmk) . ' tidak tercapai' ?></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Rencana Perbaikan:</label>
+                                        <textarea class="form-control" name="cqi[<?= $index ?>][rencana_perbaikan]" rows="3" placeholder="Jelaskan rencana perbaikan yang akan dilakukan..."><?= $cqiData ? esc($cqiData['rencana_perbaikan']) : 'Revisi metode pengajaran dengan pendekatan yang lebih kontekstual dan interaktif' ?></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Penanggung Jawab:</label>
+                                            <input type="text" class="form-control" name="cqi[<?= $index ?>][penanggung_jawab]" placeholder="Contoh: Dosen pengampu" value="<?= $cqiData ? esc($cqiData['penanggung_jawab']) : 'Dosen pengampu' ?>">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Jadwal Implementasi:</label>
+                                            <input type="text" class="form-control" name="cqi[<?= $index ?>][jadwal_pelaksanaan]" placeholder="Contoh: Semester depan" value="<?= $cqiData ? esc($cqiData['jadwal_pelaksanaan']) : 'Semester depan' ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-success" onclick="saveCqi()">
+                                <i class="bi bi-save"></i> Simpan
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelEditCqi()">
+                                Batal
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-center text-muted mb-0">Tidak ada CPMK yang belum tercapai. Tidak perlu tindakan perbaikan.</p>
+                        <div class="mt-3 text-center">
+                            <button type="button" class="btn btn-secondary" onclick="cancelEditCqi()">
+                                Tutup
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -502,6 +565,76 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Terjadi kesalahan saat menyimpan analisis.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        });
+    }
+
+    function toggleEditCqi() {
+        document.getElementById('cqi-display').style.display = 'none';
+        document.getElementById('cqi-edit').style.display = 'block';
+    }
+
+    function cancelEditCqi() {
+        document.getElementById('cqi-display').style.display = 'block';
+        document.getElementById('cqi-edit').style.display = 'none';
+    }
+
+    function saveCqi() {
+        // Show loading
+        const saveBtn = event.target;
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+        // Collect CQI data from form
+        const cqiData = [];
+        const cqiEditDiv = document.getElementById('cqi-edit');
+        const cqiInputs = cqiEditDiv.querySelectorAll('input[type="hidden"][name*="[kode_cpmk]"]');
+
+        cqiInputs.forEach((input, index) => {
+            const kodeCpmk = input.value;
+            const masalah = cqiEditDiv.querySelector(`textarea[name="cqi[${index}][masalah]"]`)?.value || '';
+            const rencanaPerbaikan = cqiEditDiv.querySelector(`textarea[name="cqi[${index}][rencana_perbaikan]"]`)?.value || '';
+            const penanggungJawab = cqiEditDiv.querySelector(`input[name="cqi[${index}][penanggung_jawab]"]`)?.value || '';
+            const jadwalPelaksanaan = cqiEditDiv.querySelector(`input[name="cqi[${index}][jadwal_pelaksanaan]"]`)?.value || '';
+
+            cqiData.push({
+                kode_cpmk: kodeCpmk,
+                masalah: masalah,
+                rencana_perbaikan: rencanaPerbaikan,
+                penanggung_jawab: penanggungJawab,
+                jadwal_pelaksanaan: jadwalPelaksanaan
+            });
+        });
+
+        // Prepare data
+        const formData = new FormData();
+        formData.append('jadwal_mengajar_id', '<?= $portfolio['jadwal_mengajar_id'] ?>');
+        formData.append('cqi_data', JSON.stringify(cqiData));
+
+        // Send AJAX request
+        fetch('<?= base_url('admin/laporan-cpmk/save-cqi') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Data CQI berhasil disimpan! Halaman akan dimuat ulang.');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan: ' + data.message);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan data CQI.');
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalText;
         });

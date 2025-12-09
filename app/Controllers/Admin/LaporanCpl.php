@@ -10,6 +10,7 @@ class LaporanCpl extends BaseController
 	protected $cplModel;
 	protected $profilProdiModel;
 	protected $analysisCplModel;
+	protected $cqiModel;
 
 	public function __construct()
 	{
@@ -17,6 +18,7 @@ class LaporanCpl extends BaseController
 		$this->cplModel = new \App\Models\CplModel();
 		$this->profilProdiModel = new \App\Models\ProfilProdiModel();
 		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
+		$this->cqiModel = new \App\Models\CqiModel();
 	}
 
 	public function index()
@@ -140,13 +142,17 @@ class LaporanCpl extends BaseController
 		// 6. Get Jadwal and RPS data for Lampiran section
 		$lampiranData = $this->getLampiranData($programStudi, $tahunAkademik, $cpmkCplMatrix);
 
+		// 7. Get CQI data
+		$cqiData = $this->getCqiData($programStudi, $tahunAkademik, $angkatan);
+
 		return [
 			'identitas' => $identitas,
 			'cpl_list' => $cplList,
 			'cpmk_cpl_matrix' => $cpmkCplMatrix,
 			'cpl_achievement' => $cplAchievementData,
 			'analysis' => $analysis,
-			'lampiran' => $lampiranData
+			'lampiran' => $lampiranData,
+			'cqi_data' => $cqiData
 		];
 	}
 
@@ -1038,6 +1044,19 @@ class LaporanCpl extends BaseController
 		}
 	}
 
+	private function getCqiData($programStudi, $tahunAkademik, $angkatan)
+	{
+		$cqiList = $this->cqiModel->getCqiCplList($programStudi, $tahunAkademik, $angkatan);
+
+		// Convert to associative array with kode_cpl as key
+		$cqiByKodeCpl = [];
+		foreach ($cqiList as $cqi) {
+			$cqiByKodeCpl[$cqi['kode_cpl']] = $cqi;
+		}
+
+		return $cqiByKodeCpl;
+	}
+
 	public function saveAnalysis()
 	{
 		// Check user role
@@ -1080,6 +1099,66 @@ class LaporanCpl extends BaseController
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Gagal menyimpan analisis: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function saveCqi()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+		$cqiDataJson = $this->request->getPost('cqi_data');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan || !$cqiDataJson) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Decode JSON string to array
+			$cqiData = json_decode($cqiDataJson, true);
+
+			if (!is_array($cqiData)) {
+				throw new \Exception('Format data CQI tidak valid.');
+			}
+
+			// Save each CQI record
+			foreach ($cqiData as $cqi) {
+				if (!empty($cqi['kode_cpl'])) {
+					$data = [
+						'program_studi' => $programStudi,
+						'tahun_akademik' => $tahunAkademik,
+						'angkatan' => $angkatan,
+						'kode_cpl' => $cqi['kode_cpl'],
+						'masalah' => $cqi['masalah'] ?? null,
+						'rencana_perbaikan' => $cqi['rencana_perbaikan'] ?? null,
+						'penanggung_jawab' => $cqi['penanggung_jawab'] ?? null,
+						'jadwal_pelaksanaan' => $cqi['jadwal_pelaksanaan'] ?? null
+					];
+
+					$this->cqiModel->saveCqiCpl($data);
+				}
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Data CQI berhasil disimpan.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menyimpan data CQI: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}
