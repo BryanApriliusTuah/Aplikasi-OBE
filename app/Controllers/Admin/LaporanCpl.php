@@ -135,12 +135,16 @@ class LaporanCpl extends BaseController
 		// 5. Get Analysis
 		$analysis = $this->getAnalysisData($cplAchievementData);
 
+		// 6. Get Jadwal and RPS data for Lampiran section
+		$lampiranData = $this->getLampiranData($programStudi, $tahunAkademik, $cpmkCplMatrix);
+
 		return [
 			'identitas' => $identitas,
 			'cpl_list' => $cplList,
 			'cpmk_cpl_matrix' => $cpmkCplMatrix,
 			'cpl_achievement' => $cplAchievementData,
-			'analysis' => $analysis
+			'analysis' => $analysis,
+			'lampiran' => $lampiranData
 		];
 	}
 
@@ -203,6 +207,7 @@ class LaporanCpl extends BaseController
 
 			if (!isset($matrix[$mkKey])) {
 				$matrix[$mkKey] = [
+					'mata_kuliah_id' => $row['mata_kuliah_id'],
 					'nama_mk' => $row['nama_mk'],
 					'kode_mk' => $row['kode_mk'],
 					'cpmk_list' => []
@@ -519,5 +524,499 @@ class LaporanCpl extends BaseController
 		$angkatan = $builder->get()->getResultArray();
 
 		return $this->response->setJSON($angkatan);
+	}
+
+	private function getLampiranData($programStudi, $tahunAkademik, $cpmkCplMatrix)
+	{
+		$lampiranData = [
+			'rekap_cpmk' => [],
+			'rps_list' => []
+		];
+
+		foreach ($cpmkCplMatrix as $mk) {
+			$mataKuliahId = $mk['mata_kuliah_id'] ?? 0;
+
+			// Get jadwal_mengajar for this mata kuliah
+			$jadwalList = $this->db->table('jadwal_mengajar')
+				->select('id, kelas')
+				->where('mata_kuliah_id', $mataKuliahId)
+				->where('tahun_akademik', $tahunAkademik)
+				->where('program_studi', $programStudi)
+				->get()
+				->getResultArray();
+
+			// Get RPS ID for this mata kuliah
+			$rpsData = $this->db->table('rps')
+				->select('id')
+				->where('mata_kuliah_id', $mataKuliahId)
+				->orderBy('created_at', 'DESC')
+				->get()
+				->getRowArray();
+
+			$rpsId = $rpsData['id'] ?? null;
+
+			// Add to rekap_cpmk list
+			if (!empty($jadwalList)) {
+				foreach ($jadwalList as $jadwal) {
+					$lampiranData['rekap_cpmk'][] = [
+						'nama_mk' => $mk['nama_mk'],
+						'jadwal_id' => $jadwal['id'],
+						'kelas' => $jadwal['kelas']
+					];
+				}
+			} else {
+				$lampiranData['rekap_cpmk'][] = [
+					'nama_mk' => $mk['nama_mk'],
+					'jadwal_id' => null,
+					'kelas' => null
+				];
+			}
+
+			// Add to RPS list
+			$lampiranData['rps_list'][] = [
+				'nama_mk' => $mk['nama_mk'],
+				'rps_id' => $rpsId
+			];
+		}
+
+		return $lampiranData;
+	}
+
+	public function exportZip()
+	{
+		try {
+			// Check user role
+			if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+				return redirect()->to('/')->with('error', 'Akses ditolak.');
+			}
+
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+			$programStudi = $this->request->getGet('program_studi');
+			$angkatan = $this->request->getGet('angkatan');
+			$documents = $this->request->getGet('documents');
+
+			if (!$tahunAkademik || !$programStudi || !$angkatan) {
+				return redirect()->to('admin/laporan-cpl')->with('error', 'Parameter tidak lengkap.');
+			}
+
+			// Get CPL report data
+			$reportData = $this->getReportData($tahunAkademik, $programStudi, $angkatan);
+
+			if (!$reportData) {
+				return redirect()->to('admin/laporan-cpl')->with('error', 'Data tidak ditemukan.');
+			}
+
+			// Parse selected documents
+			$selectedDocuments = [];
+			if (!empty($documents)) {
+				$selectedDocuments = explode(',', $documents);
+			}
+
+			// Create ZIP file
+			$zip = new \ZipArchive();
+			$zipFilename = 'Laporan_CPL_' . str_replace(' ', '_', $programStudi) . '_' . $angkatan . '_' . time() . '.zip';
+			$zipPath = WRITEPATH . 'uploads/' . $zipFilename;
+
+			// Ensure uploads directory exists
+			if (!is_dir(WRITEPATH . 'uploads')) {
+				mkdir(WRITEPATH . 'uploads', 0755, true);
+			}
+
+			if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+				return redirect()->to('admin/laporan-cpl')->with('error', 'Gagal membuat file ZIP.');
+			}
+
+			$tempFiles = [];
+
+			// 1. Generate and add Portfolio DOC
+			$portfolioHtml = view('admin/laporan_cpl/portfolio_pdf', ['report' => $reportData]);
+
+			// Wrap in Word-compatible HTML structure
+			$wordHtml = '
+			<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+			<head>
+				<meta charset="UTF-8">
+				<style>
+					body { font-family: Arial, sans-serif; font-size: 11pt; padding: 30px; }
+					h2 { font-size: 18pt; font-weight: bold; margin-bottom: 10px; text-align: center; }
+					h5 { font-size: 14pt; font-weight: bold; margin-bottom: 10px; }
+					p, li { font-size: 11pt; line-height: 1.4; }
+					table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+					table th, table td { padding: 8px; border: 1px solid #000; word-wrap: break-word; vertical-align: top; }
+					table thead th { background-color: #f8f9fa; font-weight: bold; }
+					.section { margin-bottom: 25px; page-break-inside: avoid; }
+					.text-center { text-align: center; }
+					.fw-bold { font-weight: bold; }
+					.text-success { color: #198754; }
+					.text-danger { color: #dc3545; }
+					.text-muted { color: #6c757d; }
+					.bg-light { background-color: #f8f9fa; padding: 10px; }
+					ul { margin: 0; padding-left: 20px; }
+					.list-unstyled { list-style: none; padding-left: 0; }
+					@page { margin: 2cm; }
+				</style>
+			</head>
+			<body>' . $portfolioHtml . '</body></html>';
+
+			// Save as .doc file
+			$docFilename = 'Laporan_Pemenuhan_CPL.doc';
+			$tempDocPath = WRITEPATH . 'uploads/temp_portfolio_cpl_' . time() . '.doc';
+			file_put_contents($tempDocPath, $wordHtml);
+			$zip->addFile($tempDocPath, $docFilename);
+			$tempFiles[] = $tempDocPath;
+
+			// 2. Add supporting documents based on selection
+			foreach ($selectedDocuments as $docType) {
+				$this->addDocumentToZip($zip, $docType, $reportData, $tempFiles);
+			}
+
+			$zip->close();
+
+			// Download the ZIP file
+			$data = file_get_contents($zipPath);
+
+			// Clean up temporary files
+			foreach ($tempFiles as $tempFile) {
+				if (file_exists($tempFile)) {
+					@unlink($tempFile);
+				}
+			}
+
+			// Return the download response
+			$response = $this->response->download($zipFilename, $data);
+
+			// Clean up the ZIP file after sending
+			@unlink($zipPath);
+
+			return $response;
+		} catch (\Exception $e) {
+			log_message('error', 'Error in exportZip: ' . $e->getMessage());
+			return redirect()->to('admin/laporan-cpl')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+		}
+	}
+
+	private function addDocumentToZip(&$zip, $docType, $reportData, &$tempFiles)
+	{
+		try {
+			switch ($docType) {
+				case 'rekap_cpmk':
+					// Add all CPMK Excel files
+					if (!empty($reportData['lampiran']['rekap_cpmk'])) {
+						foreach ($reportData['lampiran']['rekap_cpmk'] as $item) {
+							if ($item['jadwal_id']) {
+								$this->generateAndAddCpmkExcel($zip, $item['jadwal_id'], $item['nama_mk'], $item['kelas'], $tempFiles);
+							}
+						}
+					}
+					return true;
+
+				case 'matriks_cpl_cpmk':
+					// Add matrix Excel
+					return $this->generateAndAddMatrixExcel($zip, $tempFiles);
+
+				case 'rps_mk_kontributor':
+					// Add all RPS DOC files
+					if (!empty($reportData['lampiran']['rps_list'])) {
+						foreach ($reportData['lampiran']['rps_list'] as $item) {
+							if ($item['rps_id']) {
+								$this->generateAndAddRpsDoc($zip, $item['rps_id'], $item['nama_mk'], $tempFiles);
+							}
+						}
+					}
+					return true;
+			}
+		} catch (\Exception $e) {
+			log_message('error', 'Error adding document to ZIP: ' . $e->getMessage());
+			return false;
+		}
+
+		return false;
+	}
+
+	private function generateAndAddCpmkExcel(&$zip, $jadwalId, $namaMk, $kelas, &$tempFiles)
+	{
+		try {
+			// Import required models
+			$jadwalModel = new \App\Models\MengajarModel();
+			$mahasiswaModel = new \App\Models\MahasiswaModel();
+			$cpmkModel = new \App\Models\CpmkModel();
+			$nilaiCpmkModel = new \App\Models\NilaiCpmkMahasiswaModel();
+
+			// Get jadwal details
+			$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwalId], true);
+			if (!$jadwal) {
+				log_message('error', 'Jadwal not found for ID: ' . $jadwalId);
+				return false;
+			}
+
+			// Get students for this class
+			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+
+			// Get CPMK list for this jadwal
+			$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwalId);
+
+			// Get all CPMK scores for all students
+			$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwalId);
+
+			// Create Excel file using PhpSpreadsheet
+			$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+			$sheet = $spreadsheet->getActiveSheet();
+
+			// Set document properties
+			$spreadsheet->getProperties()
+				->setCreator('OBE System')
+				->setTitle('Nilai CPMK - ' . $jadwal['nama_mk'])
+				->setSubject('Nilai CPMK');
+
+			// Basic table header
+			$row = 1;
+			$col = 1;
+
+			// Course information
+			$sheet->setCellValue('A' . $row, 'MATA KULIAH');
+			$sheet->setCellValue('B' . $row, strtoupper($jadwal['nama_mk']));
+			$row++;
+			$sheet->setCellValue('A' . $row, 'KELAS/PROGRAM STUDI');
+			$sheet->setCellValue('B' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+			$row++;
+			$sheet->setCellValue('A' . $row, 'DOSEN PENGAMPU');
+			$sheet->setCellValue('B' . $row, strtoupper($jadwal['dosen_ketua']));
+			$row += 2;
+
+			// Table header
+			$headerRow = $row;
+			$col = 1;
+
+			// Basic columns
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
+
+			// CPMK columns
+			foreach ($cpmk_list as $cpmk) {
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $cpmk['kode_cpmk']);
+			}
+
+			// Nilai Akhir column
+			$lastCol = $col;
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, 'Nilai Akhir MK');
+
+			// Style header
+			$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastCol);
+			$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $headerRow);
+			$headerStyle->getFont()->setBold(true);
+			$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FF4472C4');
+			$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+			$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+			// Data rows
+			$row++;
+			$no = 1;
+			foreach ($students as $student) {
+				$col = 1;
+				$mahasiswa_id = $student['id'];
+
+				// Basic info
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $no++);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nim']);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nama_lengkap']);
+
+				// CPMK scores
+				$student_scores = [];
+				foreach ($cpmk_list as $cpmk) {
+					$score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+					if ($score !== null && $score !== '') {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $score);
+						$student_scores[] = (float)$score;
+					} else {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					}
+				}
+
+				// Nilai Akhir
+				if (count($student_scores) > 0) {
+					$total = array_sum($student_scores);
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, number_format($total, 2));
+				} else {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, '-');
+				}
+
+				$row++;
+			}
+
+			// Add borders
+			$lastRow = $row - 1;
+			$sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $lastRow)->applyFromArray([
+				'borders' => [
+					'allBorders' => [
+						'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+						'color' => ['argb' => 'FF000000'],
+					],
+				],
+			]);
+
+			// Auto-size columns
+			for ($i = 1; $i <= $lastCol; $i++) {
+				$columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+				$sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+			}
+
+			// Save to file
+			$tempPath = WRITEPATH . 'uploads/temp_cpmk_' . $jadwalId . '_' . time() . '_' . mt_rand() . '.xlsx';
+			$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+			$writer->save($tempPath);
+
+			// Add to ZIP
+			$filename = 'Rekap_CPMK_' . str_replace(' ', '_', $namaMk) . '_Kelas_' . $kelas . '.xlsx';
+			$zip->addFile($tempPath, $filename);
+			$tempFiles[] = $tempPath;
+
+			log_message('info', 'Successfully added CPMK Excel to ZIP: ' . $filename);
+			return true;
+		} catch (\Exception $e) {
+			log_message('error', 'Error generating CPMK Excel: ' . $e->getMessage());
+			return false;
+		}
+	}
+
+	private function generateAndAddRpsDoc(&$zip, $rpsId, $namaMk, &$tempFiles)
+	{
+		try {
+			// Generate RPS DOC using preview data
+			$rpsService = new \App\Services\RpsPreviewService();
+			$rpsData = $rpsService->getData($rpsId);
+
+			// Get the view content
+			$fullHtml = view('rps/preview', $rpsData);
+
+			// Extract only the content within #rps-content div
+			libxml_use_internal_errors(true);
+			$dom = new \DOMDocument();
+			$dom->loadHTML('<?xml encoding="UTF-8">' . $fullHtml);
+			libxml_clear_errors();
+
+			$xpath = new \DOMXPath($dom);
+			$contentNode = $xpath->query("//*[@id='rps-content']")->item(0);
+
+			if ($contentNode) {
+				$cleanHtml = '';
+				foreach ($contentNode->childNodes as $child) {
+					$cleanHtml .= $dom->saveHTML($child);
+				}
+
+				// Wrap in Word-compatible HTML structure
+				$rpsHtml = '
+				<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+				<head>
+					<meta charset="UTF-8">
+					<style>
+						body { font-family: Arial, sans-serif; font-size: 10pt; padding: 20px; }
+						table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }
+						table th, table td { padding: 6px; border: 1px solid #000; word-wrap: break-word; vertical-align: top; }
+						.fw-bold { font-weight: bold; }
+						.text-center { text-align: center; }
+						@page { margin: 2cm; }
+					</style>
+				</head>
+				<body>' . $cleanHtml . '</body></html>';
+
+				// Save as .doc file
+				$filename = 'RPS_' . str_replace(' ', '_', $namaMk) . '.doc';
+				$tempRpsPath = WRITEPATH . 'uploads/temp_rps_' . $rpsId . '_' . time() . '.doc';
+				file_put_contents($tempRpsPath, $rpsHtml);
+				$zip->addFile($tempRpsPath, $filename);
+				$tempFiles[] = $tempRpsPath;
+
+				return true;
+			}
+
+			return false;
+		} catch (\Exception $e) {
+			log_message('error', 'Error generating RPS DOC: ' . $e->getMessage());
+			return false;
+		}
+	}
+
+	private function generateAndAddMatrixExcel(&$zip, &$tempFiles)
+	{
+		try {
+			// Get matrix data
+			$matrixData = $this->db->table('cpl_cpmk')
+				->select(
+					'cpl.id AS cpl_id, cpmk.id AS cpmk_id, cpl.kode_cpl, cpmk.kode_cpmk, GROUP_CONCAT(DISTINCT mk.nama_mk ORDER BY mk.nama_mk SEPARATOR ", ") AS mk_list'
+				)
+				->join('cpl', 'cpl.id = cpl_cpmk.cpl_id')
+				->join('cpmk', 'cpmk.id = cpl_cpmk.cpmk_id')
+				->join('cpmk_mk', 'cpmk_mk.cpmk_id = cpmk.id', 'left')
+				->join('mata_kuliah mk', 'mk.id = cpmk_mk.mata_kuliah_id', 'left')
+				->groupBy(['cpl.id', 'cpmk.id'])
+				->orderBy('cpl.kode_cpl', 'asc')
+				->orderBy('cpmk.kode_cpmk', 'asc')
+				->get()->getResultArray();
+
+			// Create Excel file using PhpSpreadsheet
+			$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+			$sheet = $spreadsheet->getActiveSheet();
+
+			// Set document properties
+			$spreadsheet->getProperties()
+				->setCreator('OBE System')
+				->setTitle('Pemetaan CPL - CPMK - MK')
+				->setSubject('Pemetaan CPL - CPMK - MK');
+
+			// Set headers
+			$sheet->setCellValue('A1', 'Kode CPL');
+			$sheet->setCellValue('B1', 'Kode CPMK');
+			$sheet->setCellValue('C1', 'Mata Kuliah');
+
+			// Style header
+			$headerStyle = $sheet->getStyle('A1:C1');
+			$headerStyle->getFont()->setBold(true);
+			$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FF4472C4');
+			$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+			$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+			// Fill data
+			$rowNumber = 2;
+			foreach ($matrixData as $row) {
+				$sheet->setCellValue('A' . $rowNumber, $row['kode_cpl']);
+				$sheet->setCellValue('B' . $rowNumber, $row['kode_cpmk']);
+				$sheet->setCellValue('C' . $rowNumber, $row['mk_list']);
+				$rowNumber++;
+			}
+
+			// Add borders
+			$sheet->getStyle('A1:C' . ($rowNumber - 1))->applyFromArray([
+				'borders' => [
+					'allBorders' => [
+						'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+						'color' => ['argb' => 'FF000000'],
+					],
+				],
+			]);
+
+			// Auto-size columns
+			foreach (range('A', 'C') as $col) {
+				$sheet->getColumnDimension($col)->setAutoSize(true);
+			}
+
+			// Save to file
+			$tempPath = WRITEPATH . 'uploads/temp_matrix_' . time() . '_' . mt_rand() . '.xlsx';
+			$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+			$writer->save($tempPath);
+
+			// Add to ZIP
+			$filename = 'Pemetaan_CPL_CPMK_MK.xlsx';
+			$zip->addFile($tempPath, $filename);
+			$tempFiles[] = $tempPath;
+
+			log_message('info', 'Successfully added Matrix Excel to ZIP: ' . $filename);
+			return true;
+		} catch (\Exception $e) {
+			log_message('error', 'Error generating Matrix Excel: ' . $e->getMessage());
+			return false;
+		}
 	}
 }

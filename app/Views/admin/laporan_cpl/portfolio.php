@@ -12,6 +12,9 @@
                 <button type="button" class="btn btn-primary" onclick="window.print()">
                     <i class="bi bi-printer"></i> Cetak
                 </button>
+                <button type="button" class="btn btn-success" onclick="exportToZIP()">
+                    <i class="bi bi-file-earmark-zip"></i> Download ZIP
+                </button>
             </div>
         </div>
     </div>
@@ -299,11 +302,79 @@
             <!-- 8. Lampiran -->
             <div class="section mb-3">
                 <h5 class="fw-bold mb-3">8. Lampiran</h5>
-                <ul>
+                <p class="mb-2 no-print">(Pilih dokumen yang akan disertakan dalam unduhan atau klik untuk unduh satu per satu)</p>
+                <p class="mb-2 d-none d-print-block">(Lampirkan dalam satu file atau folder terorganisir)</p>
+
+                <div class="no-print">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllLampiran()">
+                            <i class="bi bi-check-square"></i> Pilih Semua
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllLampiran()">
+                            <i class="bi bi-square"></i> Hapus Semua
+                        </button>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input lampiran-checkbox" type="checkbox" value="rekap_cpmk" id="lampiran_rekap_cpmk" data-label="Rekap nilai CPMK dari seluruh mata kuliah" checked onchange="updatePrintLampiran()">
+                        <label class="form-check-label d-block" for="lampiran_rekap_cpmk">
+                            Rekap nilai CPMK dari seluruh mata kuliah:
+                        </label>
+                        <ul class="mt-2">
+                            <?php if (!empty($report['lampiran']['rekap_cpmk'])): ?>
+                                <?php foreach ($report['lampiran']['rekap_cpmk'] as $item): ?>
+                                    <li>
+                                        <?php if ($item['jadwal_id']): ?>
+                                            <a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $item['jadwal_id']) ?>" class="text-decoration-none" target="_blank">
+                                                <?= esc($item['nama_mk']) ?> - Kelas <?= esc($item['kelas']) ?> <i class="bi bi-file-earmark-excel"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= esc($item['nama_mk']) ?> <span class="text-muted">(Jadwal tidak tersedia)</span>
+                                        <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <li class="text-muted">Tidak ada mata kuliah</li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input lampiran-checkbox" type="checkbox" value="matriks_cpl_cpmk" id="lampiran_matriks" data-label="Matriks hubungan CPL – CPMK – MK" checked onchange="updatePrintLampiran()">
+                        <label class="form-check-label" for="lampiran_matriks">
+                            <a href="<?= base_url('admin/pemetaan-cpl-mk-cpmk/exportExcel') ?>" class="text-decoration-none" target="_blank">
+                                Matriks hubungan CPL – CPMK – MK <i class="bi bi-file-earmark-excel"></i>
+                            </a>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input lampiran-checkbox" type="checkbox" value="rps_mk_kontributor" id="lampiran_rps" data-label="RPS dari MK Kontributor" checked onchange="updatePrintLampiran()">
+                        <label class="form-check-label d-block" for="lampiran_rps">
+                            RPS dari MK Kontributor:
+                        </label>
+                        <ul class="mt-2">
+                            <?php if (!empty($report['lampiran']['rps_list'])): ?>
+                                <?php foreach ($report['lampiran']['rps_list'] as $item): ?>
+                                    <li>
+                                        <?php if ($item['rps_id']): ?>
+                                            <a href="<?= base_url('rps/preview/' . $item['rps_id']) ?>" target="_blank" class="text-decoration-none">
+                                                <?= esc($item['nama_mk']) ?> <i class="bi bi-file-earmark-pdf"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= esc($item['nama_mk']) ?> <span class="text-muted">(RPS tidak tersedia)</span>
+                                        <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <li class="text-muted">Tidak ada mata kuliah kontributor</li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Print version (dynamically updated based on selection) -->
+                <ul id="print-lampiran-list" class="d-none d-print-block">
                     <li>Rekap nilai CPMK dari seluruh mata kuliah</li>
                     <li>Matriks hubungan CPL – CPMK – MK</li>
-                    <li>Bukti dokumentasi asesmen</li>
-                    <li>Notulensi rapat evaluasi CPL</li>
                     <li>RPS dari MK Kontributor</li>
                 </ul>
             </div>
@@ -341,4 +412,84 @@
         }
     }
 </style>
+<?= $this->endSection() ?>
+
+<?= $this->section('js') ?>
+<script>
+    function selectAllLampiran() {
+        document.querySelectorAll('.lampiran-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updatePrintLampiran();
+    }
+
+    function deselectAllLampiran() {
+        document.querySelectorAll('.lampiran-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updatePrintLampiran();
+    }
+
+    function updatePrintLampiran() {
+        const printList = document.getElementById('print-lampiran-list');
+        const checkedBoxes = document.querySelectorAll('.lampiran-checkbox:checked');
+
+        // Clear the list
+        printList.innerHTML = '';
+
+        // Add only selected documents
+        checkedBoxes.forEach(checkbox => {
+            const li = document.createElement('li');
+            li.textContent = checkbox.getAttribute('data-label');
+            printList.appendChild(li);
+        });
+
+        // If no documents selected, show a message
+        if (checkedBoxes.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'Tidak ada dokumen yang dipilih';
+            li.className = 'text-muted';
+            printList.appendChild(li);
+        }
+    }
+
+    function exportToZIP() {
+        // Collect selected documents
+        const selectedDocs = [];
+        document.querySelectorAll('.lampiran-checkbox:checked').forEach(checkbox => {
+            selectedDocs.push(checkbox.value);
+        });
+
+        if (selectedDocs.length === 0) {
+            alert('Silakan pilih minimal satu dokumen untuk disertakan dalam ZIP.');
+            return;
+        }
+
+        // Build URL for ZIP export with current parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Add selected documents to URL
+        urlParams.set('documents', selectedDocs.join(','));
+
+        const exportUrl = '<?= base_url('admin/laporan-cpl/export-zip') ?>?' + urlParams.toString();
+
+        // Show loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.id = 'zip-loading';
+        loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;z-index:9999;font-size:16px;';
+        loadingMsg.innerHTML = '<i class="bi bi-hourglass-split"></i> Menyiapkan dokumen...';
+        document.body.appendChild(loadingMsg);
+
+        // Use window.location to trigger download
+        window.location.href = exportUrl;
+
+        // Remove loading indicator after a short delay
+        setTimeout(() => {
+            const loading = document.getElementById('zip-loading');
+            if (loading) {
+                document.body.removeChild(loading);
+            }
+        }, 3000);
+    }
+</script>
 <?= $this->endSection() ?>
