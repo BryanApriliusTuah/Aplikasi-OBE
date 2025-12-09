@@ -250,6 +250,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('laporan-cpl/generate-pdf', 'LaporanCpl::generatePdf');
 	$routes->get('laporan-cpl/export-zip', 'LaporanCpl::exportZip');
 	$routes->get('laporan-cpl/get-angkatan', 'LaporanCpl::getAngkatanByFilter');
+	$routes->post('laporan-cpl/save-analysis', 'LaporanCpl::saveAnalysis');
 
 	// MBKM Management Routes
 	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {

@@ -235,10 +235,51 @@
                             <span class="text-muted">-</span>
                         <?php endif; ?>
                     </li>
-                    <li class="mb-3">
-                        <strong>Analisis Singkat:</strong>
-                        <div class="mt-2 p-3 bg-light rounded">
+                    <li class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Analisis Singkat:</strong>
+                            <button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="toggleEditAnalysis()">
+                                <i class="bi bi-pencil"></i> Edit Analisis
+                            </button>
+                        </div>
+
+                        <!-- Display Mode -->
+                        <div id="analysis-display" class="mt-2 p-3 bg-light rounded">
                             <?= esc($report['analysis']['analisis_summary']) ?>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div id="analysis-edit" class="mt-2 p-3 border rounded bg-white" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Pilih Mode Analisis:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="analysis_mode" id="mode_auto" value="auto" <?= ($report['analysis']['mode'] ?? 'auto') === 'auto' ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="mode_auto">
+                                        Otomatis - Sistem akan menghasilkan analisis berdasarkan data CPL
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="analysis_mode" id="mode_manual" value="manual" <?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="mode_manual">
+                                        Manual - Saya akan menulis analisis sendiri
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="manual-analysis-container" style="display: <?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? 'block' : 'none' ?>;">
+                                <label class="form-label fw-bold">Tulis Analisis:</label>
+                                <textarea id="manual-analysis-text" class="form-control" rows="5" placeholder="Tulis analisis singkat mengenai pemenuhan CPL..."><?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? esc($report['analysis']['analisis_summary']) : '' ?></textarea>
+                                <small class="text-muted">Jelaskan pencapaian CPL, faktor yang mempengaruhi, dan rekomendasi perbaikan jika diperlukan.</small>
+                            </div>
+
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-success" onclick="saveAnalysis()">
+                                    <i class="bi bi-save"></i> Simpan
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="cancelEditAnalysis()">
+                                    Batal
+                                </button>
+                            </div>
                         </div>
                     </li>
                 </ul>
@@ -490,6 +531,82 @@
                 document.body.removeChild(loading);
             }
         }, 3000);
+    }
+
+    function toggleEditAnalysis() {
+        document.getElementById('analysis-display').style.display = 'none';
+        document.getElementById('analysis-edit').style.display = 'block';
+    }
+
+    function cancelEditAnalysis() {
+        document.getElementById('analysis-display').style.display = 'block';
+        document.getElementById('analysis-edit').style.display = 'none';
+    }
+
+    // Toggle manual analysis textarea based on selected mode
+    document.querySelectorAll('input[name="analysis_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const manualContainer = document.getElementById('manual-analysis-container');
+            if (this.value === 'manual') {
+                manualContainer.style.display = 'block';
+            } else {
+                manualContainer.style.display = 'none';
+            }
+        });
+    });
+
+    function saveAnalysis() {
+        const mode = document.querySelector('input[name="analysis_mode"]:checked').value;
+        const analysisText = document.getElementById('manual-analysis-text').value;
+
+        // Validate manual mode
+        if (mode === 'manual' && !analysisText.trim()) {
+            alert('Silakan tulis analisis terlebih dahulu untuk mode manual.');
+            return;
+        }
+
+        // Show loading
+        const saveBtn = event.target;
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+        // Get current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Prepare data
+        const formData = new FormData();
+        formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+        formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+        formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+        formData.append('mode', mode);
+        formData.append('analisis_summary', analysisText);
+
+        // Send AJAX request
+        fetch('<?= base_url('admin/laporan-cpl/save-analysis') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Analisis berhasil disimpan! Halaman akan dimuat ulang.');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan: ' + data.message);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan analisis.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        });
     }
 </script>
 <?= $this->endSection() ?>

@@ -9,12 +9,14 @@ class LaporanCpl extends BaseController
 	protected $db;
 	protected $cplModel;
 	protected $profilProdiModel;
+	protected $analysisCplModel;
 
 	public function __construct()
 	{
 		$this->db = \Config\Database::connect();
 		$this->cplModel = new \App\Models\CplModel();
 		$this->profilProdiModel = new \App\Models\ProfilProdiModel();
+		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
 	}
 
 	public function index()
@@ -133,7 +135,7 @@ class LaporanCpl extends BaseController
 		$cplAchievementData = $this->getCplAchievementData($programStudi, $angkatan, $tahunAkademik);
 
 		// 5. Get Analysis
-		$analysis = $this->getAnalysisData($cplAchievementData);
+		$analysis = $this->getAnalysisData($cplAchievementData, $programStudi, $tahunAkademik, $angkatan);
 
 		// 6. Get Jadwal and RPS data for Lampiran section
 		$lampiranData = $this->getLampiranData($programStudi, $tahunAkademik, $cpmkCplMatrix);
@@ -433,7 +435,7 @@ class LaporanCpl extends BaseController
 		return $achievementData;
 	}
 
-	private function getAnalysisData($cplAchievementData)
+	private function getAnalysisData($cplAchievementData, $programStudi = null, $tahunAkademik = null, $angkatan = null)
 	{
 		$passingThreshold = 75; // Standard 75% for CPL
 		$cplTercapai = [];
@@ -450,8 +452,23 @@ class LaporanCpl extends BaseController
 			}
 		}
 
-		// Generate analysis summary
-		$analysisSummary = $this->generateAnalysisSummary($cplTercapai, $cplTidakTercapai);
+		// Check if there's saved analysis
+		$savedAnalysis = null;
+		if ($programStudi && $tahunAkademik && $angkatan) {
+			$savedAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+		}
+
+		// Determine mode and analysis text
+		$mode = $savedAnalysis['mode'] ?? 'auto';
+		$analysisSummary = '';
+
+		if ($mode === 'manual' && !empty($savedAnalysis['analisis_summary'])) {
+			// Use manual analysis
+			$analysisSummary = $savedAnalysis['analisis_summary'];
+		} else {
+			// Use auto-generated analysis
+			$analysisSummary = $this->generateAnalysisSummary($cplTercapai, $cplTidakTercapai);
+		}
 
 		return [
 			'cpl_tercapai' => $cplTercapai,
@@ -460,7 +477,8 @@ class LaporanCpl extends BaseController
 			'analisis_summary' => $analysisSummary,
 			'total_cpl' => count($cplAchievementData),
 			'total_tercapai' => count($cplTercapai),
-			'total_tidak_tercapai' => count($cplTidakTercapai)
+			'total_tidak_tercapai' => count($cplTidakTercapai),
+			'mode' => $mode
 		];
 	}
 
@@ -1017,6 +1035,52 @@ class LaporanCpl extends BaseController
 		} catch (\Exception $e) {
 			log_message('error', 'Error generating Matrix Excel: ' . $e->getMessage());
 			return false;
+		}
+	}
+
+	public function saveAnalysis()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+		$mode = $this->request->getPost('mode');
+		$analysisSummary = $this->request->getPost('analisis_summary');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan || !$mode) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		$data = [
+			'program_studi' => $programStudi,
+			'tahun_akademik' => $tahunAkademik,
+			'angkatan' => $angkatan,
+			'mode' => $mode,
+			'analisis_summary' => $mode === 'manual' ? $analysisSummary : null
+		];
+
+		try {
+			$this->analysisCplModel->saveAnalysis($data);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Analisis berhasil disimpan.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menyimpan analisis: ' . $e->getMessage()
+			])->setStatusCode(500);
 		}
 	}
 }
