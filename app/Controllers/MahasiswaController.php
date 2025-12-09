@@ -838,6 +838,740 @@ class MahasiswaController extends BaseController
 	}
 
 	/**
+	 * Mahasiswa - Laporan CPMK
+	 */
+	public function laporanCpmk()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return redirect()->to('/login');
+		}
+
+		$data = [
+			'title' => 'Laporan CPMK',
+			'semesterList' => $this->getSemesterList(),
+			'tahunAkademikList' => $this->getTahunAkademikList()
+		];
+
+		return view('mahasiswa/laporan_cpmk', $data);
+	}
+
+	/**
+	 * Mahasiswa - Get Laporan CPMK Data (AJAX)
+	 */
+	public function getLaporanCpmkData()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+		}
+
+		try {
+			$mahasiswaId = session('mahasiswa_id');
+			$semester = $this->request->getGet('semester');
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+
+			$db = \Config\Database::connect();
+
+		// Get all assessment scores with weights for this student
+		// Using formula: Capaian CPMK (%) = (Σ(nilai × bobot) / Σ(bobot)) × 100
+		$builder = $db->table('nilai_teknik_penilaian ntp')
+			->select('ntp.nilai, ntp.teknik_penilaian_key,
+			         rm.cpmk_id, rm.teknik_penilaian,
+			         cpmk.kode_cpmk, cpmk.deskripsi,
+			         mk.kode_mk, mk.nama_mk, mk.id as mata_kuliah_id,
+			         jm.tahun_akademik, jm.kelas')
+			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+			->join('cpmk', 'cpmk.id = rm.cpmk_id')
+			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+			->where('ntp.mahasiswa_id', $mahasiswaId);
+
+		// Apply semester filter if provided
+		if ($semester) {
+			$builder->where('jm.tahun_akademik', $semester);
+		}
+
+		// Apply tahun akademik filter if provided
+		if ($tahunAkademik) {
+			$builder->like('jm.tahun_akademik', $tahunAkademik, 'both');
+		}
+
+		$nilaiData = $builder
+			->orderBy('mk.kode_mk', 'ASC')
+			->get()
+			->getResultArray();
+
+		if (empty($nilaiData)) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Belum ada data CPMK untuk filter yang dipilih'
+			]);
+		}
+
+		// Group by mata kuliah
+		$mkGroups = [];
+
+		foreach ($nilaiData as $row) {
+			$mkKey = $row['mata_kuliah_id'];
+			$cpmkId = $row['cpmk_id'];
+
+			// Decode the weight (bobot) from JSON
+			$teknikData = json_decode($row['teknik_penilaian'], true);
+
+			// Check if teknikData is valid and is an array
+			if (!is_array($teknikData)) {
+				continue;
+			}
+
+			$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
+
+			if ($bobot > 0 && $row['nilai'] !== null) {
+				if (!isset($mkGroups[$mkKey])) {
+					$mkGroups[$mkKey] = [
+						'kode_mk' => $row['kode_mk'],
+						'nama_mk' => $row['nama_mk'],
+						'tahun_akademik' => $row['tahun_akademik'],
+						'kelas' => $row['kelas'],
+						'cpmk_scores' => []
+					];
+				}
+
+				if (!isset($mkGroups[$mkKey]['cpmk_scores'][$cpmkId])) {
+					$mkGroups[$mkKey]['cpmk_scores'][$cpmkId] = [
+						'cpmk_id' => $cpmkId,
+						'kode_cpmk' => $row['kode_cpmk'],
+						'deskripsi' => $row['deskripsi'],
+						'total_weighted' => 0,
+						'total_bobot' => 0
+					];
+				}
+
+				$mkGroups[$mkKey]['cpmk_scores'][$cpmkId]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+				$mkGroups[$mkKey]['cpmk_scores'][$cpmkId]['total_bobot'] += $bobot;
+			}
+		}
+
+		// Calculate average CPMK for each mata kuliah
+		$reportData = [];
+		foreach ($mkGroups as $mkData) {
+			$totalCapaian = 0;
+			$countCpmk = 0;
+			$cpmkDetails = [];
+
+			foreach ($mkData['cpmk_scores'] as $cpmkData) {
+				$capaian = $cpmkData['total_bobot'] > 0
+					? round(($cpmkData['total_weighted'] / $cpmkData['total_bobot']) * 100, 2)
+					: 0;
+
+				if ($capaian > 0) {
+					$totalCapaian += $capaian;
+					$countCpmk++;
+				}
+
+				$cpmkDetails[] = [
+					'kode_cpmk' => $cpmkData['kode_cpmk'],
+					'deskripsi' => $cpmkData['deskripsi'],
+					'capaian' => $capaian
+				];
+			}
+
+			$avgCpmk = $countCpmk > 0 ? round($totalCapaian / $countCpmk, 2) : 0;
+
+			$reportData[] = [
+				'kode_mk' => $mkData['kode_mk'],
+				'nama_mk' => $mkData['nama_mk'],
+				'tahun_akademik' => $mkData['tahun_akademik'],
+				'kelas' => $mkData['kelas'],
+				'avg_cpmk' => $avgCpmk,
+				'cpmk_details' => $cpmkDetails
+			];
+		}
+
+			// Check if we have any valid report data
+			if (empty($reportData)) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Tidak ada data CPMK yang valid untuk filter yang dipilih'
+				]);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => $reportData
+			]);
+		} catch (\Exception $e) {
+			log_message('error', 'Error in getLaporanCpmkData: ' . $e->getMessage());
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+			]);
+		}
+	}
+
+	/**
+	 * Mahasiswa - Get CPMK Detail Calculation (AJAX)
+	 */
+	public function getCpmkDetailCalculation()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+		}
+
+		try {
+			$mahasiswaId = session('mahasiswa_id');
+			$kodeMk = $this->request->getGet('kode_mk');
+			$semester = $this->request->getGet('semester');
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+
+			if (!$kodeMk) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Parameter tidak lengkap'
+				]);
+			}
+
+			$db = \Config\Database::connect();
+
+		// Get mata kuliah info
+		$mk = $db->table('mata_kuliah')->where('kode_mk', $kodeMk)->get()->getRowArray();
+		if (!$mk) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Mata kuliah tidak ditemukan'
+			]);
+		}
+
+		// Get all assessment scores with weights for this student and mata kuliah
+		$builder = $db->table('nilai_teknik_penilaian ntp')
+			->select('ntp.nilai, ntp.teknik_penilaian_key,
+			         rm.cpmk_id, rm.teknik_penilaian,
+			         cpmk.kode_cpmk, cpmk.deskripsi,
+			         mk.kode_mk, mk.nama_mk')
+			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+			->join('cpmk', 'cpmk.id = rm.cpmk_id')
+			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+			->where('ntp.mahasiswa_id', $mahasiswaId)
+			->where('mk.kode_mk', $kodeMk);
+
+		// Apply semester filter if provided
+		if ($semester) {
+			$builder->where('jm.tahun_akademik', $semester);
+		}
+
+		// Apply tahun akademik filter if provided
+		if ($tahunAkademik) {
+			$builder->like('jm.tahun_akademik', $tahunAkademik, 'both');
+		}
+
+		$nilaiData = $builder
+			->orderBy('cpmk.kode_cpmk', 'ASC')
+			->get()
+			->getResultArray();
+
+		// Group by CPMK and calculate
+		$cpmkGroups = [];
+		foreach ($nilaiData as $row) {
+			$cpmkId = $row['cpmk_id'];
+
+			// Decode the weight (bobot) from JSON
+			$teknikData = json_decode($row['teknik_penilaian'], true);
+
+			// Check if teknikData is valid and is an array
+			if (!is_array($teknikData)) {
+				continue;
+			}
+
+			$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
+
+			if ($bobot > 0 && $row['nilai'] !== null) {
+				if (!isset($cpmkGroups[$cpmkId])) {
+					$cpmkGroups[$cpmkId] = [
+						'kode_cpmk' => $row['kode_cpmk'],
+						'deskripsi' => $row['deskripsi'],
+						'total_weighted' => 0,
+						'total_bobot' => 0
+					];
+				}
+
+				$cpmkGroups[$cpmkId]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+				$cpmkGroups[$cpmkId]['total_bobot'] += $bobot;
+			}
+		}
+
+		// Calculate final values
+		$detailData = [];
+		$totalCapaian = 0;
+		$countCpmk = 0;
+
+		foreach ($cpmkGroups as $cpmkData) {
+			$capaian = $cpmkData['total_bobot'] > 0
+				? round(($cpmkData['total_weighted'] / $cpmkData['total_bobot']) * 100, 2)
+				: 0;
+
+			$detailData[] = [
+				'kode_cpmk' => $cpmkData['kode_cpmk'],
+				'deskripsi' => $cpmkData['deskripsi'],
+				'capaian' => $capaian
+			];
+
+			if ($capaian > 0) {
+				$totalCapaian += $capaian;
+				$countCpmk++;
+			}
+		}
+
+			$avgCpmk = $countCpmk > 0 ? round($totalCapaian / $countCpmk, 2) : 0;
+
+			// Check if we have any valid data
+			if (empty($detailData)) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Tidak ada data detail CPMK untuk mata kuliah ini'
+				]);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => $detailData,
+				'summary' => [
+					'kode_mk' => $mk['kode_mk'],
+					'nama_mk' => $mk['nama_mk'],
+					'avg_cpmk' => $avgCpmk,
+					'jumlah_cpmk' => $countCpmk
+				]
+			]);
+		} catch (\Exception $e) {
+			log_message('error', 'Error in getCpmkDetailCalculation: ' . $e->getMessage());
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+			]);
+		}
+	}
+
+	/**
+	 * Mahasiswa - Laporan CPL
+	 */
+	public function laporanCpl()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return redirect()->to('/login');
+		}
+
+		$data = [
+			'title' => 'Laporan CPL',
+			'semesterList' => $this->getSemesterList(),
+			'tahunAkademikList' => $this->getTahunAkademikList()
+		];
+
+		return view('mahasiswa/laporan_cpl', $data);
+	}
+
+	/**
+	 * Mahasiswa - Get Laporan CPL Data (AJAX)
+	 */
+	public function getLaporanCplData()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+		}
+
+		try {
+			$mahasiswaId = session('mahasiswa_id');
+			$semester = $this->request->getGet('semester');
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+
+			$db = \Config\Database::connect();
+
+		// Get all CPL
+		$cplList = $db->table('cpl')
+			->orderBy('kode_cpl', 'ASC')
+			->get()
+			->getResultArray();
+
+		if (empty($cplList)) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Tidak ada data CPL'
+			]);
+		}
+
+		// Get all jadwal for this student (filtered by semester/tahun akademik)
+		$jadwalBuilder = $db->table('nilai_mahasiswa nm')
+			->distinct()
+			->select('jm.id, jm.mata_kuliah_id, mk.kode_mk, mk.nama_mk')
+			->join('jadwal_mengajar jm', 'jm.id = nm.jadwal_mengajar_id')
+			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+			->where('nm.mahasiswa_id', $mahasiswaId);
+
+		// Apply filters
+		if ($semester) {
+			$jadwalBuilder->where('jm.tahun_akademik', $semester);
+		}
+
+		if ($tahunAkademik) {
+			$jadwalBuilder->like('jm.tahun_akademik', $tahunAkademik, 'both');
+		}
+
+		$jadwalList = $jadwalBuilder->get()->getResultArray();
+
+		if (empty($jadwalList)) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Belum ada data untuk filter yang dipilih'
+			]);
+		}
+
+		// Group by mata kuliah
+		$mkList = [];
+		foreach ($jadwalList as $jadwal) {
+			$mkKey = $jadwal['mata_kuliah_id'];
+			if (!isset($mkList[$mkKey])) {
+				$mkList[$mkKey] = [
+					'mata_kuliah_id' => $jadwal['mata_kuliah_id'],
+					'kode_mk' => $jadwal['kode_mk'],
+					'nama_mk' => $jadwal['nama_mk'],
+					'cpl_data' => []
+				];
+			}
+		}
+
+		// Calculate CPL for each mata kuliah
+		$reportData = [];
+
+		foreach ($mkList as $mk) {
+			$cplScores = [];
+
+			foreach ($cplList as $cpl) {
+				// Get all CPMK linked to this CPL
+				$cpmkLinked = $db->table('cpl_cpmk')
+					->select('cpmk_id')
+					->where('cpl_id', $cpl['id'])
+					->get()
+					->getResultArray();
+
+				if (empty($cpmkLinked)) {
+					$cplScores[] = [
+						'kode_cpl' => $cpl['kode_cpl'],
+						'capaian' => 0
+					];
+					continue;
+				}
+
+				$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
+
+				// Get nilai_cpmk for this student, mata kuliah, and these CPMK
+				$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
+					->select('ncm.nilai_cpmk, ncm.cpmk_id')
+					->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+					->where('ncm.mahasiswa_id', $mahasiswaId)
+					->where('jm.mata_kuliah_id', $mk['mata_kuliah_id'])
+					->whereIn('ncm.cpmk_id', $cpmkIds);
+
+				// Apply filters
+				if ($semester) {
+					$nilaiBuilder->where('jm.tahun_akademik', $semester);
+				}
+
+				if ($tahunAkademik) {
+					$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'both');
+				}
+
+				$nilaiList = $nilaiBuilder->get()->getResultArray();
+
+				// Calculate CPL using formula:
+				// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+				$nilaiCpl = 0;
+				$totalBobot = 0;
+
+				foreach ($nilaiList as $nilai) {
+					// Get bobot from rps_mingguan
+					$rps = $db->table('rps')
+						->select('id')
+						->where('mata_kuliah_id', $mk['mata_kuliah_id'])
+						->orderBy('created_at', 'DESC')
+						->get()
+						->getRowArray();
+
+					$bobot = 0;
+					if ($rps) {
+						// Sum bobot across all weeks for this CPMK
+						$bobotResult = $db->table('rps_mingguan')
+							->selectSum('bobot')
+							->where('rps_id', $rps['id'])
+							->where('cpmk_id', $nilai['cpmk_id'])
+							->get()
+							->getRowArray();
+
+						$bobot = $bobotResult['bobot'] ?? 0;
+					}
+
+					// Sum CPMK scores and bobot
+					if ($bobot > 0) {
+						$nilaiCpl += $nilai['nilai_cpmk'];
+						$totalBobot += $bobot;
+					}
+				}
+
+				// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+				$capaianCpl = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+
+				$cplScores[] = [
+					'kode_cpl' => $cpl['kode_cpl'],
+					'capaian' => $capaianCpl
+				];
+			}
+
+			// Calculate average CPL for this mata kuliah
+			$totalCpl = 0;
+			$countCpl = 0;
+			foreach ($cplScores as $cplScore) {
+				if ($cplScore['capaian'] > 0) {
+					$totalCpl += $cplScore['capaian'];
+					$countCpl++;
+				}
+			}
+
+			$avgCpl = $countCpl > 0 ? round($totalCpl / $countCpl, 2) : 0;
+
+			$reportData[] = [
+				'kode_mk' => $mk['kode_mk'],
+				'nama_mk' => $mk['nama_mk'],
+				'avg_cpl' => $avgCpl,
+				'cpl_details' => $cplScores
+			];
+		}
+
+			// Check if we have any valid data
+			if (empty($reportData)) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Tidak ada data CPL yang valid untuk filter yang dipilih'
+				]);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => $reportData
+			]);
+		} catch (\Exception $e) {
+			log_message('error', 'Error in getLaporanCplData: ' . $e->getMessage());
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+			]);
+		}
+	}
+
+	/**
+	 * Mahasiswa - Get CPL Detail Calculation (AJAX)
+	 */
+	public function getCplDetailCalculation()
+	{
+		if (session('role') !== 'mahasiswa') {
+			return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+		}
+
+		try {
+			$mahasiswaId = session('mahasiswa_id');
+			$kodeMk = $this->request->getGet('kode_mk');
+			$semester = $this->request->getGet('semester');
+			$tahunAkademik = $this->request->getGet('tahun_akademik');
+
+			if (!$kodeMk) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Parameter tidak lengkap'
+				]);
+			}
+
+			$db = \Config\Database::connect();
+
+		// Get mata kuliah info
+		$mk = $db->table('mata_kuliah')->where('kode_mk', $kodeMk)->get()->getRowArray();
+		if (!$mk) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Mata kuliah tidak ditemukan'
+			]);
+		}
+
+		// Get all CPL
+		$cplList = $db->table('cpl')
+			->orderBy('kode_cpl', 'ASC')
+			->get()
+			->getResultArray();
+
+		$detailData = [];
+
+		foreach ($cplList as $cpl) {
+			// Get all CPMK linked to this CPL
+			$cpmkLinked = $db->table('cpl_cpmk')
+				->select('cpmk_id')
+				->where('cpl_id', $cpl['id'])
+				->get()
+				->getResultArray();
+
+			if (empty($cpmkLinked)) {
+				$detailData[] = [
+					'kode_cpl' => $cpl['kode_cpl'],
+					'deskripsi' => $cpl['deskripsi'],
+					'capaian' => 0
+				];
+				continue;
+			}
+
+			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
+
+			// Get nilai_cpmk for this student and mata kuliah
+			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id')
+				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->where('ncm.mahasiswa_id', $mahasiswaId)
+				->where('jm.mata_kuliah_id', $mk['id'])
+				->whereIn('ncm.cpmk_id', $cpmkIds);
+
+			// Apply filters
+			if ($semester) {
+				$nilaiBuilder->where('jm.tahun_akademik', $semester);
+			}
+
+			if ($tahunAkademik) {
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'both');
+			}
+
+			$nilaiList = $nilaiBuilder->get()->getResultArray();
+
+			// Calculate CPL
+			$nilaiCpl = 0;
+			$totalBobot = 0;
+
+			foreach ($nilaiList as $nilai) {
+				// Get bobot from rps_mingguan
+				$rps = $db->table('rps')
+					->select('id')
+					->where('mata_kuliah_id', $mk['id'])
+					->orderBy('created_at', 'DESC')
+					->get()
+					->getRowArray();
+
+				$bobot = 0;
+				if ($rps) {
+					// Sum bobot across all weeks for this CPMK
+					$bobotResult = $db->table('rps_mingguan')
+						->selectSum('bobot')
+						->where('rps_id', $rps['id'])
+						->where('cpmk_id', $nilai['cpmk_id'])
+						->get()
+						->getRowArray();
+
+					$bobot = $bobotResult['bobot'] ?? 0;
+				}
+
+				// Sum CPMK scores and bobot
+				if ($bobot > 0) {
+					$nilaiCpl += $nilai['nilai_cpmk'];
+					$totalBobot += $bobot;
+				}
+			}
+
+			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
+			$capaianCpl = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+
+			$detailData[] = [
+				'kode_cpl' => $cpl['kode_cpl'],
+				'deskripsi' => $cpl['deskripsi'],
+				'capaian' => $capaianCpl
+			];
+		}
+
+		// Calculate average
+		$totalCapaian = 0;
+		$countCpl = 0;
+
+		foreach ($detailData as $cplData) {
+			if ($cplData['capaian'] > 0) {
+				$totalCapaian += $cplData['capaian'];
+				$countCpl++;
+			}
+		}
+
+			$avgCpl = $countCpl > 0 ? round($totalCapaian / $countCpl, 2) : 0;
+
+			// Check if we have any valid data
+			if (empty($detailData)) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Tidak ada detail CPL yang valid untuk mata kuliah ini'
+				]);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => $detailData,
+				'summary' => [
+					'kode_mk' => $mk['kode_mk'],
+					'nama_mk' => $mk['nama_mk'],
+					'avg_cpl' => $avgCpl,
+					'jumlah_cpl' => $countCpl
+				]
+			]);
+		} catch (\Exception $e) {
+			log_message('error', 'Error in getCplDetailCalculation: ' . $e->getMessage());
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+			]);
+		}
+	}
+
+	/**
+	 * Helper - Get Semester List
+	 */
+	private function getSemesterList()
+	{
+		$db = \Config\Database::connect();
+		$builder = $db->table('jadwal_mengajar');
+		$result = $builder
+			->select('tahun_akademik')
+			->distinct()
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// tahun_akademik already contains the semester (e.g., "2024/2025 Ganjil")
+		return array_column($result, 'tahun_akademik');
+	}
+
+	/**
+	 * Helper - Get Tahun Akademik List
+	 */
+	private function getTahunAkademikList()
+	{
+		$db = \Config\Database::connect();
+		$builder = $db->table('jadwal_mengajar');
+		$result = $builder
+			->select('tahun_akademik')
+			->distinct()
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Extract just the year part (e.g., "2024/2025" from "2024/2025 Ganjil")
+		$tahunAkademikList = [];
+		foreach ($result as $row) {
+			$tahunAkademik = $row['tahun_akademik'];
+			// Remove " Ganjil" or " Genap" from the end
+			$yearOnly = preg_replace('/ (Ganjil|Genap)$/', '', $tahunAkademik);
+			if (!in_array($yearOnly, $tahunAkademikList)) {
+				$tahunAkademikList[] = $yearOnly;
+			}
+		}
+
+		return $tahunAkademikList;
+	}
+
+	/**
 	 * Helper function to get current academic year
 	 */
 	private function getCurrentAcademicYear()

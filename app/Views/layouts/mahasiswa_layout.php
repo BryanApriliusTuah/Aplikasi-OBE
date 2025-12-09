@@ -68,6 +68,35 @@
 					</a>
 				</li>
 
+				<li class="nav-item">
+					<a class="nav-link<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? ' active' : '' ?>"
+						data-bs-toggle="collapse" href="#laporanSubmenu" role="button"
+						aria-expanded="<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? 'true' : 'false' ?>"
+						aria-controls="laporanSubmenu"
+						title="Lihat laporan CPL dan CPMK">
+						<i class="bi bi-file-earmark-text"></i> Laporan
+						<i class="bi bi-chevron-down float-end"></i>
+					</a>
+					<div class="collapse<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? ' show' : '' ?>" id="laporanSubmenu">
+						<ul class="nav flex-column ms-3">
+							<li class="nav-item">
+								<a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpmk' ? ' active' : '' ?>"
+									href="<?= base_url('mahasiswa/laporan-cpmk') ?>"
+									data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian CPMK">
+									<i class="bi bi-graph-up"></i> Laporan CPMK
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpl' ? ' active' : '' ?>"
+									href="<?= base_url('mahasiswa/laporan-cpl') ?>"
+									data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian CPL">
+									<i class="bi bi-trophy"></i> Laporan CPL
+								</a>
+							</li>
+						</ul>
+					</div>
+				</li>
+
 				<!-- <li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'mahasiswa/jadwal' ? ' active' : '' ?>"
 						href="<?= base_url('mahasiswa/jadwal') ?>"

@@ -305,6 +305,14 @@ $routes->group('mahasiswa', ['filter' => 'auth'], function ($routes) {
 	$routes->get('profil-cpl', 'MahasiswaController::profilCpl');
 	$routes->get('profil-cpl/detail', 'MahasiswaController::getCplDetail');
 
+	// Laporan Routes
+	$routes->get('laporan-cpmk', 'MahasiswaController::laporanCpmk');
+	$routes->get('get-laporan-cpmk-data', 'MahasiswaController::getLaporanCpmkData');
+	$routes->get('get-cpmk-detail-calculation', 'MahasiswaController::getCpmkDetailCalculation');
+	$routes->get('laporan-cpl', 'MahasiswaController::laporanCpl');
+	$routes->get('get-laporan-cpl-data', 'MahasiswaController::getLaporanCplData');
+	$routes->get('get-cpl-detail-calculation', 'MahasiswaController::getCplDetailCalculation');
+
 	// MBKM Routes (if needed)
 	$routes->get('mbkm', 'MahasiswaController::mbkm');
 	$routes->get('mbkm/daftar', 'MahasiswaController::mbkmDaftar');
