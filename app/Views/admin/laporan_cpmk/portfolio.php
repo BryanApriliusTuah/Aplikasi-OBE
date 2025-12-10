@@ -330,7 +330,7 @@
             <!-- 6. Dokumen Pendukung -->
             <div class="section mb-4">
                 <h5 class="fw-bold mb-3">6. Dokumen Pendukung</h5>
-                <p class="mb-2 no-print">(Pilih dokumen yang akan disertakan dalam unduhan)</p>
+                <p class="mb-2 no-print">(Pilih dokumen yang akan disertakan dalam unduhan atau klik untuk unduh satu per satu)</p>
                 <p class="mb-2 d-none d-print-block">(Lampirkan dalam satu file atau folder terorganisir)</p>
 
                 <div class="no-print">
@@ -346,19 +346,37 @@
                     <div class="form-check mb-2">
                         <input class="form-check-input document-checkbox" type="checkbox" value="rps" id="doc_rps" data-label="RPS (Rencana Pembelajaran Semester)" checked onchange="updatePrintDocuments()">
                         <label class="form-check-label" for="doc_rps">
-                            RPS (Rencana Pembelajaran Semester)
+                            <?php if ($portfolio['rps_id']): ?>
+                                <a href="<?= base_url('rps/export/doc/' . $portfolio['rps_id']) ?>" class="text-decoration-none">
+                                    RPS (Rencana Pembelajaran Semester) <i class="bi bi-file-earmark-word"></i>
+                                </a>
+                            <?php else: ?>
+                                RPS (Rencana Pembelajaran Semester) <span class="text-muted">(RPS tidak tersedia)</span>
+                            <?php endif; ?>
                         </label>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input document-checkbox" type="checkbox" value="nilai" id="doc_nilai" data-label="Daftar nilai mahasiswa" checked onchange="updatePrintDocuments()">
                         <label class="form-check-label" for="doc_nilai">
-                            Daftar nilai mahasiswa
+                            <?php if ($portfolio['jadwal_mengajar_id']): ?>
+                                <a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_mengajar_id']) ?>" class="text-decoration-none" target="_blank">
+                                    Daftar nilai mahasiswa <i class="bi bi-file-earmark-excel"></i>
+                                </a>
+                            <?php else: ?>
+                                Daftar nilai mahasiswa <span class="text-muted">(Data tidak tersedia)</span>
+                            <?php endif; ?>
                         </label>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input document-checkbox" type="checkbox" value="rekapitulasi" id="doc_rekapitulasi" data-label="Rekapitulasi nilai per CPMK" checked onchange="updatePrintDocuments()">
                         <label class="form-check-label" for="doc_rekapitulasi">
-                            Rekapitulasi nilai per CPMK
+                            <?php if ($portfolio['jadwal_mengajar_id']): ?>
+                                <a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_mengajar_id']) ?>" class="text-decoration-none" target="_blank">
+                                    Rekapitulasi nilai per CPMK <i class="bi bi-file-earmark-excel"></i>
+                                </a>
+                            <?php else: ?>
+                                Rekapitulasi nilai per CPMK <span class="text-muted">(Data tidak tersedia)</span>
+                            <?php endif; ?>
                         </label>
                     </div>
                 </div>
