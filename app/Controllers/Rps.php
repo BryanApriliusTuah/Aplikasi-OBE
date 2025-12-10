@@ -528,4 +528,73 @@ public function mingguan_edit($id)
         $data = RpsPreviewService::getData($id);
         return view('rps/preview', $data);
     }
+
+    // EXPORT RPS as DOC
+    public function exportDoc($id)
+    {
+        try {
+            // Get RPS data
+            $rpsData = RpsPreviewService::getData($id);
+            $rpsData['for_doc'] = true;
+
+            // Generate HTML content
+            $fullHtml = view('rps/preview', $rpsData);
+
+            // Extract only the content within #rps-content div
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $fullHtml);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+            $contentNode = $xpath->query("//*[@id='rps-content']")->item(0);
+
+            if ($contentNode) {
+                // Get the inner HTML of rps-content
+                $cleanHtml = '';
+                foreach ($contentNode->childNodes as $child) {
+                    $cleanHtml .= $dom->saveHTML($child);
+                }
+
+                // Wrap in Word-compatible HTML structure with proper styling
+                $rpsHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " .
+                    "xmlns:w='urn:schemas-microsoft-com:office:word' " .
+                    "xmlns='http://www.w3.org/TR/REC-html40'>" .
+                    "<head><meta charset='utf-8'><title>RPS</title>" .
+                    "<style>" .
+                    "@page { size: A4 portrait; margin: 20mm 15mm 20mm 15mm; }" .
+                    "body { font-family: Arial, sans-serif; font-size: 10pt; }" .
+                    "table, th, td { border: 1px solid black; border-collapse: collapse; padding: 4px; }" .
+                    "table { width: 100%; }" .
+                    "th { background-color: #f2f2f2; font-weight: bold; }" .
+                    ".text-center { text-align: center; }" .
+                    ".fw-bold { font-weight: bold; }" .
+                    "</style></head><body>" .
+                    $cleanHtml .
+                    "</body></html>";
+            } else {
+                // Fallback: use full HTML with wrapper
+                $rpsHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " .
+                    "xmlns:w='urn:schemas-microsoft-com:office:word' " .
+                    "xmlns='http://www.w3.org/TR/REC-html40'>" .
+                    "<head><meta charset='utf-8'><title>RPS</title></head><body>" .
+                    $fullHtml .
+                    "</body></html>";
+            }
+
+            // Generate filename
+            $mata_kuliah = $rpsData['rps']['mata_kuliah'] ?? 'RPS';
+            $filename = 'RPS_' . str_replace(' ', '_', $mata_kuliah) . '.doc';
+
+            // Return download response with BOM for proper encoding
+            return $this->response
+                ->setHeader('Content-Type', 'application/msword; charset=utf-8')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->setBody("\xEF\xBB\xBF" . $rpsHtml);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error exporting RPS as DOC: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengunduh RPS.');
+        }
+    }
 }
