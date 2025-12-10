@@ -9,9 +9,6 @@
                 <i class="bi bi-arrow-left"></i> Kembali
             </a>
             <div class="btn-group">
-                <button type="button" class="btn btn-primary" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Cetak
-                </button>
                 <button type="button" class="btn btn-success" onclick="exportToZIP()">
                     <i class="bi bi-file-earmark-zip"></i> Download ZIP
                 </button>
