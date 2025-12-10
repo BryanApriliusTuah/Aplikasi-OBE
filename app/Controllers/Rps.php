@@ -583,7 +583,7 @@ public function mingguan_edit($id)
             }
 
             // Generate filename
-            $mata_kuliah = $rpsData['rps']['mata_kuliah'] ?? 'RPS';
+            $mata_kuliah = $rpsData['rps']['nama_mk'] ?? 'Mata_Kuliah';
             $filename = 'RPS_' . str_replace(' ', '_', $mata_kuliah) . '.doc';
 
             // Return download response with BOM for proper encoding
