@@ -461,8 +461,8 @@
                                 <?php foreach ($report['lampiran']['rps_list'] as $item): ?>
                                     <li>
                                         <?php if ($item['rps_id']): ?>
-                                            <a href="<?= base_url('rps/preview/' . $item['rps_id']) ?>" target="_blank" class="text-decoration-none">
-                                                <?= esc($item['nama_mk']) ?> <i class="bi bi-file-earmark-pdf"></i>
+                                            <a href="<?= base_url('rps/export/doc/' . $item['rps_id']) ?>" class="text-decoration-none">
+                                                <?= esc($item['nama_mk']) ?> <i class="bi bi-file-earmark-word"></i>
                                             </a>
                                         <?php else: ?>
                                             <?= esc($item['nama_mk']) ?> <span class="text-muted">(RPS tidak tersedia)</span>
