@@ -156,6 +156,14 @@ class LaporanCpmk extends BaseController
 		$jadwalMengajarId = $jadwalMengajar[0]['id'] ?? null;
 		$cqiData = $jadwalMengajarId ? $this->getCqiData($jadwalMengajarId) : [];
 
+		// 6. Get RPS ID for document download
+		$rpsId = $this->db->table('rps')
+			->where('mata_kuliah_id', $mataKuliahId)
+			->orderBy('id', 'DESC')
+			->limit(1)
+			->get()
+			->getRow('id');
+
 		return [
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
@@ -172,6 +180,7 @@ class LaporanCpmk extends BaseController
 			'passing_threshold' => $passingThreshold,
 			'mata_kuliah_id' => $mataKuliahId,
 			'jadwal_mengajar_id' => $jadwalMengajarId,
+			'rps_id' => $rpsId,
 			'cqi_data' => $cqiData
 		];
 	}
