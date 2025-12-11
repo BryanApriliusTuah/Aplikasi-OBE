@@ -2,6 +2,40 @@
 
 <?= $this->section('content') ?>
 
+<style>
+	.filter-card {
+		border: 2px solid #e0e0e0;
+		background: #ffffff;
+	}
+
+	.filter-card:hover {
+		transform: translateY(-5px);
+		border-color: #0d6efd !important;
+	}
+
+	.filter-card.border-primary {
+		background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+	}
+
+	.filter-card i {
+		transition: all 0.3s ease;
+	}
+
+	.filter-card:hover i {
+		transform: scale(1.1);
+	}
+
+	.filter-card .card-title {
+		transition: all 0.3s ease;
+		font-size: 1.1rem;
+	}
+
+	.filter-card .card-text {
+		line-height: 1.4;
+		min-height: 40px;
+	}
+</style>
+
 <div class="card">
 	<div class="card-body">
 		<h2 class="mb-4">Capaian CPL</h2>
@@ -23,78 +57,208 @@
 					<i class="bi bi-bar-chart-line"></i> Keseluruhan
 				</button>
 			</li>
-			<!-- <li class="nav-item" role="presentation">
-				<button class="nav-link" id="all-subjects-tab" data-bs-toggle="tab" data-bs-target="#allSubjects" type="button" role="tab">
-					<i class="bi bi-grid-3x3"></i> Seluruh Mata Kuliah
-				</button>
-			</li> -->
 		</ul>
 
 		<!-- Tab Content -->
 		<div class="tab-content" id="cplTabContent">
-			<!-- Individual Tab -->
+			<!-- Individual Tab (Mahasiswa) -->
 			<div class="tab-pane fade show active" id="individual" role="tabpanel">
-				<!-- Filter Section Individual -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter Mahasiswa</h5>
+				<!-- Sub-tabs for different filter types -->
+				<div class="row g-3 mb-4">
+					<div class="col-md-4">
+						<div class="card filter-card h-100 border-primary shadow-sm" id="filter1-card" role="button" data-bs-toggle="tab" data-bs-target="#filter1" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-person-check-fill text-primary" style="font-size: 1.8rem;"></i>
+								</div>
+								<h6 class="card-title mb-2 text-primary fw-bold">CPL Mahasiswa</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan CPL mahasiswa dilakukan dengan menjumlahkan seluruh CPMK pada berbagai mata kuliah yang telah ditempuh.</p>
+							</div>
+						</div>
 					</div>
-					<div class="card-body">
-						<form id="filterIndividualForm">
-							<div class="row g-3 mb-3">
-								<div class="col-md-6">
-									<label for="programStudiSelect" class="form-label">Program Studi</label>
-									<select class="form-select" id="programStudiSelect" name="program_studi">
-										<option value="">-- Semua Program Studi --</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
-										<?php endforeach; ?>
-									</select>
+					<div class="col-md-4">
+						<div class="card filter-card h-100 shadow-sm" id="filter2-card" role="button" data-bs-toggle="tab" data-bs-target="#filter2" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-calendar-range text-secondary" style="font-size: 1.8rem;"></i>
 								</div>
-								<div class="col-md-6">
-									<label for="tahunAngkatanSelect" class="form-label">Tahun Angkatan</label>
-									<select class="form-select" id="tahunAngkatanSelect" name="tahun_angkatan">
-										<option value="">-- Semua Tahun --</option>
-										<?php foreach ($tahunAngkatan as $tahun): ?>
-											<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
+								<h6 class="card-title mb-2">CPL per Semester</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan CPL mahasiswa per semester dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam satu semester.</p>
 							</div>
-							<div class="row g-3 mb-3">
-								<div class="col-md-6">
-									<label for="semesterSelect" class="form-label">Semester</label>
-									<select class="form-select" id="semesterSelect" name="semester">
-										<option value="">-- Semua Semester --</option>
-										<?php foreach ($semesterList as $semester): ?>
-											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
-										<?php endforeach; ?>
-									</select>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="card filter-card h-100 shadow-sm" id="filter3-card" role="button" data-bs-toggle="tab" data-bs-target="#filter3" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
 								</div>
-								<div class="col-md-6">
-									<label for="tahunAkademikSelect" class="form-label">Tahun Akademik</label>
-									<select class="form-select" id="tahunAkademikSelect" name="tahun_akademik_filter">
-										<option value="">-- Semua Tahun --</option>
-										<?php foreach ($tahunAkademikList as $ta): ?>
-											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
+								<h6 class="card-title mb-2">CPL per Tahun Akademik</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan CPL mahasiswa per tahun akademik dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam 1 tahun akademik.</p>
 							</div>
-							<div class="row g-3">
-								<div class="col-md-10">
-									<label for="mahasiswaSelect" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
-									<select class="form-select" id="mahasiswaSelect" name="mahasiswa_id" required disabled>
-										<option value="">-- Pilih Mahasiswa --</option>
-									</select>
-								</div>
-								<div class="col-md-2 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i> Tampilkan
-									</button>
-								</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="tab-content" id="filterSubTabContent">
+					<!-- Filter 1: CPL Mahasiswa -->
+					<div class="tab-pane fade show active" id="filter1" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Mahasiswa</h5>
 							</div>
-						</form>
+							<div class="card-body">
+								<form id="filterIndividualForm1">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiSelect1" class="form-label">Program Studi</label>
+											<select class="form-select" id="programStudiSelect1" name="program_studi">
+												<option value="">-- Semua Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanSelect1" class="form-label">Tahun Angkatan</label>
+											<select class="form-select" id="tahunAngkatanSelect1" name="tahun_angkatan">
+												<option value="">-- Semua Tahun --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-10">
+											<label for="mahasiswaSelect1" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
+											<select class="form-select" id="mahasiswaSelect1" name="mahasiswa_id">
+												<option value="">-- Pilih Mahasiswa --</option>
+											</select>
+										</div>
+										<div class="col-md-2 d-flex align-items-end">
+											<button type="submit" class="btn btn-primary w-100">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+
+					<!-- Filter 2: CPL Mahasiswa per Semester -->
+					<div class="tab-pane fade" id="filter2" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Mahasiswa per Semester</h5>
+							</div>
+							<div class="card-body">
+								<form id="filterIndividualForm2">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiSelect2" class="form-label">Program Studi</label>
+											<select class="form-select" id="programStudiSelect2" name="program_studi">
+												<option value="">-- Semua Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanSelect2" class="form-label">Tahun Angkatan</label>
+											<select class="form-select" id="tahunAngkatanSelect2" name="tahun_angkatan">
+												<option value="">-- Semua Tahun --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="mahasiswaSelect2" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
+											<select class="form-select" id="mahasiswaSelect2" name="mahasiswa_id">
+												<option value="">-- Pilih Mahasiswa --</option>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="semesterSelect2" class="form-label">Semester <span class="text-danger">*</span></label>
+											<select class="form-select" id="semesterSelect2" name="semester">
+												<option value="">-- Pilih Semester --</option>
+												<?php foreach ($semesterList as $semester): ?>
+													<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-12 text-end">
+											<button type="submit" class="btn btn-primary">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+
+					<!-- Filter 3: CPL Mahasiswa per Tahun Akademik -->
+					<div class="tab-pane fade" id="filter3" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Mahasiswa per Tahun Akademik</h5>
+							</div>
+							<div class="card-body">
+								<form id="filterIndividualForm3">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiSelect3" class="form-label">Program Studi</label>
+											<select class="form-select" id="programStudiSelect3" name="program_studi">
+												<option value="">-- Semua Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanSelect3" class="form-label">Tahun Angkatan</label>
+											<select class="form-select" id="tahunAngkatanSelect3" name="tahun_angkatan">
+												<option value="">-- Semua Tahun --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="mahasiswaSelect3" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
+											<select class="form-select" id="mahasiswaSelect3" name="mahasiswa_id">
+												<option value="">-- Pilih Mahasiswa --</option>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAkademikSelect3" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
+											<select class="form-select" id="tahunAkademikSelect3" name="tahun_akademik_filter">
+												<option value="">-- Pilih Tahun Akademik --</option>
+												<?php foreach ($tahunAkademikList as $ta): ?>
+													<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-12 text-end">
+											<button type="submit" class="btn btn-primary">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -120,61 +284,186 @@
 				</div>
 			</div>
 
-			<!-- Comparative Tab -->
+			<!-- Comparative Tab (Angkatan) -->
 			<div class="tab-pane fade" id="comparative" role="tabpanel">
-				<!-- Filter Section Comparative -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter Angkatan</h5>
+				<!-- Sub-tabs for different filter types -->
+				<div class="row g-3 mb-4">
+					<div class="col-md-4">
+						<div class="card filter-card-comparative h-100 border-primary shadow-sm" id="filterComparative1-card" role="button" data-bs-toggle="tab" data-bs-target="#filterComparative1" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-people-fill text-primary" style="font-size: 1.8rem;"></i>
+								</div>
+								<h6 class="card-title mb-2 text-primary fw-bold">CPL Angkatan</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan rata-rata CPL angkatan dilakukan dengan menjumlahkan seluruh capaian CPL mahasiswa dalam satu angkatan.</p>
+							</div>
+						</div>
 					</div>
-					<div class="card-body">
-						<form id="filterComparativeForm">
-							<div class="row g-3 mb-3">
-								<div class="col-md-6">
-									<label for="programStudiComparativeSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
-									<select class="form-select" id="programStudiComparativeSelect" name="program_studi" required>
-										<option value="">-- Pilih Program Studi --</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
-										<?php endforeach; ?>
-									</select>
+					<div class="col-md-4">
+						<div class="card filter-card-comparative h-100 shadow-sm" id="filterComparative2-card" role="button" data-bs-toggle="tab" data-bs-target="#filterComparative2" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-calendar-range text-secondary" style="font-size: 1.8rem;"></i>
 								</div>
-								<div class="col-md-6">
-									<label for="tahunAngkatanComparativeSelect" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
-									<select class="form-select" id="tahunAngkatanComparativeSelect" name="tahun_angkatan" required>
-										<option value="">-- Pilih Tahun Angkatan --</option>
-										<?php foreach ($tahunAngkatan as $tahun): ?>
-											<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
+								<h6 class="card-title mb-2">CPL Angkatan per Semester</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan rata-rata CPL angkatan per semester dilakukan dengan menjumlahkan seluruh nilai CPL mahasiswa pada suatu semester, lalu dibagi dengan total mahasiswa pada angkatan tersebut.</p>
 							</div>
-							<div class="row g-3">
-								<div class="col-md-4">
-									<label for="semesterComparativeSelect" class="form-label">Semester</label>
-									<select class="form-select" id="semesterComparativeSelect" name="semester">
-										<option value="">-- Semua Semester --</option>
-										<?php foreach ($semesterList as $semester): ?>
-											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
-										<?php endforeach; ?>
-									</select>
+						</div>
+					</div>
+					<div class="col-md-4">
+						<div class="card filter-card-comparative h-100 shadow-sm" id="filterComparative3-card" role="button" data-bs-toggle="tab" data-bs-target="#filterComparative3" style="cursor: pointer; transition: all 0.3s;">
+							<div class="card-body text-center p-3">
+								<div class="mb-2">
+									<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
 								</div>
-								<div class="col-md-4">
-									<label for="tahunAkademikComparativeSelect" class="form-label">Tahun Akademik</label>
-									<select class="form-select" id="tahunAkademikComparativeSelect" name="tahun_akademik_filter">
-										<option value="">-- Semua Tahun --</option>
-										<?php foreach ($tahunAkademikList as $ta): ?>
-											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<div class="col-md-4 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i> Tampilkan
-									</button>
-								</div>
+								<h6 class="card-title mb-2">CPL Angkatan per Tahun Akademik</h6>
+								<p class="card-text text-muted small mb-0">Perhitungan rata-rata CPL angkatan per tahun akademik dilakukan dengan menjumlahkan seluruh nilai CPL mahasiswa pada tahun akademik tertentu, lalu dibagi dengan total mahasiswa pada angkatan tersebut</p>
 							</div>
-						</form>
+						</div>
+					</div>
+				</div>
+
+				<div class="tab-content" id="filterComparativeSubTabContent">
+					<!-- Filter 1: CPL Angkatan -->
+					<div class="tab-pane fade show active" id="filterComparative1" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Angkatan</h5>
+							</div>
+							<div class="card-body">
+								<form id="filterComparativeForm1">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiComparativeSelect1" class="form-label">Program Studi <span class="text-danger">*</span></label>
+											<select class="form-select" id="programStudiComparativeSelect1" name="program_studi" required>
+												<option value="">-- Pilih Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanComparativeSelect1" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
+											<select class="form-select" id="tahunAngkatanComparativeSelect1" name="tahun_angkatan" required>
+												<option value="">-- Pilih Tahun Angkatan --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-12 text-end">
+											<button type="submit" class="btn btn-primary">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+
+					<!-- Filter 2: CPL Angkatan per Semester -->
+					<div class="tab-pane fade" id="filterComparative2" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Angkatan per Semester</h5>
+							</div>
+							<div class="card-body">
+								<form id="filterComparativeForm2">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiComparativeSelect2" class="form-label">Program Studi <span class="text-danger">*</span></label>
+											<select class="form-select" id="programStudiComparativeSelect2" name="program_studi" required>
+												<option value="">-- Pilih Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanComparativeSelect2" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
+											<select class="form-select" id="tahunAngkatanComparativeSelect2" name="tahun_angkatan" required>
+												<option value="">-- Pilih Tahun Angkatan --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="semesterComparativeSelect2" class="form-label">Semester <span class="text-danger">*</span></label>
+											<select class="form-select" id="semesterComparativeSelect2" name="semester" required>
+												<option value="">-- Pilih Semester --</option>
+												<?php foreach ($semesterList as $semester): ?>
+													<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-12 text-end">
+											<button type="submit" class="btn btn-primary">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+
+					<!-- Filter 3: CPL Angkatan per Tahun Akademik -->
+					<div class="tab-pane fade" id="filterComparative3" role="tabpanel">
+						<div class="card mb-4">
+							<div class="card-header bg-light">
+								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPL Angkatan per Tahun Akademik</h5>
+							</div>
+							<div class="card-body">
+								<form id="filterComparativeForm3">
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="programStudiComparativeSelect3" class="form-label">Program Studi <span class="text-danger">*</span></label>
+											<select class="form-select" id="programStudiComparativeSelect3" name="program_studi" required>
+												<option value="">-- Pilih Program Studi --</option>
+												<?php foreach ($programStudi as $prodi): ?>
+													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="tahunAngkatanComparativeSelect3" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
+											<select class="form-select" id="tahunAngkatanComparativeSelect3" name="tahun_angkatan" required>
+												<option value="">-- Pilih Tahun Angkatan --</option>
+												<?php foreach ($tahunAngkatan as $tahun): ?>
+													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3 mb-3">
+										<div class="col-md-6">
+											<label for="tahunAkademikComparativeSelect3" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
+											<select class="form-select" id="tahunAkademikComparativeSelect3" name="tahun_akademik_filter" required>
+												<option value="">-- Pilih Tahun Akademik --</option>
+												<?php foreach ($tahunAkademikList as $ta): ?>
+													<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+									</div>
+									<div class="row g-3">
+										<div class="col-md-12 text-end">
+											<button type="submit" class="btn btn-primary">
+												<i class="bi bi-search"></i> Tampilkan
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -209,8 +498,8 @@
 					</div>
 					<div class="card-body">
 						<form id="filterKeseluruhanForm">
-							<div class="row g-3 mb-3">
-								<div class="col-md-12">
+							<div class="row g-3">
+								<div class="col-md-10">
 									<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
 									<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
 										<option value="">-- Pilih Program Studi --</option>
@@ -219,27 +508,7 @@
 										<?php endforeach; ?>
 									</select>
 								</div>
-							</div>
-							<div class="row g-3">
-								<div class="col-md-4">
-									<label for="semesterKeseluruhanSelect" class="form-label">Semester</label>
-									<select class="form-select" id="semesterKeseluruhanSelect" name="semester">
-										<option value="">-- Semua Semester --</option>
-										<?php foreach ($semesterList as $semester): ?>
-											<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<div class="col-md-4">
-									<label for="tahunAkademikKeseluruhanSelect" class="form-label">Tahun Akademik</label>
-									<select class="form-select" id="tahunAkademikKeseluruhanSelect" name="tahun_akademik_filter">
-										<option value="">-- Semua Tahun --</option>
-										<?php foreach ($tahunAkademikList as $ta): ?>
-											<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<div class="col-md-4 d-flex align-items-end">
+								<div class="col-md-2 d-flex align-items-end">
 									<button type="submit" class="btn btn-primary w-100">
 										<i class="bi bi-search"></i> Tampilkan
 									</button>
@@ -268,46 +537,6 @@
 				<div id="emptyStateKeseluruhan" class="text-center py-5">
 					<i class="bi bi-bar-chart-line" style="font-size: 4rem; color: #ccc;"></i>
 					<p class="text-muted mt-3">Pilih program studi untuk melihat grafik rata-rata capaian CPL dari semua angkatan</p>
-				</div>
-			</div>
-
-			<!-- All Subjects Tab (NEW) -->
-			<div class="tab-pane fade" id="allSubjects" role="tabpanel">
-				<!-- Filter Section All Subjects -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter</h5>
-					</div>
-					<div class="card-body">
-						<form id="filterAllSubjectsForm">
-							<div class="row g-3">
-								<div class="col-md-10">
-									<label for="programStudiAllSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
-									<select class="form-select" id="programStudiAllSelect" name="program_studi" required>
-										<option value="">-- Pilih Program Studi --</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>"><?= esc($prodi) ?></option>
-										<?php endforeach; ?>
-									</select>
-									<small class="text-muted">Menampilkan semua mata kuliah aktif dari semua tahun akademik</small>
-								</div>
-								<div class="col-md-2 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i> Tampilkan
-									</button>
-								</div>
-							</div>
-						</form>
-					</div>
-				</div>
-
-				<!-- Chart Section All Subjects -->
-				<div id="chartSectionAllSubjects" class="d-none"></div>
-
-				<!-- Empty State All Subjects -->
-				<div id="emptyStateAllSubjects" class="text-center py-5">
-					<i class="bi bi-grid-3x3" style="font-size: 4rem; color: #ccc;"></i>
-					<p class="text-muted mt-3">Pilih program studi untuk melihat capaian CPL di semua mata kuliah (semua tahun akademik)</p>
 				</div>
 			</div>
 		</div>
@@ -369,10 +598,81 @@
 	let currentIndividualData = null;
 	let currentComparativeData = null;
 	let currentKeseluruhanData = null;
+	let currentActiveFilter = 1; // Track which filter is currently active for Individual tab (1, 2, or 3)
+	let currentActiveComparativeFilter = 1; // Track which filter is currently active for Comparative tab (1, 2, or 3)
 
 	$(document).ready(function() {
-		// Initialize Select2 on Program Studi dropdown
-		$('#programStudiSelect').select2({
+		// Handle filter card interactions and active states for Individual (Mahasiswa) tab
+		$('.filter-card').on('click', function() {
+			const targetTab = $(this).data('bs-target');
+
+			// Remove active state from all cards
+			$('.filter-card').removeClass('border-primary shadow').addClass('shadow-sm');
+			$('.filter-card .card-title').removeClass('text-primary fw-bold');
+			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
+
+			// Add active state to clicked card
+			$(this).removeClass('shadow-sm').addClass('border-primary shadow');
+			$(this).find('.card-title').addClass('text-primary fw-bold');
+			$(this).find('i').removeClass('text-secondary').addClass('text-primary');
+
+			// Hide all tab panes
+			$('#filterSubTabContent .tab-pane').removeClass('show active');
+
+			// Show the target tab pane
+			$(targetTab).addClass('show active');
+		});
+
+		// Add hover effect for filter cards
+		$('.filter-card').hover(
+			function() {
+				if (!$(this).hasClass('border-primary')) {
+					$(this).removeClass('shadow-sm').addClass('shadow');
+				}
+			},
+			function() {
+				if (!$(this).hasClass('border-primary')) {
+					$(this).removeClass('shadow').addClass('shadow-sm');
+				}
+			}
+		);
+
+		// Handle filter card interactions and active states for Comparative (Angkatan) tab
+		$('.filter-card-comparative').on('click', function() {
+			const targetTab = $(this).data('bs-target');
+
+			// Remove active state from all cards
+			$('.filter-card-comparative').removeClass('border-primary shadow').addClass('shadow-sm');
+			$('.filter-card-comparative .card-title').removeClass('text-primary fw-bold');
+			$('.filter-card-comparative i').removeClass('text-primary').addClass('text-secondary');
+
+			// Add active state to clicked card
+			$(this).removeClass('shadow-sm').addClass('border-primary shadow');
+			$(this).find('.card-title').addClass('text-primary fw-bold');
+			$(this).find('i').removeClass('text-secondary').addClass('text-primary');
+
+			// Hide all tab panes
+			$('#filterComparativeSubTabContent .tab-pane').removeClass('show active');
+
+			// Show the target tab pane
+			$(targetTab).addClass('show active');
+		});
+
+		// Add hover effect for filter cards
+		$('.filter-card-comparative').hover(
+			function() {
+				if (!$(this).hasClass('border-primary')) {
+					$(this).removeClass('shadow-sm').addClass('shadow');
+				}
+			},
+			function() {
+				if (!$(this).hasClass('border-primary')) {
+					$(this).removeClass('shadow').addClass('shadow-sm');
+				}
+			}
+		);
+		// Initialize Select2 for Filter 1 (CPL Mahasiswa)
+		$('#programStudiSelect1').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Semua Program Studi --',
 			allowClear: true,
@@ -387,8 +687,7 @@
 			}
 		});
 
-		// Initialize Select2 on Tahun Angkatan dropdown
-		$('#tahunAngkatanSelect').select2({
+		$('#tahunAngkatanSelect1').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Semua Tahun --',
 			allowClear: true,
@@ -403,40 +702,7 @@
 			}
 		});
 
-		// Initialize Select2 on Semester dropdown (Individual Tab)
-		$('#semesterSelect').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Semua Semester --',
-			allowClear: true,
-			width: '100%',
-			language: {
-				noResults: function() {
-					return "Semester tidak ditemukan";
-				},
-				searching: function() {
-					return "Mencari...";
-				}
-			}
-		});
-
-		// Initialize Select2 on Tahun Akademik dropdown (Individual Tab)
-		$('#tahunAkademikSelect').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Semua Tahun --',
-			allowClear: true,
-			width: '100%',
-			language: {
-				noResults: function() {
-					return "Tahun akademik tidak ditemukan";
-				},
-				searching: function() {
-					return "Mencari...";
-				}
-			}
-		});
-
-		// Initialize Select2 on mahasiswa dropdown
-		$('#mahasiswaSelect').select2({
+		$('#mahasiswaSelect1').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Mahasiswa --',
 			allowClear: true,
@@ -454,8 +720,136 @@
 			}
 		});
 
-		// Initialize Select2 on Program Studi dropdown (Comparative Tab)
-		$('#programStudiComparativeSelect').select2({
+		// Initialize Select2 for Filter 2 (CPL per Semester)
+		$('#programStudiSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#tahunAngkatanSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#mahasiswaSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Mahasiswa --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Mahasiswa tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				},
+				inputTooShort: function() {
+					return "Ketik untuk mencari...";
+				}
+			}
+		});
+
+		$('#semesterSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Semester --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Semester tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 for Filter 3 (CPL per Tahun Akademik)
+		$('#programStudiSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#tahunAngkatanSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Semua Tahun --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#mahasiswaSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Mahasiswa --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Mahasiswa tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				},
+				inputTooShort: function() {
+					return "Ketik untuk mencari...";
+				}
+			}
+		});
+
+		$('#tahunAkademikSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Akademik --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun akademik tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		// Initialize Select2 for Comparative Filter 1
+		$('#programStudiComparativeSelect1').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Program Studi --',
 			allowClear: true,
@@ -470,8 +864,7 @@
 			}
 		});
 
-		// Initialize Select2 on Tahun Angkatan dropdown (Comparative Tab)
-		$('#tahunAngkatanComparativeSelect').select2({
+		$('#tahunAngkatanComparativeSelect1').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Tahun Angkatan --',
 			allowClear: true,
@@ -486,10 +879,40 @@
 			}
 		});
 
-		// Initialize Select2 on Semester dropdown (Comparative Tab)
-		$('#semesterComparativeSelect').select2({
+		// Initialize Select2 for Comparative Filter 2
+		$('#programStudiComparativeSelect2').select2({
 			theme: 'bootstrap-5',
-			placeholder: '-- Semua Semester --',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#tahunAngkatanComparativeSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Angkatan --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#semesterComparativeSelect2').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Semester --',
 			allowClear: true,
 			width: '100%',
 			language: {
@@ -502,10 +925,40 @@
 			}
 		});
 
-		// Initialize Select2 on Tahun Akademik dropdown (Comparative Tab)
-		$('#tahunAkademikComparativeSelect').select2({
+		// Initialize Select2 for Comparative Filter 3
+		$('#programStudiComparativeSelect3').select2({
 			theme: 'bootstrap-5',
-			placeholder: '-- Semua Tahun --',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Program studi tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#tahunAngkatanComparativeSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Angkatan --',
+			allowClear: true,
+			width: '100%',
+			language: {
+				noResults: function() {
+					return "Tahun angkatan tidak ditemukan";
+				},
+				searching: function() {
+					return "Mencari...";
+				}
+			}
+		});
+
+		$('#tahunAkademikComparativeSelect3').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Tahun Akademik --',
 			allowClear: true,
 			width: '100%',
 			language: {
@@ -534,55 +987,63 @@
 			}
 		});
 
-		// Initialize Select2 on Semester dropdown (Keseluruhan Tab)
-		$('#semesterKeseluruhanSelect').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Semua Semester --',
-			allowClear: true,
-			width: '100%',
-			language: {
-				noResults: function() {
-					return "Semester tidak ditemukan";
-				},
-				searching: function() {
-					return "Mencari...";
-				}
-			}
+		// Load initial data for all filters
+		loadMahasiswa(1);
+		loadMahasiswa(2);
+		loadMahasiswa(3);
+
+		// Individual Tab Events - Filter 1
+		$('#programStudiSelect1, #tahunAngkatanSelect1').on('change', function() {
+			loadMahasiswa(1);
 		});
 
-		// Initialize Select2 on Tahun Akademik dropdown (Keseluruhan Tab)
-		$('#tahunAkademikKeseluruhanSelect').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Semua Tahun --',
-			allowClear: true,
-			width: '100%',
-			language: {
-				noResults: function() {
-					return "Tahun akademik tidak ditemukan";
-				},
-				searching: function() {
-					return "Mencari...";
-				}
-			}
-		});
-
-		// Load initial data
-		loadMahasiswa();
-
-		// Individual Tab Events
-		$('#programStudiSelect, #tahunAngkatanSelect, #semesterSelect, #tahunAkademikSelect').on('change', function() {
-			loadMahasiswa();
-		});
-
-		$('#filterIndividualForm').on('submit', function(e) {
+		$('#filterIndividualForm1').on('submit', function(e) {
 			e.preventDefault();
-			loadIndividualChartData();
+			currentActiveFilter = 1;
+			loadIndividualChartData(1);
 		});
 
-		// Comparative Tab Events
-		$('#filterComparativeForm').on('submit', function(e) {
+		// Individual Tab Events - Filter 2
+		$('#programStudiSelect2, #tahunAngkatanSelect2').on('change', function() {
+			loadMahasiswa(2);
+		});
+
+		$('#filterIndividualForm2').on('submit', function(e) {
 			e.preventDefault();
-			loadComparativeChartData();
+			currentActiveFilter = 2;
+			loadIndividualChartData(2);
+		});
+
+		// Individual Tab Events - Filter 3
+		$('#programStudiSelect3, #tahunAngkatanSelect3').on('change', function() {
+			loadMahasiswa(3);
+		});
+
+		$('#filterIndividualForm3').on('submit', function(e) {
+			e.preventDefault();
+			currentActiveFilter = 3;
+			loadIndividualChartData(3);
+		});
+
+		// Comparative Tab Events - Filter 1
+		$('#filterComparativeForm1').on('submit', function(e) {
+			e.preventDefault();
+			currentActiveComparativeFilter = 1;
+			loadComparativeChartData(1);
+		});
+
+		// Comparative Tab Events - Filter 2
+		$('#filterComparativeForm2').on('submit', function(e) {
+			e.preventDefault();
+			currentActiveComparativeFilter = 2;
+			loadComparativeChartData(2);
+		});
+
+		// Comparative Tab Events - Filter 3
+		$('#filterComparativeForm3').on('submit', function(e) {
+			e.preventDefault();
+			currentActiveComparativeFilter = 3;
+			loadComparativeChartData(3);
 		});
 
 		// Keseluruhan Tab Events
@@ -617,48 +1078,87 @@
 	});
 
 
-	function loadMahasiswa() {
-		const programStudi = $('#programStudiSelect').val();
-		const tahunAngkatan = $('#tahunAngkatanSelect').val();
-		const semester = $('#semesterSelect').val();
-		const tahunAkademik = $('#tahunAkademikSelect').val();
+	function loadMahasiswa(filterNum) {
+		const programStudi = $(`#programStudiSelect${filterNum}`).val();
+		const tahunAngkatan = $(`#tahunAngkatanSelect${filterNum}`).val();
+
+		console.log(`Loading mahasiswa for filter ${filterNum} with filters:`, {
+			programStudi,
+			tahunAngkatan
+		});
 
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/mahasiswa") ?>',
 			method: 'GET',
 			data: {
 				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan,
-				semester: semester,
-				tahun_akademik: tahunAkademik
+				tahun_angkatan: tahunAngkatan
 			},
 			success: function(response) {
-				const mahasiswaSelect = $('#mahasiswaSelect');
+				console.log(`Mahasiswa response for filter ${filterNum}:`, response);
+				const mahasiswaSelect = $(`#mahasiswaSelect${filterNum}`);
 
 				// Clear existing options
 				mahasiswaSelect.html('<option value="">-- Pilih Mahasiswa --</option>');
 
-				if (response.length > 0) {
+				if (response && response.length > 0) {
 					response.forEach(function(mhs) {
 						mahasiswaSelect.append(`<option value="${mhs.id}">${mhs.nim} - ${mhs.nama_lengkap}</option>`);
 					});
 					mahasiswaSelect.prop('disabled', false);
+					console.log(`Loaded ${response.length} mahasiswa for filter ${filterNum}`);
 				} else {
 					mahasiswaSelect.prop('disabled', true);
+					console.log(`No mahasiswa found for filter ${filterNum}`);
 				}
 
 				// Refresh Select2 after updating options
 				mahasiswaSelect.trigger('change.select2');
+			},
+			error: function(xhr, status, error) {
+				console.error(`Error loading mahasiswa for filter ${filterNum}:`, {
+					xhr,
+					status,
+					error
+				});
+				console.error('Response text:', xhr.responseText);
+				alert('Error loading mahasiswa: ' + error);
 			}
 		});
 	}
 
-	function loadIndividualChartData() {
-		const mahasiswaId = $('#mahasiswaSelect').val();
+	function loadIndividualChartData(filterNum) {
+		const mahasiswaId = $(`#mahasiswaSelect${filterNum}`).val();
 
-		if (!mahasiswaId) {
-			alert('Silakan pilih mahasiswa terlebih dahulu');
-			return;
+		// Build the validation and data object based on filter type
+		let validationMessage = 'Silakan pilih mahasiswa terlebih dahulu';
+		let ajaxData = {
+			mahasiswa_id: mahasiswaId,
+			program_studi: $(`#programStudiSelect${filterNum}`).val(),
+			tahun_angkatan: $(`#tahunAngkatanSelect${filterNum}`).val()
+		};
+
+		// Filter-specific validation and data
+		if (filterNum === 2) {
+			const semester = $(`#semesterSelect${filterNum}`).val();
+			if (!mahasiswaId || !semester) {
+				alert('Silakan pilih mahasiswa dan semester terlebih dahulu');
+				return;
+			}
+			ajaxData.semester = semester;
+		} else if (filterNum === 3) {
+			const tahunAkademik = $(`#tahunAkademikSelect${filterNum}`).val();
+			if (!mahasiswaId || !tahunAkademik) {
+				alert('Silakan pilih mahasiswa dan tahun akademik terlebih dahulu');
+				return;
+			}
+			ajaxData.tahun_akademik = tahunAkademik;
+		} else {
+			// Filter 1 - just mahasiswa
+			if (!mahasiswaId) {
+				alert(validationMessage);
+				return;
+			}
 		}
 
 		$('#emptyStateIndividual').addClass('d-none');
@@ -669,13 +1169,7 @@
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/chart-data") ?>',
 			method: 'GET',
-			data: {
-				mahasiswa_id: mahasiswaId,
-				program_studi: $('#programStudiSelect').val(),
-				tahun_angkatan: $('#tahunAngkatanSelect').val(),
-				semester: $('#semesterSelect').val(),
-				tahun_akademik: $('#tahunAkademikSelect').val()
-			},
+			data: ajaxData,
 			success: function(response) {
 				if (response.success) {
 					currentIndividualData = response;
@@ -691,15 +1185,37 @@
 		});
 	}
 
-	function loadComparativeChartData() {
-		const programStudi = $('#programStudiComparativeSelect').val();
-		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
-		const semester = $('#semesterComparativeSelect').val();
-		const tahunAkademik = $('#tahunAkademikComparativeSelect').val();
+	function loadComparativeChartData(filterNum) {
+		const programStudi = $(`#programStudiComparativeSelect${filterNum}`).val();
+		const tahunAngkatan = $(`#tahunAngkatanComparativeSelect${filterNum}`).val();
 
-		if (!programStudi || !tahunAngkatan) {
-			alert('Silakan pilih program studi dan tahun angkatan');
-			return;
+		// Build the validation and data object based on filter type
+		let ajaxData = {
+			program_studi: programStudi,
+			tahun_angkatan: tahunAngkatan
+		};
+
+		// Filter-specific validation and data
+		if (filterNum === 2) {
+			const semester = $(`#semesterComparativeSelect${filterNum}`).val();
+			if (!programStudi || !tahunAngkatan || !semester) {
+				alert('Silakan pilih program studi, tahun angkatan, dan semester');
+				return;
+			}
+			ajaxData.semester = semester;
+		} else if (filterNum === 3) {
+			const tahunAkademik = $(`#tahunAkademikComparativeSelect${filterNum}`).val();
+			if (!programStudi || !tahunAngkatan || !tahunAkademik) {
+				alert('Silakan pilih program studi, tahun angkatan, dan tahun akademik');
+				return;
+			}
+			ajaxData.tahun_akademik = tahunAkademik;
+		} else {
+			// Filter 1 - just program studi and tahun angkatan
+			if (!programStudi || !tahunAngkatan) {
+				alert('Silakan pilih program studi dan tahun angkatan');
+				return;
+			}
 		}
 
 		$('#emptyStateComparative').addClass('d-none');
@@ -709,12 +1225,7 @@
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/comparative-data") ?>',
 			method: 'GET',
-			data: {
-				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan,
-				semester: semester,
-				tahun_akademik: tahunAkademik
-			},
+			data: ajaxData,
 			success: function(response) {
 				if (response.success) {
 					currentComparativeData = response;
@@ -732,8 +1243,6 @@
 
 	function loadKeseluruhanChartData() {
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
-		const semester = $('#semesterKeseluruhanSelect').val();
-		const tahunAkademik = $('#tahunAkademikKeseluruhanSelect').val();
 
 		if (!programStudi) {
 			alert('Silakan pilih program studi');
@@ -748,9 +1257,7 @@
 			url: '<?= base_url("admin/capaian-cpl/keseluruhan-data") ?>',
 			method: 'GET',
 			data: {
-				program_studi: programStudi,
-				semester: semester,
-				tahun_akademik: tahunAkademik
+				program_studi: programStudi
 			},
 			success: function(response) {
 				if (response.success) {
@@ -955,9 +1462,8 @@
 	}
 
 	function loadCplCalculationDetail(cplId, kodeCpl) {
-		const mahasiswaId = $('#mahasiswaSelect').val();
-		const semester = $('#semesterSelect').val();
-		const tahunAkademik = $('#tahunAkademikSelect').val();
+		// Use currentActiveFilter to get the right mahasiswa ID and filter values
+		const mahasiswaId = $(`#mahasiswaSelect${currentActiveFilter}`).val();
 
 		// Set modal title
 		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl}`);
@@ -976,15 +1482,23 @@
 		const modal = new bootstrap.Modal(document.getElementById('detailCplModal'));
 		modal.show();
 
+		// Build ajax data based on active filter
+		let ajaxData = {
+			mahasiswa_id: mahasiswaId,
+			cpl_id: cplId
+		};
+
+		// Add filter-specific data
+		if (currentActiveFilter === 2) {
+			ajaxData.semester = $(`#semesterSelect${currentActiveFilter}`).val();
+		} else if (currentActiveFilter === 3) {
+			ajaxData.tahun_akademik = $(`#tahunAkademikSelect${currentActiveFilter}`).val();
+		}
+
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/detail-calculation") ?>',
 			method: 'GET',
-			data: {
-				mahasiswa_id: mahasiswaId,
-				cpl_id: cplId,
-				semester: semester,
-				tahun_akademik: tahunAkademik
-			},
+			data: ajaxData,
 			success: function(response) {
 				if (response.success) {
 					displayCplCalculationDetail(kodeCpl, response.data, response.summary);
@@ -1152,8 +1666,6 @@
 
 	function loadKeseluruhanCplDetail(cplId, kodeCpl, index) {
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
-		const semester = $('#semesterKeseluruhanSelect').val();
-		const tahunAkademik = $('#tahunAkademikKeseluruhanSelect').val();
 
 		// Set modal title
 		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Semua Angkatan`);
@@ -1177,9 +1689,7 @@
 			method: 'GET',
 			data: {
 				cpl_id: cplId,
-				program_studi: programStudi,
-				semester: semester,
-				tahun_akademik: tahunAkademik
+				program_studi: programStudi
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1324,10 +1834,9 @@
 	}
 
 	function loadComparativeCplDetail(cplId, kodeCpl, index) {
-		const programStudi = $('#programStudiComparativeSelect').val();
-		const tahunAngkatan = $('#tahunAngkatanComparativeSelect').val();
-		const semester = $('#semesterComparativeSelect').val();
-		const tahunAkademik = $('#tahunAkademikComparativeSelect').val();
+		// Use currentActiveComparativeFilter to get the right filter values
+		const programStudi = $(`#programStudiComparativeSelect${currentActiveComparativeFilter}`).val();
+		const tahunAngkatan = $(`#tahunAngkatanComparativeSelect${currentActiveComparativeFilter}`).val();
 
 		// Set modal title
 		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Angkatan`);
@@ -1346,16 +1855,24 @@
 		const modal = new bootstrap.Modal(document.getElementById('detailCplModal'));
 		modal.show();
 
+		// Build ajax data based on active filter
+		let ajaxData = {
+			cpl_id: cplId,
+			program_studi: programStudi,
+			tahun_angkatan: tahunAngkatan
+		};
+
+		// Add filter-specific data
+		if (currentActiveComparativeFilter === 2) {
+			ajaxData.semester = $(`#semesterComparativeSelect${currentActiveComparativeFilter}`).val();
+		} else if (currentActiveComparativeFilter === 3) {
+			ajaxData.tahun_akademik = $(`#tahunAkademikComparativeSelect${currentActiveComparativeFilter}`).val();
+		}
+
 		$.ajax({
 			url: '<?= base_url("admin/capaian-cpl/comparative-detail-calculation") ?>',
 			method: 'GET',
-			data: {
-				cpl_id: cplId,
-				program_studi: programStudi,
-				tahun_angkatan: tahunAngkatan,
-				semester: semester,
-				tahun_akademik: tahunAkademik
-			},
+			data: ajaxData,
 			success: function(response) {
 				if (response.success) {
 					displayComparativeCplCalculationDetail(index, kodeCpl, response.data, response.summary);
