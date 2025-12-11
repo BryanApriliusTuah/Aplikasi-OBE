@@ -11,6 +11,7 @@ class LaporanCpl extends BaseController
 	protected $profilProdiModel;
 	protected $analysisCplModel;
 	protected $cqiModel;
+	protected $standarMinimalCapaianModel;
 
 	public function __construct()
 	{
@@ -19,6 +20,7 @@ class LaporanCpl extends BaseController
 		$this->profilProdiModel = new \App\Models\ProfilProdiModel();
 		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
 		$this->cqiModel = new \App\Models\CqiModel();
+		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
 	}
 
 	public function index()
@@ -443,7 +445,8 @@ class LaporanCpl extends BaseController
 
 	private function getAnalysisData($cplAchievementData, $programStudi = null, $tahunAkademik = null, $angkatan = null)
 	{
-		$passingThreshold = 75; // Standard 75% for CPL
+		// Get passing threshold from database
+		$passingThreshold = $this->standarMinimalCapaianModel->getPersentase();
 		$cplTercapai = [];
 		$cplTidakTercapai = [];
 
