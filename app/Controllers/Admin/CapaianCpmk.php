@@ -66,7 +66,7 @@ class CapaianCpmk extends BaseController
 			->where('mata_kuliah_id', $mataKuliahId);
 
 		if ($tahunAkademik) {
-			$jadwalBuilder->where('tahun_akademik', $tahunAkademik);
+			$jadwalBuilder->like('tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		if ($kelas) {
@@ -160,7 +160,7 @@ class CapaianCpmk extends BaseController
 			->where('mata_kuliah_id', $mataKuliahId);
 
 		if ($tahunAkademik) {
-			$jadwalBuilder->where('tahun_akademik', $tahunAkademik);
+			$jadwalBuilder->like('tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		if ($kelas) {
@@ -295,7 +295,7 @@ class CapaianCpmk extends BaseController
 			->where('mata_kuliah_id', $mataKuliahId);
 
 		if ($tahunAkademik) {
-			$builder->where('tahun_akademik', $tahunAkademik);
+			$builder->like('tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		$result = $builder
@@ -345,7 +345,7 @@ class CapaianCpmk extends BaseController
 				->where('mata_kuliah_id', $mkId);
 
 			if ($tahunAkademik) {
-				$jadwalBuilder->where('tahun_akademik', $tahunAkademik);
+				$jadwalBuilder->like('tahun_akademik', $tahunAkademik, 'after');
 			}
 
 			if ($kelas) {

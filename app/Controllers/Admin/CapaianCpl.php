@@ -128,7 +128,7 @@ class CapaianCpl extends BaseController
 			} elseif ($semester) {
 				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 			} elseif ($tahunAkademik) {
-				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
@@ -310,7 +310,7 @@ class CapaianCpl extends BaseController
 				$builder->like('jm.tahun_akademik', $semester, 'after');
 			} elseif ($tahunAkademik) {
 				// Only tahun akademik: tahun_akademik should start with "YYYY/YYYY"
-				$builder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+				$builder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
 			$mahasiswa = $builder
@@ -420,7 +420,7 @@ class CapaianCpl extends BaseController
 			} elseif ($semester) {
 				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 			} elseif ($tahunAkademik) {
-				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
@@ -667,7 +667,7 @@ class CapaianCpl extends BaseController
 		} elseif ($semester) {
 			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 		} elseif ($tahunAkademik) {
-			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		$nilaiList = $nilaiBuilder->get()->getResultArray();
@@ -814,7 +814,7 @@ class CapaianCpl extends BaseController
 		} elseif ($semester) {
 			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 		} elseif ($tahunAkademik) {
-			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		$nilaiList = $nilaiBuilder
@@ -1240,7 +1240,7 @@ class CapaianCpl extends BaseController
 			} elseif ($semester) {
 				$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 			} elseif ($tahunAkademik) {
-				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
@@ -1405,7 +1405,7 @@ class CapaianCpl extends BaseController
 		} elseif ($semester) {
 			$nilaiBuilder->like('jm.tahun_akademik', $semester, 'after');
 		} elseif ($tahunAkademik) {
-			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'before');
+			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
 		$nilaiList = $nilaiBuilder->get()->getResultArray();
