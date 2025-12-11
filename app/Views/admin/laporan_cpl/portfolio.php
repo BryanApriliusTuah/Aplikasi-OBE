@@ -138,7 +138,7 @@
 
             <!-- 4. Rekapitulasi Capaian CPL Berdasarkan CPMK Untuk Satu Angkatan -->
             <div class="section mb-5">
-                <h5 class="fw-bold mb-3">4. Rekapitulasi Capaian CPL Berdasarkan CPMK Untuk Satu Angkatan</h5>
+                <h5 class="fw-bold mb-3">4. Rekapitulasi Capaian CPL Berdasarkan CPMK Untuk Angkatan <?= esc($report['identitas']['angkatan']) ?></h5>
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
@@ -214,6 +214,10 @@
             <div class="section mb-5">
                 <h5 class="fw-bold mb-3">5. Analisis Pemenuhan CPL</h5>
                 <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>Standar Minimal Capaian CPL:</strong>
+                        <span class="fs-6"><?= $report['analysis']['passing_threshold'] ?>%</span>
+                    </li>
                     <li class="mb-2">
                         <strong>CPL yang tercapai:</strong>
                         <?php if (!empty($report['analysis']['cpl_tercapai'])): ?>
@@ -396,7 +400,7 @@
                         dengan persentase capaian minimal <?= $report['analysis']['passing_threshold'] ?>%.
                         <?php if ($report['analysis']['total_tidak_tercapai'] > 0): ?>
                             <strong><?= $report['analysis']['total_tidak_tercapai'] ?></strong> CPL belum tercapai dan akan
-                            ditindaklanjuti pada tahun ajaran berikutnya melalui revisi pendekatan pembelajaran dan asesmen.
+                            ditindaklanjuti menyesuaikan dengan rencana CQI di atas.
                         <?php else: ?>
                             Semua CPL tercapai dengan baik, menunjukkan efektivitas proses pembelajaran yang telah dilaksanakan.
                         <?php endif; ?>
