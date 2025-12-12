@@ -83,3 +83,107 @@ Response:
 	],
 }
 ```
+
+## Data KRS
+
+API GET: /obe-krs-mahasiswa
+Response:
+
+```json
+{
+	[
+		"NIM"				: "2130305137",
+		"Nama"				: "Mayrika",
+		"Program Studi"		: "Teknik Informatika",
+		"KRS": {
+			[
+				"Semester"			: "2021/2022 Ganjil",
+				"Tahun Akademik"	: "2021/2022",
+				"Mata Kuliah"		: {
+					[
+						"Kode MK"			: "1DCP101030",
+						"Mata Kuliah"		: "Basis Data I",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owi",
+						"NIP"				: "12345"
+					],
+					[
+						"Kode MK"			: "1DCP101031",
+						"Mata Kuliah"		: "Basis Data II",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owo",
+						"NIP"				: "1234"
+					],
+				}
+			],
+			[
+				"Semester"			: "2021/2022 Genap",
+				"Tahun Akademik"	: "2021/2022",
+				"Mata Kuliah"		: {
+					[
+						"Kode MK"			: "1DCP1010334",
+						"Mata Kuliah"		: "Basis Data III",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owi",
+						"NIP"				: "12345"
+					],
+					[
+						"Kode MK"			: "1DCP10103141",
+						"Mata Kuliah"		: "Basis Data IV",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owo",
+						"NIP"				: "1234"
+					],
+				}
+			], [...]
+		}
+	],
+	[
+		"NIM"				: "2130305138",
+		"Nama"				: "Mayrika Chinta",
+		"Program Studi"		: "Teknik Informatika",
+		"KRS": {
+			[
+				"Semester"			: "2021/2022 Ganjil",
+				"Tahun Akademik"	: "2021/2022",
+				"Mata Kuliah"		: {
+					[
+						"Kode MK"			: "1DCP101030",
+						"Mata Kuliah"		: "Basis Data I",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owi",
+						"NIP"				: "12345"
+					],
+					[
+						"Kode MK"			: "1DCP101031",
+						"Mata Kuliah"		: "Basis Data II",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owo",
+						"NIP"				: "1234"
+					],
+				}
+			],
+			[
+				"Semester"			: "2021/2022 Genap",
+				"Tahun Akademik"	: "2021/2022",
+				"Mata Kuliah"		: {
+					[
+						"Kode MK"			: "1DCP1010334",
+						"Mata Kuliah"		: "Basis Data III",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owi",
+						"NIP"				: "12345"
+					],
+					[
+						"Kode MK"			: "1DCP10103141",
+						"Mata Kuliah"		: "Basis Data IV",
+						"Kelas"				: "A",
+						"Dosen Koordinator"	: "Owo",
+						"NIP"				: "1234"
+					],
+				}
+			], [...]
+		}
+	], [...]
+}
+```
