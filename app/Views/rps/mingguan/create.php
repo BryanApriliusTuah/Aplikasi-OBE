@@ -23,7 +23,8 @@
 
     <div class="mb-2">
         <label>Minggu ke-</label>
-        <input type="number" name="minggu" class="form-control" value="<?= old('minggu') ?>" required>
+        <input type="number" name="minggu" id="input-minggu" class="form-control" value="<?= old('minggu') ?>" required min="1">
+        <div id="minggu-warning" class="form-text text-danger" style="display:none;">Minggu ini sudah ada! Silakan pilih minggu yang berbeda.</div>
     </div>
     <div class="mb-2">
         <label>CPL</label>
@@ -186,6 +187,35 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Validation for duplicate week numbers
+        const existingWeeks = <?= json_encode($existingWeeks ?? []) ?>;
+        const mingguInput = document.getElementById('input-minggu');
+        const mingguWarning = document.getElementById('minggu-warning');
+        const form = mingguInput.closest('form');
+
+        function validateMinggu() {
+            const value = parseInt(mingguInput.value);
+            if (existingWeeks.includes(value)) {
+                mingguWarning.style.display = 'block';
+                mingguInput.classList.add('is-invalid');
+                return false;
+            } else {
+                mingguWarning.style.display = 'none';
+                mingguInput.classList.remove('is-invalid');
+                return true;
+            }
+        }
+
+        mingguInput.addEventListener('input', validateMinggu);
+        mingguInput.addEventListener('change', validateMinggu);
+
+        form.addEventListener('submit', function(e) {
+            if (!validateMinggu()) {
+                e.preventDefault();
+                mingguInput.focus();
+                return false;
+            }
+        });
         function setupLainnyaCheckbox(checkId, inputId) {
             const checkbox = document.getElementById(checkId);
             const input = document.getElementById(inputId);
