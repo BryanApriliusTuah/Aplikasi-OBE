@@ -115,9 +115,9 @@
 							<i class="bi bi-lightbulb-fill text-info fs-5"></i>
 						</div>
 						<div>
-							<h6 class="fw-bold mb-1">Penilaian Otomatis (Separated Mode)</h6>
+							<h6 class="fw-bold mb-1">Informasi Mata Kuliah</h6>
 							<small class="text-muted">
-								Sistem menghitung <strong>Nilai CPMK = Σ(Bobot × Nilai)</strong> dari <?= count($teknik_list) ?> teknik penilaian (per minggu) dalam <?= count($teknik_by_tahap) ?> tahap
+								Berikut adalah informasi singkat mengenai RPS dan teknik penilaian mingguan yang digunakan pada mata kuliah ini.
 							</small>
 						</div>
 					</div>
@@ -168,7 +168,7 @@
 				<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
 					<div class="text-end">
 						<small class="opacity-75">
-							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian (Separated)
+							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian
 						</small>
 					</div>
 				<?php endif; ?>
@@ -335,7 +335,7 @@
 											<?= $index + 1 ?>
 										</td>
 										<td class="align-middle">
-											<span class="fw-semibold text-primary"><?= esc($mahasiswa['nim']) ?></span>
+											<span class="fw-semibold"><?= esc($mahasiswa['nim']) ?></span>
 										</td>
 										<td class="align-middle">
 											<div class="d-flex align-items-center">
@@ -377,14 +377,14 @@
 											</td>
 										<?php endforeach; ?>
 										<td class="align-middle text-center">
-											<span class="badge bg-success nilai-huruf-display"
+											<span class="nilai-huruf-display"
 												data-mahasiswa="<?= $mahasiswa['id'] ?>"
 												style="font-size: 1rem; min-width: 50px;">-</span>
 										</td>
 										<td class="align-middle text-center">
-											<span class="badge bg-secondary keterangan-display"
+											<span class="keterangan-display"
 												data-mahasiswa="<?= $mahasiswa['id'] ?>"
-												style="font-size: 0.85rem;">-</span>
+												style="font-size: 1rem;">-</span>
 										</td>
 									</tr>
 								<?php endforeach; ?>
@@ -398,7 +398,7 @@
 								<div class="d-flex align-items-center gap-3">
 									<small class="text-muted">
 										<i class="bi bi-info-circle me-1"></i>
-										Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($teknik_list) ?> teknik penilaian (separated mode - per minggu)
+										Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($teknik_list) ?> teknik penilaian
 									</small>
 									<small class="text-muted" id="saveStatus"></small>
 								</div>
@@ -678,9 +678,7 @@
 						// Determine color based on is_passing and score range
 						let color = 'secondary';
 						if (grade.is_passing == 1) {
-							if (score > 80) color = 'success';
-							else if (score > 65) color = 'info';
-							else color = 'warning';
+							color = 'success';
 						} else {
 							color = 'danger';
 						}
@@ -789,7 +787,7 @@
 
 				// Update Nilai Huruf
 				nilaiHurufEl.textContent = gradeInfo.grade;
-				nilaiHurufEl.className = `badge bg-${gradeInfo.color} nilai-huruf-display`;
+				nilaiHurufEl.className = `fw-bold text-${gradeInfo.color} nilai-huruf-display`;
 				nilaiHurufEl.setAttribute('data-mahasiswa', mahasiswaId);
 				nilaiHurufEl.style.fontSize = '1rem';
 				nilaiHurufEl.style.minWidth = '50px';
@@ -797,21 +795,21 @@
 
 				// Update Keterangan
 				keteranganEl.textContent = keteranganInfo.text;
-				keteranganEl.className = `badge bg-${keteranganInfo.color} keterangan-display`;
+				keteranganEl.className = `fw-bold text-${keteranganInfo.color} keterangan-display`;
 				keteranganEl.setAttribute('data-mahasiswa', mahasiswaId);
 				keteranganEl.style.fontSize = '0.85rem';
 				keteranganEl.title = keteranganInfo.title;
 			} else {
 				// Reset to default if scores are incomplete
 				nilaiHurufEl.textContent = '-';
-				nilaiHurufEl.className = 'badge bg-secondary nilai-huruf-display';
+				nilaiHurufEl.className = 'fw-bold nilai-huruf-display';
 				nilaiHurufEl.setAttribute('data-mahasiswa', mahasiswaId);
 				nilaiHurufEl.style.fontSize = '1rem';
 				nilaiHurufEl.style.minWidth = '50px';
 				nilaiHurufEl.title = '';
 
 				keteranganEl.textContent = '-';
-				keteranganEl.className = 'badge bg-secondary keterangan-display';
+				keteranganEl.className = 'fw-bold keterangan-display';
 				keteranganEl.setAttribute('data-mahasiswa', mahasiswaId);
 				keteranganEl.style.fontSize = '0.85rem';
 				keteranganEl.title = '';
@@ -900,13 +898,13 @@
 
 				if (nilaiHurufEl) {
 					nilaiHurufEl.textContent = '-';
-					nilaiHurufEl.className = 'badge bg-secondary nilai-huruf-display';
+					nilaiHurufEl.className = 'fw-bold nilai-huruf-display';
 					nilaiHurufEl.title = '';
 				}
 
 				if (keteranganEl) {
 					keteranganEl.textContent = '-';
-					keteranganEl.className = 'badge bg-secondary keterangan-display';
+					keteranganEl.className = 'fw-bold keterangan-display';
 					keteranganEl.title = '';
 				}
 			});

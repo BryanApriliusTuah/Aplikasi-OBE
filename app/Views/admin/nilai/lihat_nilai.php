@@ -17,7 +17,7 @@
 
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
-					<h2 class="fw-bold mb-1">Lihat Nilai (Read-Only)</h2>
+					<h2 class="fw-bold mb-1">Lihat Nilai</h2>
 					<p class="text-muted mb-0">Menampilkan nilai untuk setiap teknik penilaian (Kehadiran, Tugas, UTS, UAS, dll)</p>
 					<?php if (isset($jadwal['is_nilai_validated']) && $jadwal['is_nilai_validated'] == 1): ?>
 						<div class="alert alert-success alert-sm mt-2 mb-0 py-2">
@@ -106,9 +106,9 @@
 							<i class="bi bi-lightbulb-fill text-info fs-5"></i>
 						</div>
 						<div>
-							<h6 class="fw-bold mb-1">Penilaian Otomatis (Separated Mode)</h6>
+							<h6 class="fw-bold mb-1">Informasi Mata Kuliah</h6>
 							<small class="text-muted">
-								Sistem menghitung <strong>Nilai CPMK = Σ(Bobot × Nilai)</strong> dari <?= count($teknik_list) ?> teknik penilaian (dipisah per minggu) dalam <?= count($teknik_by_tahap) ?> tahap
+								Berikut adalah informasi singkat mengenai RPS dan teknik penilaian mingguan yang digunakan pada mata kuliah ini.
 							</small>
 						</div>
 					</div>
@@ -152,9 +152,6 @@
 	<!-- Grade Distribution Chart -->
 	<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
 		<div class="card border-0 shadow-sm mb-4">
-			<div class="card-header bg-light py-3">
-				<h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Distribusi Nilai Huruf Mahasiswa</h5>
-			</div>
 			<div class="card-body">
 				<canvas id="gradeDistributionChart" style="max-height: 400px;"></canvas>
 			</div>
@@ -162,16 +159,16 @@
 	<?php endif; ?>
 
 	<div class="card border-0 shadow-sm">
-		<div class="card-header bg-info text-white py-3">
+		<div class="card-header bg-primary text-white py-3">
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
-					<h5 class="mb-0"><i class="bi bi-eye me-2"></i>Tampilan Nilai Teknik Penilaian (Read-Only)</h5>
+					<h5 class="mb-0"><i class="bi bi-eye me-2"></i>Tampilan Nilai Teknik Penilaian</h5>
 					<small class="opacity-75">Nilai ini hanya dapat dilihat, tidak dapat diubah</small>
 				</div>
 				<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
 					<div class="text-end">
 						<small class="opacity-75">
-							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian (Separated)
+							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian
 						</small>
 					</div>
 				<?php endif; ?>
@@ -251,7 +248,7 @@
 										$show_border = $is_last_in_group && !$is_last_tahap_group;
 										// Build tooltip with week and bobot
 										$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
-											$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " - CPMK: " . esc($cpmk_display) . " (" . number_format($item['bobot'], 1) . "%)";
+										$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " - CPMK: " . esc($cpmk_display) . " (" . number_format($item['bobot'], 1) . "%)";
 										?>
 										<th class="text-center align-middle <?= $show_border ? 'tahap-border-right' : '' ?>" style="width: 110px; min-width: 110px;"
 											title="<?= $tooltip ?>"
@@ -336,12 +333,12 @@
 										</td>
 									<?php endforeach; ?>
 									<td class="align-middle text-center">
-										<span class="badge bg-success" style="font-size: 1rem; min-width: 50px;">
+										<span class="fw-bold" style="font-size: 1rem; min-width: 50px;">
 											<?= esc($nilai_huruf) ?>
 										</span>
 									</td>
 									<td class="align-middle text-center">
-										<span class="badge <?= $keterangan == 'Lulus' ? 'bg-success' : 'bg-danger' ?>" style="font-size: 0.85rem;">
+										<span class="fw-bold <?= $keterangan == 'Lulus' ? '' : 'text-danger' ?>" style="font-size: 1rem;">
 											<?= esc($keterangan) ?>
 										</span>
 									</td>
@@ -357,11 +354,11 @@
 							<div class="d-flex align-items-center gap-3 justify-content-center">
 								<small class="text-muted">
 									<i class="bi bi-info-circle me-1"></i>
-									Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($teknik_list) ?> teknik penilaian (separated mode)
+									Total: <?= count($mahasiswa_list) ?> mahasiswa dengan <?= count($teknik_list) ?> teknik penilaian
 								</small>
 								<small class="text-muted">
 									<i class="bi bi-lock me-1"></i>
-									Mode tampilan saja (Read-Only)
+									Mode tampilan saja
 								</small>
 							</div>
 						</div>
