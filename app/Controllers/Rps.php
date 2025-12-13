@@ -59,7 +59,17 @@ class Rps extends BaseController
     {
         $mkModel = new MataKuliahModel();
         $dosenModel = new DosenModel();
-        $data['mata_kuliah'] = $mkModel->findAll();
+        $rpsModel = new RpsModel();
+
+        // Get all mata kuliah IDs that already have RPS
+        $existingRpsMkIds = $rpsModel->select('mata_kuliah_id')->findColumn('mata_kuliah_id');
+
+        // Get all mata kuliah and filter out those with existing RPS
+        $allMataKuliah = $mkModel->findAll();
+        $data['mata_kuliah'] = array_filter($allMataKuliah, function($mk) use ($existingRpsMkIds) {
+            return !in_array($mk['id'], $existingRpsMkIds);
+        });
+
         $data['dosen'] = $dosenModel->where('status_keaktifan', 'Aktif')->findAll();
         return view('rps/create', $data);
     }
@@ -68,10 +78,23 @@ class Rps extends BaseController
     {
         $db = \Config\Database::connect();
         $rpsModel = new RpsModel();
+        $mkModel = new MataKuliahModel();
+
+        $mata_kuliah_id = $this->request->getPost('mata_kuliah_id');
+
+        // Check if mata kuliah already has RPS
+        $existingRps = $rpsModel->where('mata_kuliah_id', $mata_kuliah_id)->first();
+        if ($existingRps) {
+            return redirect()->back()->withInput()->with('error', 'Mata kuliah ini sudah memiliki RPS. Silakan pilih mata kuliah lain.');
+        }
+
+        // Get semester from mata kuliah
+        $mataKuliah = $mkModel->find($mata_kuliah_id);
+        $semester = $mataKuliah ? $mataKuliah['semester'] : null;
 
         $rpsModel->insert([
-            'mata_kuliah_id'    => $this->request->getPost('mata_kuliah_id'),
-            'semester'          => $this->request->getPost('semester'),
+            'mata_kuliah_id'    => $mata_kuliah_id,
+            'semester'          => $semester,
             'tahun_ajaran'      => $this->request->getPost('tahun_ajaran'),
             'tgl_penyusunan'    => $this->request->getPost('tgl_penyusunan'),
             'status'            => $this->request->getPost('status'),
@@ -103,7 +126,17 @@ class Rps extends BaseController
         $db = \Config\Database::connect();
 
         $data['rps'] = $rpsModel->find($id);
-        $data['mata_kuliah'] = $mkModel->findAll();
+
+        // Get all mata kuliah IDs that already have RPS (excluding current RPS)
+        $existingRpsMkIds = $rpsModel->where('id !=', $id)->select('mata_kuliah_id')->findColumn('mata_kuliah_id');
+
+        // Get all mata kuliah and filter out those with existing RPS (except current)
+        $allMataKuliah = $mkModel->findAll();
+        $data['mata_kuliah'] = array_filter($allMataKuliah, function($mk) use ($existingRpsMkIds, $data) {
+            // Include current mata kuliah or mata kuliah without RPS
+            return $mk['id'] == $data['rps']['mata_kuliah_id'] || !in_array($mk['id'], $existingRpsMkIds);
+        });
+
         $data['dosen'] = $dosenModel->where('status_keaktifan', 'Aktif')->findAll();
 
         $pengampu = $db->table('rps_pengampu')->where('rps_id', $id)->where('peran', 'pengampu')->get()->getResultArray();
@@ -119,10 +152,23 @@ class Rps extends BaseController
     {
         $db = \Config\Database::connect();
         $rpsModel = new RpsModel();
+        $mkModel = new MataKuliahModel();
+
+        $mata_kuliah_id = $this->request->getPost('mata_kuliah_id');
+
+        // Check if mata kuliah already has RPS (excluding current RPS)
+        $existingRps = $rpsModel->where('mata_kuliah_id', $mata_kuliah_id)->where('id !=', $id)->first();
+        if ($existingRps) {
+            return redirect()->back()->withInput()->with('error', 'Mata kuliah ini sudah memiliki RPS. Silakan pilih mata kuliah lain.');
+        }
+
+        // Get semester from mata kuliah
+        $mataKuliah = $mkModel->find($mata_kuliah_id);
+        $semester = $mataKuliah ? $mataKuliah['semester'] : null;
 
         $rpsModel->update($id, [
-            'mata_kuliah_id'    => $this->request->getPost('mata_kuliah_id'),
-            'semester'          => $this->request->getPost('semester'),
+            'mata_kuliah_id'    => $mata_kuliah_id,
+            'semester'          => $semester,
             'tahun_ajaran'      => $this->request->getPost('tahun_ajaran'),
             'tgl_penyusunan'    => $this->request->getPost('tgl_penyusunan'),
             'status'            => $this->request->getPost('status'),

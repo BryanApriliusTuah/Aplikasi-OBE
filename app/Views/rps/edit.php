@@ -58,10 +58,6 @@
     </div>
 
     <div class="mb-2">
-        <label>Semester</label>
-        <input type="number" name="semester" class="form-control" value="<?= esc($rps['semester']) ?>" required>
-    </div>
-    <div class="mb-2">
         <label>Tahun Ajaran</label>
         <input type="text" name="tahun_ajaran" class="form-control" value="<?= esc($rps['tahun_ajaran']) ?>" required>
     </div>
