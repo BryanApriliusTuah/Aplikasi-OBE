@@ -1799,6 +1799,10 @@ class Nilai extends BaseController
 			$final_scores_map[$score['mahasiswa_id']] = $score;
 		}
 
+		// Get dynamic grade configuration from database
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+		$grades = $gradeConfigModel->getActiveGrades();
+
 		$data = [
 			'title' => 'Lihat Nilai',
 			'jadwal' => $jadwal,
@@ -1807,6 +1811,7 @@ class Nilai extends BaseController
 			'teknik_by_tahap' => $teknik_by_tahap,
 			'existing_scores' => $existing_scores,
 			'final_scores_map' => $final_scores_map,
+			'grade_config' => $grades,
 			'readonly' => true, // Flag to indicate read-only mode
 		];
 
