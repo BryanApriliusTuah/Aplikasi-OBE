@@ -2,168 +2,151 @@
 
 <?= $this->section('content') ?>
 
-<div class="card">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="mb-1">Pengaturan Sistem Penilaian</h2>
-                <p class="text-muted mb-0">Kelola konfigurasi nilai dan grade untuk sistem penilaian</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="<?= base_url('admin/settings/reset-to-default') ?>"
-                   class="btn btn-outline-warning"
-                   onclick="return confirm('Apakah Anda yakin ingin mereset ke konfigurasi default? Semua konfigurasi saat ini akan dihapus.')">
-                    <i class="bi bi-arrow-clockwise"></i> Reset ke Default
-                </a>
-                <a href="<?= base_url('admin/settings/create') ?>" class="btn btn-primary">
-                    <i class="bi bi-plus-lg"></i> Tambah Konfigurasi
-                </a>
-            </div>
-        </div>
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
 
-        <?php if (session()->getFlashdata('success')): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill"></i> <?= session()->getFlashdata('success') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+<div class="card border-0 shadow-sm">
+	<div class="card-body p-4">
+		<!-- Header -->
+		<div class="d-flex justify-content-between align-items-center mb-5">
+			<h4 class="mb-0 fw-semibold">Pengaturan Sistem Penilaian</h4>
+			<div class="d-flex gap-2">
+				<a href="<?= base_url('admin/settings/create') ?>" class="btn btn-dark btn-sm">
+					<i class="bi bi-plus-lg"></i> Tambah
+				</a>
+			</div>
+		</div>
 
-        <?php if (session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i> <?= session()->getFlashdata('error') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+		<!-- Flash Messages -->
+		<?php if (session()->getFlashdata('success')): ?>
+			<div class="alert alert-success alert-dismissible fade show border-0" role="alert">
+				<?= session()->getFlashdata('success') ?>
+				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+			</div>
+		<?php endif; ?>
 
-        <!-- CPMK Threshold Configuration -->
-        <div class="card bg-light mb-4">
-            <div class="card-body">
-                <h5 class="card-title mb-3">
-                    <i class="bi bi-clipboard-check"></i> Standar Minimal Capaian CPMK
-                </h5>
-                <p class="text-muted small mb-3">
-                    Standar persentase minimal untuk menentukan apakah CPMK tercapai atau tidak dalam laporan portofolio mata kuliah.
-                </p>
-                <form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
-                    <?= csrf_field() ?>
-                    <div class="col-md-4">
-                        <label for="persentase" class="form-label fw-semibold">Persentase Minimal</label>
-                        <div class="input-group">
-                            <input type="number"
-                                   class="form-control"
-                                   id="persentase"
-                                   name="persentase"
-                                   value="<?= esc($standar_cpmk) ?>"
-                                   min="0"
-                                   max="100"
-                                   step="0.01"
-                                   required>
-                            <span class="input-group-text">%</span>
-                        </div>
-                        <div class="form-text">Nilai antara 0 - 100</div>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Simpan Perubahan
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+		<?php if (session()->getFlashdata('error')): ?>
+			<div class="alert alert-danger alert-dismissible fade show border-0" role="alert">
+				<?= session()->getFlashdata('error') ?>
+				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+			</div>
+		<?php endif; ?>
 
-        <hr class="my-4">
+		<!-- CPMK Threshold -->
+		<div class="border rounded p-4 mb-5">
+			<h6 class="mb-3 fw-semibold">Standar Minimal Capaian CPMK</h6>
+			<form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
+				<?= csrf_field() ?>
+				<div class="col-auto">
+					<label for="persentase" class="form-label small text-muted mb-1">Persentase Minimal (%)</label>
+					<div class="input-group">
+						<input type="number"
+							class="form-control"
+							id="persentase"
+							name="persentase"
+							value="<?= esc($standar_cpmk) ?>"
+							min="0"
+							max="100"
+							step="0.01"
+							style="width: 120px;"
+							required>
+						<span class="input-group-text bg-white">%</span>
+					</div>
+				</div>
+				<div class="col-auto">
+					<button type="submit" class="btn btn-dark btn-sm">
+						Simpan
+					</button>
+				</div>
+			</form>
+		</div>
 
-        <h5 class="mb-3">Konfigurasi Sistem Penilaian Mahasiswa</h5>
-
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col" class="text-center" style="width: 5%;">No</th>
-                        <th scope="col" class="text-center" style="width: 10%;">Huruf Mutu</th>
-                        <th scope="col" class="text-center" style="width: 15%;">Range Nilai</th>
-                        <th scope="col" class="text-center" style="width: 10%;">Grade Point</th>
-                        <th scope="col" style="width: 20%;">Deskripsi</th>
-                        <th scope="col" class="text-center" style="width: 10%;">Status Lulus</th>
-                        <th scope="col" class="text-center" style="width: 10%;">Status</th>
-                        <th scope="col" class="text-center" style="width: 20%;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($grades)): ?>
-                        <tr>
-                            <td colspan="8" class="text-center py-4">
-                                <div class="text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mt-2 mb-0">Belum ada konfigurasi nilai.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php $no = 1; foreach ($grades as $grade): ?>
-                        <tr>
-                            <td class="text-center"><?= $no++; ?></td>
-                            <td class="text-center">
-                                <span class="badge bg-primary fs-6"><?= esc($grade['grade_letter']); ?></span>
-                            </td>
-                            <td class="text-center">
-                                <strong><?= number_format($grade['min_score'], 2); ?></strong> -
-                                <strong><?= number_format($grade['max_score'], 2); ?></strong>
-                            </td>
-                            <td class="text-center">
-                                <?= $grade['grade_point'] ? number_format($grade['grade_point'], 2) : '-'; ?>
-                            </td>
-                            <td><?= esc($grade['description']); ?></td>
-                            <td class="text-center">
-                                <?php if ($grade['is_passing']): ?>
-                                    <span class="badge bg-success">Lulus</span>
-                                <?php else: ?>
-                                    <span class="badge bg-danger">Tidak Lulus</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="text-center">
-                                <?php if ($grade['is_active']): ?>
-                                    <span class="badge bg-success">Aktif</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary">Nonaktif</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    <a href="<?= base_url('admin/settings/edit/' . $grade['id']); ?>"
-                                       class="btn btn-outline-primary btn-sm"
-                                       data-bs-toggle="tooltip"
-                                       title="Edit">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <a href="<?= base_url('admin/settings/toggle/' . $grade['id']); ?>"
-                                       class="btn btn-outline-warning btn-sm"
-                                       data-bs-toggle="tooltip"
-                                       title="<?= $grade['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
-                                        <i class="bi bi-toggle-<?= $grade['is_active'] ? 'on' : 'off' ?>"></i>
-                                    </a>
-                                    <a href="<?= base_url('admin/settings/delete/' . $grade['id']); ?>"
-                                       class="btn btn-outline-danger btn-sm"
-                                       onclick="return confirm('Apakah Anda yakin ingin menghapus konfigurasi ini?')"
-                                       data-bs-toggle="tooltip"
-                                       title="Hapus">
-                                        <i class="bi bi-trash3"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="alert alert-info mt-4" role="alert">
-            <i class="bi bi-info-circle-fill"></i>
-            <strong>Informasi:</strong> Konfigurasi nilai ini akan digunakan untuk menghitung nilai huruf pada seluruh sistem penilaian.
-            Pastikan range nilai tidak tumpang tindih dan mencakup seluruh range 0-100.
-        </div>
-    </div>
+		<!-- Grade Configuration Table -->
+		<div class="modern-table-wrapper">
+			<table class="modern-table">
+				<thead>
+					<tr>
+						<th scope="col" class="text-center" style="width: 5%;">No</th>
+						<th scope="col" class="text-center" style="width: 10%;">Huruf</th>
+						<th scope="col" class="text-center" style="width: 15%;">Range</th>
+						<th scope="col" class="text-center" style="width: 10%;">Point</th>
+						<th scope="col" style="width: 25%;">Deskripsi</th>
+						<th scope="col" class="text-center" style="width: 10%;">Lulus</th>
+						<th scope="col" class="text-center" style="width: 10%;">Status</th>
+						<th scope="col" class="text-center" style="width: 15%;">Aksi</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if (empty($grades)): ?>
+						<tr>
+							<td colspan="8" class="text-center py-5">
+								<div class="text-muted">
+									<i class="bi bi-inbox" style="font-size: 2.5rem; opacity: 0.3;"></i>
+									<p class="mt-2 mb-0 small">Belum ada konfigurasi</p>
+								</div>
+							</td>
+						</tr>
+					<?php else: ?>
+						<?php $no = 1;
+						foreach ($grades as $grade): ?>
+							<tr>
+								<td class="text-center"><?= $no++; ?></td>
+								<td class="text-center">
+									<span class="fw-semibold fs-5"><?= esc($grade['grade_letter']); ?></span>
+								</td>
+								<td class="text-center text-muted small">
+									<?= number_format($grade['min_score'], 2); ?> - <?= number_format($grade['max_score'], 2); ?>
+								</td>
+								<td class="text-center">
+									<?= $grade['grade_point'] ? number_format($grade['grade_point'], 2) : '-'; ?>
+								</td>
+								<td class="small"><?= esc($grade['description']); ?></td>
+								<td class="text-center">
+									<?php if ($grade['is_passing']): ?>
+										<i class="bi bi-check-circle-fill text-success"></i>
+									<?php else: ?>
+										<i class="bi bi-x-circle-fill text-danger"></i>
+									<?php endif; ?>
+								</td>
+								<td class="text-center">
+									<?php if ($grade['is_active']): ?>
+										<span class="fw-bold text-success">Aktif</span>
+									<?php else: ?>
+										<span class="fw-bold text-muted">Nonaktif</span>
+									<?php endif; ?>
+								</td>
+								<td class="text-center">
+									<div class="d-flex gap-2 justify-content-center">
+										<a href="<?= base_url('admin/settings/edit/' . $grade['id']); ?>"
+											class="btn btn-sm btn-light border-0"
+											data-bs-toggle="tooltip"
+											title="Edit"
+											style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+											<i class="bi bi-pencil"></i>
+										</a>
+										<a href="<?= base_url('admin/settings/toggle/' . $grade['id']); ?>"
+											class="btn btn-sm btn-light border-0"
+											data-bs-toggle="tooltip"
+											title="<?= $grade['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>"
+											style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+											<i class="bi bi-toggle-<?= $grade['is_active'] ? 'on' : 'off' ?>"></i>
+										</a>
+										<a href="<?= base_url('admin/settings/delete/' . $grade['id']); ?>"
+											class="btn btn-sm btn-light border-0 text-danger"
+											onclick="return confirm('Hapus konfigurasi ini?')"
+											data-bs-toggle="tooltip"
+											title="Hapus"
+											style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+											<i class="bi bi-trash3"></i>
+										</a>
+									</div>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
 
 <?= $this->endSection() ?>

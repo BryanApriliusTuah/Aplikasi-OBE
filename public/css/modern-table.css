@@ -1,0 +1,199 @@
+:root {
+	--modern-table-border: #e5e7eb;
+	--modern-table-border-light: #f1f5f9;
+	--modern-table-border-header: #e2e8f0;
+	--modern-table-header-bg-start: #f8fafc;
+	--modern-table-header-bg-end: #f1f5f9;
+	--modern-table-header-text: #475569;
+	--modern-table-hover-bg: #f8fafc;
+	--modern-table-text: #1e293b;
+	--modern-table-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--modern-table-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+	/* Default sticky column fallback positions (using rem for better scaling) */
+	--sticky-col-1-fallback: 0;
+	--sticky-col-2-fallback: 3rem;
+	--sticky-col-3-fallback: 12rem;
+	--sticky-col-4-fallback: 22rem;
+	--sticky-col-5-fallback: 31rem;
+}
+
+/* Modern Table Container */
+.modern-table-wrapper {
+	position: relative;
+	overflow-x: auto;
+	overflow-y: visible;
+	border: 1px solid var(--modern-table-border);
+	background: white;
+}
+
+/* Custom Scrollbar */
+.modern-table-wrapper::-webkit-scrollbar {
+	height: 8px;
+}
+
+.modern-table-wrapper::-webkit-scrollbar-track {
+	background: #f1f5f9;
+	border-radius: 4px;
+}
+
+.modern-table-wrapper::-webkit-scrollbar-thumb {
+	background: #cbd5e1;
+	border-radius: 4px;
+}
+
+.modern-table-wrapper::-webkit-scrollbar-thumb:hover {
+	background: #94a3b8;
+}
+
+/* Modern Table Base */
+.modern-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Table Header */
+.modern-table thead {
+	background: linear-gradient(to bottom, var(--modern-table-header-bg-start), var(--modern-table-header-bg-end));
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.modern-table th {
+	padding: 1rem 0.75rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+	color: var(--modern-table-header-text);
+	border-bottom: 2px solid var(--modern-table-border-header);
+	border-right: 1px solid var(--modern-table-border);
+	white-space: nowrap;
+}
+
+.modern-table th:last-child {
+	border-right: none;
+}
+
+/* Table Body */
+.modern-table tbody tr {
+	transition: all 0.2s ease;
+	border-bottom: 1px solid var(--modern-table-border-light);
+}
+
+.modern-table tbody tr:hover {
+	background-color: var(--modern-table-hover-bg);
+	transform: scale(1.001);
+}
+
+.modern-table tbody tr:last-child {
+	border-bottom: none;
+}
+
+.modern-table td {
+	padding: 1rem 0.75rem;
+	font-size: 0.875rem;
+	color: var(--modern-table-text);
+	vertical-align: middle;
+	border-right: 1px solid var(--modern-table-border);
+}
+
+.modern-table td:last-child {
+	border-right: none;
+}
+
+/* Sticky Columns */
+.modern-table .sticky-col {
+	position: sticky;
+	background-color: white;
+	z-index: 10;
+	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+}
+
+.modern-table thead .sticky-col {
+	z-index: 30; /* Higher than regular sticky header to stay on top */
+	background: linear-gradient(to bottom, var(--modern-table-header-bg-start), var(--modern-table-header-bg-end));
+}
+
+.modern-table tbody tr:hover .sticky-col {
+	background-color: var(--modern-table-hover-bg);
+}
+
+.modern-table .sticky-col:nth-child(1) {
+	left: var(--sticky-col-1-left, var(--sticky-col-1-fallback));
+}
+
+.modern-table .sticky-col:nth-child(2) {
+	left: var(--sticky-col-2-left, var(--sticky-col-2-fallback));
+}
+
+.modern-table .sticky-col:nth-child(3) {
+	left: var(--sticky-col-3-left, var(--sticky-col-3-fallback));
+}
+
+.modern-table .sticky-col:nth-child(4) {
+	left: var(--sticky-col-4-left, var(--sticky-col-4-fallback));
+}
+
+.modern-table .sticky-col:nth-child(5) {
+	left: var(--sticky-col-5-left, var(--sticky-col-5-fallback));
+}
+
+/* Score Cell Styles (optional, for score-based tables) */
+.modern-table .score-cell {
+	min-width: 90px;
+	text-align: center;
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 40px;
+	background: linear-gradient(to left, rgba(255, 255, 255, 0.9), transparent);
+	pointer-events: none;
+	z-index: 5;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.modern-table-wrapper.has-scroll .scroll-indicator {
+	opacity: 1;
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+	.modern-table th,
+	.modern-table td {
+		padding: 0.75rem 0.5rem;
+		font-size: 0.8125rem;
+	}
+
+	/* Responsive sticky positions can be overridden with --sticky-col-X-left-mobile variables */
+	.modern-table .sticky-col:nth-child(3) {
+		left: var(--sticky-col-3-left-mobile, var(--sticky-col-3-left, 180px));
+	}
+}
+
+/* Print Styles */
+@media print {
+	.modern-table-wrapper {
+		border: 1px solid #dee2e6 !important;
+		overflow: visible !important;
+	}
+
+	.scroll-indicator {
+		display: none !important;
+	}
+
+	.modern-table tbody tr:hover {
+		background-color: transparent !important;
+		transform: none !important;
+	}
+}

@@ -1,91 +1,94 @@
 <?= $this->extend('layouts/admin_layout') ?>
 <?= $this->section('content') ?>
 
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
 <style>
+	/* Page-specific color variables */
+	:root {
+		--color-good: #f0fdf4;
+		--color-good-text: #15803d;
+		--color-good-border: #86efac;
+		--color-medium: #fef3c7;
+		--color-medium-text: #b45309;
+		--color-medium-border: #fcd34d;
+		--color-low: #fef2f2;
+		--color-low-text: #dc2626;
+		--color-low-border: #fca5a5;
+		--color-primary: #3b82f6;
+		--color-primary-light: #dbeafe;
+		--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	}
+
+	/* CPMK-specific styles */
 	.cpmk-header {
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		color: white;
 		padding: 2rem;
-		border-radius: 0.5rem;
+		border-radius: 0.75rem;
 		margin-bottom: 2rem;
 	}
 
 	.stats-card {
 		border-left: 4px solid #667eea;
-		transition: transform 0.2s;
+		transition: all 0.3s ease;
 	}
 
 	.stats-card:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-md);
 	}
 
-	.score-cell {
-		min-width: 80px;
-		text-align: center;
-	}
-
-	.score-good {
-		background-color: #d1e7dd;
-		color: #0f5132;
-	}
-
-	.score-medium {
-		background-color: #fff3cd;
-		color: #856404;
-	}
-
+	/* Score background styles */
+	.score-good,
+	.score-medium,
 	.score-low {
-		background-color: #f8d7da;
-		color: #842029;
+		background-color: transparent;
 	}
 
-	.sticky-col {
-		position: sticky;
-		left: 0;
-		background-color: white;
-		z-index: 10;
-	}
-
-	.sticky-header {
-		position: sticky;
-		top: 0;
-		z-index: 20;
-		background-color: #f8f9fa;
-	}
-
+	/* Modern Badges */
 	.badge-score {
-		background-color: rgba(0, 140, 254, 0.75);
+		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 		color: white;
 		font-weight: 600;
-		padding: 0.4rem 0.8rem;
-		border-radius: 0.375rem;
+		padding: 0.375rem 0.75rem;
+		border-radius: 0.5rem;
 		font-size: 0.875rem;
 		display: inline-block;
-		margin-bottom: 0.25rem;
+		box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+		letter-spacing: 0.025em;
 	}
 
 	.badge-capaian {
 		font-weight: 600;
-		padding: 0.3rem 0.6rem;
-		border-radius: 0.25rem;
+		padding: 0.25rem 0.625rem;
+		border-radius: 0.375rem;
 		font-size: 0.75rem;
 		display: inline-block;
+		letter-spacing: 0.025em;
 	}
 
 	.badge-capaian-low {
-		background-color: rgba(220, 53, 69, 0.85);
+		background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 		color: white;
+		box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 	}
 
 	.badge-capaian-medium {
-		background-color: rgba(255, 193, 7, 0.85);
-		color: #000;
+		background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+		color: #78350f;
+		box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+	}
+
+	/* Fix missing border between Huruf and Keterangan */
+	.modern-table thead tr:nth-child(2) th:last-child {
+		border-right: 1px solid var(--modern-table-border) !important;
 	}
 </style>
 
 <div class="container-fluid px-4">
-	<div class="cpmk-header">
+	<div class="cpmk-header bg-primary shadow-sm mb-4">
 		<div class="d-flex justify-content-between align-items-center">
 			<div>
 				<p class="mb-0 display-6 fw-bold">
@@ -121,14 +124,12 @@
 	<?php endif; ?>
 
 	<!-- CPMK Statistics -->
-	<div class="card shadow-sm mb-4">
-		<div class="card-header bg-light">
-			<h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Nilai CPMK Mata Kuliah (<?= esc($jadwal['nama_mk']) ?>)</h5>
-		</div>
-		<div class="card-body p-0">
-			<div class="table-responsive">
-				<table class="table table-bordered table-hover mb-0 align-middle">
-					<thead class="table-light">
+	<div class="shadow-sm mb-4">
+		<div class="p-0">
+			<div class="modern-table-wrapper">
+				<div class="scroll-indicator"></div>
+				<table class="modern-table">
+					<thead>
 						<tr>
 							<th class="text-center" style="width: 50px;">No</th>
 							<th style="min-width: 120px;">Kode CPMK</th>
@@ -168,9 +169,6 @@
 	<div class="row mb-4">
 		<div class="col-12">
 			<div class="card shadow-sm">
-				<div class="card-header bg-light">
-					<h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Grafik Capaian CPMK (<?= esc($jadwal['nama_mk']) ?>)</h5>
-				</div>
 				<div class="card-body">
 					<canvas id="cpmkCapaianChart" style="max-height: 400px;"></canvas>
 				</div>
@@ -179,11 +177,8 @@
 	</div>
 
 	<!-- CPMK Scores Table -->
-	<div class="card shadow-sm">
-		<div class="card-header bg-light">
-			<h5 class="mb-0"><i class="bi bi-table"></i> Nilai CPMK Mahasiswa (<?= esc($jadwal['nama_mk']) ?>)</h5>
-		</div>
-		<div class="card-body p-0">
+	<div class="shadow-sm">
+		<div class="p-0">
 			<?php if (empty($mahasiswa_list)): ?>
 				<div class="text-center text-muted py-5">
 					<i class="bi bi-inbox fs-1"></i>
@@ -196,13 +191,14 @@
 					<p class="small">Silakan lengkapi RPS terlebih dahulu</p>
 				</div>
 			<?php else: ?>
-				<div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
-					<table class="table table-bordered table-hover mb-0 align-middle">
-						<thead class="table-light sticky-header">
+				<div class="modern-table-wrapper">
+					<div class="scroll-indicator"></div>
+					<table class="modern-table" id="cpmkTable">
+						<thead>
 							<tr>
-								<th class="text-center sticky-col" rowspan="2" style="width: 50px;">No</th>
-								<th class="sticky-col" rowspan="2" style="min-width: 150px;">NIM</th>
-								<th class="sticky-col" rowspan="2" style="min-width: 200px;">Nama Mahasiswa</th>
+								<th class="text-center sticky-col" rowspan="2">No</th>
+								<th class="sticky-col" rowspan="2">NIM</th>
+								<th class="sticky-col" rowspan="2">Nama Mahasiswa</th>
 								<th class="text-center" colspan="<?= count($cpmk_list) ?>">Nilai CPMK</th>
 								<th class="text-center" colspan="2" style="width: 150px;">Nilai Akhir</th>
 								<th class="text-center" rowspan="2" style="width: 100px;">Keterangan</th>
@@ -336,15 +332,15 @@
 				<div class="col-md-9">
 					<div class="d-flex flex-wrap gap-4 align-items-center">
 						<div>
-							<span class="badge-score">.</span>
+							<span class="badge-score text-primary">.</span>
 							<small class="text-muted ms-2">= Skor CPMK</small>
 						</div>
 						<div>
-							<span class="badge-capaian badge-capaian-low">.</span>
+							<span class="badge-capaian text-danger badge-capaian-low">.</span>
 							<small class="text-muted ms-2">= Capaian CPMK &lt; 60%</small>
 						</div>
 						<div>
-							<span class="badge-capaian badge-capaian-medium">.</span>
+							<span class="badge-capaian text-warning badge-capaian-medium">.</span>
 							<small class="text-muted ms-2">= Capaian CPMK ≥ 60%</small>
 						</div>
 					</div>
@@ -501,6 +497,68 @@
 			}
 		});
 	}
+
+	// Handle scroll indicator for modern table
+	document.addEventListener('DOMContentLoaded', function() {
+		const tableWrapper = document.querySelector('.modern-table-wrapper');
+		if (tableWrapper) {
+			function checkScroll() {
+				const hasHorizontalScroll = tableWrapper.scrollWidth > tableWrapper.clientWidth;
+				const isScrolledToEnd = tableWrapper.scrollLeft >= (tableWrapper.scrollWidth - tableWrapper.clientWidth - 10);
+
+				if (hasHorizontalScroll && !isScrolledToEnd) {
+					tableWrapper.classList.add('has-scroll');
+				} else {
+					tableWrapper.classList.remove('has-scroll');
+				}
+			}
+
+			// Check on load and resize
+			checkScroll();
+			window.addEventListener('resize', checkScroll);
+			tableWrapper.addEventListener('scroll', checkScroll);
+		}
+
+		// Dynamic sticky column positioning
+		const table = document.getElementById('cpmkTable');
+		if (table) {
+			function updateStickyPositions() {
+				// Get all sticky columns from the first row (header)
+				const headerRow = table.querySelector('thead tr');
+				if (!headerRow) return;
+
+				const stickyColumns = headerRow.querySelectorAll('.sticky-col');
+				let cumulativeLeft = 0;
+
+				stickyColumns.forEach((col, index) => {
+					// Set the left position for this column
+					const varName = `--sticky-col-${index + 1}-left`;
+					table.style.setProperty(varName, `${cumulativeLeft}px`);
+
+					// Add this column's width to the cumulative total for the next column
+					cumulativeLeft += col.offsetWidth;
+				});
+			}
+
+			// Update positions on load
+			updateStickyPositions();
+
+			// Update on window resize with debouncing for performance
+			let resizeTimeout;
+			window.addEventListener('resize', function() {
+				clearTimeout(resizeTimeout);
+				resizeTimeout = setTimeout(updateStickyPositions, 100);
+			});
+
+			// Update after fonts load (can affect column widths)
+			if (document.fonts && document.fonts.ready) {
+				document.fonts.ready.then(updateStickyPositions);
+			}
+		}
+	});
 </script>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('css') ?>
 <?= $this->endSection() ?>

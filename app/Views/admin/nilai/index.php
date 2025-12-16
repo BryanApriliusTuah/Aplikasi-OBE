@@ -1,59 +1,73 @@
 <?= $this->extend('layouts/admin_layout') ?>
 <?= $this->section('content') ?>
 
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
 <style>
-.course-name {
-	font-size: 0.95rem;
-	line-height: 1.3;
-	color: #2c3e50;
-}
-.course-info {
-	font-size: 0.8rem;
-	color: #6c757d;
-}
-.progress-cell {
-	min-width: 140px;
-}
-.progress-info {
-	font-size: 0.75rem;
-}
-.action-buttons .btn {
-	padding: 0.25rem 0.5rem;
-}
-.table-hover tbody tr:hover {
-	background-color: #f8f9fa;
-	cursor: pointer;
-}
-.badge-status {
-	font-size: 0.75rem;
-	padding: 0.35rem 0.6rem;
-}
-#jadwalTable_wrapper .dataTables_filter input {
-	border-radius: 0.25rem;
-	border: 1px solid #ced4da;
-	padding: 0.375rem 0.75rem;
-}
-#jadwalTable_wrapper .dataTables_length select {
-	border-radius: 0.25rem;
-	border: 1px solid #ced4da;
-	padding: 0.375rem 0.75rem;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-	background: #0d6efd !important;
-	color: white !important;
-	border: 1px solid #0d6efd !important;
-	border-radius: 0.25rem;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-	background: #e9ecef !important;
-	color: #0d6efd !important;
-	border: 1px solid #dee2e6 !important;
-}
-.btn-outline-purple:hover {
-	background-color: #764ba2 !important;
-	border-color: #764ba2 !important;
-	color: white !important;
-}
+	.course-name {
+		font-size: 0.95rem;
+		line-height: 1.3;
+		color: #2c3e50;
+	}
+
+	.course-info {
+		font-size: 0.8rem;
+		color: #6c757d;
+	}
+
+	.progress-cell {
+		min-width: 140px;
+	}
+
+	.progress-info {
+		font-size: 0.75rem;
+	}
+
+	.action-buttons .btn {
+		padding: 0.25rem 0.5rem;
+	}
+
+	.table-hover tbody tr:hover {
+		background-color: #f8f9fa;
+		cursor: pointer;
+	}
+
+	.badge-status {
+		font-size: 0.75rem;
+		padding: 0.35rem 0.6rem;
+	}
+
+	#jadwalTable_wrapper .dataTables_filter input {
+		border-radius: 0.25rem;
+		border: 1px solid #ced4da;
+		padding: 0.375rem 0.75rem;
+	}
+
+	#jadwalTable_wrapper .dataTables_length select {
+		border-radius: 0.25rem;
+		border: 1px solid #ced4da;
+		padding: 0.375rem 0.75rem;
+	}
+
+	.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+		background: #0d6efd !important;
+		color: white !important;
+		border: 1px solid #0d6efd !important;
+		border-radius: 0.25rem;
+	}
+
+	.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+		background: #e9ecef !important;
+		color: #0d6efd !important;
+		border: 1px solid #dee2e6 !important;
+	}
+
+	.btn-outline-purple:hover {
+		background-color: #764ba2 !important;
+		border-color: #764ba2 !important;
+		color: white !important;
+	}
 </style>
 
 <div class="container-fluid px-4">
@@ -117,14 +131,8 @@
 	}
 	?>
 
-	<div class="card shadow-sm">
-		<div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-			<div class="d-flex justify-content-between align-items-center">
-				<h5 class="mb-0"><i class="bi bi-calendar3"></i> Daftar Jadwal Mengajar</h5>
-				<span class="badge bg-white text-primary rounded-pill"><?= count($all_schedules) ?> Jadwal</span>
-			</div>
-		</div>
-		<div class="card-body p-0">
+	<div class="shadow-sm border-0">
+		<div class="p-0">
 			<?php if (empty($all_schedules)): ?>
 				<div class="text-center text-muted py-5">
 					<i class="bi bi-calendar-x fs-1"></i>
@@ -132,24 +140,25 @@
 					<p class="small">Silakan sesuaikan filter untuk melihat jadwal</p>
 				</div>
 			<?php else: ?>
-				<div class="table-responsive p-3">
-					<table id="jadwalTable" class="table table-hover align-middle mb-0" style="width:100%">
-						<thead class="table-light">
+				<div class="modern-table-wrapper" style="max-height: 70vh;">
+					<div class="scroll-indicator"></div>
+					<table class="modern-table" id="jadwalTable">
+						<thead>
 							<tr>
-								<th class="text-center" style="width: 50px;">No</th>
-								<th style="min-width: 250px;">Mata Kuliah</th>
-								<th style="min-width: 180px;">Dosen</th>
-								<th style="min-width: 150px;">Program Studi</th>
-								<th style="width: 180px;">Progress Penilaian</th>
-								<th style="width: 150px;">Status</th>
-								<th class="text-center" style="width: 160px;">Aksi</th>
+								<th class="text-center align-middle" style="width: 50px;">No</th>
+								<th class="text-center align-middle" style="min-width: 250px;">Mata Kuliah</th>
+								<th class="text-center align-middle" style="min-width: 180px;">Dosen</th>
+								<th class="text-center align-middle" style="min-width: 150px;">Program Studi</th>
+								<th class="text-center align-middle" style="width: 180px;">Progress Penilaian</th>
+								<th class="text-center align-middle" style="width: 150px;">Status</th>
+								<th class="text-center align-middle" style="width: 160px;">Aksi</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ($all_schedules as $index => $jadwal): ?>
-								<tr>
-									<td class="text-center fw-semibold text-muted"><?= $index + 1 ?></td>
-									<td>
+								<tr class="<?= $index % 2 === 0 ? 'bg-light bg-opacity-50' : '' ?>">
+									<td class="text-center align-middle fw-semibold text-muted"><?= $index + 1 ?></td>
+									<td class="align-middle">
 										<div class="course-name fw-bold"><?= esc($jadwal['nama_mk']) ?></div>
 										<div class="course-info">
 											<?php if (isset($jadwal['kode_mk'])): ?>
@@ -163,7 +172,7 @@
 											<?php endif; ?>
 										</div>
 									</td>
-									<td>
+									<td class="align-middle">
 										<?php if (isset($jadwal['dosen_ketua']) && !empty($jadwal['dosen_ketua'])): ?>
 											<div class="mb-1">
 												<span class="badge bg-primary me-1" style="font-size: 0.7rem;">
@@ -180,10 +189,10 @@
 													$anggota = trim($anggota);
 													if (!empty($anggota)):
 												?>
-													<div class="mt-1">
-														<i class="bi bi-person text-muted" style="font-size: 0.8rem;"></i>
-														<small class="text-muted"><?= esc($anggota) ?></small>
-													</div>
+														<div class="mt-1">
+															<i class="bi bi-person text-muted" style="font-size: 0.8rem;"></i>
+															<small class="text-muted"><?= esc($anggota) ?></small>
+														</div>
 												<?php
 													endif;
 												endforeach;
@@ -193,8 +202,8 @@
 											<small class="text-muted fst-italic">Belum ditentukan</small>
 										<?php endif; ?>
 									</td>
-									<td><small class="text-muted"><?= esc($jadwal['program_studi']) ?></small></td>
-									<td>
+									<td class="align-middle"><small class="text-muted"><?= esc($jadwal['program_studi']) ?></small></td>
+									<td class="align-middle">
 										<?php if (isset($jadwal['score_completion'])): ?>
 											<?php
 											$completed = $jadwal['score_completion']['completed'];
@@ -215,7 +224,7 @@
 											<small class="text-muted fst-italic">Tidak ada data</small>
 										<?php endif; ?>
 									</td>
-									<td>
+									<td class="align-middle">
 										<?php if (isset($jadwal['is_nilai_validated']) && $jadwal['is_nilai_validated'] == 1): ?>
 											<span class="badge bg-success badge-status">
 												<i class="bi bi-check-circle-fill"></i> Tervalidasi
@@ -226,34 +235,34 @@
 											</span>
 										<?php endif; ?>
 									</td>
-									<td>
+									<td class="align-middle">
 										<div class="d-flex gap-1 justify-content-center flex-nowrap action-buttons">
 											<a href="<?= base_url('admin/nilai/lihat-nilai/' . $jadwal['id']) ?>"
-											   class="btn btn-sm btn-outline-info"
-											   data-bs-toggle="tooltip"
-											   title="Lihat Teknik Penilaian">
+												class="btn btn-sm btn-outline-info"
+												data-bs-toggle="tooltip"
+												title="Lihat Teknik Penilaian">
 												<i class="bi bi-eye"></i>
 											</a>
 
 											<a href="<?= base_url('admin/nilai/lihat-cpmk/' . $jadwal['id']) ?>"
-											   class="btn btn-sm btn-outline-success"
-											   data-bs-toggle="tooltip"
-											   title="Lihat Nilai CPMK">
+												class="btn btn-sm btn-outline-success"
+												data-bs-toggle="tooltip"
+												title="Lihat Nilai CPMK">
 												<i class="bi bi-graph-up"></i>
 											</a>
 
 											<?php if (isset($jadwal['can_input_grades']) && $jadwal['can_input_grades']): ?>
 												<a href="<?= base_url('admin/nilai/input-nilai-teknik/' . $jadwal['id']) ?>"
-												   class="btn btn-sm btn-primary"
-												   data-bs-toggle="tooltip"
-												   title="Input Nilai">
+													class="btn btn-sm btn-primary"
+													data-bs-toggle="tooltip"
+													title="Input Nilai">
 													<i class="bi bi-pencil-square"></i>
 												</a>
 											<?php else: ?>
 												<button class="btn btn-sm btn-secondary"
-														disabled
-														data-bs-toggle="tooltip"
-														title="Hanya dosen pengampu yang dapat menginput nilai">
+													disabled
+													data-bs-toggle="tooltip"
+													title="Hanya dosen pengampu yang dapat menginput nilai">
 													<i class="bi bi-lock"></i>
 												</button>
 											<?php endif; ?>
@@ -264,50 +273,88 @@
 						</tbody>
 					</table>
 				</div>
+
+				<div class="card-footer bg-light border-0 py-3">
+					<div class="row align-items-center">
+						<div class="col-12">
+							<div class="d-flex align-items-center gap-3 justify-content-center">
+								<small class="text-muted">
+									<i class="bi bi-info-circle me-1"></i>
+									Total: <?= count($all_schedules) ?> jadwal mengajar
+								</small>
+							</div>
+						</div>
+					</div>
+				</div>
 			<?php endif; ?>
 		</div>
 	</div>
 </div>
 
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-
 <script>
-$(document).ready(function() {
-	// Initialize DataTable
-	$('#jadwalTable').DataTable({
-		"language": {
-			"lengthMenu": "Tampilkan _MENU_ data per halaman",
-			"zeroRecords": "Data tidak ditemukan",
-			"info": "Menampilkan halaman _PAGE_ dari _PAGES_",
-			"infoEmpty": "Tidak ada data tersedia",
-			"infoFiltered": "(difilter dari _MAX_ total data)",
-			"search": "Cari:",
-			"paginate": {
-				"first": "Pertama",
-				"last": "Terakhir",
-				"next": "Selanjutnya",
-				"previous": "Sebelumnya"
-			}
-		},
-		"pageLength": 10,
-		"order": [[1, 'asc']], // Sort by Mata Kuliah by default
-		"columnDefs": [
-			{ "orderable": false, "targets": [6] }, // Disable sorting on Action column
-			{ "searchable": false, "targets": [0, 6] } // Disable search on No and Action columns
-		],
-		"responsive": true,
-		"autoWidth": false,
-		"dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
-	});
+	document.addEventListener('DOMContentLoaded', function() {
+		const tableWrapper = document.querySelector('.modern-table-wrapper');
+		if (tableWrapper) {
+			function checkScroll() {
+				const hasHorizontalScroll = tableWrapper.scrollWidth > tableWrapper.clientWidth;
+				const isScrolledToEnd = tableWrapper.scrollLeft >= (tableWrapper.scrollWidth - tableWrapper.clientWidth - 10);
 
-	// Initialize Bootstrap tooltips
-	var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-	var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl);
+				if (hasHorizontalScroll && !isScrolledToEnd) {
+					tableWrapper.classList.add('has-scroll');
+				} else {
+					tableWrapper.classList.remove('has-scroll');
+				}
+			}
+
+			// Check on load and resize
+			checkScroll();
+			window.addEventListener('resize', checkScroll);
+			tableWrapper.addEventListener('scroll', checkScroll);
+		}
+
+		// Dynamic sticky column positioning
+		const table = document.getElementById('jadwalTable');
+		if (table) {
+			function updateStickyPositions() {
+				// Get all sticky columns from the first row (header)
+				const headerRow = table.querySelector('thead tr');
+				if (!headerRow) return;
+
+				const stickyColumns = headerRow.querySelectorAll('.sticky-col');
+				let cumulativeLeft = 0;
+
+				stickyColumns.forEach((col, index) => {
+					// Set the left position for this column
+					const varName = `--sticky-col-${index + 1}-left`;
+					table.style.setProperty(varName, `${cumulativeLeft}px`);
+
+					// Add this column's width to the cumulative total for the next column
+					cumulativeLeft += col.offsetWidth;
+				});
+			}
+
+			// Update positions on load
+			updateStickyPositions();
+
+			// Update on window resize with debouncing for performance
+			let resizeTimeout;
+			window.addEventListener('resize', function() {
+				clearTimeout(resizeTimeout);
+				resizeTimeout = setTimeout(updateStickyPositions, 100);
+			});
+
+			// Update after fonts load (can affect column widths)
+			if (document.fonts && document.fonts.ready) {
+				document.fonts.ready.then(updateStickyPositions);
+			}
+		}
+
+		// Initialize Bootstrap tooltips
+		var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+		var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl);
+		});
 	});
-});
 </script>
 
 <?= $this->endSection() ?>

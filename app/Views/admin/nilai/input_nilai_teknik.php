@@ -1,24 +1,15 @@
 <?= $this->extend('layouts/admin_layout') ?>
 <?= $this->section('content') ?>
 
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
 <div class="container-fluid px-4" style="overflow-x: hidden;">
 	<div class="row mb-4">
 		<div class="col-12">
-			<nav aria-label="breadcrumb" class="mb-3">
-				<ol class="breadcrumb">
-					<li class="breadcrumb-item">
-						<a href="<?= base_url('admin/nilai') ?>" class="text-decoration-none">
-							<i class="bi bi-house-door me-1"></i>Penilaian
-						</a>
-					</li>
-					<li class="breadcrumb-item active">Input Nilai by Teknik Penilaian</li>
-				</ol>
-			</nav>
-
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
-					<h2 class="fw-bold mb-1">Input Nilai Berdasarkan Teknik Penilaian</h2>
-					<p class="text-muted mb-0">Masukkan nilai untuk setiap teknik penilaian (Kehadiran, Tugas, UTS, UAS, dll)</p>
+					<h2 class="fw-bold mb-1">Input Penilaian</h2>
 					<?php if (isset($jadwal['is_nilai_validated']) && $jadwal['is_nilai_validated'] == 1): ?>
 						<div class="alert alert-success alert-sm mt-2 mb-0 py-2">
 							<i class="bi bi-check-circle-fill me-1"></i>
@@ -57,22 +48,16 @@
 	<div class="card border-0 shadow-sm mb-4">
 		<div class="card-body bg-light">
 			<div class="row g-3">
-				<div class="col-md-4">
+				<div class="col-md-3">
 					<div class="d-flex align-items-center">
-						<div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-							<i class="bi bi-book text-primary fs-5"></i>
-						</div>
 						<div>
 							<small class="text-muted">Mata Kuliah</small>
 							<h6 class="mb-0 fw-semibold"><?= esc($jadwal['nama_mk']) ?></h6>
 						</div>
 					</div>
 				</div>
-				<div class="col-md-2">
+				<div class="col-md-3">
 					<div class="d-flex align-items-center">
-						<div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
-							<i class="bi bi-people text-success fs-5"></i>
-						</div>
 						<div>
 							<small class="text-muted">Kelas</small>
 							<h6 class="mb-0 fw-semibold"><?= esc($jadwal['kelas']) ?></h6>
@@ -81,9 +66,6 @@
 				</div>
 				<div class="col-md-3">
 					<div class="d-flex align-items-center">
-						<div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
-							<i class="bi bi-calendar text-info fs-5"></i>
-						</div>
 						<div>
 							<small class="text-muted">Tahun Akademik</small>
 							<h6 class="mb-0 fw-semibold"><?= esc($jadwal['tahun_akademik']) ?></h6>
@@ -92,9 +74,6 @@
 				</div>
 				<div class="col-md-3">
 					<div class="d-flex align-items-center">
-						<div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
-							<i class="bi bi-person-badge text-warning fs-5"></i>
-						</div>
 						<div>
 							<small class="text-muted">Dosen Pengampu</small>
 							<h6 class="mb-0 fw-semibold"><?= esc($jadwal['dosen_ketua'] ?? 'N/A') ?></h6>
@@ -159,22 +138,6 @@
 	<?php endif; ?>
 
 	<div class="card border-0 shadow-sm">
-		<div class="card-header bg-primary text-white py-3">
-			<div class="d-flex justify-content-between align-items-center">
-				<div>
-					<h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Form Input Nilai Teknik Penilaian</h5>
-					<small class="opacity-75">Masukkan nilai antara 0-100 untuk setiap teknik penilaian</small>
-				</div>
-				<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
-					<div class="text-end">
-						<small class="opacity-75">
-							<?= count($mahasiswa_list) ?> Mahasiswa | <?= count($teknik_list) ?> Teknik Penilaian
-						</small>
-					</div>
-				<?php endif; ?>
-			</div>
-		</div>
-
 		<div class="card-body p-0">
 			<?php if (empty($mahasiswa_list) || empty($teknik_list)): ?>
 				<div class="text-center py-5">
@@ -231,7 +194,7 @@
 							<div class="col-md-4 text-end">
 								<?php if ($canEdit): ?>
 									<button type="submit" class="btn btn-primary">
-										<i class="bi bi-save me-2"></i>Simpan & Hitung CPMK
+										<i class="bi bi-save me-2"></i>Simpan Perubahan
 									</button>
 								<?php else: ?>
 									<button type="button" class="btn btn-secondary" disabled>
@@ -242,21 +205,14 @@
 						</div>
 					</div>
 
-					<div class="table-responsive" style="max-height: 70vh; overflow-x: auto; overflow-y: auto;">
-						<table class="table table-hover table-bordered mb-0 table-sm" id="nilaiTable">
-							<thead class="table-dark sticky-top">
+					<div class="modern-table-wrapper" style="max-height: 70vh;">
+						<div class="scroll-indicator"></div>
+						<table class="modern-table" id="nilaiTable">
+							<thead>
 								<tr>
-									<th class="text-center align-middle" style="width: 60px; min-width: 60px;" rowspan="2">No</th>
-									<th class="align-middle" style="width: 130px; min-width: 130px;" rowspan="2">
-										<div class="d-flex align-items-center">
-											<i class="bi bi-hash me-2"></i>NIM
-										</div>
-									</th>
-									<th class="align-middle" style="min-width: 200px;" rowspan="2">
-										<div class="d-flex align-items-center">
-											<i class="bi bi-person me-2"></i>Nama Mahasiswa
-										</div>
-									</th>
+									<th class="text-center align-middle sticky-col" style="width: 60px; min-width: 60px;" rowspan="2">No</th>
+									<th class="align-middle sticky-col" style="width: 130px; min-width: 130px;" rowspan="2">NIM</th>
+									<th class="align-middle sticky-col" style="min-width: 200px;" rowspan="2">Nama Mahasiswa</th>
 									<?php
 									$tahap_count = count($teknik_by_tahap);
 									$tahap_index = 0;
@@ -266,7 +222,7 @@
 										$tahap_index++;
 										$is_last_tahap = ($tahap_index === $tahap_count);
 										?>
-										<th class="text-center align-middle bg-primary bg-opacity-25 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_items) ?>">
+										<th class="text-center align-middle bg-secondary bg-opacity-10 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_items) ?>">
 											<?= esc($tahap) ?>
 										</th>
 									<?php endforeach; ?>
@@ -330,14 +286,14 @@
 							</thead>
 							<tbody>
 								<?php foreach ($mahasiswa_list as $index => $mahasiswa) : ?>
-									<tr class="<?= $index % 2 === 0 ? 'bg-light bg-opacity-50' : '' ?>">
-										<td class="text-center align-middle fw-bold text-muted">
+									<tr>
+										<td class="text-center align-middle fw-bold text-muted sticky-col">
 											<?= $index + 1 ?>
 										</td>
-										<td class="align-middle">
+										<td class="align-middle sticky-col">
 											<span class="fw-semibold"><?= esc($mahasiswa['nim']) ?></span>
 										</td>
-										<td class="align-middle">
+										<td class="align-middle sticky-col">
 											<div class="d-flex align-items-center">
 												<span><?= esc($mahasiswa['nama_lengkap']) ?></span>
 											</div>
@@ -372,7 +328,7 @@
 													data-teknik="<?= $item['teknik_key'] ?>"
 													data-bobot="<?= $item['bobot'] ?>"
 													placeholder="0-100"
-													style="min-width: 85px;"
+													style="width: max-content; background: transparent; padding: 0;"
 													<?= (!$canEdit) ? 'readonly' : '' ?>>
 											</td>
 										<?php endforeach; ?>
@@ -402,17 +358,6 @@
 									</small>
 									<small class="text-muted" id="saveStatus"></small>
 								</div>
-							</div>
-							<div class="col-md-4 text-end">
-								<?php if ($canEdit): ?>
-									<button type="submit" class="btn btn-primary btn-lg">
-										<i class="bi bi-cloud-upload me-2"></i>Simpan & Hitung CPMK
-									</button>
-								<?php else: ?>
-									<button type="button" class="btn btn-secondary btn-lg" disabled>
-										<i class="bi bi-lock me-2"></i>Nilai Sudah Divalidasi
-									</button>
-								<?php endif; ?>
 							</div>
 						</div>
 					</div>
@@ -505,58 +450,6 @@
 		background-color: #fff8f8;
 	}
 
-	.table-responsive {
-		border: 1px solid #dee2e6;
-		border-radius: 0;
-		overflow-x: auto !important;
-		overflow-y: auto !important;
-		-webkit-overflow-scrolling: touch;
-		width: 100%;
-		max-width: 100%;
-	}
-
-	/* Prevent table from expanding container */
-	#nilaiTable {
-		width: max-content;
-		max-width: none;
-	}
-
-	/* Sticky first columns for better UX */
-	#nilaiTable thead th:nth-child(1),
-	#nilaiTable thead th:nth-child(2),
-	#nilaiTable thead th:nth-child(3),
-	#nilaiTable tbody td:nth-child(1),
-	#nilaiTable tbody td:nth-child(2),
-	#nilaiTable tbody td:nth-child(3) {
-		position: sticky;
-		background-color: white;
-		z-index: 10;
-	}
-
-	#nilaiTable thead th:nth-child(1),
-	#nilaiTable tbody td:nth-child(1) {
-		left: 0;
-	}
-
-	#nilaiTable thead th:nth-child(2),
-	#nilaiTable tbody td:nth-child(2) {
-		left: 60px;
-	}
-
-	#nilaiTable thead th:nth-child(3),
-	#nilaiTable tbody td:nth-child(3) {
-		left: 190px;
-	}
-
-	#nilaiTable thead th {
-		z-index: 20;
-		background-color: #212529;
-	}
-
-	#nilaiTable tbody tr:nth-of-type(even) td:nth-child(-n+3) {
-		background-color: rgba(0, 0, 0, 0.05);
-	}
-
 	.card {
 		transition: all 0.3s ease;
 	}
@@ -567,44 +460,14 @@
 		border-right: 4px solid #ffc107 !important;
 	}
 
-	/* Sticky columns for Nilai Huruf and Keterangan (last two columns) */
-	#nilaiTable thead th:nth-last-child(1),
-	#nilaiTable thead th:nth-last-child(2),
-	#nilaiTable tbody td:nth-last-child(1),
-	#nilaiTable tbody td:nth-last-child(2) {
-		position: sticky;
-		background-color: white;
-		z-index: 10;
-	}
-
-	#nilaiTable thead th:nth-last-child(1),
-	#nilaiTable tbody td:nth-last-child(1) {
-		right: 0;
-	}
-
-	#nilaiTable thead th:nth-last-child(2),
-	#nilaiTable tbody td:nth-last-child(2) {
-		right: 150px;
-	}
-
-	#nilaiTable thead th:nth-last-child(1),
-	#nilaiTable thead th:nth-last-child(2) {
-		z-index: 20;
-	}
-
-	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(1),
-	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(2) {
-		background-color: rgba(0, 0, 0, 0.05);
-	}
-
 	/* Ensure body doesn't scroll horizontally */
 	body {
 		overflow-x: hidden;
 	}
 
 	@media (max-width: 768px) {
-		.table-responsive {
-			max-height: 60vh;
+		.modern-table-wrapper {
+			max-height: 60vh !important;
 		}
 	}
 </style>
@@ -852,14 +715,14 @@
 	});
 
 	function fillAllValues() {
-		if (confirm('Apakah Anda yakin ingin mengisi semua nilai dengan data testing (70-95)?')) {
+		if (confirm('Apakah Anda yakin ingin mengisi semua nilai dengan data testing (1-100)?')) {
 			const inputs = document.querySelectorAll('.nilai-input');
 			const updatedMahasiswa = new Set();
 			let filledCount = 0;
 
 			inputs.forEach(input => {
-				// Generate random score between 70-95 for realistic test data
-				const randomScore = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
+				// Generate random score between 1-100 for realistic test data
+				const randomScore = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
 				input.value = randomScore;
 				input.classList.remove('is-invalid');
 				input.classList.add('is-valid');
@@ -1056,5 +919,62 @@
 		document.getElementById('btnUpload').disabled = false;
 		document.getElementById('btnUpload').innerHTML = '<i class="bi bi-upload me-2"></i>Unggah';
 	});
+
+	// Handle scroll indicator for modern table
+	const tableWrapper = document.querySelector('.modern-table-wrapper');
+	if (tableWrapper) {
+		function checkScroll() {
+			const hasHorizontalScroll = tableWrapper.scrollWidth > tableWrapper.clientWidth;
+			const isScrolledToEnd = tableWrapper.scrollLeft >= (tableWrapper.scrollWidth - tableWrapper.clientWidth - 10);
+
+			if (hasHorizontalScroll && !isScrolledToEnd) {
+				tableWrapper.classList.add('has-scroll');
+			} else {
+				tableWrapper.classList.remove('has-scroll');
+			}
+		}
+
+		// Check on load and resize
+		checkScroll();
+		window.addEventListener('resize', checkScroll);
+		tableWrapper.addEventListener('scroll', checkScroll);
+	}
+
+	// Dynamic sticky column positioning
+	const table = document.getElementById('nilaiTable');
+	if (table) {
+		function updateStickyPositions() {
+			// Get all sticky columns from the first row (header)
+			const headerRow = table.querySelector('thead tr');
+			if (!headerRow) return;
+
+			const stickyColumns = headerRow.querySelectorAll('.sticky-col');
+			let cumulativeLeft = 0;
+
+			stickyColumns.forEach((col, index) => {
+				// Set the left position for this column
+				const varName = `--sticky-col-${index + 1}-left`;
+				table.style.setProperty(varName, `${cumulativeLeft}px`);
+
+				// Add this column's width to the cumulative total for the next column
+				cumulativeLeft += col.offsetWidth;
+			});
+		}
+
+		// Update positions on load
+		updateStickyPositions();
+
+		// Update on window resize with debouncing for performance
+		let resizeTimeout;
+		window.addEventListener('resize', function() {
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(updateStickyPositions, 100);
+		});
+
+		// Update after fonts load (can affect column widths)
+		if (document.fonts && document.fonts.ready) {
+			document.fonts.ready.then(updateStickyPositions);
+		}
+	}
 </script>
 <?= $this->endSection() ?>
