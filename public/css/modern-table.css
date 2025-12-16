@@ -70,19 +70,14 @@
 	text-transform: uppercase;
 	letter-spacing: 0.025em;
 	color: var(--modern-table-header-text);
+	border: 1px solid var(--modern-table-border);
 	border-bottom: 2px solid var(--modern-table-border-header);
-	border-right: 1px solid var(--modern-table-border);
 	white-space: nowrap;
-}
-
-.modern-table th:last-child {
-	border-right: none;
 }
 
 /* Table Body */
 .modern-table tbody tr {
 	transition: all 0.2s ease;
-	border-bottom: 1px solid var(--modern-table-border-light);
 }
 
 .modern-table tbody tr:hover {
@@ -90,20 +85,17 @@
 	transform: scale(1.001);
 }
 
-.modern-table tbody tr:last-child {
-	border-bottom: none;
-}
-
 .modern-table td {
 	padding: 1rem 0.75rem;
 	font-size: 0.875rem;
 	color: var(--modern-table-text);
 	vertical-align: middle;
-	border-right: 1px solid var(--modern-table-border);
+	border: 1px solid var(--modern-table-border);
+	border-top: none;
 }
 
-.modern-table td:last-child {
-	border-right: none;
+.modern-table tbody tr:first-child td {
+	border-top: 1px solid var(--modern-table-border);
 }
 
 /* Sticky Columns */

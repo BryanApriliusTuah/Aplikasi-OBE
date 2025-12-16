@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/admin_layout') ?>
 
 <?= $this->section('content') ?>
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
 <div class="container-fluid">
     <!-- Action Buttons -->
     <div class="row mb-3 no-print">
@@ -32,8 +33,9 @@
             <!-- 1. Identitas Program Studi -->
             <div class="section mb-5">
                 <h5 class="fw-bold mb-3">1. Identitas Program Studi</h5>
-                <table class="table table-bordered">
-                    <tbody>
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <tbody>
                         <tr>
                             <td class="fw-bold" style="width: 30%;">Nama Program Studi</td>
                             <td><?= esc($report['identitas']['nama_program_studi']) ?></td>
@@ -60,14 +62,15 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- 2. Daftar CPL Program Studi -->
             <div class="section mb-5">
                 <h5 class="fw-bold mb-3">2. Daftar CPL Program Studi</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th style="width: 15%;">Kode CPL</th>
                                 <th style="width: 55%;">Rumusan CPL</th>
@@ -96,9 +99,9 @@
             <!-- 3. Matriks CPMK terhadap CPL -->
             <div class="section mb-5">
                 <h5 class="fw-bold mb-3">3. Matriks CPMK terhadap CPL</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th style="width: 25%;">Mata Kuliah (MK)</th>
                                 <th style="width: 20%;">Kode CPMK</th>
@@ -139,9 +142,9 @@
             <!-- 4. Rekapitulasi Capaian CPL Berdasarkan CPMK Untuk Satu Angkatan -->
             <div class="section mb-5">
                 <h5 class="fw-bold mb-3">4. Rekapitulasi Capaian CPL Berdasarkan CPMK Untuk Angkatan <?= esc($report['identitas']['angkatan']) ?></h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th rowspan="2" style="width: 12%;" class="align-middle text-center">Kode CPL</th>
                                 <th rowspan="2" style="width: 15%;" class="align-middle text-center">CPMK</th>
@@ -296,9 +299,9 @@
                 </div>
 
                 <!-- Display Mode -->
-                <div id="cqi-display" class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                <div id="cqi-display" class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th style="width: 15%;">Kode CPL</th>
                                 <th style="width: 25%;">Masalah Utama</th>

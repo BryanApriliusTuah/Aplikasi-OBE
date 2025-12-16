@@ -34,6 +34,41 @@
 		line-height: 1.4;
 		min-height: 40px;
 	}
+
+	/* Modern Chart Styling */
+	canvas {
+		font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+	}
+
+	.card-body canvas {
+		border-radius: 8px;
+	}
+
+	/* Export button hover effect */
+	.btn-outline-primary:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+		transition: all 0.3s ease;
+	}
+
+	/* Chart container animation */
+	#chartSectionIndividual .card,
+	#chartSectionComparative .card,
+	#chartSectionKeseluruhan .card {
+		animation: fadeInUp 0.5s ease-out;
+	}
+
+	@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 </style>
 
 <div class="card">
@@ -268,9 +303,6 @@
 				<!-- Detailed Calculation Table Individual -->
 				<div id="detailCalculationIndividual" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL per Mahasiswa</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationContent"></div>
 						</div>
@@ -473,9 +505,6 @@
 				<!-- Detailed Calculation Table Comparative -->
 				<div id="detailCalculationComparative" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL per Angkatan</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationComparativeContent"></div>
 						</div>
@@ -524,9 +553,6 @@
 				<!-- Detailed Calculation Table Keseluruhan -->
 				<div id="detailCalculationKeseluruhan" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL Keseluruhan</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationKeseluruhanContent"></div>
 						</div>
@@ -547,10 +573,6 @@
 <div class="modal fade" id="detailCplModal" tabindex="-1">
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
-				<h5 class="modal-title" id="detailCplModalTitle">Detail Capaian CPL</h5>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-			</div>
 			<div class="modal-body">
 				<div id="detailCplModalContent">
 					<div class="text-center py-4">
@@ -572,20 +594,17 @@
 <?= $this->section('js') ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
 
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
-<!-- DataTables CSS -->
-<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<!-- Modern Table CSS -->
+<link href="<?= base_url('css/modern-table.css') ?>" rel="stylesheet" />
 
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 	// Dynamic passing threshold from grade configuration
@@ -600,6 +619,120 @@
 	let currentKeseluruhanData = null;
 	let currentActiveFilter = 1; // Track which filter is currently active for Individual tab (1, 2, or 3)
 	let currentActiveComparativeFilter = 1; // Track which filter is currently active for Comparative tab (1, 2, or 3)
+
+	// Pagination Helper Function
+	function initPagination(tableId, rowsPerPage = 10) {
+		const table = document.getElementById(tableId);
+		if (!table) return;
+
+		const tbody = table.querySelector('tbody');
+		const rows = Array.from(tbody.querySelectorAll('tr'));
+		const totalRows = rows.length;
+		const totalPages = Math.ceil(totalRows / rowsPerPage);
+		let currentPage = 1;
+
+		// Create pagination controls
+		const paginationId = `${tableId}_pagination`;
+		let paginationContainer = document.getElementById(paginationId);
+
+		if (!paginationContainer) {
+			paginationContainer = document.createElement('div');
+			paginationContainer.id = paginationId;
+			paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3';
+			table.parentElement.appendChild(paginationContainer);
+		}
+
+		function showPage(page) {
+			currentPage = page;
+			const start = (page - 1) * rowsPerPage;
+			const end = start + rowsPerPage;
+
+			rows.forEach((row, index) => {
+				row.style.display = (index >= start && index < end) ? '' : 'none';
+			});
+
+			renderPagination();
+		}
+
+		function renderPagination() {
+			const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+			const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+
+			let html = `
+				<div class="text-muted small">
+					Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+				</div>
+				<nav>
+					<ul class="pagination pagination-sm mb-0">
+			`;
+
+			// Previous button
+			html += `
+				<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+					<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+				</li>
+			`;
+
+			// Page numbers
+			const maxVisiblePages = 5;
+			let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+			let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+			if (endPage - startPage + 1 < maxVisiblePages) {
+				startPage = Math.max(1, endPage - maxVisiblePages + 1);
+			}
+
+			if (startPage > 1) {
+				html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+				if (startPage > 2) {
+					html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+				}
+			}
+
+			for (let i = startPage; i <= endPage; i++) {
+				html += `
+					<li class="page-item ${i === currentPage ? 'active' : ''}">
+						<a class="page-link" href="#" data-page="${i}">${i}</a>
+					</li>
+				`;
+			}
+
+			if (endPage < totalPages) {
+				if (endPage < totalPages - 1) {
+					html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+				}
+				html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+			}
+
+			// Next button
+			html += `
+				<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+					<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+				</li>
+			`;
+
+			html += `
+					</ul>
+				</nav>
+			`;
+
+			paginationContainer.innerHTML = html;
+
+			// Add event listeners
+			paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+				link.addEventListener('click', function(e) {
+					e.preventDefault();
+					const page = parseInt(this.getAttribute('data-page'));
+					if (page >= 1 && page <= totalPages) {
+						showPage(page);
+					}
+				});
+			});
+		}
+
+		// Initialize first page
+		showPage(1);
+	}
 
 	$(document).ready(function() {
 		// Handle filter card interactions and active states for Individual (Mahasiswa) tab
@@ -1066,15 +1199,6 @@
 			e.preventDefault();
 			loadAllSubjectsChartData();
 		});
-
-		// Export buttons
-		$('#exportChartIndividualBtn').on('click', function() {
-			exportChart(cplChartIndividual, 'capaian-cpl-individual.png');
-		});
-
-		$('#exportChartComparativeBtn').on('click', function() {
-			exportChart(cplChartComparative, 'capaian-cpl-comparative.png');
-		});
 	});
 
 
@@ -1379,15 +1503,22 @@
 	}
 
 	function displayIndividualChart(response) {
-		const chartHTML = createChartHTML('Individual', 'primary', 'cplChartIndividual');
-		$('#chartSectionIndividual').html(chartHTML);
+		// Destroy existing chart if any
+		if (cplChartIndividual) {
+			cplChartIndividual.destroy();
+		}
 
-		bindExportButton('#exportChartIndividualBtn', cplChartIndividual, 'capaian-cpl-individual.png');
+		// Create and render modern chart
+		cplChartIndividual = createModernChart(
+			'chartSectionIndividual',
+			response.chartData,
+			'Capaian CPL Mahasiswa',
+			'capaian-cpl-individual.png'
+		);
+		cplChartIndividual.render();
 
-		const ctx = document.getElementById('cplChartIndividual').getContext('2d');
-		if (cplChartIndividual) cplChartIndividual.destroy();
-
-		cplChartIndividual = createBarChart(ctx, response.chartData, 'Capaian CPL Mahasiswa', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+		// Show chart section
+		$('#chartSectionIndividual').removeClass('d-none');
 
 		// Show calculation explanation
 		$('#calculationExplanationIndividual').removeClass('d-none');
@@ -1404,8 +1535,8 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table id="individualDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="individualDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
@@ -1443,30 +1574,13 @@
 		$('#detailCalculationContent').html(html);
 		$('#detailCalculationIndividual').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#individualDetailTable')) {
-			$('#individualDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		$('#individualDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize custom pagination
+		setTimeout(() => initPagination('individualDetailTable', 10), 100);
 	}
 
 	function loadCplCalculationDetail(cplId, kodeCpl) {
 		// Use currentActiveFilter to get the right mahasiswa ID and filter values
 		const mahasiswaId = $(`#mahasiswaSelect${currentActiveFilter}`).val();
-
-		// Set modal title
-		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl}`);
 
 		// Show loading state in modal
 		$('#detailCplModalContent').html(`
@@ -1514,9 +1628,9 @@
 
 	function displayCplCalculationDetail(kodeCpl, data, summary) {
 		let html = `
-			<div class="table-responsive">
-				<table class="table table-bordered table-sm mb-0">
-					<thead class="table-primary">
+			<div class="modern-table-wrapper">
+				<table class="modern-table mb-0">
+					<thead>
 						<tr>
 							<th width="5%" class="text-center">No</th>
 							<th width="15%">Kode CPMK</th>
@@ -1555,13 +1669,13 @@
 		// Summary row
 		html += `
 					</tbody>
-					<tfoot class="table-light">
+					<tfoot>
 						<tr>
 							<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
 							<td class="text-center"><strong>${summary.nilai_cpl.toFixed(2)}</strong></td>
 							<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
 						</tr>
-						<tr class="table-success">
+						<tr style="background-color: #d1e7dd;">
 							<td colspan="6" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
 							<td class="text-center"><h6 class="mb-0"><strong>${summary.capaian_cpl.toFixed(2)}%</strong></h6></td>
 						</tr>
@@ -1574,30 +1688,44 @@
 	}
 
 	function displayComparativeChart(response) {
-		const chartHTML = createChartHTML('Comparative', 'primary', 'cplChartComparative');
-		$('#chartSectionComparative').html(chartHTML);
+		// Destroy existing chart if any
+		if (cplChartComparative) {
+			cplChartComparative.destroy();
+		}
 
-		bindExportButton('#exportChartComparativeBtn', cplChartComparative, 'capaian-cpl-comparative.png');
+		// Create and render modern chart
+		cplChartComparative = createModernChart(
+			'chartSectionComparative',
+			response.chartData,
+			'Rata-rata Capaian CPL (Angkatan)',
+			'capaian-cpl-comparative.png'
+		);
+		cplChartComparative.render();
 
-		const ctx = document.getElementById('cplChartComparative').getContext('2d');
-		if (cplChartComparative) cplChartComparative.destroy();
-
-		cplChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL (Angkatan)', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+		// Show chart section
+		$('#chartSectionComparative').removeClass('d-none');
 
 		// Display detailed calculation
 		displayComparativeDetailedCalculation(response);
 	}
 
 	function displayKeseluruhanChart(response) {
-		const chartHTML = createChartHTML('Keseluruhan', 'primary', 'cplChartKeseluruhan');
-		$('#chartSectionKeseluruhan').html(chartHTML);
+		// Destroy existing chart if any
+		if (cplChartKeseluruhan) {
+			cplChartKeseluruhan.destroy();
+		}
 
-		bindExportButton('#exportChartKeseluruhanBtn', cplChartKeseluruhan, 'capaian-cpl-keseluruhan.png');
+		// Create and render modern chart
+		cplChartKeseluruhan = createModernChart(
+			'chartSectionKeseluruhan',
+			response.chartData,
+			'Rata-rata Capaian CPL Keseluruhan',
+			'capaian-cpl-keseluruhan.png'
+		);
+		cplChartKeseluruhan.render();
 
-		const ctx = document.getElementById('cplChartKeseluruhan').getContext('2d');
-		if (cplChartKeseluruhan) cplChartKeseluruhan.destroy();
-
-		cplChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPL Keseluruhan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+		// Show chart section
+		$('#chartSectionKeseluruhan').removeClass('d-none');
 
 		// Display detailed calculation
 		displayKeseluruhanDetailedCalculation(response);
@@ -1609,8 +1737,8 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table id="keseluruhanDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="keseluruhanDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
@@ -1646,29 +1774,12 @@
 		$('#detailCalculationKeseluruhanContent').html(html);
 		$('#detailCalculationKeseluruhan').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#keseluruhanDetailTable')) {
-			$('#keseluruhanDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		$('#keseluruhanDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize custom pagination
+		setTimeout(() => initPagination('keseluruhanDetailTable', 10), 100);
 	}
 
 	function loadKeseluruhanCplDetail(cplId, kodeCpl, index) {
 		const programStudi = $('#programStudiKeseluruhanSelect').val();
-
-		// Set modal title
-		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Semua Angkatan`);
 
 		// Show loading state in modal
 		$('#detailCplModalContent').html(`
@@ -1711,9 +1822,9 @@
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
 		} else {
 			html += `
-				<div class="table-responsive">
-					<table id="keseluruhanCplDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
-						<thead class="table-primary">
+				<div class="modern-table-wrapper">
+					<table id="keseluruhanCplDetailTable_${index}" class="modern-table mb-0">
+						<thead>
 							<tr>
 								<th width="8%" class="text-center">No</th>
 								<th width="15%">NIM</th>
@@ -1739,12 +1850,12 @@
 
 			html += `
 						</tbody>
-						<tfoot class="table-light">
+						<tfoot>
 							<tr>
 								<td colspan="4" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa (semua angkatan):</strong></td>
 								<td class="text-center"><strong>${summary.total_cpl.toFixed(2)}%</strong></td>
 							</tr>
-							<tr class="table-success">
+							<tr style="background-color: #d1e7dd;">
 								<td colspan="4" class="text-end"><strong>Rata-rata CPL = ${summary.total_cpl.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
 								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
@@ -1756,19 +1867,9 @@
 
 		$('#detailCplModalContent').html(html);
 
-		// Initialize DataTable with pagination
+		// Initialize custom pagination
 		if (data.length > 0) {
-			// Destroy existing DataTable if it exists
-			if ($.fn.DataTable.isDataTable(`#keseluruhanCplDetailTable_${index}`)) {
-				$(`#keseluruhanCplDetailTable_${index}`).DataTable().destroy();
-			}
-
-			$(`#keseluruhanCplDetailTable_${index}`).DataTable({
-				pageLength: 10,
-				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-				}
-			});
+			setTimeout(() => initPagination(`keseluruhanCplDetailTable_${index}`, 10), 100);
 		}
 	}
 
@@ -1778,8 +1879,8 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table id="comparativeDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="comparativeDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
@@ -1815,31 +1916,14 @@
 		$('#detailCalculationComparativeContent').html(html);
 		$('#detailCalculationComparative').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#comparativeDetailTable')) {
-			$('#comparativeDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		$('#comparativeDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize custom pagination
+		setTimeout(() => initPagination('comparativeDetailTable', 10), 100);
 	}
 
 	function loadComparativeCplDetail(cplId, kodeCpl, index) {
 		// Use currentActiveComparativeFilter to get the right filter values
 		const programStudi = $(`#programStudiComparativeSelect${currentActiveComparativeFilter}`).val();
 		const tahunAngkatan = $(`#tahunAngkatanComparativeSelect${currentActiveComparativeFilter}`).val();
-
-		// Set modal title
-		$('#detailCplModalTitle').text(`Detail Perhitungan ${kodeCpl} - Angkatan`);
 
 		// Show loading state in modal
 		$('#detailCplModalContent').html(`
@@ -1893,9 +1977,9 @@
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPL ini</div>';
 		} else {
 			html += `
-				<div class="table-responsive">
-					<table id="comparativeCplDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
-						<thead class="table-primary">
+				<div class="modern-table-wrapper">
+					<table id="comparativeCplDetailTable_${index}" class="modern-table mb-0">
+						<thead>
 							<tr>
 								<th width="10%" class="text-center">No</th>
 								<th width="20%">NIM</th>
@@ -1919,12 +2003,12 @@
 
 			html += `
 						</tbody>
-						<tfoot class="table-light">
+						<tfoot>
 							<tr>
 								<td colspan="3" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa:</strong></td>
 								<td class="text-center"><strong>${summary.total_cpl.toFixed(2)}%</strong></td>
 							</tr>
-							<tr class="table-success">
+							<tr style="background-color: #d1e7dd;">
 								<td colspan="3" class="text-end"><strong>Rata-rata CPL = ${summary.total_cpl.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
 								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
@@ -1936,19 +2020,9 @@
 
 		$('#detailCplModalContent').html(html);
 
-		// Initialize DataTable with pagination
+		// Initialize custom pagination
 		if (data.length > 0) {
-			// Destroy existing DataTable if it exists
-			if ($.fn.DataTable.isDataTable(`#comparativeCplDetailTable_${index}`)) {
-				$(`#comparativeCplDetailTable_${index}`).DataTable().destroy();
-			}
-
-			$(`#comparativeCplDetailTable_${index}`).DataTable({
-				pageLength: 10,
-				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-				}
-			});
+			setTimeout(() => initPagination(`comparativeCplDetailTable_${index}`, 10), 100);
 		}
 	}
 
@@ -2076,9 +2150,9 @@
                 <h5 class="mb-0"><i class="bi bi-table"></i> Ringkasan Capaian per Mata Kuliah</h5>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover table-striped">
-                        <thead class="table-light">
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th width="5%">No</th>
                                 <th width="10%">Kode MK</th>
@@ -2168,7 +2242,6 @@
 	function showCplDetail(cplId, kodeCpl) {
 		const mahasiswaId = $('#mahasiswaSelect').val();
 
-		$('#detailCplModalTitle').text(`Detail Capaian ${kodeCpl}`);
 		$('#detailCplModal').modal('show');
 		$('#detailCplModalContent').html(getLoadingHTML());
 
@@ -2205,9 +2278,9 @@
 			html += `<div class="alert alert-info"><i class="bi bi-info-circle"></i> Belum ada data CPMK yang terkait dengan CPL ini atau mahasiswa belum memiliki nilai.</div>`;
 		} else {
 			html += `
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-primary">
+            <div class="modern-table-wrapper">
+                <table class="modern-table">
+                    <thead>
                         <tr>
                             <th width="5%">No</th>
                             <th width="12%">Kode CPMK</th>
@@ -2254,155 +2327,24 @@
 	}
 
 	// Helper Functions
-	function createBarChart(ctx, chartData, title, backgroundColor, borderColor) {
-		// Create conditional colors based on passing threshold
-		const backgroundColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : backgroundColor
-		);
-		const borderColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : borderColor
-		);
-
-		return new Chart(ctx, {
-			type: 'bar',
-			data: {
-				labels: chartData.labels,
-				datasets: [{
-					label: 'Capaian CPL',
-					data: chartData.data,
-					backgroundColor: backgroundColors,
-					borderColor: borderColors,
-					borderWidth: 2,
-					borderRadius: 5
-				}]
-			},
-			plugins: [ChartDataLabels],
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					legend: {
-						display: true,
-						position: 'top',
-						labels: {
-							generateLabels: function(chart) {
-								const data = chart.data.datasets[0].data;
-								const labels = [];
-
-								// Check if there are values >= threshold (blue bars)
-								const hasAboveThreshold = data.some(value => value >= passingThreshold);
-								if (hasAboveThreshold) {
-									labels.push({
-										text: `Capaian ≥ ${passingThreshold}%`,
-										fillStyle: 'rgba(13, 110, 253, 0.8)',
-										strokeStyle: 'rgba(13, 110, 253, 1)',
-										lineWidth: 2,
-										hidden: false,
-										index: 0
-									});
-								}
-
-								// Check if there are values < threshold (red bars)
-								const hasBelowThreshold = data.some(value => value < passingThreshold);
-								if (hasBelowThreshold) {
-									labels.push({
-										text: `Capaian < ${passingThreshold}%`,
-										fillStyle: 'rgba(220, 53, 69, 0.8)',
-										strokeStyle: 'rgba(220, 53, 69, 1)',
-										lineWidth: 2,
-										hidden: false,
-										index: 1
-									});
-								}
-
-								return labels;
-							}
-						}
-					},
-					title: {
-						display: true,
-						text: title,
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
-					},
-					tooltip: {
-						backgroundColor: 'rgba(0, 0, 0, 0.8)',
-						padding: 12,
-						callbacks: {
-							label: function(context) {
-								return 'Capaian CPL: ' + context.parsed.y.toFixed(2) + '%';
-							}
-						}
-					},
-					datalabels: {
-						anchor: 'end',
-						align: 'top',
-						formatter: function(value) {
-							return value.toFixed(2) + '%';
-						},
-						font: {
-							weight: 'bold',
-							size: 12
-						},
-						color: '#333'
-					}
-				},
-				scales: {
-					y: {
-						beginAtZero: true,
-						max: 100,
-						title: {
-							display: true,
-							text: 'Capaian CPL (%)',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						},
-						ticks: {
-							callback: function(value) {
-								return value + '%';
-							}
-						},
-						grid: {
-							display: true,
-							color: 'rgba(0, 0, 0, 0.05)'
-						}
-					},
-					x: {
-						title: {
-							display: true,
-							text: 'Kode CPL',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						},
-						grid: {
-							display: false
-						}
-					}
+	function createModernChart(containerId, chartData, title, exportFilename) {
+		return new ModernChartComponent({
+			containerId: containerId,
+			chartData: chartData,
+			config: {
+				title: title,
+				type: 'bar',
+				passingThreshold: passingThreshold,
+				showExportButton: true,
+				showSubtitle: false,
+				exportFilename: exportFilename,
+				height: 80,
+				labels: {
+					yAxis: 'Persentase Capaian (%)',
+					xAxis: 'Kode CPL'
 				}
 			}
 		});
-	}
-
-	function createChartHTML(type, color, canvasId, title = 'Grafik Capaian CPL') {
-		return `
-        <div class="card">
-            <div class="card-header bg-${color} text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> ${title}</h5>
-                <button class="btn btn-light btn-sm" id="exportChart${type}Btn">
-                    <i class="bi bi-download"></i> Export PNG
-                </button>
-            </div>
-            <div class="card-body">
-                <canvas id="${canvasId}" height="80"></canvas>
-            </div>
-        </div>
-    `;
 	}
 
 	function createTableHTML(type, showAction) {
@@ -2414,9 +2356,9 @@
                 <h5 class="mb-0"><i class="bi bi-table"></i> Detail Capaian CPL</h5>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
                                 <th width="5%">No</th>
                                 <th width="10%">Kode CPL</th>

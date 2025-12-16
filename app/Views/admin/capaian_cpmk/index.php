@@ -34,6 +34,41 @@
 		line-height: 1.4;
 		min-height: 40px;
 	}
+
+	/* Modern Chart Styling */
+	canvas {
+		font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+	}
+
+	.card-body canvas {
+		border-radius: 8px;
+	}
+
+	/* Export button hover effect */
+	.btn-outline-primary:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+		transition: all 0.3s ease;
+	}
+
+	/* Chart container animation */
+	#chartSectionIndividual .card,
+	#chartSectionComparative .card,
+	#chartSectionKeseluruhan .card {
+		animation: fadeInUp 0.5s ease-out;
+	}
+
+	@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 </style>
 
 <div class="card">
@@ -268,9 +303,6 @@
 				<!-- Detailed Calculation Table Individual -->
 				<div id="detailCalculationIndividual" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPMK</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationContent"></div>
 						</div>
@@ -473,9 +505,6 @@
 				<!-- Detailed Calculation Table Comparative -->
 				<div id="detailCalculationComparative" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPMK per Angkatan</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationComparativeContent"></div>
 						</div>
@@ -524,9 +553,6 @@
 				<!-- Detailed Calculation Table Keseluruhan -->
 				<div id="detailCalculationKeseluruhan" class="d-none">
 					<div class="card mt-4">
-						<div class="card-header bg-secondary text-white">
-							<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPMK Keseluruhan</h5>
-						</div>
 						<div class="card-body">
 							<div id="detailCalculationKeseluruhanContent"></div>
 						</div>
@@ -547,10 +573,6 @@
 <div class="modal fade" id="detailCpmkModal" tabindex="-1">
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
-				<h5 class="modal-title" id="detailCpmkModalTitle">Detail Capaian CPMK</h5>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-			</div>
 			<div class="modal-body">
 				<div id="detailCpmkModalContent">
 					<div class="text-center py-4">
@@ -572,20 +594,17 @@
 <?= $this->section('js') ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
 
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
-<!-- DataTables CSS -->
-<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<!-- Modern Table CSS -->
+<link href="<?= base_url('css/modern-table.css') ?>" rel="stylesheet" />
 
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 	// Dynamic passing threshold from grade configuration
@@ -599,6 +618,120 @@
 	let currentKeseluruhanData = null;
 	let currentActiveFilter = 1; // Track which filter is currently active for Individual tab (1, 2, or 3)
 	let currentActiveComparativeFilter = 1; // Track which filter is currently active for Comparative tab (1, 2, or 3)
+
+	// Pagination Helper Function
+	function initPagination(tableId, rowsPerPage = 10) {
+		const table = document.getElementById(tableId);
+		if (!table) return;
+
+		const tbody = table.querySelector('tbody');
+		const rows = Array.from(tbody.querySelectorAll('tr'));
+		const totalRows = rows.length;
+		const totalPages = Math.ceil(totalRows / rowsPerPage);
+		let currentPage = 1;
+
+		// Create pagination controls
+		const paginationId = `${tableId}_pagination`;
+		let paginationContainer = document.getElementById(paginationId);
+
+		if (!paginationContainer) {
+			paginationContainer = document.createElement('div');
+			paginationContainer.id = paginationId;
+			paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3';
+			table.parentElement.appendChild(paginationContainer);
+		}
+
+		function showPage(page) {
+			currentPage = page;
+			const start = (page - 1) * rowsPerPage;
+			const end = start + rowsPerPage;
+
+			rows.forEach((row, index) => {
+				row.style.display = (index >= start && index < end) ? '' : 'none';
+			});
+
+			renderPagination();
+		}
+
+		function renderPagination() {
+			const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+			const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+
+			let html = `
+				<div class="text-muted small">
+					Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+				</div>
+				<nav>
+					<ul class="pagination pagination-sm mb-0">
+			`;
+
+			// Previous button
+			html += `
+				<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+					<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+				</li>
+			`;
+
+			// Page numbers
+			const maxVisiblePages = 5;
+			let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+			let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+			if (endPage - startPage + 1 < maxVisiblePages) {
+				startPage = Math.max(1, endPage - maxVisiblePages + 1);
+			}
+
+			if (startPage > 1) {
+				html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+				if (startPage > 2) {
+					html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+				}
+			}
+
+			for (let i = startPage; i <= endPage; i++) {
+				html += `
+					<li class="page-item ${i === currentPage ? 'active' : ''}">
+						<a class="page-link" href="#" data-page="${i}">${i}</a>
+					</li>
+				`;
+			}
+
+			if (endPage < totalPages) {
+				if (endPage < totalPages - 1) {
+					html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+				}
+				html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+			}
+
+			// Next button
+			html += `
+				<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+					<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+				</li>
+			`;
+
+			html += `
+					</ul>
+				</nav>
+			`;
+
+			paginationContainer.innerHTML = html;
+
+			// Add event listeners
+			paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+				link.addEventListener('click', function(e) {
+					e.preventDefault();
+					const page = parseInt(this.getAttribute('data-page'));
+					if (page >= 1 && page <= totalPages) {
+						showPage(page);
+					}
+				});
+			});
+		}
+
+		// Initialize first page
+		showPage(1);
+	}
 
 	$(document).ready(function() {
 		// Handle filter card interactions and active states for Individual (Mahasiswa) tab
@@ -1358,8 +1491,8 @@
 			cpmkValues[label] = response.chartData.data[index];
 		});
 
-		let html = '<div class="table-responsive"><table id="individualDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="individualDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="15%">Kode CPMK</th>';
@@ -1399,22 +1532,8 @@
 		$('#detailCalculationContent').html(html);
 		$('#detailCalculationIndividual').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#individualDetailTable')) {
-			$('#individualDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		window.individualDetailTable = $('#individualDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize pagination
+		setTimeout(() => initPagination('individualDetailTable', 10), 100);
 	}
 
 	function loadIndividualCpmkDetail(kodeCpmk, index) {
@@ -1494,9 +1613,9 @@
 
 			if (course.assessments && course.assessments.length > 0) {
 				html += `
-					<div class="table-responsive">
-						<table class="table table-sm table-bordered">
-							<thead class="table-light">
+					<div class="modern-table-wrapper">
+						<table class="modern-table">
+							<thead>
 								<tr>
 									<th>Teknik Penilaian</th>
 									<th class="text-center">Nilai</th>
@@ -1522,7 +1641,7 @@
 
 				html += `
 							</tbody>
-							<tfoot class="table-light">
+							<tfoot>
 								<tr>
 									<td colspan="3" class="text-end"><strong>Total</strong></td>
 									<td class="text-center"><strong>${nilaiCpmk.toFixed(2)}</strong></td>
@@ -1586,8 +1705,8 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table id="comparativeDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="comparativeDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="15%">Kode CPMK</th>';
@@ -1622,22 +1741,8 @@
 		$('#detailCalculationComparativeContent').html(html);
 		$('#detailCalculationComparative').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#comparativeDetailTable')) {
-			$('#comparativeDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		window.comparativeDetailTable = $('#comparativeDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize pagination
+		setTimeout(() => initPagination('comparativeDetailTable', 10), 100);
 	}
 
 	function displayKeseluruhanDetailedCalculation(response) {
@@ -1646,8 +1751,8 @@
 			return;
 		}
 
-		let html = '<div class="table-responsive"><table id="keseluruhanDetailTable" class="table table-bordered table-hover">';
-		html += '<thead class="table-light">';
+		let html = '<div class="modern-table-wrapper"><table id="keseluruhanDetailTable" class="modern-table">';
+		html += '<thead>';
 		html += '<tr>';
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="15%">Kode CPMK</th>';
@@ -1682,22 +1787,8 @@
 		$('#detailCalculationKeseluruhanContent').html(html);
 		$('#detailCalculationKeseluruhan').removeClass('d-none');
 
-		// Destroy existing DataTable if it exists
-		if ($.fn.DataTable.isDataTable('#keseluruhanDetailTable')) {
-			$('#keseluruhanDetailTable').DataTable().destroy();
-		}
-
-		// Initialize DataTable with pagination
-		window.keseluruhanDetailTable = $('#keseluruhanDetailTable').DataTable({
-			pageLength: 10,
-			language: {
-				url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-			},
-			columnDefs: [{
-				orderable: false,
-				targets: -1
-			}]
-		});
+		// Initialize pagination
+		setTimeout(() => initPagination('keseluruhanDetailTable', 10), 100);
 	}
 
 	function loadComparativeCpmkDetail(cpmkId, kodeCpmk, index) {
@@ -1760,9 +1851,9 @@
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPMK ini</div>';
 		} else {
 			html += `
-				<div class="table-responsive">
-					<table id="comparativeCpmkDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
-						<thead class="table-primary">
+				<div class="modern-table-wrapper">
+					<table id="comparativeCpmkDetailTable_${index}" class="modern-table mb-0">
+						<thead>
 							<tr>
 								<th width="10%" class="text-center">No</th>
 								<th width="20%">NIM</th>
@@ -1786,12 +1877,12 @@
 
 			html += `
 						</tbody>
-						<tfoot class="table-light">
+						<tfoot style="background: #f8f9fa;">
 							<tr>
 								<td colspan="3" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa:</strong></td>
 								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}%</strong></td>
 							</tr>
-							<tr class="table-success">
+							<tr style="background: #d1e7dd;">
 								<td colspan="3" class="text-end"><strong>Rata - rata  = ${summary.total_nilai.toFixed(2)} / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
 								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
@@ -1803,19 +1894,9 @@
 
 		$('#detailCpmkModalContent').html(html);
 
-		// Initialize DataTable with pagination
+		// Initialize pagination
 		if (data.length > 0) {
-			// Destroy existing DataTable if it exists
-			if ($.fn.DataTable.isDataTable(`#comparativeCpmkDetailTable_${index}`)) {
-				$(`#comparativeCpmkDetailTable_${index}`).DataTable().destroy();
-			}
-
-			$(`#comparativeCpmkDetailTable_${index}`).DataTable({
-				pageLength: 10,
-				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-				}
-			});
+			setTimeout(() => initPagination(`comparativeCpmkDetailTable_${index}`, 10), 100);
 		}
 	}
 
@@ -1866,9 +1947,9 @@
 			html += '<div class="alert alert-info mb-0">Belum ada mahasiswa yang memiliki nilai untuk CPMK ini</div>';
 		} else {
 			html += `
-				<div class="table-responsive">
-					<table id="keseluruhanCpmkDetailTable_${index}" class="table table-bordered table-sm table-hover mb-0">
-						<thead class="table-primary">
+				<div class="modern-table-wrapper">
+					<table id="keseluruhanCpmkDetailTable_${index}" class="modern-table mb-0">
+						<thead>
 							<tr>
 								<th width="8%" class="text-center">No</th>
 								<th width="15%">NIM</th>
@@ -1894,12 +1975,12 @@
 
 			html += `
 						</tbody>
-						<tfoot class="table-light">
+						<tfoot style="background: #f8f9fa;">
 							<tr>
 								<td colspan="4" class="text-end"><strong>Total dari ${summary.jumlah_mahasiswa} mahasiswa (semua angkatan):</strong></td>
 								<td class="text-center"><strong>${summary.total_nilai.toFixed(2)}%</strong></td>
 							</tr>
-							<tr class="table-success">
+							<tr style="background: #d1e7dd;">
 								<td colspan="4" class="text-end"><strong>Rata - rata = ${summary.total_nilai.toFixed(2)}% / ${summary.jumlah_mahasiswa} mahasiswa</strong></td>
 								<td class="text-center"><h6 class="mb-0"><strong>${summary.rata_rata.toFixed(2)}%</strong></h6></td>
 							</tr>
@@ -1911,30 +1992,33 @@
 
 		$('#detailCpmkModalContent').html(html);
 
-		// Initialize DataTable with pagination
+		// Initialize pagination
 		if (data.length > 0) {
-			// Destroy existing DataTable if it exists
-			if ($.fn.DataTable.isDataTable(`#keseluruhanCpmkDetailTable_${index}`)) {
-				$(`#keseluruhanCpmkDetailTable_${index}`).DataTable().destroy();
-			}
-
-			$(`#keseluruhanCpmkDetailTable_${index}`).DataTable({
-				pageLength: 10,
-				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-				}
-			});
+			setTimeout(() => initPagination(`keseluruhanCpmkDetailTable_${index}`, 10), 100);
 		}
 	}
 
 	// Helper Functions
 	function createBarChart(ctx, chartData, title, backgroundColor, borderColor) {
-		// Create conditional colors based on passing threshold
-		const backgroundColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : backgroundColor
-		);
+		// Create modern gradient colors
+		const createGradient = (ctx, color1, color2) => {
+			const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+			gradient.addColorStop(0, color1);
+			gradient.addColorStop(1, color2);
+			return gradient;
+		};
+
+		// Create conditional colors based on passing threshold with gradients
+		const backgroundColors = chartData.data.map((value, index) => {
+			if (value < passingThreshold) {
+				return createGradient(ctx, 'rgba(220, 53, 69, 0.9)', 'rgba(220, 53, 69, 0.6)');
+			} else {
+				return createGradient(ctx, 'rgba(13, 110, 253, 0.9)', 'rgba(13, 110, 253, 0.6)');
+			}
+		});
+
 		const borderColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : borderColor
+			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
 		);
 
 		return new Chart(ctx, {
@@ -1946,19 +2030,42 @@
 					data: chartData.data,
 					backgroundColor: backgroundColors,
 					borderColor: borderColors,
-					borderWidth: 2,
-					borderRadius: 5
+					borderWidth: 0,
+					borderRadius: 8,
+					barThickness: 'flex',
+					maxBarThickness: 60,
+					// Add shadow effect
+					shadowOffsetX: 0,
+					shadowOffsetY: 4,
+					shadowBlur: 8,
+					shadowColor: 'rgba(0, 0, 0, 0.15)'
 				}]
 			},
 			plugins: [ChartDataLabels],
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
+				interaction: {
+					intersect: false,
+					mode: 'index'
+				},
+				animation: {
+					duration: 1000,
+					easing: 'easeInOutQuart'
+				},
 				plugins: {
 					legend: {
 						display: true,
-						position: 'top',
+						position: 'bottom',
+						align: 'end',
 						labels: {
+							usePointStyle: true,
+							pointStyle: 'circle',
+							font: {
+								size: 13,
+								family: "'Inter', 'Segoe UI', sans-serif",
+								weight: '500'
+							},
 							generateLabels: function(chart) {
 								const data = chart.data.datasets[0].data;
 								const labels = [];
@@ -1968,9 +2075,9 @@
 								if (hasAboveThreshold) {
 									labels.push({
 										text: `Capaian ≥ ${passingThreshold}%`,
-										fillStyle: 'rgba(13, 110, 253, 0.8)',
+										fillStyle: 'rgba(13, 110, 253, 0.9)',
 										strokeStyle: 'rgba(13, 110, 253, 1)',
-										lineWidth: 2,
+										lineWidth: 0,
 										hidden: false,
 										index: 0
 									});
@@ -1981,9 +2088,9 @@
 								if (hasBelowThreshold) {
 									labels.push({
 										text: `Capaian < ${passingThreshold}%`,
-										fillStyle: 'rgba(220, 53, 69, 0.8)',
+										fillStyle: 'rgba(220, 53, 69, 0.9)',
 										strokeStyle: 'rgba(220, 53, 69, 1)',
-										lineWidth: 2,
+										lineWidth: 0,
 										hidden: false,
 										index: 1
 									});
@@ -1991,36 +2098,71 @@
 
 								return labels;
 							}
-						}
-					},
-					title: {
-						display: true,
-						text: title,
-						font: {
-							size: 16,
-							weight: 'bold'
+						},
+						// Add spacing below the legend to prevent overlap with data labels
+						padding: {
+							bottom: 30
 						}
 					},
 					tooltip: {
-						backgroundColor: 'rgba(0, 0, 0, 0.8)',
-						padding: 12,
+						backgroundColor: 'rgba(30, 39, 46, 0.95)',
+						padding: 16,
+						cornerRadius: 8,
+						titleFont: {
+							size: 14,
+							weight: '600',
+							family: "'Inter', 'Segoe UI', sans-serif"
+						},
+						bodyFont: {
+							size: 13,
+							family: "'Inter', 'Segoe UI', sans-serif"
+						},
+						borderColor: 'rgba(255, 255, 255, 0.1)',
+						borderWidth: 1,
+						displayColors: true,
 						callbacks: {
+							title: function(context) {
+								return context[0].label;
+							},
 							label: function(context) {
-								return 'Capaian CPMK: ' + context.parsed.y.toFixed(2) + '%';
+								const value = context.parsed.y;
+								const status = value >= passingThreshold ? 'Memenuhi' : 'Belum Memenuhi';
+								return [
+									`Capaian: ${value.toFixed(2)}%`,
+									`Status: ${status}`
+								];
 							}
 						}
 					},
 					datalabels: {
 						anchor: 'end',
 						align: 'top',
+						offset: 4,
 						formatter: function(value) {
-							return value.toFixed(2) + '%';
+							return value.toFixed(1) + '%';
 						},
 						font: {
-							weight: 'bold',
-							size: 12
+							weight: '600',
+							size: 11,
+							family: "'Inter', 'Segoe UI', sans-serif"
 						},
-						color: '#333'
+						color: function(context) {
+							return context.dataset.data[context.dataIndex] < passingThreshold ?
+								'rgba(220, 53, 69, 1)' :
+								'rgba(13, 110, 253, 1)';
+						},
+						backgroundColor: function(context) {
+							return context.dataset.data[context.dataIndex] < passingThreshold ?
+								'rgba(220, 53, 69, 0.1)' :
+								'rgba(13, 110, 253, 0.1)';
+						},
+						borderRadius: 4,
+						padding: {
+							top: 4,
+							bottom: 4,
+							left: 8,
+							right: 8
+						}
 					}
 				},
 				scales: {
@@ -2029,20 +2171,37 @@
 						max: 100,
 						title: {
 							display: true,
-							text: 'Capaian CPMK',
+							text: 'Persentase Capaian (%)',
 							font: {
-								size: 14,
-								weight: 'bold'
+								size: 13,
+								weight: '600',
+								family: "'Inter', 'Segoe UI', sans-serif"
+							},
+							color: '#2c3e50',
+							padding: {
+								bottom: 10
 							}
 						},
 						ticks: {
 							callback: function(value) {
 								return value + '%';
-							}
+							},
+							font: {
+								size: 11,
+								family: "'Inter', 'Segoe UI', sans-serif"
+							},
+							color: '#5a6c7d',
+							padding: 8
 						},
 						grid: {
 							display: true,
-							color: 'rgba(0, 0, 0, 0.05)'
+							color: 'rgba(0, 0, 0, 0.04)',
+							lineWidth: 1,
+							drawBorder: false,
+							drawTicks: false
+						},
+						border: {
+							display: false
 						}
 					},
 					x: {
@@ -2050,13 +2209,39 @@
 							display: true,
 							text: 'Kode CPMK',
 							font: {
-								size: 14,
-								weight: 'bold'
+								size: 13,
+								weight: '600',
+								family: "'Inter', 'Segoe UI', sans-serif"
+							},
+							color: '#2c3e50',
+							padding: {
+								top: 10
 							}
 						},
+						ticks: {
+							font: {
+								size: 11,
+								weight: '500',
+								family: "'Inter', 'Segoe UI', sans-serif"
+							},
+							color: '#2c3e50',
+							padding: 8
+						},
 						grid: {
+							display: false,
+							drawBorder: false
+						},
+						border: {
 							display: false
 						}
+					}
+				},
+				layout: {
+					padding: {
+						top: 20,
+						right: 20,
+						bottom: 10,
+						left: 10
 					}
 				}
 			}
@@ -2065,14 +2250,19 @@
 
 	function createChartHTML(type, color, canvasId, title = 'Grafik Capaian CPMK') {
 		return `
-        <div class="card">
-            <div class="card-header bg-${color} text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> ${title}</h5>
-                <button class="btn btn-light btn-sm" id="exportChart${type}Btn">
+        <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center" style="padding: 1.5rem;">
+                <div>
+                    <h5 class="mb-1" style="color: #2c3e50; font-weight: 600;">
+                        <i class="bi bi-bar-chart-fill" style="color: #0d6efd;"></i> ${title}
+                    </h5>
+                    <p class="text-muted mb-0 small">Visualisasi data capaian pembelajaran</p>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" id="exportChart${type}Btn" style="border-radius: 8px; padding: 0.5rem 1rem;">
                     <i class="bi bi-download"></i> Export PNG
                 </button>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="padding: 2rem; background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);">
                 <canvas id="${canvasId}" height="80"></canvas>
             </div>
         </div>
