@@ -168,11 +168,7 @@
 	<!-- CPMK Achievement Charts -->
 	<div class="row mb-4">
 		<div class="col-12">
-			<div class="card shadow-sm">
-				<div class="card-body">
-					<canvas id="cpmkCapaianChart" style="max-height: 400px;"></canvas>
-				</div>
-			</div>
+			<div id="cpmkChartContainer"></div>
 		</div>
 	</div>
 
@@ -394,6 +390,8 @@
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<!-- Modern Chart Component -->
+<script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
 
 <script>
 	// Prepare data for CPMK Average Capaian Chart
@@ -413,93 +411,42 @@
 						}, $cpmk_list)) ?>;
 	const cpmkCapaianData = <?= json_encode($cpmk_data) ?>;
 
-	// CPMK Average Capaian Chart
-	const ctxCpmk = document.getElementById('cpmkCapaianChart');
-	if (ctxCpmk) {
-		new Chart(ctxCpmk, {
-			type: 'bar',
-			data: {
+	// Initialize Modern Chart Component when DOM is ready
+	let cpmkChart;
+
+	function initializeCpmkChart() {
+		cpmkChart = new ModernChartComponent({
+			containerId: 'cpmkChartContainer',
+			chartData: {
 				labels: cpmkLabels,
-				datasets: [{
-					label: 'Capaian CPMK (%)',
-					data: cpmkCapaianData.map(d => d.capaian),
-					backgroundColor: cpmkCapaianData.map(d =>
-						d.capaian < 60 ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
-					),
-					borderColor: cpmkCapaianData.map(d =>
-						d.capaian < 60 ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
-					),
-					borderWidth: 2,
-					borderRadius: 5
-				}]
+				data: cpmkCapaianData.map(d => d.capaian)
 			},
-			plugins: [ChartDataLabels],
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					legend: {
-						display: true,
-						position: 'top'
-					},
-					title: {
-						display: true,
-						text: 'Rata-rata Capaian CPMK (Jumlah Persentase Capaian CPMK / Jumlah Mahasiswa)',
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
-					},
-					tooltip: {
-						callbacks: {
-							label: function(context) {
-								const data = cpmkCapaianData[context.dataIndex];
-								return [
-									`Capaian: ${data.capaian.toFixed(2)}%`
-								];
-							}
-						}
-					},
-					datalabels: {
-						anchor: 'end',
-						align: 'top',
-						formatter: function(value) {
-							return value.toFixed(2) + '%';
-						},
-						font: {
-							weight: 'bold',
-							size: 12
-						},
-						color: '#333'
-					}
-				},
-				scales: {
-					y: {
-						beginAtZero: true,
-						max: 100,
-						ticks: {
-							callback: function(value) {
-								return value + '%';
-							}
-						},
-						title: {
-							display: true,
-							text: 'Capaian (%)'
-						}
-					},
-					x: {
-						title: {
-							display: true,
-							text: 'CPMK'
-						}
-					}
+			config: {
+				title: 'Grafik Capaian CPMK',
+				subtitle: 'Rata-rata capaian CPMK (Jumlah Persentase Capaian CPMK / Jumlah Mahasiswa)',
+				type: 'bar',
+				passingThreshold: 60,
+				showExportButton: true,
+				showSubtitle: true,
+				height: 80,
+				animationDuration: 1500,
+				exportFilename: 'capaian-cpmk-<?= esc($jadwal['nama_mk']) ?>-<?= esc($jadwal['kelas']) ?>.png',
+				labels: {
+					yAxis: 'Capaian (%)',
+					xAxis: 'Kode CPMK'
 				}
 			}
 		});
+
+		// Render the chart
+		cpmkChart.render();
 	}
 
 	// Handle scroll indicator for modern table
 	document.addEventListener('DOMContentLoaded', function() {
+		// Initialize the chart
+		initializeCpmkChart();
+
 		const tableWrapper = document.querySelector('.modern-table-wrapper');
 		if (tableWrapper) {
 			function checkScroll() {

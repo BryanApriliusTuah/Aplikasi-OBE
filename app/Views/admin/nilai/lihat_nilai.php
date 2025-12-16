@@ -127,11 +127,7 @@
 
 	<!-- Grade Distribution Chart -->
 	<?php if (!empty($mahasiswa_list) && !empty($teknik_list)): ?>
-		<div class="card border-0 shadow-sm mb-4">
-			<div class="card-body">
-				<canvas id="gradeDistributionChart" style="max-height: 400px;"></canvas>
-			</div>
-		</div>
+		<div id="gradeDistributionContainer" class="mb-4"></div>
 	<?php endif; ?>
 
 	<div class="card border-0 shadow-sm">
@@ -381,6 +377,8 @@
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<!-- Modern Chart Component -->
+<script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
 
 <script>
 	// Prepare data for Grade Distribution Chart
@@ -416,7 +414,6 @@
 	}
 
 	// Generate dynamic colors based on grade configuration
-	// Create a color map from grade data (green for high scores, red for low scores)
 	$grade_colors = [];
 	if (isset($grade_config) && is_array($grade_config)) {
 		$total_grades = count($grade_config);
@@ -425,7 +422,6 @@
 			$position = $total_grades > 1 ? $index / ($total_grades - 1) : 0;
 
 			// Interpolate between green (good) and red (bad)
-			// Green: rgb(40, 167, 69), Yellow: rgb(255, 193, 7), Red: rgb(220, 53, 69)
 			if ($position < 0.5) {
 				// Green to Yellow
 				$factor = $position * 2;
@@ -445,95 +441,213 @@
 	}
 	?>
 
-	const gradeLabels = <?= json_encode(array_keys($sorted_grades)) ?>;
-	const gradeCounts = <?= json_encode(array_values($sorted_grades)) ?>;
-	const gradeColors = <?= json_encode($grade_colors) ?>;
+	// Grade Distribution Chart using Modern Chart Component
+	document.addEventListener('DOMContentLoaded', function() {
+		const gradeLabels = <?= json_encode(array_keys($sorted_grades)) ?>;
+		const gradeCounts = <?= json_encode(array_values($sorted_grades)) ?>;
+		const gradeColors = <?= json_encode($grade_colors) ?>;
 
-	// Grade Distribution Chart
-	const ctxGrade = document.getElementById('gradeDistributionChart');
-	if (ctxGrade && gradeLabels.length > 0) {
-		const backgroundColor = gradeLabels.map(grade => gradeColors[grade] || 'rgba(102, 126, 234, 0.8)');
-		const borderColor = gradeLabels.map(grade => {
-			const bgColor = gradeColors[grade] || 'rgba(102, 126, 234, 0.8)';
-			return bgColor.replace('0.8', '1');
-		});
+		if (gradeLabels.length > 0) {
+			// Custom chart for grade distribution (not using the component's default config)
+			const container = document.getElementById('gradeDistributionContainer');
+			if (container) {
+				// Create card structure
+				container.innerHTML = `
+					<div class="card shadow-sm border-0 modern-chart-card" style="border-radius: 12px; overflow: hidden;">
+						<div class="card-header bg-white border-0 d-flex justify-content-between align-items-center" style="padding: 1.5rem;">
+							<div>
+								<h5 class="mb-1" style="color: #2c3e50; font-weight: 600;">
+									<i class="bi bi-bar-chart-fill" style="color: #0d6efd;"></i> Distribusi Nilai Huruf Mahasiswa
+								</h5>
+								<p class="text-muted mb-0 small">Visualisasi distribusi nilai huruf pada mata kuliah ini</p>
+							</div>
+						</div>
+						<div class="card-body" style="padding: 2rem; background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);">
+							<canvas id="gradeDistributionChart" height="80"></canvas>
+						</div>
+					</div>
+				`;
 
-		new Chart(ctxGrade, {
-			type: 'bar',
-			data: {
-				labels: gradeLabels,
-				datasets: [{
-					label: 'Jumlah Mahasiswa',
-					data: gradeCounts,
-					backgroundColor: backgroundColor,
-					borderColor: borderColor,
-					borderWidth: 2,
-					borderRadius: 8
-				}]
-			},
-			plugins: [ChartDataLabels],
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					legend: {
-						display: false
-					},
-					title: {
-						display: true,
-						text: 'Distribusi Nilai Huruf Mahasiswa',
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
-					},
-					datalabels: {
-						anchor: 'end',
-						align: 'top',
-						formatter: function(value, context) {
-							return value;
-						},
-						font: {
-							weight: 'bold',
-							size: 12
-						},
-						color: '#333'
-					}
-				},
-				scales: {
-					y: {
-						beginAtZero: true,
-						ticks: {
-							stepSize: 1,
-							callback: function(value) {
-								if (Number.isInteger(value)) {
-									return value;
+				// Initialize chart
+				setTimeout(() => {
+					const ctx = document.getElementById('gradeDistributionChart');
+					if (ctx) {
+						const chartContext = ctx.getContext('2d');
+
+						const backgroundColor = gradeLabels.map(grade => gradeColors[grade] || 'rgba(102, 126, 234, 0.8)');
+						const borderColor = backgroundColor.map(color => color.replace('0.8', '1'));
+
+						const gradeChart = new Chart(chartContext, {
+							type: 'bar',
+							data: {
+								labels: gradeLabels,
+								datasets: [{
+									label: 'Jumlah Mahasiswa',
+									data: gradeCounts,
+									backgroundColor: backgroundColor,
+									borderColor: borderColor,
+									borderWidth: 0,
+									borderRadius: 8,
+									barThickness: 'flex',
+									maxBarThickness: 60
+								}]
+							},
+							plugins: [ChartDataLabels],
+							options: {
+								responsive: true,
+								maintainAspectRatio: true,
+								interaction: {
+									intersect: false,
+									mode: 'index'
+								},
+								animation: {
+									duration: 1000,
+									easing: 'easeInOutQuart'
+								},
+								plugins: {
+									legend: {
+										display: false
+									},
+									title: {
+										display: false
+									},
+									tooltip: {
+										backgroundColor: 'rgba(30, 39, 46, 0.95)',
+										padding: 16,
+										cornerRadius: 8,
+										titleFont: {
+											size: 14,
+											weight: '600',
+											family: "'Inter', 'Segoe UI', sans-serif"
+										},
+										bodyFont: {
+											size: 13,
+											family: "'Inter', 'Segoe UI', sans-serif"
+										},
+										borderColor: 'rgba(255, 255, 255, 0.1)',
+										borderWidth: 1,
+										callbacks: {
+											title: (context) => 'Nilai ' + context[0].label,
+											label: (context) => 'Jumlah Mahasiswa: ' + context.parsed.y
+										}
+									},
+									datalabels: {
+										anchor: 'end',
+										align: 'top',
+										offset: 4,
+										formatter: (value) => value,
+										font: {
+											weight: '600',
+											size: 11,
+											family: "'Inter', 'Segoe UI', sans-serif"
+										},
+										color: '#2c3e50',
+										backgroundColor: 'rgba(255, 255, 255, 0.9)',
+										borderRadius: 4,
+										padding: {
+											top: 4,
+											bottom: 4,
+											left: 8,
+											right: 8
+										}
+									}
+								},
+								scales: {
+									y: {
+										beginAtZero: true,
+										ticks: {
+											stepSize: 1,
+											callback: function(value) {
+												if (Number.isInteger(value)) {
+													return value;
+												}
+											},
+											font: {
+												size: 11,
+												family: "'Inter', 'Segoe UI', sans-serif"
+											},
+											color: '#5a6c7d',
+											padding: 8
+										},
+										title: {
+											display: true,
+											text: 'Jumlah Mahasiswa',
+											font: {
+												size: 13,
+												weight: '600',
+												family: "'Inter', 'Segoe UI', sans-serif"
+											},
+											color: '#2c3e50',
+											padding: {
+												bottom: 10
+											}
+										},
+										grid: {
+											display: true,
+											color: 'rgba(0, 0, 0, 0.04)',
+											lineWidth: 1,
+											drawBorder: false,
+											drawTicks: false
+										},
+										border: {
+											display: false
+										}
+									},
+									x: {
+										title: {
+											display: true,
+											text: 'Nilai Huruf',
+											font: {
+												size: 13,
+												weight: '600',
+												family: "'Inter', 'Segoe UI', sans-serif"
+											},
+											color: '#2c3e50',
+											padding: {
+												top: 10
+											}
+										},
+										ticks: {
+											font: {
+												size: 11,
+												weight: '500',
+												family: "'Inter', 'Segoe UI', sans-serif"
+											},
+											color: '#2c3e50',
+											padding: 8
+										},
+										grid: {
+											display: false,
+											drawBorder: false
+										},
+										border: {
+											display: false
+										}
+									}
+								},
+								layout: {
+									padding: {
+										top: 20,
+										right: 20,
+										bottom: 10,
+										left: 10
+									}
 								}
 							}
-						},
-						title: {
-							display: true,
-							text: 'Jumlah Mahasiswa',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						}
-					},
-					x: {
-						title: {
-							display: true,
-							text: 'Nilai Huruf',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						}
+						});
+
+						// Export functionality
+						document.getElementById('exportGradeChart').addEventListener('click', function() {
+							const link = document.createElement('a');
+							link.download = 'distribusi-nilai-huruf.png';
+							link.href = gradeChart.toBase64Image();
+							link.click();
+						});
 					}
-				}
+				}, 100);
 			}
-		});
-	}
+		}
+	});
 
 	// Handle scroll indicator for modern table
 	document.addEventListener('DOMContentLoaded', function() {
