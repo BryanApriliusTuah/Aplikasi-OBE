@@ -123,7 +123,7 @@ class LaporanCpmk extends BaseController
 		// Get teaching schedule
 		$builder = $this->db->table('jadwal_mengajar');
 		$builder->where('mata_kuliah_id', $mataKuliahId);
-		$builder->where('tahun_akademik', $tahunAkademik);
+		$builder->like('tahun_akademik', $tahunAkademik, 'both');
 		if ($programStudi) {
 			$builder->where('program_studi', $programStudi);
 		}
@@ -584,8 +584,8 @@ class LaporanCpmk extends BaseController
 	private function getTahunAkademik()
 	{
 		return $this->db->table('jadwal_mengajar')
-			->select('tahun_akademik')
-			->groupBy('tahun_akademik')
+			->select('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", "")) as tahun_akademik')
+			->groupBy('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", ""))')
 			->orderBy('tahun_akademik', 'DESC')
 			->get()
 			->getResultArray();
@@ -637,7 +637,7 @@ class LaporanCpmk extends BaseController
 			// Get jadwal_mengajar ID for nilai exports
 			$builder = $this->db->table('jadwal_mengajar');
 			$builder->where('mata_kuliah_id', $mataKuliahId);
-			$builder->where('tahun_akademik', $tahunAkademik);
+			$builder->like('tahun_akademik', $tahunAkademik, 'both');
 			if ($programStudi) {
 				$builder->where('program_studi', $programStudi);
 			}

@@ -293,7 +293,7 @@ class LaporanCpl extends BaseController
 					->join('mata_kuliah mk', 'mk.id = cm.mata_kuliah_id')
 					->join('jadwal_mengajar jm', 'jm.mata_kuliah_id = mk.id')
 					->where('c.id', $cpmkId)
-					->where('jm.tahun_akademik', $tahunAkademik)
+					->like('jm.tahun_akademik', $tahunAkademik, 'both')
 					->where('jm.program_studi', $programStudi)
 					->groupBy('cm.mata_kuliah_id, c.id, c.kode_cpmk, mk.nama_mk')
 					->get()
@@ -338,6 +338,8 @@ class LaporanCpl extends BaseController
 				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
 				->whereIn('ncm.mahasiswa_id', $studentIds)
 				->whereIn('ncm.cpmk_id', $cpmkIds)
+				->like('jm.tahun_akademik', $tahunAkademik, 'both')
+				->where('jm.program_studi', $programStudi)
 				->get()
 				->getResultArray();
 
@@ -345,7 +347,7 @@ class LaporanCpl extends BaseController
 			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
 			$studentScores = [];
 			$nilaiCpl = 0;
-			
+
 			foreach ($nilaiList as $nilai) {
 				// Get bobot from rps_mingguan
 				$rps = $this->db->table('rps')
@@ -354,7 +356,7 @@ class LaporanCpl extends BaseController
 					->orderBy('created_at', 'DESC')
 					->get()
 					->getRowArray();
-				
+
 				$bobot = 0;
 				if ($rps) {
 					// Sum bobot across all weeks for this CPMK
@@ -387,7 +389,7 @@ class LaporanCpl extends BaseController
 			// Calculate average Capaian CPL (%) across all students
 			$totalCplScore = 0;
 			$studentCount = 0;
-			
+
 			foreach ($studentScores as $mhsId => $scores) {
 				if ($scores['totalBobot'] > 0) {
 					$cplScore = $scores['nilaiCpl'];
@@ -397,13 +399,13 @@ class LaporanCpl extends BaseController
 			}
 
 			$average = $studentCount > 0 ? round($totalCplScore / $studentCount, 2) : 0;
-			
+
 			// Calculate CPMK contributors for this CPL
 			$cpmkContributors = [];
 
 			foreach ($cpmkDetails as $cpmkDetail) {
 				// Get average CPMK score for this CPMK from nilai_cpmk_mahasiswa
-				$cpmkScores = array_filter($nilaiList, function($item) use ($cpmkDetail) {
+				$cpmkScores = array_filter($nilaiList, function ($item) use ($cpmkDetail) {
 					return $item['cpmk_id'] == $cpmkDetail['cpmk_id'];
 				});
 
@@ -437,8 +439,7 @@ class LaporanCpl extends BaseController
 				'total_capaian_cpl_persen' => round($totalCplScore, 2),
 				'capaian_cpl_persen' => round($average, 2)
 			];
-		
-	}
+		}
 		// DD($achievementData);
 		return $achievementData;
 	}
@@ -507,8 +508,8 @@ class LaporanCpl extends BaseController
 	private function getTahunAkademik()
 	{
 		return $this->db->table('jadwal_mengajar')
-			->select('tahun_akademik')
-			->groupBy('tahun_akademik')
+			->select('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", "")) as tahun_akademik')
+			->groupBy('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", ""))')
 			->orderBy('tahun_akademik', 'DESC')
 			->get()
 			->getResultArray();
@@ -520,16 +521,6 @@ class LaporanCpl extends BaseController
 			->select('program_studi')
 			->groupBy('program_studi')
 			->orderBy('program_studi', 'ASC')
-			->get()
-			->getResultArray();
-	}
-
-	private function getAngkatan()
-	{
-		return $this->db->table('mahasiswa')
-			->select('tahun_angkatan')
-			->groupBy('tahun_angkatan')
-			->orderBy('tahun_angkatan', 'DESC')
 			->get()
 			->getResultArray();
 	}

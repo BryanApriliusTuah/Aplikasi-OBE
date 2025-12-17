@@ -123,48 +123,6 @@
 		</div>
 	<?php endif; ?>
 
-	<!-- CPMK Statistics -->
-	<div class="shadow-sm mb-4">
-		<div class="p-0">
-			<div class="modern-table-wrapper">
-				<div class="scroll-indicator"></div>
-				<table class="modern-table">
-					<thead>
-						<tr>
-							<th class="text-center" style="width: 50px;">No</th>
-							<th style="min-width: 120px;">Kode CPMK</th>
-							<th style="min-width: 250px;">Deskripsi</th>
-							<th class="text-center" style="width: 100px;">Bobot</th>
-							<th class="text-center" style="width: 200px;">Rata-Rata Capaian</th>
-							<th class="text-center" style="width: 100px;">Terisi</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ($cpmk_list as $index => $cpmk): ?>
-							<?php
-							$avg_capaian = ($cpmk_stats[$cpmk['id']]['avg'] / $cpmk['bobot_cpmk']) * 100;
-							?>
-							<tr>
-								<td class="text-center"><?= $index + 1 ?></td>
-								<td class="text-center"><strong class="text-primary"><?= esc($cpmk['kode_cpmk']) ?></strong></td>
-								<td><small class="text-dark"><?= esc($cpmk['deskripsi']) ?></small></td>
-								<td class="text-center">
-									<span class="badge bg-primary text-white me-1 mb-1"><?= esc($cpmk['bobot_cpmk']) ?>%</span>
-								</td>
-								<td class="text-center <?= number_format($avg_capaian, 2) < 60 ? 'text-danger fw-bold' : '' ?>">
-									<?= number_format($avg_capaian, 2) ?>%
-								</td>
-								<td class="text-center">
-									<strong><?= $cpmk_stats[$cpmk['id']]['count'] ?></strong> / <?= count($mahasiswa_list) ?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			</div>
-		</div>
-	</div>
-
 	<!-- CPMK Achievement Charts -->
 	<div class="row mb-4">
 		<div class="col-12">

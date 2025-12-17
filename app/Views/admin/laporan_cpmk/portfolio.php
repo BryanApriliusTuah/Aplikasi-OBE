@@ -124,7 +124,7 @@
 								<th class="text-center" style="width: 20%;">Teknik Penilaian</th>
 								<th class="text-center" style="width: 28%;">Indikator Penilaian</th>
 								<th class="text-center" style="width: 15%;">Nilai Rata-rata Mahasiswa</th>
-								<th class="text-center" style="width: 15%;">Persentase Capaian Target</th>
+								<th class="text-center" style="width: 15%;">Rata-rata Capaian</th>
 							</tr>
 						</thead>
 						<tbody>
