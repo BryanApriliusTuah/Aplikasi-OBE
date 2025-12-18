@@ -217,7 +217,7 @@
 													</span>
 													<?php
 													$capaian = ($score / $cpmk['bobot_cpmk']) * 100;
-													$capaian_class = $capaian < 60 ? 'badge-capaian-low' : 'badge-capaian-medium';
+													$capaian_class = $capaian < ($passing_threshold ?? 60) ? 'badge-capaian-low' : 'badge-capaian-medium';
 													?>
 													<span class="badge-capaian <?= $capaian_class ?>">
 														<?= number_format($capaian, 2) ?>%
@@ -291,11 +291,11 @@
 						</div>
 						<div>
 							<span class="badge-capaian text-danger badge-capaian-low">.</span>
-							<small class="text-muted ms-2">= Capaian CPMK &lt; 60%</small>
+							<small class="text-muted ms-2">= Capaian CPMK &lt; <?= $passing_threshold ?? 60 ?>%</small>
 						</div>
 						<div>
 							<span class="badge-capaian text-warning badge-capaian-medium">.</span>
-							<small class="text-muted ms-2">= Capaian CPMK ≥ 60%</small>
+							<small class="text-muted ms-2">= Capaian CPMK ≥ <?= $passing_threshold ?? 60 ?>%</small>
 						</div>
 					</div>
 				</div>
@@ -383,7 +383,7 @@
 				title: 'Grafik Capaian CPMK',
 				subtitle: 'Rata-rata capaian CPMK (Jumlah Persentase Capaian CPMK / Jumlah Mahasiswa)',
 				type: 'bar',
-				passingThreshold: 60,
+				passingThreshold: <?= $passing_threshold ?? 60 ?>,
 				showExportButton: true,
 				showSubtitle: true,
 				height: 80,
