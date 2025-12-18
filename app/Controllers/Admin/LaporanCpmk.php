@@ -443,52 +443,6 @@ class LaporanCpmk extends BaseController
 		return $assessmentData;
 	}
 
-
-	private function getCpmkBobot($mataKuliahId, $cpmkId)
-	{
-		// Try to get bobot from RPS mingguan
-		$query = "
-            SELECT rm.bobot, rm.teknik_penilaian
-            FROM rps_mingguan rm
-            INNER JOIN rps r ON rm.rps_id = r.id
-            WHERE r.mata_kuliah_id = ?
-            AND rm.cpmk_id = ?
-        ";
-
-		$result = $this->db->query($query, [$mataKuliahId, $cpmkId])->getResultArray();
-
-		// Calculate total weight from all weeks
-		$totalBobot = 0;
-		foreach ($result as $row) {
-			// First try to get bobot from the direct column
-			if (!empty($row['bobot'])) {
-				$totalBobot += (int)$row['bobot'];
-			}
-			// Otherwise try from teknik_penilaian JSON
-			elseif (!empty($row['teknik_penilaian'])) {
-				$teknik = json_decode($row['teknik_penilaian'], true);
-				if (is_array($teknik)) {
-					foreach ($teknik as $t) {
-						if (isset($t['bobot'])) {
-							$totalBobot += (int)$t['bobot'];
-						}
-					}
-				}
-			}
-		}
-
-		// If no bobot found, return default equal weight
-		if ($totalBobot == 0) {
-			$cpmkCount = $this->db->table('cpmk_mk')
-				->where('mata_kuliah_id', $mataKuliahId)
-				->countAllResults();
-
-			return $cpmkCount > 0 ? round(100 / $cpmkCount) : 0;
-		}
-
-		return $totalBobot;
-	}
-
 	private function getTeknikPenilaianByCpmk($mataKuliahId, $cpmkId)
 	{
 		$query = "
