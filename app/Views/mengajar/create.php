@@ -80,41 +80,21 @@
 							<hr class="my-3">
 
 							<div class="col-12">
-								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
-								<select class="form-select" id="dosen_leader" name="dosen_leader" required>
-									<option value="">-- Pilih Dosen Koordinator --</option>
-									<?php foreach ($dosen_list as $dosen): ?>
-										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader') == $dosen['id'] ? 'selected' : '' ?>>
-											<?= esc($dosen['nama_lengkap']) ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
+								<div class="alert d-none" id="rps-info">
+									<i class="bi bi-info-circle"></i> <span id="rps-message"></span>
+								</div>
 							</div>
 
 							<div class="col-12">
-								<label class="form-label">Dosen Anggota (Team Teaching)</label>
-								<div id="dosen-members-container">
-									<?php // Repopulate on validation error
-									$old_members = old('dosen_members') ?? [];
-									foreach ($old_members as $member_id): ?>
-										<div class="input-group mb-2">
-											<select class="form-select" name="dosen_members[]">
-												<option value="">-- Pilih Dosen Anggota --</option>
-												<?php foreach ($dosen_list as $dosen): ?>
-													<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
-														<?= esc($dosen['nama_lengkap']) ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-											<button class="btn btn-outline-danger remove-member-btn" type="button">
-												<i class="bi bi-x-lg"></i>
-											</button>
-										</div>
-									<?php endforeach; ?>
-								</div>
-								<button type="button" id="add-member-btn" class="btn btn-outline-primary btn-sm mt-2">
-									<i class="bi bi-plus"></i> Tambah Dosen Anggota
-								</button>
+								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
+								<input type="text" class="form-control" id="dosen_leader_display" readonly placeholder="Pilih mata kuliah terlebih dahulu">
+								<input type="hidden" id="dosen_leader" name="dosen_leader" required>
+							</div>
+
+							<div class="col-12">
+								<label class="form-label">Dosen Pengampu</label>
+								<div id="dosen-members-display"></div>
+								<div id="dosen-members-container" style="display: none;"></div>
 							</div>
 						</div>
 					</div>
@@ -130,41 +110,108 @@
 	</div>
 </div>
 
-<div id="dosen-member-template" style="display: none;">
-	<div class="input-group mb-2">
-		<select class="form-select" name="dosen_members[]">
-			<option value="">-- Pilih Dosen Anggota --</option>
-			<?php foreach ($dosen_list as $dosen): ?>
-				<option value="<?= $dosen['id'] ?>"><?= esc($dosen['nama_lengkap']) ?></option>
-			<?php endforeach; ?>
-		</select>
-		<button class="btn btn-outline-danger remove-member-btn" type="button">
-			<i class="bi bi-x-lg"></i>
-		</button>
-	</div>
-</div>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
-		const container = document.getElementById('dosen-members-container');
-		const addButton = document.getElementById('add-member-btn');
-		const template = document.getElementById('dosen-member-template');
+		const mataKuliahSelect = document.getElementById('mata_kuliah_id');
+		const dosenLeaderDisplay = document.getElementById('dosen_leader_display');
+		const dosenLeaderInput = document.getElementById('dosen_leader');
+		const dosenMembersDisplay = document.getElementById('dosen-members-display');
+		const dosenMembersContainer = document.getElementById('dosen-members-container');
+		const rpsInfo = document.getElementById('rps-info');
+		const rpsMessage = document.getElementById('rps-message');
+		const submitButton = document.querySelector('button[type="submit"]');
 
-		addButton.addEventListener('click', function() {
-			// Clone the template's first child (the input-group div)
-			const newRow = template.firstElementChild.cloneNode(true);
-			container.appendChild(newRow);
-		});
+		// Initially disable submit button
+		submitButton.disabled = true;
 
-		container.addEventListener('click', function(event) {
-			// Check if a remove button was clicked
-			if (event.target.closest('.remove-member-btn')) {
-				// Find the parent .input-group and remove it
-				event.target.closest('.input-group').remove();
+		// Fetch RPS dosen data when mata kuliah is selected
+		mataKuliahSelect.addEventListener('change', function() {
+			const mataKuliahId = this.value;
+
+			// Reset fields
+			dosenLeaderDisplay.value = '';
+			dosenLeaderInput.value = '';
+			dosenMembersDisplay.innerHTML = '';
+			dosenMembersContainer.innerHTML = '';
+			rpsInfo.classList.add('d-none');
+			rpsInfo.className = 'alert d-none';
+			submitButton.disabled = true;
+
+			if (!mataKuliahId) {
+				dosenLeaderDisplay.placeholder = 'Pilih mata kuliah terlebih dahulu';
+				return;
 			}
+
+			dosenLeaderDisplay.placeholder = 'Memuat data RPS...';
+
+			// Fetch RPS dosen data via AJAX
+			fetch('<?= base_url('admin/mengajar/getRpsDosen') ?>/' + mataKuliahId, {
+					method: 'GET',
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						// Show success message
+						rpsInfo.classList.remove('d-none');
+						rpsInfo.classList.add('alert-success');
+						rpsMessage.textContent = 'Data dosen berhasil dimuat dari RPS';
+
+						// Set dosen koordinator
+						if (data.data.koordinator) {
+							dosenLeaderDisplay.value = data.data.koordinator.nama_lengkap;
+							dosenLeaderInput.value = data.data.koordinator.id;
+						} else {
+							dosenLeaderDisplay.value = 'Tidak ada koordinator di RPS';
+							rpsInfo.classList.remove('alert-success');
+							rpsInfo.classList.add('alert-danger');
+							rpsMessage.textContent = 'RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.';
+							return;
+						}
+
+						// Display members from RPS
+						if (data.data.members && data.data.members.length > 0) {
+							let membersHtml = '<div class="list-group">';
+							data.data.members.forEach(member => {
+								membersHtml += `<div class="list-group-item">${member.nama_lengkap}</div>`;
+								// Add hidden inputs for submission
+								const input = document.createElement('input');
+								input.type = 'hidden';
+								input.name = 'dosen_members[]';
+								input.value = member.id;
+								dosenMembersContainer.appendChild(input);
+							});
+							membersHtml += '</div>';
+							dosenMembersDisplay.innerHTML = membersHtml;
+						} else {
+							dosenMembersDisplay.innerHTML = '<p class="text-muted mb-0">Tidak ada dosen anggota</p>';
+						}
+
+						// Enable submit button
+						submitButton.disabled = false;
+					} else {
+						// Show error message
+						rpsInfo.classList.remove('d-none');
+						rpsInfo.classList.add('alert-danger');
+						rpsMessage.textContent = data.message || 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.';
+						dosenLeaderDisplay.value = '';
+						dosenLeaderDisplay.placeholder = 'RPS tidak tersedia';
+						submitButton.disabled = true;
+					}
+				})
+				.catch(error => {
+					console.error('Error fetching RPS data:', error);
+					rpsInfo.classList.remove('d-none');
+					rpsInfo.classList.add('alert-danger');
+					rpsMessage.textContent = 'Terjadi kesalahan saat mengambil data RPS.';
+					dosenLeaderDisplay.placeholder = 'Error memuat data';
+					submitButton.disabled = true;
+				});
 		});
 	});
 </script>

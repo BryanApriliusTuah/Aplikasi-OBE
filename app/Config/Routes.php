@@ -167,6 +167,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mengajar/edit/(:num)', 'Mengajar::edit/$1');
 	$routes->post('mengajar/update/(:num)', 'Mengajar::update/$1');
 	$routes->delete('mengajar/delete/(:num)', 'Mengajar::delete/$1');
+	$routes->get('mengajar/getRpsDosen/(:num)', 'Mengajar::getRpsDosen/$1');
 	$routes->get('mengajar/exportExcel', 'Mengajar::exportExcel');
 	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
 

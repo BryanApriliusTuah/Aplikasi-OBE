@@ -168,13 +168,45 @@ class Mengajar extends BaseController
 		$dosen_leader = $this->request->getPost('dosen_leader');
 		$dosen_members = array_filter($this->request->getPost('dosen_members') ?? []);
 
-		// Validation
-		if (in_array($dosen_leader, $dosen_members)) {
-			return redirect()->back()->withInput()->with('error', 'Dosen ketua tidak boleh sama dengan dosen anggota.');
+		// Validate that RPS exists for this mata kuliah
+		$rps = $this->db->table('rps')
+			->where('mata_kuliah_id', $mata_kuliah_id)
+			->get()
+			->getRowArray();
+
+		if (!$rps) {
+			return redirect()->back()->withInput()->with('error', 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.');
 		}
 
-		if (count($dosen_members) !== count(array_unique($dosen_members))) {
-			return redirect()->back()->withInput()->with('error', 'Dosen anggota tidak boleh ada yang sama.');
+		// Validate that the submitted dosen data matches RPS data
+		$rps_koordinator = $this->db->table('rps_pengampu')
+			->where('rps_id', $rps['id'])
+			->where('peran', 'koordinator')
+			->get()
+			->getRowArray();
+
+		if (!$rps_koordinator) {
+			return redirect()->back()->withInput()->with('error', 'RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.');
+		}
+
+		if ($dosen_leader != $rps_koordinator['dosen_id']) {
+			return redirect()->back()->withInput()->with('error', 'Dosen koordinator tidak sesuai dengan data RPS.');
+		}
+
+		// Get RPS members
+		$rps_members = $this->db->table('rps_pengampu')
+			->where('rps_id', $rps['id'])
+			->where('peran', 'pengampu')
+			->get()
+			->getResultArray();
+
+		$rps_member_ids = array_column($rps_members, 'dosen_id');
+		sort($rps_member_ids);
+		$submitted_member_ids = $dosen_members;
+		sort($submitted_member_ids);
+
+		if ($rps_member_ids !== $submitted_member_ids) {
+			return redirect()->back()->withInput()->with('error', 'Dosen anggota tidak sesuai dengan data RPS.');
 		}
 
 		try {
@@ -184,12 +216,13 @@ class Mengajar extends BaseController
 			$existing = $this->db->table('jadwal_mengajar')
 				->where([
 					'mata_kuliah_id' => $mata_kuliah_id,
+					'program_studi' => $program_studi,
 					'tahun_akademik' => $tahun_akademik,
 					'kelas' => $kelas
 				])->countAllResults();
 
 			if ($existing > 0) {
-				return redirect()->back()->withInput()->with('error', 'Jadwal untuk mata kuliah ini sudah ada.');
+				return redirect()->back()->withInput()->with('error', 'Jadwal untuk mata kuliah, program studi, tahun akademik, dan kelas ini sudah ada.');
 			}
 
 			// Insert jadwal
@@ -229,12 +262,15 @@ class Mengajar extends BaseController
 			$this->db->transComplete();
 
 			if ($this->db->transStatus() === false) {
-				return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data.');
+				$error = $this->db->error();
+				log_message('error', 'Failed to insert jadwal_mengajar: ' . print_r($error, true));
+				return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Error: ' . ($error['message'] ?? 'Unknown error'));
 			}
 
 			return redirect()->to(base_url('admin/mengajar'))->with('success', 'Jadwal mengajar berhasil ditambahkan.');
 		} catch (\Exception $e) {
 			$this->db->transRollback();
+			log_message('error', 'Exception in store jadwal_mengajar: ' . $e->getMessage());
 			return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
 		}
 	}
@@ -447,6 +483,63 @@ class Mengajar extends BaseController
 			return redirect()->to(base_url('admin/mengajar'))->with('success', 'Jadwal mengajar berhasil dihapus.');
 		} catch (\Exception $e) {
 			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * AJAX endpoint to get RPS dosen data for a specific mata kuliah
+	 */
+	public function getRpsDosen($mata_kuliah_id)
+	{
+		if (!$this->request->isAJAX()) {
+			return $this->response->setStatusCode(403)->setJSON(['error' => 'Invalid request']);
+		}
+
+		try {
+			// Get RPS for this mata kuliah
+			$rps = $this->db->table('rps')
+				->where('mata_kuliah_id', $mata_kuliah_id)
+				->get()
+				->getRowArray();
+
+			if (!$rps) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'RPS tidak ditemukan untuk mata kuliah ini'
+				]);
+			}
+
+			// Get dosen koordinator
+			$koordinator = $this->db->table('rps_pengampu rp')
+				->select('d.id, d.nama_lengkap, rp.peran')
+				->join('dosen d', 'd.id = rp.dosen_id')
+				->where('rp.rps_id', $rps['id'])
+				->where('rp.peran', 'koordinator')
+				->get()
+				->getRowArray();
+
+			// Get dosen pengampu (members)
+			$members = $this->db->table('rps_pengampu rp')
+				->select('d.id, d.nama_lengkap, rp.peran')
+				->join('dosen d', 'd.id = rp.dosen_id')
+				->where('rp.rps_id', $rps['id'])
+				->where('rp.peran', 'pengampu')
+				->get()
+				->getResultArray();
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data' => [
+					'koordinator' => $koordinator,
+					'members' => $members,
+					'rps_id' => $rps['id']
+				]
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setStatusCode(500)->setJSON([
+				'success' => false,
+				'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+			]);
 		}
 	}
 
