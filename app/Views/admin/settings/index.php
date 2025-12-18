@@ -33,7 +33,7 @@
 
 		<!-- CPMK Threshold -->
 		<div class="border rounded p-4 mb-5">
-			<h6 class="mb-3 fw-semibold">Standar Minimal Capaian CPMK</h6>
+			<h6 class="mb-3 fw-semibold">Standar Minimal Portofolio Capaian CPMK / CPL</h6>
 			<form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
 				<?= csrf_field() ?>
 				<div class="col-auto">
