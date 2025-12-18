@@ -115,12 +115,13 @@ class CapaianCpl extends BaseController
 
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-			// Get all nilai_cpmk for this student for these CPMK
-			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
-				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
-				->where('ncm.mahasiswa_id', $mahasiswaId)
-				->whereIn('ncm.cpmk_id', $cpmkIds);
+			// Get all assessment scores from nilai_teknik_penilaian for this student and these CPMK
+			$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
+				->select('ntp.nilai, ntp.teknik_penilaian_key, rm.cpmk_id, rm.teknik_penilaian, jm.mata_kuliah_id, jm.id as jadwal_mengajar_id')
+				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->where('ntp.mahasiswa_id', $mahasiswaId)
+				->whereIn('rm.cpmk_id', $cpmkIds);
 
 			// Apply semester and tahun akademik filters
 			if ($semester && $tahunAkademik) {
@@ -133,48 +134,49 @@ class CapaianCpl extends BaseController
 
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
-			// Calculate CPL using formula:
-			// Nilai CPL = Σ(CPMK scores) - note: nilai_cpmk is already weighted (raw × bobot / 100)
-			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
-			$nilaiCpl = 0;
-			$totalBobot = 0;
+			// Calculate CPMK scores using weighted formula: (Σ(nilai × bobot / 100) / Σ(bobot)) × 100
+			$cpmkScores = [];
 			$distinctCpmk = [];
 			$distinctMk = [];
 
-			foreach ($nilaiList as $nilai) {
-				// Get bobot from rps_mingguan
-				$rps = $db->table('rps')
-					->select('id')
-					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
-					->orderBy('created_at', 'DESC')
-					->get()
-					->getRowArray();
+			foreach ($nilaiList as $row) {
+				$cpmkId = $row['cpmk_id'];
 
-				$bobot = 0;
-				if ($rps) {
-					// Sum bobot across all weeks for this CPMK
-					$bobotResult = $db->table('rps_mingguan')
-						->selectSum('bobot')
-						->where('rps_id', $rps['id'])
-						->where('cpmk_id', $nilai['cpmk_id'])
-						->get()
-						->getRowArray();
+				// Decode the weight (bobot) from JSON
+				$teknikData = json_decode($row['teknik_penilaian'], true);
+				$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
 
-					$bobot = $bobotResult['bobot'] ?? 0;
+				if ($bobot > 0 && $row['nilai'] !== null) {
+					if (!isset($cpmkScores[$cpmkId])) {
+						$cpmkScores[$cpmkId] = [
+							'total_weighted' => 0,
+							'total_bobot' => 0
+						];
+					}
+
+					$cpmkScores[$cpmkId]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+					$cpmkScores[$cpmkId]['total_bobot'] += $bobot;
 				}
 
-				// Sum CPMK scores and bobot
-				if ($bobot > 0) {
-					$nilaiCpl += $nilai['nilai_cpmk'];
-					$totalBobot += $bobot;
-				}
-
-				$distinctCpmk[$nilai['cpmk_id']] = true;
-				$distinctMk[$nilai['jadwal_mengajar_id']] = true;
+				$distinctCpmk[$cpmkId] = true;
+				$distinctMk[$row['jadwal_mengajar_id']] = true;
 			}
 
-			// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
-			$average = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+			// Calculate average CPL from CPMK percentages
+			$totalCpmkPercentage = 0;
+			$cpmkCount = 0;
+
+			foreach ($cpmkScores as $cpmkId => $scoreData) {
+				if ($scoreData['total_bobot'] > 0) {
+					// Calculate CPMK percentage
+					$cpmkPercentage = ($scoreData['total_weighted'] / $scoreData['total_bobot']) * 100;
+					$totalCpmkPercentage += $cpmkPercentage;
+					$cpmkCount++;
+				}
+			}
+
+			// Average CPL = Average of all CPMK percentages
+			$average = $cpmkCount > 0 ? round($totalCpmkPercentage / $cpmkCount, 2) : 0;
 			$jumlahCpmk = count($distinctCpmk);
 			$jumlahMk = count($distinctMk);
 
@@ -242,30 +244,72 @@ class CapaianCpl extends BaseController
 		// Get nilai for each CPMK
 		$detailData = [];
 		foreach ($cpmkLinked as $cpmk) {
-			// Get all nilai for this CPMK and mahasiswa
-			$nilaiList = $db->table('nilai_cpmk_mahasiswa')
-				->select('nilai_cpmk_mahasiswa.nilai_cpmk, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas')
-				->join('jadwal_mengajar', 'jadwal_mengajar.id = nilai_cpmk_mahasiswa.jadwal_mengajar_id')
-				->join('mata_kuliah', 'mata_kuliah.id = jadwal_mengajar.mata_kuliah_id')
-				->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
-				->where('nilai_cpmk_mahasiswa.cpmk_id', $cpmk['id'])
+			// Get all assessment scores from nilai_teknik_penilaian for this CPMK and mahasiswa
+			$nilaiList = $db->table('nilai_teknik_penilaian ntp')
+				->select('ntp.nilai, ntp.teknik_penilaian_key, rm.teknik_penilaian, mk.kode_mk, mk.nama_mk, jm.tahun_akademik, jm.kelas, jm.id as jadwal_id')
+				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+				->where('ntp.mahasiswa_id', $mahasiswaId)
+				->where('rm.cpmk_id', $cpmk['id'])
 				->get()
 				->getResultArray();
 
-			// Calculate average for this CPMK
-			$totalNilai = 0;
-			$countNilai = count($nilaiList);
-			foreach ($nilaiList as $nilai) {
-				$totalNilai += $nilai['nilai_cpmk'];
+			// Group by mata kuliah and calculate weighted scores
+			$mkGroups = [];
+			foreach ($nilaiList as $row) {
+				$mkKey = $row['kode_mk'];
+
+				if (!isset($mkGroups[$mkKey])) {
+					$mkGroups[$mkKey] = [
+						'kode_mk' => $row['kode_mk'],
+						'nama_mk' => $row['nama_mk'],
+						'tahun_akademik' => $row['tahun_akademik'],
+						'kelas' => $row['kelas'],
+						'total_weighted' => 0,
+						'total_bobot' => 0
+					];
+				}
+
+				// Decode the weight (bobot) from JSON
+				$teknikData = json_decode($row['teknik_penilaian'], true);
+				$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
+
+				if ($bobot > 0 && $row['nilai'] !== null) {
+					$mkGroups[$mkKey]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+					$mkGroups[$mkKey]['total_bobot'] += $bobot;
+				}
 			}
-			$rataCpmk = $countNilai > 0 ? round($totalNilai / $countNilai, 2) : 0;
+
+			// Calculate percentage for each mata kuliah and overall average
+			$totalPercentage = 0;
+			$mkCount = 0;
+			$detailMk = [];
+
+			foreach ($mkGroups as $mkData) {
+				if ($mkData['total_bobot'] > 0) {
+					$percentage = ($mkData['total_weighted'] / $mkData['total_bobot']) * 100;
+					$totalPercentage += $percentage;
+					$mkCount++;
+
+					$detailMk[] = [
+						'kode_mk' => $mkData['kode_mk'],
+						'nama_mk' => $mkData['nama_mk'],
+						'tahun_akademik' => $mkData['tahun_akademik'],
+						'kelas' => $mkData['kelas'],
+						'nilai_cpmk' => round($percentage, 2)
+					];
+				}
+			}
+
+			$rataCpmk = $mkCount > 0 ? round($totalPercentage / $mkCount, 2) : 0;
 
 			$detailData[] = [
 				'kode_cpmk' => $cpmk['kode_cpmk'],
 				'deskripsi_cpmk' => $cpmk['deskripsi'],
 				'rata_rata' => $rataCpmk,
-				'jumlah_nilai' => $countNilai,
-				'detail_mk' => $nilaiList
+				'jumlah_nilai' => $mkCount,
+				'detail_mk' => $detailMk
 			];
 		}
 
@@ -407,12 +451,13 @@ class CapaianCpl extends BaseController
 
 			$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-			// Get all nilai_cpmk for all students for these CPMK
-			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
-				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
-				->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-				->whereIn('ncm.cpmk_id', $cpmkIds);
+			// Get all assessment scores from nilai_teknik_penilaian for all students and these CPMK
+			$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
+				->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id, rm.cpmk_id, rm.teknik_penilaian')
+				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->whereIn('ntp.mahasiswa_id', $mahasiswaIds)
+				->whereIn('rm.cpmk_id', $cpmkIds);
 
 			// Apply semester and tahun akademik filters
 			if ($semester && $tahunAkademik) {
@@ -425,55 +470,50 @@ class CapaianCpl extends BaseController
 
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
-			// Calculate CPL for each student using formula:
-			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
-			$studentScores = [];
+			// Calculate CPMK scores for each student using weighted formula
+			$studentCpmkScores = [];
 
-			foreach ($nilaiList as $nilai) {
-				// Get bobot from rps_mingguan
-				$rps = $db->table('rps')
-					->select('id')
-					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
-					->orderBy('created_at', 'DESC')
-					->get()
-					->getRowArray();
+			foreach ($nilaiList as $row) {
+				$mhsId = $row['mahasiswa_id'];
+				$cpmkId = $row['cpmk_id'];
 
-				$bobot = 0;
-				if ($rps) {
-					// Sum bobot across all weeks for this CPMK
-					$bobotResult = $db->table('rps_mingguan')
-						->selectSum('bobot')
-						->where('rps_id', $rps['id'])
-						->where('cpmk_id', $nilai['cpmk_id'])
-						->get()
-						->getRowArray();
+				// Decode the weight (bobot) from JSON
+				$teknikData = json_decode($row['teknik_penilaian'], true);
+				$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
 
-					$bobot = $bobotResult['bobot'] ?? 0;
-				}
+				if ($bobot > 0 && $row['nilai'] !== null) {
+					if (!isset($studentCpmkScores[$mhsId][$cpmkId])) {
+						$studentCpmkScores[$mhsId][$cpmkId] = [
+							'total_weighted' => 0,
+							'total_bobot' => 0
+						];
+					}
 
-				$mhsId = $nilai['mahasiswa_id'];
-				if (!isset($studentScores[$mhsId])) {
-					$studentScores[$mhsId] = [
-						'nilaiCpl' => 0,
-						'totalBobot' => 0
-					];
-				}
-
-				// Sum CPMK scores and bobot
-				if ($bobot > 0) {
-					$studentScores[$mhsId]['nilaiCpl'] += $nilai['nilai_cpmk'];
-					$studentScores[$mhsId]['totalBobot'] += $bobot;
+					$studentCpmkScores[$mhsId][$cpmkId]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+					$studentCpmkScores[$mhsId][$cpmkId]['total_bobot'] += $bobot;
 				}
 			}
 
-			// Calculate average Capaian CPL (%) across all students
+			// Calculate CPL average from CPMK percentages for each student
 			$totalCplScore = 0;
 			$studentCount = 0;
 
-			foreach ($studentScores as $mhsId => $scores) {
-				if ($scores['totalBobot'] > 0) {
-					// Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
-					$cplScore = ($scores['nilaiCpl'] / $scores['totalBobot']) * 100;
+			foreach ($studentCpmkScores as $mhsId => $cpmkScores) {
+				$totalCpmkPercentage = 0;
+				$cpmkCount = 0;
+
+				foreach ($cpmkScores as $cpmkId => $scoreData) {
+					if ($scoreData['total_bobot'] > 0) {
+						// Calculate CPMK percentage
+						$cpmkPercentage = ($scoreData['total_weighted'] / $scoreData['total_bobot']) * 100;
+						$totalCpmkPercentage += $cpmkPercentage;
+						$cpmkCount++;
+					}
+				}
+
+				if ($cpmkCount > 0) {
+					// Calculate this student's CPL as average of their CPMK percentages
+					$cplScore = $totalCpmkPercentage / $cpmkCount;
 					$totalCplScore += $cplScore;
 					$studentCount++;
 				}
@@ -654,12 +694,13 @@ class CapaianCpl extends BaseController
 
 		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
 
-		// Get all nilai_cpmk for all students for these CPMK
-		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
-			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
-			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
-			->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
-			->whereIn('ncm.cpmk_id', $cpmkIds);
+		// Get all assessment scores from nilai_teknik_penilaian for all students and these CPMK
+		$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
+			->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id, rm.cpmk_id, rm.teknik_penilaian')
+			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->whereIn('ntp.mahasiswa_id', $mahasiswaIds)
+			->whereIn('rm.cpmk_id', $cpmkIds);
 
 		// Apply semester and tahun akademik filters
 		if ($semester && $tahunAkademik) {
@@ -672,67 +713,68 @@ class CapaianCpl extends BaseController
 
 		$nilaiList = $nilaiBuilder->get()->getResultArray();
 
-		// Calculate CPL for each student
-		$studentScores = [];
-		$mahasiswaMap = [];
+		// Calculate CPMK scores for each student
+		$studentCpmkScores = [];
 		foreach ($mahasiswaList as $mhs) {
-			$mahasiswaMap[$mhs['id']] = $mhs;
-			$studentScores[$mhs['id']] = [
+			$studentCpmkScores[$mhs['id']] = [
 				'mahasiswa_id' => $mhs['id'],
 				'nim' => $mhs['nim'],
 				'nama_lengkap' => $mhs['nama_lengkap'],
-				'nilaiCpl' => 0,
-				'totalBobot' => 0,
-				'capaianCpl' => 0
+				'cpmk_scores' => []
 			];
 		}
 
-		foreach ($nilaiList as $nilai) {
-			// Get bobot from rps_mingguan
-			$rps = $db->table('rps')
-				->select('id')
-				->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
-				->orderBy('created_at', 'DESC')
-				->get()
-				->getRowArray();
+		foreach ($nilaiList as $row) {
+			$mhsId = $row['mahasiswa_id'];
+			$cpmkId = $row['cpmk_id'];
 
-			$bobot = 0;
-			if ($rps) {
-				$bobotResult = $db->table('rps_mingguan')
-					->selectSum('bobot')
-					->where('rps_id', $rps['id'])
-					->where('cpmk_id', $nilai['cpmk_id'])
-					->get()
-					->getRowArray();
+			// Decode the weight (bobot) from JSON
+			$teknikData = json_decode($row['teknik_penilaian'], true);
+			$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
 
-				$bobot = $bobotResult['bobot'] ?? 0;
-			}
+			if ($bobot > 0 && $row['nilai'] !== null) {
+				if (!isset($studentCpmkScores[$mhsId]['cpmk_scores'][$cpmkId])) {
+					$studentCpmkScores[$mhsId]['cpmk_scores'][$cpmkId] = [
+						'total_weighted' => 0,
+						'total_bobot' => 0
+					];
+				}
 
-			$mhsId = $nilai['mahasiswa_id'];
-			if (isset($studentScores[$mhsId]) && $bobot > 0) {
-				$studentScores[$mhsId]['nilaiCpl'] += $nilai['nilai_cpmk'];
-				$studentScores[$mhsId]['totalBobot'] += $bobot;
+				$studentCpmkScores[$mhsId]['cpmk_scores'][$cpmkId]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+				$studentCpmkScores[$mhsId]['cpmk_scores'][$cpmkId]['total_bobot'] += $bobot;
 			}
 		}
 
-		// Calculate capaian CPL for each student
+		// Calculate CPL for each student as average of their CPMK percentages
 		$detailData = [];
 		$totalCplScore = 0;
 		$studentCount = 0;
 
-		foreach ($studentScores as $mhsId => $scores) {
-			if ($scores['totalBobot'] > 0) {
-				$capaianCpl = ($scores['nilaiCpl'] / $scores['totalBobot']) * 100;
-				$studentScores[$mhsId]['capaianCpl'] = $capaianCpl;
+		foreach ($studentCpmkScores as $mhsId => $studentData) {
+			$totalCpmkPercentage = 0;
+			$cpmkCount = 0;
+
+			foreach ($studentData['cpmk_scores'] as $cpmkId => $scoreData) {
+				if ($scoreData['total_bobot'] > 0) {
+					// Calculate CPMK percentage
+					$cpmkPercentage = ($scoreData['total_weighted'] / $scoreData['total_bobot']) * 100;
+					$totalCpmkPercentage += $cpmkPercentage;
+					$cpmkCount++;
+				}
+			}
+
+			if ($cpmkCount > 0) {
+				// Calculate this student's CPL as average of their CPMK percentages
+				$capaianCpl = $totalCpmkPercentage / $cpmkCount;
 				$totalCplScore += $capaianCpl;
 				$studentCount++;
 
 				$detailData[] = [
-					'mahasiswa_id' => $scores['mahasiswa_id'],
-					'nim' => $scores['nim'],
-					'nama_lengkap' => $scores['nama_lengkap'],
-					'nilai_cpl' => round($scores['nilaiCpl'], 2),
-					'total_bobot' => round($scores['totalBobot'], 2),
+					'mahasiswa_id' => $studentData['mahasiswa_id'],
+					'nim' => $studentData['nim'],
+					'nama_lengkap' => $studentData['nama_lengkap'],
+					'nilai_cpl' => round($totalCpmkPercentage, 2),
+					'total_bobot' => $cpmkCount,
 					'capaian_cpl' => round($capaianCpl, 2)
 				];
 			}
@@ -779,8 +821,10 @@ class CapaianCpl extends BaseController
 
 		// Get all CPMK linked to this CPL
 		$cpmkLinked = $db->table('cpl_cpmk')
-			->select('cpmk_id')
-			->where('cpl_id', $cplId)
+			->select('cpmk.id, cpmk.kode_cpmk')
+			->join('cpmk', 'cpmk.id = cpl_cpmk.cpmk_id')
+			->where('cpl_cpmk.cpl_id', $cplId)
+			->orderBy('cpmk.kode_cpmk', 'ASC')
 			->get()
 			->getResultArray();
 
@@ -797,16 +841,18 @@ class CapaianCpl extends BaseController
 			]);
 		}
 
-		$cpmkIds = array_column($cpmkLinked, 'cpmk_id');
+		$cpmkIds = array_column($cpmkLinked, 'id');
 
-		// Get all nilai_cpmk for this student for these CPMK with detailed info
-		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
-			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id, jm.tahun_akademik, jm.kelas, mk.kode_mk, mk.nama_mk, cpmk.kode_cpmk')
-			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+		// Get all assessment scores from nilai_teknik_penilaian for this student and these CPMK
+		$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
+			->select('ntp.nilai, ntp.teknik_penilaian_key, rm.cpmk_id, rm.teknik_penilaian,
+			         cpmk.kode_cpmk, mk.kode_mk, mk.nama_mk, jm.tahun_akademik, jm.kelas')
+			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
+			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
-			->join('cpmk', 'cpmk.id = ncm.cpmk_id')
-			->where('ncm.mahasiswa_id', $mahasiswaId)
-			->whereIn('ncm.cpmk_id', $cpmkIds);
+			->join('cpmk', 'cpmk.id = rm.cpmk_id')
+			->where('ntp.mahasiswa_id', $mahasiswaId)
+			->whereIn('rm.cpmk_id', $cpmkIds);
 
 		// Apply semester and tahun akademik filters
 		if ($semester && $tahunAkademik) {
@@ -823,60 +869,69 @@ class CapaianCpl extends BaseController
 			->get()
 			->getResultArray();
 
-		// Calculate CPL and prepare detailed data
-		$detailData = [];
-		$nilaiCpl = 0;
-		$totalBobot = 0;
+		// Group by CPMK+MK combination and calculate weighted scores
+		$cpmkMkGroups = [];
 
-		foreach ($nilaiList as $nilai) {
-			// Get bobot from rps_mingguan
-			$rps = $db->table('rps')
-				->select('id')
-				->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
-				->orderBy('created_at', 'DESC')
-				->get()
-				->getRowArray();
+		foreach ($nilaiList as $row) {
+			$key = $row['kode_cpmk'] . '_' . $row['kode_mk'];
 
-			$bobot = 0;
-			if ($rps) {
-				// Sum bobot across all weeks for this CPMK
-				$bobotResult = $db->table('rps_mingguan')
-					->selectSum('bobot')
-					->where('rps_id', $rps['id'])
-					->where('cpmk_id', $nilai['cpmk_id'])
-					->get()
-					->getRowArray();
-
-				$bobot = $bobotResult['bobot'] ?? 0;
+			if (!isset($cpmkMkGroups[$key])) {
+				$cpmkMkGroups[$key] = [
+					'kode_cpmk' => $row['kode_cpmk'],
+					'kode_mk' => $row['kode_mk'],
+					'nama_mk' => $row['nama_mk'],
+					'tahun_akademik' => $row['tahun_akademik'],
+					'kelas' => $row['kelas'],
+					'cpmk_id' => $row['cpmk_id'],
+					'total_weighted' => 0,
+					'total_bobot' => 0
+				];
 			}
 
-			// Add to detail data
-			$detailData[] = [
-				'kode_cpmk' => $nilai['kode_cpmk'],
-				'kode_mk' => $nilai['kode_mk'],
-				'nama_mk' => $nilai['nama_mk'],
-				'tahun_akademik' => $nilai['tahun_akademik'],
-				'kelas' => $nilai['kelas'],
-				'nilai_cpmk' => $nilai['nilai_cpmk'],
-				'bobot' => $bobot
-			];
+			// Decode the weight (bobot) from JSON
+			$teknikData = json_decode($row['teknik_penilaian'], true);
+			$bobot = isset($teknikData[$row['teknik_penilaian_key']]) ? floatval($teknikData[$row['teknik_penilaian_key']]) : 0;
 
-			// Sum for calculation
-			if ($bobot > 0) {
-				$nilaiCpl += $nilai['nilai_cpmk'];
-				$totalBobot += $bobot;
+			if ($bobot > 0 && $row['nilai'] !== null) {
+				$cpmkMkGroups[$key]['total_weighted'] += ($row['nilai'] * $bobot / 100);
+				$cpmkMkGroups[$key]['total_bobot'] += $bobot;
 			}
 		}
 
-		// Calculate Capaian CPL (%)
-		$capaianCpl = $totalBobot > 0 ? round(($nilaiCpl / $totalBobot) * 100, 2) : 0;
+		// Calculate percentage for each CPMK+MK and prepare detail data
+		$detailData = [];
+		$totalCpmkPercentage = 0;
+		$cpmkCount = 0;
+
+		foreach ($cpmkMkGroups as $data) {
+			if ($data['total_bobot'] > 0) {
+				// Calculate CPMK percentage for this mata kuliah
+				$cpmkPercentage = ($data['total_weighted'] / $data['total_bobot']) * 100;
+
+				$detailData[] = [
+					'kode_cpmk' => $data['kode_cpmk'],
+					'kode_mk' => $data['kode_mk'],
+					'nama_mk' => $data['nama_mk'],
+					'tahun_akademik' => $data['tahun_akademik'],
+					'kelas' => $data['kelas'],
+					'nilai_cpmk' => round($cpmkPercentage, 2),
+					'bobot' => $data['total_bobot']
+				];
+
+				$totalCpmkPercentage += $cpmkPercentage;
+				$cpmkCount++;
+			}
+		}
+
+		// Calculate average CPL from CPMK percentages
+		$capaianCpl = $cpmkCount > 0 ? round($totalCpmkPercentage / $cpmkCount, 2) : 0;
 
 		return $this->response->setJSON([
 			'success' => true,
 			'data' => $detailData,
 			'summary' => [
-				'nilai_cpl' => $nilaiCpl,
-				'total_bobot' => $totalBobot,
+				'nilai_cpl' => round($totalCpmkPercentage, 2),
+				'total_bobot' => $cpmkCount,
 				'capaian_cpl' => $capaianCpl
 			]
 		]);
