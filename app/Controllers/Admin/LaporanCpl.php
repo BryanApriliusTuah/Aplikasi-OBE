@@ -558,7 +558,7 @@ class LaporanCpl extends BaseController
 			$jadwalList = $this->db->table('jadwal_mengajar')
 				->select('id, kelas')
 				->where('mata_kuliah_id', $mataKuliahId)
-				->where('tahun_akademik', $tahunAkademik)
+				->like('tahun_akademik', $tahunAkademik, 'both')
 				->where('program_studi', $programStudi)
 				->get()
 				->getResultArray();
