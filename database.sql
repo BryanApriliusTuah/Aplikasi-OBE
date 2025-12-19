@@ -36,6 +36,16 @@ CREATE TABLE `analisis_cpl` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `analisis_cpl`
+--
+
+LOCK TABLES `analisis_cpl` WRITE;
+/*!40000 ALTER TABLE `analisis_cpl` DISABLE KEYS */;
+INSERT INTO `analisis_cpl` VALUES (1,'Teknik Informatika','2024/2025 Ganjil','2021','manual','Test','2025-12-09 17:06:13','2025-12-09 17:06:13');
+/*!40000 ALTER TABLE `analisis_cpl` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `analisis_cpmk`
 --
 
@@ -58,6 +68,16 @@ CREATE TABLE `analisis_cpmk` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `analisis_cpmk`
+--
+
+LOCK TABLES `analisis_cpmk` WRITE;
+/*!40000 ALTER TABLE `analisis_cpmk` DISABLE KEYS */;
+INSERT INTO `analisis_cpmk` VALUES (1,8,'2024/2025 Ganjil','Teknik Informatika','auto',NULL,'2025-12-06 09:45:35','2025-12-06 09:48:02');
+/*!40000 ALTER TABLE `analisis_cpmk` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `bahan_kajian`
 --
 
@@ -73,6 +93,16 @@ CREATE TABLE `bahan_kajian` (
   UNIQUE KEY `kode_bk` (`kode_bk`)
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bahan_kajian`
+--
+
+LOCK TABLES `bahan_kajian` WRITE;
+/*!40000 ALTER TABLE `bahan_kajian` DISABLE KEYS */;
+INSERT INTO `bahan_kajian` VALUES (1,'BK01','Social Issues and Professional Practice','2025-06-14 13:48:49'),(2,'BK02','Security','2025-06-14 13:48:49'),(3,'BK03','Project Management','2025-06-14 13:48:49'),(4,'BK04','User Experience Design','2025-06-14 13:48:49'),(5,'BK05','Software Development Fundamentals','2025-06-14 13:48:49'),(6,'BK06','Data Management','2025-06-14 13:48:49'),(7,'BK07','Parallel and Distributed Computing','2025-06-14 13:48:49'),(8,'BK08','Network and Communication','2025-06-14 13:48:49'),(9,'BK09','Human-Computer Interaction','2025-06-14 13:48:49'),(10,'BK10','Software Engineering','2025-06-14 13:48:49'),(11,'BK11','Operating Systems','2025-06-14 13:48:49'),(12,'BK12','Algoritmics Foundation','2025-06-14 13:48:49'),(13,'BK13','Foundation of Programming Languages','2025-06-14 13:48:49'),(14,'BK14','Programming Fundamentals','2025-06-14 13:48:49'),(15,'BK15','Systems Fundamentals','2025-06-14 13:48:49'),(16,'BK16','Architecture and Organization','2025-06-14 13:48:49'),(17,'BK17','Graphics and Interactive Techniques','2025-06-14 13:48:49'),(18,'BK18','Artificial Intelligence','2025-06-14 13:48:49'),(19,'BK19','Specialized Platform Development','2025-06-14 13:48:49'),(20,'BK20','Mathematical and Statistical Foundations','2025-06-14 13:48:49'),(21,'BK21','Pengembangan Diri','2025-06-14 13:48:49'),(22,'BK22','Metodologi Penelitian','2025-06-14 13:48:49');
+/*!40000 ALTER TABLE `bahan_kajian` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `bk_mk`
@@ -94,6 +124,16 @@ CREATE TABLE `bk_mk` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `bk_mk`
+--
+
+LOCK TABLES `bk_mk` WRITE;
+/*!40000 ALTER TABLE `bk_mk` DISABLE KEYS */;
+INSERT INTO `bk_mk` VALUES (1,1,11),(2,5,2),(3,5,7),(4,6,8),(5,10,7),(6,12,2),(7,14,2),(8,16,5),(9,20,3),(10,20,4),(11,21,11),(12,22,12);
+/*!40000 ALTER TABLE `bk_mk` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `cpl`
 --
 
@@ -110,6 +150,16 @@ CREATE TABLE `cpl` (
   UNIQUE KEY `kode_cpl` (`kode_cpl`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cpl`
+--
+
+LOCK TABLES `cpl` WRITE;
+/*!40000 ALTER TABLE `cpl` DISABLE KEYS */;
+INSERT INTO `cpl` VALUES (1,'CPL01','Menginternalisasi nilai-nilai Pancasila dalam kehidupan masyarakat yang beragam','P','2025-06-14 13:46:50'),(2,'CPL02','Menunjukkan sikap profesional, responsif terhadap perkembangan teknologi dan pemahaman tentang pembelajaran sepanjang hayat','S','2025-06-14 13:46:50'),(3,'CPL03','Memiliki kemampuan untuk menerapkan teori matematika dan sistem komputer untuk menyelesaikan berbagai permasalahan dengan prinsip-prinsip computing.','KU','2025-06-14 13:46:50'),(4,'CPL04','Memiliki kemampuan untuk menggunakan dan menerapkan berbagai algoritma/metode untuk memecahkan masalah pada suatu organisasi.','KK','2025-06-14 13:46:50'),(5,'CPL05','Memiliki kemampuan bekerjasama yang baik dalam tim multi displin serta berkomunikasi secara efektif, baik secara lisan maupun tulisan','KU','2025-06-15 11:18:25'),(6,'CPL06','Mampu mengambil keputusan secara tepat dalam konteks penyelesaian masalah di bidang keahliannya, berdasarkan hasil analisis data','KU','2025-06-22 10:10:57'),(7,'CPL07','Memiliki kemampuan untuk menganalisis, merancang, menerapkan, menguji dan memelihara perangkat lunak dengan berbagai kompleksitas','KK','2025-06-22 10:10:57'),(8,'CPL08','Mampu merancang dan menciptakan solusi inovatif untuk memecahkan masalah di dunia industri dengan pendekatan sistem cerdas menggunakan algoritma kompleks.','KK','2025-06-22 10:10:57'),(9,'CPL09','Memiliki kemampuan memahami, merancang, mengimplementasikan, mengevaluasi dan memelihara sistem komputer, arsitektur komputer, serta jaringan komputer sesuai dengan kebutuhan organisasi','KK','2025-06-22 10:10:57');
+/*!40000 ALTER TABLE `cpl` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `cpl_bk`
@@ -129,6 +179,16 @@ CREATE TABLE `cpl_bk` (
   CONSTRAINT `cpl_bk_ibfk_2` FOREIGN KEY (`bk_id`) REFERENCES `bahan_kajian` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cpl_bk`
+--
+
+LOCK TABLES `cpl_bk` WRITE;
+/*!40000 ALTER TABLE `cpl_bk` DISABLE KEYS */;
+INSERT INTO `cpl_bk` VALUES (1,1,1),(8,5,3),(11,7,5),(10,7,10),(14,9,11),(4,3,12),(5,4,12),(6,4,14),(13,9,16),(12,8,18),(3,3,20),(2,2,21),(7,5,21),(9,6,22);
+/*!40000 ALTER TABLE `cpl_bk` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `cpl_cpmk`
@@ -152,6 +212,16 @@ CREATE TABLE `cpl_cpmk` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `cpl_cpmk`
+--
+
+LOCK TABLES `cpl_cpmk` WRITE;
+/*!40000 ALTER TABLE `cpl_cpmk` DISABLE KEYS */;
+INSERT INTO `cpl_cpmk` VALUES (1,1,1,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,2,2,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,3,3,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(4,4,4,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(5,5,5,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(6,6,6,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(7,7,8,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(8,7,9,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(9,7,7,'2025-11-02 13:31:58','2025-11-02 13:31:58'),(10,8,8,'2025-11-02 13:32:06','2025-11-02 13:32:06'),(11,9,9,'2025-11-02 13:32:15','2025-11-02 13:32:15');
+/*!40000 ALTER TABLE `cpl_cpmk` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `cpl_mk`
 --
 
@@ -170,6 +240,16 @@ CREATE TABLE `cpl_mk` (
   CONSTRAINT `cpl_mk_ibfk_2` FOREIGN KEY (`mata_kuliah_id`) REFERENCES `mata_kuliah` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cpl_mk`
+--
+
+LOCK TABLES `cpl_mk` WRITE;
+/*!40000 ALTER TABLE `cpl_mk` DISABLE KEYS */;
+INSERT INTO `cpl_mk` VALUES (18,1,8),(1,1,11),(26,1,15),(19,2,8),(2,2,11),(27,2,15),(3,3,3),(4,3,4),(20,3,8),(5,3,14),(28,3,15),(6,4,2),(7,4,6),(8,4,7),(21,4,8),(22,5,8),(10,5,10),(9,5,12),(23,6,8),(11,6,12),(12,7,7),(13,7,8),(24,8,8),(14,8,14),(16,9,5),(25,9,8),(17,9,13);
+/*!40000 ALTER TABLE `cpl_mk` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `cpl_pl`
@@ -191,6 +271,16 @@ CREATE TABLE `cpl_pl` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `cpl_pl`
+--
+
+LOCK TABLES `cpl_pl` WRITE;
+/*!40000 ALTER TABLE `cpl_pl` DISABLE KEYS */;
+INSERT INTO `cpl_pl` VALUES (1,1,3),(2,2,3),(3,3,1),(4,4,1),(5,5,1),(6,6,2),(7,7,2),(8,8,2),(9,9,1);
+/*!40000 ALTER TABLE `cpl_pl` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `cpmk`
 --
 
@@ -207,6 +297,16 @@ CREATE TABLE `cpmk` (
   UNIQUE KEY `uq_cpmk_kode` (`kode_cpmk`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cpmk`
+--
+
+LOCK TABLES `cpmk` WRITE;
+/*!40000 ALTER TABLE `cpmk` DISABLE KEYS */;
+INSERT INTO `cpmk` VALUES (1,'CPMK011','Mampu menginternalisasi nilai-nilai Pancasila dalam pengambilan keputusan dan penyelesaian masalah sosial','2025-08-05 14:15:56','2025-08-05 14:15:56'),(2,'CPMK022','Mampu menunjukkan sikap responsif dan adaptif terhadap perkembangan teknologi terkini','2025-08-05 14:16:51','2025-08-05 14:16:51'),(3,'CPMK033','Mampu menerapkan teori matematika yang dapat menerapkan metode statistik dan probabilistik untuk pengambilan keputusan berbasis data','2025-08-05 14:20:01','2025-08-05 14:20:01'),(4,'CPMK041','Mampu menerapkan algoritma dan metode pemrograman untuk membangun solusi perangkat lunak yang efisien terhadap permasalahan fungsional organisasi','2025-08-07 09:43:38','2025-08-07 09:43:38'),(5,'CPMK053','Mampu menulis laporan teknis, dokumentasi, atau karya ilmiah yang terstruktur dan sesuai kaidah kebahasaan dan akademik','2025-08-05 14:21:43','2025-08-05 14:21:43'),(6,'CPMK062','Mampu menerapkan metodologi penelitian untuk pengumpulan dan analisis data secara sistematis','2025-08-05 14:23:13','2025-08-05 14:23:13'),(7,'CPMK071','Mampu menganalisis dan merancang struktur data yang efisien','2025-08-07 20:33:20','2025-08-07 20:35:49'),(8,'CPMK081','Mampu mengimplementasikan konsep pemrograman berorientasi objek','2025-08-10 07:10:46','2025-08-10 07:10:46'),(9,'CPMK091','Mampu merancang dan mengimplementasikan basis data','2025-08-10 07:11:02','2025-08-10 07:11:02'),(10,'CPMK101','Mampu menerapkan prinsip keamanan informasi','2025-10-10 17:00:52','2025-10-10 17:00:52');
+/*!40000 ALTER TABLE `cpmk` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `cpmk_mk`
@@ -226,6 +326,16 @@ CREATE TABLE `cpmk_mk` (
   CONSTRAINT `fk_mk` FOREIGN KEY (`mata_kuliah_id`) REFERENCES `mata_kuliah` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cpmk_mk`
+--
+
+LOCK TABLES `cpmk_mk` WRITE;
+/*!40000 ALTER TABLE `cpmk_mk` DISABLE KEYS */;
+INSERT INTO `cpmk_mk` VALUES (12,1,8),(1,1,11),(20,1,15),(13,2,8),(2,2,11),(21,2,15),(14,3,8),(3,3,14),(4,4,2),(5,4,7),(15,4,8),(16,5,8),(6,5,12),(17,6,8),(7,6,12),(8,7,6),(18,7,8),(9,8,7),(19,8,8),(10,9,8),(11,10,13);
+/*!40000 ALTER TABLE `cpmk_mk` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `cqi`
@@ -257,6 +367,16 @@ CREATE TABLE `cqi` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `cqi`
+--
+
+LOCK TABLES `cqi` WRITE;
+/*!40000 ALTER TABLE `cqi` DISABLE KEYS */;
+INSERT INTO `cqi` VALUES (1,'cpmk',NULL,NULL,NULL,8,NULL,'CPMK071','CPMK071 tidak tercapai test','Revisi metode pengajaran dengan pendekatan yang lebih kontekstual dan interaktif test','Dosen pengampu test','Semester depan test','2025-12-09 17:21:52','2025-12-09 17:21:52'),(2,'cpl','Teknik Informatika','2024/2025 Ganjil','2021',NULL,'CPL07',NULL,'Nilai CPL < 75% test','Evaluasi mata kuliah kontributor, perbaikan metode pembelajaran dan asesmen, penambahan latihan dan studi kasus test','Tim Kurikulum & Dosen MK test','Semester Berikutnya test','2025-12-09 17:22:16','2025-12-09 17:22:16'),(3,'cpl','Teknik Informatika','2024/2025 Ganjil','2021',NULL,'CPL09',NULL,'Nilai CPL < 75% test','Evaluasi mata kuliah kontributor, perbaikan metode pembelajaran dan asesmen, penambahan latihan dan studi kasus test','Tim Kurikulum & Dosen MK test','Semester Berikutnya test','2025-12-09 17:22:16','2025-12-09 17:22:16'),(4,'cpmk',NULL,NULL,NULL,9,NULL,'CPMK011','CPMK011 tidak tercapai','Revisi metode pengajaran dengan pendekatan yang lebih kontekstual dan interaktif','Mayrika','Semester depan','2025-12-11 10:40:01','2025-12-11 10:40:01');
+/*!40000 ALTER TABLE `cqi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `dosen`
 --
 
@@ -278,6 +398,16 @@ CREATE TABLE `dosen` (
   CONSTRAINT `fk_dosen_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `dosen`
+--
+
+LOCK TABLES `dosen` WRITE;
+/*!40000 ALTER TABLE `dosen` DISABLE KEYS */;
+INSERT INTO `dosen` VALUES (1,NULL,'197001011995031001','Dr. Ahmad Fauzi, S.Kom., M.T.','Lektor Kepala','Aktif','2025-08-27 08:49:33','2025-11-03 11:16:15'),(2,NULL,'197205101996032001','Dr. Siti Nurhaliza, S.T., M.Kom.','Lektor Kepala','Aktif','2025-08-27 08:49:33','2025-10-21 02:37:12'),(3,10,'197503151997031002','Budi Santoso, S.Kom., M.T.','Lektor','Aktif','2025-08-27 16:43:34','2025-11-03 11:16:30'),(4,NULL,'197807202000032001','Dewi Lestari, S.T., M.Kom.','Lektor','Aktif','2025-09-19 12:56:59','2025-10-21 02:37:17'),(5,NULL,'198001052003121001','Ir. Joko Widodo, M.T., Ph.D.','Lektor Kepala','Aktif','2025-09-19 12:56:59','2025-09-19 13:17:19');
+/*!40000 ALTER TABLE `dosen` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `grade_config`
@@ -305,6 +435,16 @@ CREATE TABLE `grade_config` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `grade_config`
+--
+
+LOCK TABLES `grade_config` WRITE;
+/*!40000 ALTER TABLE `grade_config` DISABLE KEYS */;
+INSERT INTO `grade_config` VALUES (1,'A',80.01,100.00,4.00,'Istimewa',1,1,1,NULL,NULL),(2,'A-',70.01,80.00,3.50,'Baik Sekali',1,2,1,NULL,'2025-11-19 14:23:21'),(3,'B+',65.01,70.00,3.00,'Baik',1,3,1,NULL,'2025-11-19 14:23:30'),(4,'BC',60.01,65.00,2.50,'Cukup Baik',1,4,1,NULL,'2025-12-16 05:19:19'),(5,'C',50.01,60.00,2.00,'Cukup',1,5,1,NULL,'2025-12-16 05:19:18'),(6,'D',40.01,50.00,1.00,'Kurang',0,6,1,NULL,'2025-12-16 05:19:50'),(7,'E',0.00,40.00,0.00,'Sangat Kurang',0,7,1,NULL,'2025-12-16 05:20:22');
+/*!40000 ALTER TABLE `grade_config` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `jadwal_dosen`
 --
 
@@ -326,6 +466,16 @@ CREATE TABLE `jadwal_dosen` (
   CONSTRAINT `fk_jadwal_dosen_jadwal` FOREIGN KEY (`jadwal_mengajar_id`) REFERENCES `jadwal_mengajar` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `jadwal_dosen`
+--
+
+LOCK TABLES `jadwal_dosen` WRITE;
+/*!40000 ALTER TABLE `jadwal_dosen` DISABLE KEYS */;
+INSERT INTO `jadwal_dosen` VALUES (16,9,4,'leader','2025-11-03 11:01:27'),(22,11,4,'leader','2025-12-18 02:49:17'),(23,11,4,'member','2025-12-18 02:49:17'),(24,11,3,'member','2025-12-18 02:49:17');
+/*!40000 ALTER TABLE `jadwal_dosen` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `jadwal_mengajar`
@@ -362,6 +512,16 @@ CREATE TABLE `jadwal_mengajar` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `jadwal_mengajar`
+--
+
+LOCK TABLES `jadwal_mengajar` WRITE;
+/*!40000 ALTER TABLE `jadwal_mengajar` DISABLE KEYS */;
+INSERT INTO `jadwal_mengajar` VALUES (9,15,'Teknik Informatika','2024/2025 Ganjil','A','Ft1','Senin','06:30:00','06:31:00','active','2025-11-03 11:01:27','2025-11-03 11:01:27',0,NULL,NULL),(11,8,'Teknik Informatika','2024/2025 Genap','A','FT1','Senin',NULL,NULL,'active','2025-12-18 02:49:17','2025-12-18 02:49:17',0,NULL,NULL);
+/*!40000 ALTER TABLE `jadwal_mengajar` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mahasiswa`
 --
 
@@ -384,6 +544,16 @@ CREATE TABLE `mahasiswa` (
   CONSTRAINT `fk_mahasiswa_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mahasiswa`
+--
+
+LOCK TABLES `mahasiswa` WRITE;
+/*!40000 ALTER TABLE `mahasiswa` DISABLE KEYS */;
+INSERT INTO `mahasiswa` VALUES (1,11,'21110001','Andi Setiawan','Teknik Informatika','2021','Aktif','2025-09-19 22:44:06','2025-12-18 04:12:24'),(2,NULL,'21110002','Bella Kusuma','Teknik Informatika','2021','Aktif','2025-09-19 22:44:06','2025-12-18 04:12:32'),(3,NULL,'21110003','Cahya Permana','Teknik Informatika','2021','Aktif','2025-09-19 22:44:06','2025-12-18 04:12:38'),(4,NULL,'21110004','Dian Pratiwi','Teknik Informatika','2021','Aktif','2025-09-19 22:44:06','2025-12-18 04:12:46'),(5,NULL,'21110005','Eko Nugroho','Teknik Informatika','2021','Aktif','2025-09-19 22:44:06','2025-12-18 04:12:53'),(6,NULL,'22110001','Fitri Handayani','Sistem Informasi','2022','Aktif','2025-09-19 22:44:06','2025-12-18 04:13:00'),(7,NULL,'22110002','Gilang Ramadhan','Sistem Informasi','2022','Aktif','2025-09-19 22:44:06','2025-12-18 04:13:06'),(8,NULL,'22110003','Hesti Wulandari','Sistem Informasi','2022','Aktif','2025-09-19 22:44:06','2025-12-18 04:13:12'),(9,NULL,'23110001','Irfan Hakim','Teknik Informatika','2023','Aktif','2025-09-19 22:44:06','2025-12-18 04:13:24'),(10,NULL,'23110002','Jasmine Putri','Teknik Informatika','2023','Aktif','2025-09-19 22:44:06','2025-12-18 04:13:29');
+/*!40000 ALTER TABLE `mahasiswa` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `mata_kuliah`
@@ -409,6 +579,16 @@ CREATE TABLE `mata_kuliah` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `mata_kuliah`
+--
+
+LOCK TABLES `mata_kuliah` WRITE;
+/*!40000 ALTER TABLE `mata_kuliah` DISABLE KEYS */;
+INSERT INTO `mata_kuliah` VALUES (1,'1DCP101030','Pengantar Teknologi Informasi','Pengenalan dasar teknologi informasi dan komputer','wajib',1,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(2,'1DCP102040','Algoritma dan Pemrograman','Dasar-dasar algoritma dan pemrograman','wajib',1,4,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(3,'1DCP103030','Matematika Diskrit','Konsep matematika untuk ilmu komputer','wajib',1,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(4,'1DCP171030','Aljabar Linier dan Matriks','Mempelajari aljabar linier dan aplikasi matriks','wajib',1,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(5,'1DCP561030','Arsitektur dan Organisasi Komputer','Dasar-dasar arsitektur komputer','wajib',1,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(6,'1DCP182032','Struktur Data','Mempelajari struktur data dalam pemrograman','wajib',2,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(7,'1DCP213032','Pemrograman Berorientasi Obyek','Dasar-dasar pemrograman berorientasi objek','wajib',3,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(8,'1DCP573032','Basis Data I','Pengantar basis data','wajib',3,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(9,'1DCU024020','Kewarganegaraan','Mata kuliah kewarganegaraan','wajib',4,2,'2025-08-04 06:46:57','2025-08-04 06:46:57','mkwk'),(10,'1DCP874030','Manajemen Proyek','Dasar manajemen proyek perangkat lunak','wajib',4,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(11,'1DCU105020','Pancasila','Mata kuliah Pancasila','wajib',5,2,'2025-08-04 06:46:57','2025-08-04 06:46:57','mkwk'),(12,'1DCP115030','Metode Penelitian','Mata kuliah metodologi penelitian','wajib',5,3,'2025-08-05 13:52:10','2025-08-05 13:52:10','mkwk'),(13,'1DCP905030','Keamanan Data dan Informasi','Dasar keamanan data dan informasi','wajib',5,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(14,'1DCP685032','Data Mining','Dasar data mining','wajib',5,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori'),(15,'1DCP936030','Pembelajaran Mesin','Dasar pembelajaran mesin','wajib',6,3,'2025-08-04 06:46:57','2025-08-04 06:46:57','wajib_teori');
+/*!40000 ALTER TABLE `mata_kuliah` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mbkm_jenis_kegiatan`
 --
 
@@ -428,6 +608,16 @@ CREATE TABLE `mbkm_jenis_kegiatan` (
   UNIQUE KEY `uq_kode_kegiatan` (`kode_kegiatan`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mbkm_jenis_kegiatan`
+--
+
+LOCK TABLES `mbkm_jenis_kegiatan` WRITE;
+/*!40000 ALTER TABLE `mbkm_jenis_kegiatan` DISABLE KEYS */;
+INSERT INTO `mbkm_jenis_kegiatan` VALUES (1,'MBKM01','Magang/Praktik Kerja','Kegiatan magang di industri/instansi',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,'MBKM02','Pertukaran Pelajar','Program pertukaran mahasiswa',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,'MBKM03','Asistensi Mengajar di Satuan Pendidikan','Mengajar di sekolah',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26'),(4,'MBKM04','Penelitian/Riset','Kegiatan penelitian',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26'),(5,'MBKM05','Proyek Kemanusiaan','Kegiatan sosial kemasyarakatan',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26'),(6,'MBKM06','Kegiatan Wirausaha','Membangun startup/usaha',20,'aktif','2025-10-20 15:39:26','2025-10-20 15:39:26');
+/*!40000 ALTER TABLE `mbkm_jenis_kegiatan` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `mbkm_kegiatan`
@@ -464,6 +654,16 @@ CREATE TABLE `mbkm_kegiatan` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `mbkm_kegiatan`
+--
+
+LOCK TABLES `mbkm_kegiatan` WRITE;
+/*!40000 ALTER TABLE `mbkm_kegiatan` DISABLE KEYS */;
+INSERT INTO `mbkm_kegiatan` VALUES (1,1,'Magang sebagai Software Developer di PT. Tech Startup Indonesia','PT. Tech Startup Indonesia, Jakarta','Budi Santoso, S.Kom','budi.santoso@techstartup.id',2,'2025-02-01','2025-07-31',26,20,'Mengembangkan aplikasi mobile dan web menggunakan Flutter dan Laravel',NULL,'selesai','2024/2025 Genap','2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,4,'Penelitian: Implementasi Machine Learning untuk Prediksi Cuaca','Laboratorium Komputasi, Fakultas Teknik UPR','Dr. Siti Rahmawati, M.Kom','siti.rahmawati@upr.ac.id',4,'2025-03-01','2025-08-31',26,20,'Penelitian menggunakan algoritma Random Forest dan LSTM',NULL,'disetujui','2024/2025 Genap','2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,5,'Program Pemberdayaan Masyarakat Digital','Desa Teknologi, Palangka Raya','Kepala Desa','08123456789',3,'2025-01-01','2025-02-01',5,20,'Memberikan pelatihan komputer dasar kepada masyarakat',NULL,'selesai','2024/2025 Genap','2025-10-20 15:39:26','2025-10-20 15:39:26'),(4,1,'Backend Developer di PT Solusi Digital','PT Solusi Digital, Surabaya','Rizki Pratama, S.Kom','rizki@solusidigital.id',1,'2024-02-23','2024-07-19',21,20,'Kegiatan Backend Developer di PT Solusi Digital... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(5,1,'Frontend Developer di PT Media Kreatif','PT Media Kreatif, Bandung','Sinta Dewi, S.T.','sinta@mediakreatif.co.id',3,'2024-01-12','2024-07-12',26,20,'Kegiatan Frontend Developer di PT Media Kreatif... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2024/2025 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(6,1,'Data Analyst di PT Analytics Indonesia','PT Analytics Indonesia, Jakarta','Ahmad Fauzan, S.Kom., M.T.','ahmad@analytics.id',1,'2024-05-21','2024-11-19',26,20,'Kegiatan Data Analyst di PT Analytics Indonesia... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2024/2025 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(7,1,'Mobile Developer di PT Aplikasi Nusantara','PT Aplikasi Nusantara, Yogyakarta','Dian Pertiwi, S.Kom','dian@aplikasi.id',3,'2024-06-28','2024-12-20',25,20,'Kegiatan Mobile Developer di PT Aplikasi Nusantara... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'disetujui','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(8,2,'Program Pertukaran ke Universiti Malaya','Universiti Malaya, Malaysia','Prof. Dr. Ahmad Hassan','ahmad.hassan@um.edu.my',5,'2024-02-08','2024-06-27',20,20,'Kegiatan Program Pertukaran ke Universiti Malaya... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(9,2,'Exchange Program ke NUS Singapore','National University of Singapore','Dr. Lee Wei Ming','leeweiming@nus.edu.sg',5,'2024-07-08','2024-12-02',21,20,'Kegiatan Exchange Program ke NUS Singapore... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2024/2025 Genap','2025-10-20 16:03:10','2025-10-20 16:03:10'),(10,2,'Student Exchange to Chulalongkorn University','Chulalongkorn University, Thailand','Assoc. Prof. Somchai Pradit','somchai@chula.ac.th',1,'2024-04-11','2024-09-12',22,20,'Kegiatan Student Exchange to Chulalongkorn University... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(11,3,'Asistensi Mengajar di SMAN 1 Palangka Raya','SMAN 1 Palangka Raya','Sutrisno, S.Pd., M.Pd.','08123456701',4,'2024-04-08','2024-09-30',25,20,'Kegiatan Asistensi Mengajar di SMAN 1 Palangka Raya... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'disetujui','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(12,3,'Teaching Assistant di SMA Negeri 3','SMA Negeri 3, Palangka Raya','Rina Wati, S.Pd','08123456702',1,'2024-04-27','2024-09-21',21,20,'Kegiatan Teaching Assistant di SMA Negeri 3... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'disetujui','2024/2025 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(13,3,'Mengajar TIK di SMP Negeri 5','SMP Negeri 5, Palangka Raya','Bambang Setiawan, S.Kom','08123456703',4,'2024-02-05','2024-08-12',27,20,'Kegiatan Mengajar TIK di SMP Negeri 5... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2024/2025 Genap','2025-10-20 16:03:10','2025-10-20 16:03:10'),(14,4,'Sistem Rekomendasi Berbasis Deep Learning','Lab AI, Fakultas Teknik UPR','Dr. Ratna Sari, M.Kom','ratna@upr.ac.id',2,'2024-05-01','2024-09-25',21,20,'Kegiatan Sistem Rekomendasi Berbasis Deep Learning... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(15,4,'IoT untuk Smart Agriculture','Lab Embedded System UPR','Dr. Eko Budiyanto, M.T.','eko@upr.ac.id',4,'2024-08-11','2025-02-02',25,20,'Kegiatan IoT untuk Smart Agriculture... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Genap','2025-10-20 16:03:10','2025-10-20 16:03:10'),(16,4,'Blockchain untuk E-Voting System','Lab Keamanan Informasi UPR','Dr. Hendra Kusuma, M.Kom','hendra@upr.ac.id',5,'2024-03-06','2024-07-24',20,20,'Kegiatan Blockchain untuk E-Voting System... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'disetujui','2023/2024 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10'),(17,5,'Digitalisasi UMKM di Desa Wisata','Desa Tumbang Nusa, Kalimantan Tengah','Kepala Desa Tumbang Nusa','08123456710',2,'2024-06-09','2024-11-17',23,20,'Kegiatan Digitalisasi UMKM di Desa Wisata... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2023/2024 Genap','2025-10-20 16:03:10','2025-10-20 16:03:10'),(18,5,'Pemberdayaan Masyarakat melalui Teknologi','Kelurahan Pahandut','Lurah Pahandut','08123456711',5,'2024-01-23','2024-07-16',25,20,'Kegiatan Pemberdayaan Masyarakat melalui Teknologi... dengan fokus pada pengembangan kompetensi mahasiswa',NULL,'selesai','2024/2025 Ganjil','2025-10-20 16:03:10','2025-10-20 16:03:10');
+/*!40000 ALTER TABLE `mbkm_kegiatan` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mbkm_kegiatan_mahasiswa`
 --
 
@@ -487,6 +687,16 @@ CREATE TABLE `mbkm_kegiatan_mahasiswa` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `mbkm_kegiatan_mahasiswa`
+--
+
+LOCK TABLES `mbkm_kegiatan_mahasiswa` WRITE;
+/*!40000 ALTER TABLE `mbkm_kegiatan_mahasiswa` DISABLE KEYS */;
+INSERT INTO `mbkm_kegiatan_mahasiswa` VALUES (1,1,1,'Peserta','2025-10-20 15:39:26'),(2,2,2,'Peserta','2025-10-20 15:39:26'),(3,3,3,'Ketua','2025-10-20 15:39:26'),(4,3,4,'Anggota','2025-10-20 15:39:26'),(5,3,5,'Anggota','2025-10-20 15:39:26'),(6,4,4,'Ketua','2025-10-20 16:03:10'),(7,5,10,'Ketua','2025-10-20 16:03:10'),(8,5,5,'Anggota','2025-10-20 16:03:10'),(9,6,10,'Ketua','2025-10-20 16:03:10'),(10,6,5,'Peserta','2025-10-20 16:03:10'),(11,6,8,'Anggota','2025-10-20 16:03:10'),(12,7,8,'Ketua','2025-10-20 16:03:10'),(13,8,2,'Ketua','2025-10-20 16:03:10'),(14,9,5,'Ketua','2025-10-20 16:03:10'),(15,9,6,'Peserta','2025-10-20 16:03:10'),(16,9,2,'Anggota','2025-10-20 16:03:10'),(17,10,7,'Ketua','2025-10-20 16:03:10'),(18,10,1,'Peserta','2025-10-20 16:03:10'),(19,11,9,'Ketua','2025-10-20 16:03:10'),(20,11,2,'Peserta','2025-10-20 16:03:10'),(21,12,9,'Ketua','2025-10-20 16:03:10'),(22,13,1,'Ketua','2025-10-20 16:03:10'),(23,14,3,'Ketua','2025-10-20 16:03:10'),(24,14,5,'Peserta','2025-10-20 16:03:10'),(25,14,1,'Peserta','2025-10-20 16:03:10'),(26,15,9,'Ketua','2025-10-20 16:03:10'),(27,16,1,'Ketua','2025-10-20 16:03:10'),(28,17,5,'Ketua','2025-10-20 16:03:10'),(29,17,2,'Peserta','2025-10-20 16:03:10'),(30,18,1,'Ketua','2025-10-20 16:03:10'),(31,18,8,'Anggota','2025-10-20 16:03:10'),(32,18,4,'Peserta','2025-10-20 16:03:10');
+/*!40000 ALTER TABLE `mbkm_kegiatan_mahasiswa` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mbkm_komponen_nilai`
 --
 
@@ -505,6 +715,16 @@ CREATE TABLE `mbkm_komponen_nilai` (
   CONSTRAINT `fk_komponen_jenis` FOREIGN KEY (`jenis_kegiatan_id`) REFERENCES `mbkm_jenis_kegiatan` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mbkm_komponen_nilai`
+--
+
+LOCK TABLES `mbkm_komponen_nilai` WRITE;
+/*!40000 ALTER TABLE `mbkm_komponen_nilai` DISABLE KEYS */;
+INSERT INTO `mbkm_komponen_nilai` VALUES (1,1,'Kehadiran dan Kedisiplinan',20.00,'Penilaian kehadiran dan kedisiplinan selama magang','2025-10-20 15:39:26'),(2,1,'Kinerja dan Produktivitas',30.00,'Penilaian hasil kerja dan produktivitas','2025-10-20 15:39:26'),(3,1,'Sikap dan Etika Kerja',20.00,'Penilaian sikap profesional dan etika','2025-10-20 15:39:26'),(4,1,'Laporan Akhir',30.00,'Penilaian laporan akhir kegiatan','2025-10-20 15:39:26'),(5,4,'Proposal dan Metodologi',20.00,'Penilaian proposal penelitian dan metodologi','2025-10-20 15:39:26'),(6,4,'Pelaksanaan Penelitian',25.00,'Penilaian proses pelaksanaan','2025-10-20 15:39:26'),(7,4,'Analisis Data dan Hasil',30.00,'Penilaian analisis data','2025-10-20 15:39:26'),(8,4,'Publikasi/Laporan Akhir',25.00,'Penilaian paper atau laporan','2025-10-20 15:39:26'),(9,5,'Perencanaan Program',20.00,'Penilaian perencanaan','2025-10-20 15:39:26'),(10,5,'Pelaksanaan Kegiatan',30.00,'Penilaian pelaksanaan','2025-10-20 15:39:26'),(11,5,'Kolaborasi dan Kepemimpinan',25.00,'Penilaian kerjasama tim','2025-10-20 15:39:26'),(12,5,'Dampak dan Keberlanjutan',25.00,'Penilaian dampak program','2025-10-20 15:39:26'),(13,2,'Adaptasi Budaya dan Bahasa',15.00,'Kemampuan beradaptasi dengan budaya','2025-10-20 16:03:10'),(14,2,'Prestasi Akademik',35.00,'Nilai yang diperoleh di universitas tujuan','2025-10-20 16:03:10'),(15,2,'Kehadiran dan Partisipasi',20.00,'Keaktifan dalam kegiatan','2025-10-20 16:03:10'),(16,2,'Laporan Pengalaman',30.00,'Dokumentasi dan refleksi pengalaman','2025-10-20 16:03:10'),(17,3,'Persiapan Pembelajaran',20.00,'Rencana dan materi pembelajaran','2025-10-20 16:03:10'),(18,3,'Pelaksanaan Mengajar',30.00,'Kualitas penyampaian materi','2025-10-20 16:03:10'),(19,3,'Pengelolaan Kelas',20.00,'Kemampuan mengelola kelas','2025-10-20 16:03:10'),(20,3,'Evaluasi dan Refleksi',30.00,'Penilaian pembelajaran dan refleksi','2025-10-20 16:03:10'),(21,6,'Business Plan',25.00,'Kelengkapan dan kelayakan rencana bisnis','2025-10-20 16:03:10'),(22,6,'Implementasi Bisnis',30.00,'Pelaksanaan kegiatan usaha','2025-10-20 16:03:10'),(23,6,'Inovasi dan Kreativitas',20.00,'Tingkat inovasi produk/layanan','2025-10-20 16:03:10'),(25,6,'Keberlanjutan Usaha',10.00,'Potensi keberlanjutan bisnis','2025-12-01 13:38:36'),(26,6,'Mayrika bau',15.00,'Baunyee','2025-12-01 13:38:52');
+/*!40000 ALTER TABLE `mbkm_komponen_nilai` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `mbkm_nilai`
@@ -532,6 +752,16 @@ CREATE TABLE `mbkm_nilai` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `mbkm_nilai`
+--
+
+LOCK TABLES `mbkm_nilai` WRITE;
+/*!40000 ALTER TABLE `mbkm_nilai` DISABLE KEYS */;
+INSERT INTO `mbkm_nilai` VALUES (1,1,1,90.00,'Selalu hadir tepat waktu','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,1,2,85.00,'Mampu menyelesaikan task dengan baik','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,1,3,88.00,'Menunjukkan sikap profesional','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(4,1,4,87.00,'Laporan lengkap dan terstruktur','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(5,3,9,85.00,'Perencanaan matang','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(6,3,10,90.00,'Pelaksanaan sangat baik','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(7,3,11,88.00,'Kerjasama tim solid','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(8,3,12,92.00,'Dampak positif ke masyarakat','dosen_pembimbing','2025-10-20 15:39:26','2025-10-20 15:39:26'),(9,4,1,81.17,'Perlu peningkatan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(10,4,2,88.96,'Luar biasa','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(11,4,3,81.28,'Perlu peningkatan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(12,4,4,86.24,'Luar biasa','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(13,5,1,82.18,'Sangat baik','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(14,5,2,84.91,'Excellent','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(15,5,3,91.27,'Excellent','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(16,5,4,91.22,'Perlu peningkatan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(17,6,1,77.40,'Sangat baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(18,6,2,86.48,'Memuaskan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(19,6,3,91.28,'Baik','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(20,6,4,75.83,'Sangat baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(21,8,13,84.97,'Excellent','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(22,8,14,87.48,'Perlu peningkatan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(23,8,15,90.48,'Perlu peningkatan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(24,8,16,87.58,'Perlu peningkatan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(25,9,13,81.52,'Excellent','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(26,9,14,87.62,'Kompeten','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(27,9,15,92.27,'Kompeten','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(28,9,16,85.21,'Perlu peningkatan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(29,10,13,86.09,'Luar biasa','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(30,10,14,87.69,'Excellent','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(31,10,15,86.30,'Sangat baik','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(32,10,16,83.83,'Memuaskan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(33,13,17,93.02,'Memuaskan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(34,13,18,93.44,'Memuaskan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(35,13,19,80.73,'Baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(36,13,20,88.38,'Excellent','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(37,14,5,77.00,'Memuaskan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(38,14,6,91.32,'Luar biasa','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(39,14,7,88.39,'Luar biasa','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(40,14,8,85.96,'Baik','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(41,15,5,89.19,'Memuaskan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(42,15,6,75.41,'Luar biasa','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(43,15,7,80.65,'Sangat baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(44,15,8,84.44,'Sangat baik','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(45,17,9,83.15,'Baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(46,17,10,76.18,'Baik','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(47,17,11,90.34,'Memuaskan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(48,17,12,78.10,'Kompeten','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(49,18,9,85.88,'Perlu peningkatan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(50,18,10,79.61,'Perlu peningkatan','dosen_pembimbing','2025-10-20 16:03:10','2025-10-20 16:03:10'),(51,18,11,84.18,'Kompeten','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10'),(52,18,12,88.54,'Memuaskan','pembimbing_lapangan','2025-10-20 16:03:10','2025-10-20 16:03:10');
+/*!40000 ALTER TABLE `mbkm_nilai` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mbkm_nilai_akhir`
 --
 
@@ -555,6 +785,16 @@ CREATE TABLE `mbkm_nilai_akhir` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `mbkm_nilai_akhir`
+--
+
+LOCK TABLES `mbkm_nilai_akhir` WRITE;
+/*!40000 ALTER TABLE `mbkm_nilai_akhir` DISABLE KEYS */;
+INSERT INTO `mbkm_nilai_akhir` VALUES (1,1,87.50,'A','Lulus','Mahasiswa menunjukkan performa sangat baik selama magang','2025-08-15','2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,3,88.75,'A','Lulus','Program berdampak positif bagi masyarakat','2025-02-15','2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,4,84.41,'A-','Lulus','Mahasiswa menunjukkan kompetensi yang sangat baik','2025-08-28','2025-10-20 16:03:10','2025-10-20 16:03:10'),(4,5,87.40,'A','Lulus','Kompetensi sesuai dengan target pembelajaran','2025-08-12','2025-10-20 16:03:10','2025-10-20 16:03:10'),(5,6,82.75,'A-','Lulus','Kompetensi sesuai dengan target pembelajaran','2025-09-19','2025-10-20 16:03:10','2025-10-20 16:03:10'),(6,8,87.63,'A','Lulus','Performa memuaskan sepanjang kegiatan','2025-07-27','2025-10-20 16:03:10','2025-10-20 16:03:10'),(7,9,86.65,'A','Lulus','Mencapai capaian pembelajaran dengan baik','2025-09-13','2025-10-20 16:03:10','2025-10-20 16:03:10'),(8,10,85.98,'A','Lulus','Performa memuaskan sepanjang kegiatan','2025-10-07','2025-10-20 16:03:10','2025-10-20 16:03:10'),(9,13,88.89,'A','Lulus','Performa memuaskan sepanjang kegiatan','2025-08-29','2025-10-20 16:03:10','2025-10-20 16:03:10'),(10,14,85.67,'A','Lulus','Mencapai capaian pembelajaran dengan baik','2025-08-28','2025-10-20 16:03:10','2025-10-20 16:03:10'),(11,15,82.42,'A-','Lulus','Kompetensi sesuai dengan target pembelajaran','2025-10-03','2025-10-20 16:03:10','2025-10-20 16:03:10'),(12,17,81.94,'A-','Lulus','Performa memuaskan sepanjang kegiatan','2025-07-20','2025-10-20 16:03:10','2025-10-20 16:03:10'),(13,18,84.55,'A-','Lulus','Performa memuaskan sepanjang kegiatan','2025-09-23','2025-10-20 16:03:10','2025-10-20 16:03:10');
+/*!40000 ALTER TABLE `mbkm_nilai_akhir` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `migrations`
 --
 
@@ -574,6 +814,16 @@ CREATE TABLE `migrations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `migrations`
+--
+
+LOCK TABLES `migrations` WRITE;
+/*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
+INSERT INTO `migrations` VALUES (1,'2025-01-15-100000','App\\Database\\Migrations\\CreateNilaiTeknikPenilaianTable','default','App',1762089800,1),(2,'2025-01-16-100000','App\\Database\\Migrations\\AddValidationToJadwalMengajar','default','App',1762168438,2),(3,'2025-01-17-100000','App\\Database\\Migrations\\CreateGradeConfigTable','default','App',1762700001,3),(4,'2025-01-20-100000','App\\Database\\Migrations\\CreateStandarMinimalCapaianTable','default','App',1765013849,4),(5,'2025-01-21-100000','App\\Database\\Migrations\\CreateAnalysisCpmkTable','default','App',1765014298,5),(6,'2025-01-22-100000','App\\Database\\Migrations\\CreateAnalysisCplTable','default','App',1765299871,6),(7,'2025-01-22-110000','App\\Database\\Migrations\\CreateCqiTable','default','App',1765300607,7);
+/*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mk_prasyarat`
 --
 
@@ -591,6 +841,16 @@ CREATE TABLE `mk_prasyarat` (
   CONSTRAINT `mk_prasyarat_ibfk_2` FOREIGN KEY (`prasyarat_mk_id`) REFERENCES `mata_kuliah` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mk_prasyarat`
+--
+
+LOCK TABLES `mk_prasyarat` WRITE;
+/*!40000 ALTER TABLE `mk_prasyarat` DISABLE KEYS */;
+INSERT INTO `mk_prasyarat` VALUES (1,6,2),(2,7,2),(3,8,6),(4,14,8),(5,15,14);
+/*!40000 ALTER TABLE `mk_prasyarat` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `nilai_cpmk_mahasiswa`
@@ -617,6 +877,16 @@ CREATE TABLE `nilai_cpmk_mahasiswa` (
   CONSTRAINT `fk_nilai_cpmk_mahasiswa_id` FOREIGN KEY (`mahasiswa_id`) REFERENCES `mahasiswa` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=149 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `nilai_cpmk_mahasiswa`
+--
+
+LOCK TABLES `nilai_cpmk_mahasiswa` WRITE;
+/*!40000 ALTER TABLE `nilai_cpmk_mahasiswa` DISABLE KEYS */;
+INSERT INTO `nilai_cpmk_mahasiswa` VALUES (72,1,9,1,0.50,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(73,1,9,2,31.50,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(74,2,9,1,46.50,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(75,2,9,2,23.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(76,3,9,1,47.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(77,3,9,2,16.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(78,4,9,1,28.50,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(79,4,9,2,42.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(80,5,9,1,49.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(81,5,9,2,11.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(82,9,9,1,12.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(83,9,9,2,1.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(84,10,9,1,50.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(85,10,9,2,42.00,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(86,1,11,9,16.50,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(87,1,11,7,1.18,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(88,1,11,8,4.78,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(89,1,11,1,1.18,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(90,1,11,2,3.90,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(91,1,11,3,0.85,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(92,1,11,4,17.70,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(93,1,11,5,1.84,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(94,1,11,6,0.74,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(95,2,11,9,8.40,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(96,2,11,7,0.60,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(97,2,11,8,5.20,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(98,2,11,1,1.82,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(99,2,11,2,4.60,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(100,2,11,3,0.75,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(101,2,11,4,13.80,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(102,2,11,5,0.84,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(103,2,11,6,0.68,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(104,3,11,9,30.51,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(105,3,11,7,1.64,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(106,3,11,8,3.84,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(107,3,11,1,0.08,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(108,3,11,2,0.50,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(109,3,11,3,1.40,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(110,3,11,4,6.30,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(111,3,11,5,0.30,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(112,3,11,6,1.82,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(113,4,11,9,20.76,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(114,4,11,7,1.20,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(115,4,11,8,5.24,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(116,4,11,1,1.26,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(117,4,11,2,3.35,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(118,4,11,3,0.15,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(119,4,11,4,1.80,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(120,4,11,5,1.96,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(121,4,11,6,1.86,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(122,5,11,9,18.12,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(123,5,11,7,1.44,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(124,5,11,8,6.90,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(125,5,11,1,1.22,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(126,5,11,2,2.05,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(127,5,11,3,0.85,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(128,5,11,4,2.40,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(129,5,11,5,1.42,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(130,5,11,6,0.78,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(131,9,11,9,35.79,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(132,9,11,7,0.98,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(133,9,11,8,3.54,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(134,9,11,1,1.80,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(135,9,11,2,4.40,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(136,9,11,3,0.50,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(137,9,11,4,11.10,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(138,9,11,5,1.32,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(139,9,11,6,1.10,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(140,10,11,9,16.42,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(141,10,11,7,0.26,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(142,10,11,8,3.96,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(143,10,11,1,0.60,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(144,10,11,2,1.95,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(145,10,11,3,3.30,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(146,10,11,4,6.90,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(147,10,11,5,0.90,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(148,10,11,6,1.88,'2025-12-17 19:49:37','2025-12-17 19:49:37');
+/*!40000 ALTER TABLE `nilai_cpmk_mahasiswa` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `nilai_mahasiswa`
@@ -647,6 +917,16 @@ CREATE TABLE `nilai_mahasiswa` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `nilai_mahasiswa`
+--
+
+LOCK TABLES `nilai_mahasiswa` WRITE;
+/*!40000 ALTER TABLE `nilai_mahasiswa` DISABLE KEYS */;
+INSERT INTO `nilai_mahasiswa` VALUES (13,1,9,32.00,'E','Tidak Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(14,2,9,69.50,'B+','Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(15,3,9,63.00,'BC','Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(16,4,9,70.50,'A-','Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(17,5,9,60.00,'C','Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(18,9,9,13.00,'E','Tidak Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(19,10,9,92.00,'A','Lulus',NULL,'2025-11-03 04:02:37','2025-12-15 22:26:31'),(20,1,11,48.67,'D','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(21,2,11,36.69,'E','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(22,3,11,46.39,'D','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(23,4,11,37.58,'E','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(24,5,11,35.18,'E','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(25,9,11,60.53,'BC','Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37'),(26,10,11,36.17,'E','Tidak Lulus',NULL,'2025-12-17 19:49:37','2025-12-17 19:49:37');
+/*!40000 ALTER TABLE `nilai_mahasiswa` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `nilai_teknik_penilaian`
 --
 
@@ -673,6 +953,16 @@ CREATE TABLE `nilai_teknik_penilaian` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `nilai_teknik_penilaian`
+--
+
+LOCK TABLES `nilai_teknik_penilaian` WRITE;
+/*!40000 ALTER TABLE `nilai_teknik_penilaian` DISABLE KEYS */;
+INSERT INTO `nilai_teknik_penilaian` VALUES (113,1,9,157,'tes_tulis_uts',1.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(114,1,9,158,'tes_tulis_uas',63.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(115,2,9,157,'tes_tulis_uts',93.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(116,2,9,158,'tes_tulis_uas',46.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(117,3,9,157,'tes_tulis_uts',94.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(118,3,9,158,'tes_tulis_uas',32.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(119,4,9,157,'tes_tulis_uts',57.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(120,4,9,158,'tes_tulis_uas',84.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(121,5,9,157,'tes_tulis_uts',98.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(122,5,9,158,'tes_tulis_uas',22.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(123,9,9,157,'tes_tulis_uts',24.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(124,9,9,158,'tes_tulis_uas',2.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(125,10,9,157,'tes_tulis_uts',100.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(126,10,9,158,'tes_tulis_uas',84.00,'2025-11-03 11:02:37','2025-12-16 05:26:31'),(134,1,11,141,'partisipasi',30.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(135,1,11,142,'partisipasi',5.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(136,1,11,143,'partisipasi',59.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(137,1,11,144,'partisipasi',58.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(138,1,11,145,'partisipasi',59.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(139,1,11,146,'unjuk_kerja',78.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(140,1,11,147,'observasi',17.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(141,1,11,148,'tes_tulis_uts',59.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(142,1,11,149,'proyek',92.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(143,1,11,150,'proyek',37.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(144,1,11,151,'proyek',43.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(145,1,11,152,'proyek',86.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(146,1,11,153,'proyek',52.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(147,1,11,154,'proyek',28.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(148,1,11,155,'proyek',48.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(149,1,11,156,'tes_tulis_uas',40.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(150,2,11,141,'partisipasi',48.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(151,2,11,142,'partisipasi',22.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(152,2,11,143,'partisipasi',30.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(153,2,11,144,'partisipasi',92.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(154,2,11,145,'partisipasi',91.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(155,2,11,146,'unjuk_kerja',92.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(156,2,11,147,'observasi',15.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(157,2,11,148,'tes_tulis_uts',46.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(158,2,11,149,'proyek',42.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(159,2,11,150,'proyek',34.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(160,2,11,151,'proyek',9.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(161,2,11,152,'proyek',71.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(162,2,11,153,'proyek',88.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(163,2,11,154,'proyek',95.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(164,2,11,155,'proyek',39.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(165,2,11,156,'tes_tulis_uas',1.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(166,3,11,141,'partisipasi',51.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(167,3,11,142,'partisipasi',62.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(168,3,11,143,'partisipasi',82.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(169,3,11,144,'partisipasi',18.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(170,3,11,145,'partisipasi',4.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(171,3,11,146,'unjuk_kerja',10.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(172,3,11,147,'observasi',28.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(173,3,11,148,'tes_tulis_uts',21.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(174,3,11,149,'proyek',15.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(175,3,11,150,'proyek',91.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(176,3,11,151,'proyek',64.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(177,3,11,152,'proyek',22.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(178,3,11,153,'proyek',88.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(179,3,11,154,'proyek',36.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(180,3,11,155,'proyek',1.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(181,3,11,156,'tes_tulis_uas',88.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(182,4,11,141,'partisipasi',28.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(183,4,11,142,'partisipasi',15.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(184,4,11,143,'partisipasi',60.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(185,4,11,144,'partisipasi',76.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(186,4,11,145,'partisipasi',63.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(187,4,11,146,'unjuk_kerja',67.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(188,4,11,147,'observasi',3.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(189,4,11,148,'tes_tulis_uts',6.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(190,4,11,149,'proyek',98.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(191,4,11,150,'proyek',93.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(192,4,11,151,'proyek',9.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(193,4,11,152,'proyek',90.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(194,4,11,153,'proyek',87.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(195,4,11,154,'proyek',81.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(196,4,11,155,'proyek',47.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(197,4,11,156,'tes_tulis_uas',45.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(198,5,11,141,'partisipasi',25.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(199,5,11,142,'partisipasi',26.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(200,5,11,143,'partisipasi',72.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(201,5,11,144,'partisipasi',97.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(202,5,11,145,'partisipasi',61.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(203,5,11,146,'unjuk_kerja',41.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(204,5,11,147,'observasi',17.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(205,5,11,148,'tes_tulis_uts',8.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(206,5,11,149,'proyek',71.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(207,5,11,150,'proyek',39.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(208,5,11,151,'proyek',91.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(209,5,11,152,'proyek',93.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(210,5,11,153,'proyek',64.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(211,5,11,154,'proyek',18.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(212,5,11,155,'proyek',36.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(213,5,11,156,'tes_tulis_uas',48.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(214,9,11,141,'partisipasi',7.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(215,9,11,142,'partisipasi',10.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(216,9,11,143,'partisipasi',49.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(217,9,11,144,'partisipasi',81.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(218,9,11,145,'partisipasi',90.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(219,9,11,146,'unjuk_kerja',88.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(220,9,11,147,'observasi',10.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(221,9,11,148,'tes_tulis_uts',37.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(222,9,11,149,'proyek',66.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(223,9,11,150,'proyek',55.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(224,9,11,151,'proyek',76.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(225,9,11,152,'proyek',17.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(226,9,11,153,'proyek',3.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(227,9,11,154,'proyek',76.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(228,9,11,155,'proyek',93.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(229,9,11,156,'tes_tulis_uas',90.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(230,10,11,141,'partisipasi',96.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(231,10,11,142,'partisipasi',60.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(232,10,11,143,'partisipasi',13.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(233,10,11,144,'partisipasi',72.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(234,10,11,145,'partisipasi',30.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(235,10,11,146,'unjuk_kerja',39.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(236,10,11,147,'observasi',66.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(237,10,11,148,'tes_tulis_uts',23.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(238,10,11,149,'proyek',45.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(239,10,11,150,'proyek',94.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(240,10,11,151,'proyek',83.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(241,10,11,152,'proyek',26.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(242,10,11,153,'proyek',17.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(243,10,11,154,'proyek',34.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(244,10,11,155,'proyek',46.00,'2025-12-18 02:49:37','2025-12-18 02:49:37'),(245,10,11,156,'tes_tulis_uas',31.00,'2025-12-18 02:49:37','2025-12-18 02:49:37');
+/*!40000 ALTER TABLE `nilai_teknik_penilaian` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `profil_lulusan`
 --
 
@@ -688,6 +978,16 @@ CREATE TABLE `profil_lulusan` (
   UNIQUE KEY `kode_pl` (`kode_pl`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `profil_lulusan`
+--
+
+LOCK TABLES `profil_lulusan` WRITE;
+/*!40000 ALTER TABLE `profil_lulusan` DISABLE KEYS */;
+INSERT INTO `profil_lulusan` VALUES (1,'PL01','Lulusan memiliki kemampuan untuk menganalisa dan menyelesaikan berbagai permasalahan dengan prinsip-prinsip computing.','2025-06-14 13:45:24'),(2,'PL02','Lulusan memiliki kemampuan menganalisis, merancang, dan mengimplementasikan perangkat lunak serta solusi berbasis komputasi, termasuk kecerdasan buatan, yang sesuai dengan kebutuhan pengguna','2025-06-14 13:45:24'),(3,'PL03','Lulusan mampu bertindak dan menilai secara profesional sesuai dengan nilai-nilai Pancasila','2025-06-14 13:45:24'),(4,'PL04','Lulusan mampu berpikir logis, kritis serta sistematis dalam memanfaatkan ilmu pengetahuan informatika/ ilmu komputer untuk menyelesaikan masalah nyata.','2025-08-05 14:10:22');
+/*!40000 ALTER TABLE `profil_lulusan` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `profil_prodi`
@@ -712,6 +1012,16 @@ CREATE TABLE `profil_prodi` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `profil_prodi`
+--
+
+LOCK TABLES `profil_prodi` WRITE;
+/*!40000 ALTER TABLE `profil_prodi` DISABLE KEYS */;
+INSERT INTO `profil_prodi` VALUES (1,'UNIVERSITAS PALANGKA RAYA','TEKNIK','TEKNIK INFORMATIKA','Ariesta Lestari, S.Kom., M.Cs., PhD','198003222005012004','Frieda, S.T., M.T','197212231997022002','logo_upr.png','2025-08-27 19:14:43');
+/*!40000 ALTER TABLE `profil_prodi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `rps`
 --
 
@@ -733,6 +1043,16 @@ CREATE TABLE `rps` (
   CONSTRAINT `rps_ibfk_1` FOREIGN KEY (`mata_kuliah_id`) REFERENCES `mata_kuliah` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `rps`
+--
+
+LOCK TABLES `rps` WRITE;
+/*!40000 ALTER TABLE `rps` DISABLE KEYS */;
+INSERT INTO `rps` VALUES (13,8,3,'2025/2026','2025-11-02','draft','','2025-11-02 13:26:01','2025-11-02 13:26:01'),(14,15,3,'2024/2025','2025-11-03','draft','','2025-11-03 10:55:43','2025-11-03 10:55:43');
+/*!40000 ALTER TABLE `rps` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `rps_mingguan`
@@ -770,6 +1090,16 @@ CREATE TABLE `rps_mingguan` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `rps_mingguan`
+--
+
+LOCK TABLES `rps_mingguan` WRITE;
+/*!40000 ALTER TABLE `rps_mingguan` DISABLE KEYS */;
+INSERT INTO `rps_mingguan` VALUES (141,13,1,7,9,'[\"Perkuliahan\"]',17,'[\"Apa itu indikator\"]','[\"Kehadiran\"]','{\"partisipasi\":2}','[]','Penjelasan RPL','[\"Kuliah\"]',2,'2025-11-02 13:27:04'),(142,13,2,7,9,'[\"Perkuliahan\"]',18,'[\"Halo world\"]','[\"Kehadiran\"]','{\"partisipasi\":2}','[]','','[\"Kuliah\"]',2,'2025-11-02 13:27:54'),(143,13,3,7,7,'[\"Perkuliahan\"]',21,'[\"Test\"]','[\"Kehadiran\"]','{\"partisipasi\":2}','[]','','[\"Kuliah\"]',2,'2025-11-02 13:36:25'),(144,13,4,7,8,'[\"Perkuliahan\"]',22,'[\"Test\"]','[\"Kehadiran\"]','{\"partisipasi\":2}','[]','','[\"Kuliah\"]',2,'2025-11-02 13:36:52'),(145,13,5,1,1,'[\"Perkuliahan\"]',23,'[\"Test\"]','[\"Kehadiran\"]','{\"partisipasi\":2}','[]','','[]',2,'2025-11-02 13:37:26'),(146,13,6,2,2,'[\"Perkuliahan\"]',24,'[\"Test\"]','[\"Ketepatan Jawaban Kuis\",\"Ketepatan Jawaban Tugas\"]','{\"unjuk_kerja\":5}','[]','','[\"Case study\"]',5,'2025-11-02 13:38:15'),(147,13,7,3,3,'[\"Perkuliahan\"]',25,'[\"Test\"]','[\"Ketepatan Jawaban Tugas\"]','{\"observasi\":5}','[]','','[\"Case study\"]',5,'2025-11-02 13:38:55'),(148,13,8,4,4,'[\"Tengah Semester\"]',26,'[\"Test\"]','[\"Ketepatan Jawaban UTS\"]','{\"tes_tulis_uts\":30}','[]','','[\"Kuliah\"]',30,'2025-11-02 13:39:56'),(149,13,9,5,5,'[\"Tengah Semester\"]',27,'[\"Test\"]','[\"Kualitas Presentasi\"]','{\"proyek\":2}','[]','','[]',2,'2025-11-02 13:40:44'),(150,13,10,6,6,'[\"Tengah Semester\"]',28,'[\"Test\"]','[\"Ketepatan Jawaban Tugas\"]','{\"proyek\":2}','[]','','[\"Team Base Project\"]',2,'2025-11-02 13:41:24'),(151,13,11,8,8,'[\"Tengah Semester\"]',22,'[\"Test\"]','[\"Ketepatan Jawaban Tugas\"]','{\"proyek\":2}','[]','','[\"Team Base Project\"]',2,'2025-11-02 13:42:10'),(152,13,12,8,8,'[\"Tengah Semester\"]',29,'[\"Test\"]','[\"Ketepatan Jawaban Tugas\"]','{\"proyek\":2}','[]','','[\"Team Base Project\"]',2,'2025-11-02 13:43:31'),(153,13,13,8,8,'[\"Tengah Semester\"]',30,'[\"Test\"]','[\"Ketepatan Jawaban Tugas\"]','{\"proyek\":2}','[]','','[\"Team Base Project\"]',2,'2025-11-02 13:43:58'),(154,13,14,9,9,'[\"Tengah Semester\"]',17,'[\"Test\"]','[\"Hasil Proyek\"]','{\"proyek\":5}','[]','','[\"Team Base Project\"]',5,'2025-11-02 13:44:46'),(155,13,15,9,9,'[\"Tengah Semester\"]',18,'[\"Test\"]','[\"Hasil Proyek\"]','{\"proyek\":5}','[]','','[\"Team Base Project\"]',5,'2025-11-02 13:45:23'),(156,13,16,9,9,'[\"Akhir Semester\"]',31,'[\"Test\"]','[\"Ketepatan Jawaban UAS\"]','{\"tes_tulis_uas\":30}','[]','','[\"Kuliah\"]',30,'2025-11-02 13:46:15'),(157,14,1,1,1,'[\"Tengah Semester\"]',32,'[\"Test\"]','[\"Ketepatan Jawaban UTS\"]','{\"tes_tulis_uts\":50}','[]','','[\"Case study\"]',50,'2025-11-03 11:00:20'),(158,14,2,2,2,'[\"Akhir Semester\"]',33,'[\"Test\"]','[\"Ketepatan Jawaban UAS\"]','{\"tes_tulis_uas\":50}','[]','','[\"Kuliah\"]',50,'2025-11-03 11:00:45');
+/*!40000 ALTER TABLE `rps_mingguan` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `rps_pengampu`
 --
 
@@ -788,6 +1118,16 @@ CREATE TABLE `rps_pengampu` (
   CONSTRAINT `rps_pengampu_ibfk_1` FOREIGN KEY (`rps_id`) REFERENCES `rps` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `rps_pengampu`
+--
+
+LOCK TABLES `rps_pengampu` WRITE;
+/*!40000 ALTER TABLE `rps_pengampu` DISABLE KEYS */;
+INSERT INTO `rps_pengampu` VALUES (31,14,1,'pengampu'),(32,14,1,'koordinator'),(55,13,4,'pengampu'),(56,13,3,'pengampu'),(57,13,4,'koordinator');
+/*!40000 ALTER TABLE `rps_pengampu` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `rps_referensi`
@@ -813,6 +1153,15 @@ CREATE TABLE `rps_referensi` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `rps_referensi`
+--
+
+LOCK TABLES `rps_referensi` WRITE;
+/*!40000 ALTER TABLE `rps_referensi` DISABLE KEYS */;
+/*!40000 ALTER TABLE `rps_referensi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `standar_minimal_capaian`
 --
 
@@ -825,6 +1174,16 @@ CREATE TABLE `standar_minimal_capaian` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `standar_minimal_capaian`
+--
+
+LOCK TABLES `standar_minimal_capaian` WRITE;
+/*!40000 ALTER TABLE `standar_minimal_capaian` DISABLE KEYS */;
+INSERT INTO `standar_minimal_capaian` VALUES (1,74.00);
+/*!40000 ALTER TABLE `standar_minimal_capaian` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `sub_cpmk`
@@ -845,6 +1204,16 @@ CREATE TABLE `sub_cpmk` (
   CONSTRAINT `sub_cpmk_ibfk_1` FOREIGN KEY (`cpmk_id`) REFERENCES `cpmk` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sub_cpmk`
+--
+
+LOCK TABLES `sub_cpmk` WRITE;
+/*!40000 ALTER TABLE `sub_cpmk` DISABLE KEYS */;
+INSERT INTO `sub_cpmk` VALUES (1,1,'SubCPMK0111','Menjelaskan nilai-nilai Pancasila','2025-08-20 06:17:34','2025-08-20 13:20:35'),(2,1,'SubCPMK0112','Mengaplikasikan nilai-nilai Pancasila dalam studi kasus','2025-08-22 04:16:01','2025-08-22 04:16:01'),(3,2,'SubCPMK0221','Mengidentifikasi perkembangan teknologi terkini','2025-08-20 05:22:17','2025-08-20 05:22:17'),(4,2,'SubCPMK0222','Menerapkan teknologi terkini dalam solusi','2025-09-24 03:40:10','2025-09-24 03:40:10'),(5,3,'SubCPMK0331','Menerapkan teori probabilitas','2025-08-27 22:01:35','2025-08-27 22:01:35'),(6,3,'SubCPMK0332','Menerapkan metode statistik','2025-10-10 17:07:34','2025-10-10 17:07:34'),(7,4,'SubCPMK0411','Menganalisis algoritma pemrograman','2025-08-27 17:50:38','2025-08-28 00:56:35'),(8,4,'SubCPMK0412','Mengimplementasikan solusi pemrograman','2025-08-27 17:50:49','2025-08-27 17:50:49'),(9,5,'SubCPMK0531','Menulis laporan teknis','2025-08-27 17:51:10','2025-08-27 17:51:10'),(10,5,'SubCPMK0532','Menyusun dokumentasi sistem','2025-08-27 17:51:23','2025-08-27 17:51:23'),(11,6,'SubCPMK0621','Menerapkan metodologi penelitian','2025-10-10 17:29:09','2025-10-10 17:29:09'),(12,6,'SubCPMK0622','Menganalisis data penelitian','2025-10-10 17:03:08','2025-10-10 17:03:08'),(13,7,'SubCPMK0711','Menganalisis struktur data','2025-08-27 17:50:38','2025-08-28 00:56:35'),(14,7,'SubCPMK0712','Mengimplementasikan struktur data','2025-08-27 17:50:49','2025-08-27 17:50:49'),(15,8,'SubCPMK0811','Memahami konsep OOP','2025-08-27 17:51:10','2025-08-27 17:51:10'),(16,8,'SubCPMK0812','Mengimplementasikan OOP','2025-08-27 17:51:23','2025-08-27 17:51:23'),(17,9,'SubCPMK0911','Merancang ERD','2025-08-27 17:51:10','2025-08-27 17:51:10'),(18,9,'SubCPMK0912','Mengimplementasikan database','2025-08-27 17:51:23','2025-08-27 17:51:23'),(19,10,'SubCPMK1011','Mengidentifikasi ancaman keamanan','2025-08-27 17:51:10','2025-08-27 17:51:10'),(20,10,'SubCPMK1012','Menerapkan kontrol keamanan','2025-08-27 17:51:23','2025-08-27 17:51:23'),(21,7,'SubCPMK0713','Test','2025-11-02 06:33:54','2025-11-02 06:33:54'),(22,8,'SubCPMK0813','TEST','2025-11-02 06:34:21','2025-11-02 06:34:21'),(23,1,'SubCPMK0113','Test','2025-11-02 06:34:43','2025-11-02 06:34:43'),(24,2,'SubCPMK0223','Test','2025-11-02 06:34:57','2025-11-02 06:34:57'),(25,3,'SubCPMK0333','Test','2025-11-02 06:35:05','2025-11-02 06:35:05'),(26,4,'SubCPMK0413','Test','2025-11-02 06:35:18','2025-11-02 06:35:18'),(27,5,'SubCPMK0533','Test','2025-11-02 06:35:32','2025-11-02 06:35:32'),(28,6,'SubCPMK0623','Test','2025-11-02 06:35:40','2025-11-02 06:35:40'),(29,8,'SubCPMK0814','Test','2025-11-02 06:42:33','2025-11-02 06:42:33'),(30,8,'SubCPMK0815','Test','2025-11-02 06:42:44','2025-11-02 06:42:44'),(31,9,'SubCPMK0913','Test','2025-11-02 06:45:38','2025-11-02 06:45:38'),(32,1,'SubCPMK0114','Test','2025-11-03 03:59:20','2025-11-03 03:59:20'),(33,2,'SubCPMK0224','Test','2025-11-03 03:59:30','2025-11-03 03:59:30');
+/*!40000 ALTER TABLE `sub_cpmk` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `sub_cpmk_mk`
@@ -868,6 +1237,16 @@ CREATE TABLE `sub_cpmk_mk` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `sub_cpmk_mk`
+--
+
+LOCK TABLES `sub_cpmk_mk` WRITE;
+/*!40000 ALTER TABLE `sub_cpmk_mk` DISABLE KEYS */;
+INSERT INTO `sub_cpmk_mk` VALUES (1,1,11,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(2,2,11,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(3,3,11,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(4,4,11,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(5,5,14,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(6,6,14,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(7,7,2,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(8,8,2,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(9,9,12,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(10,10,12,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(11,11,12,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(12,12,12,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(13,13,6,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(14,14,6,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(15,15,7,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(16,16,7,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(17,17,8,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(18,18,8,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(19,19,13,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(20,20,13,'2025-10-20 15:39:26','2025-10-20 15:39:26'),(21,21,8,'2025-11-02 06:33:54','2025-11-02 06:33:54'),(22,22,8,'2025-11-02 06:34:21','2025-11-02 06:34:21'),(23,23,8,'2025-11-02 06:34:43','2025-11-02 06:34:43'),(24,24,8,'2025-11-02 06:34:57','2025-11-02 06:34:57'),(25,25,8,'2025-11-02 06:35:05','2025-11-02 06:35:05'),(26,26,8,'2025-11-02 06:35:18','2025-11-02 06:35:18'),(27,27,8,'2025-11-02 06:35:32','2025-11-02 06:35:32'),(28,28,8,'2025-11-02 06:35:40','2025-11-02 06:35:40'),(29,29,8,'2025-11-02 06:42:33','2025-11-02 06:42:33'),(30,30,8,'2025-11-02 06:42:44','2025-11-02 06:42:44'),(31,31,8,'2025-11-02 06:45:38','2025-11-02 06:45:38'),(32,32,15,'2025-11-03 03:59:20','2025-11-03 03:59:20'),(33,33,15,'2025-11-03 03:59:30','2025-11-03 03:59:30');
+/*!40000 ALTER TABLE `sub_cpmk_mk` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `users`
 --
 
@@ -883,8 +1262,18 @@ CREATE TABLE `users` (
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'admin','$2y$10$uCUV3FbS0QoHEGJ5vLKbUetKDUmY09jg.SWhb1iLzvso9mmqm0B2a','admin','2025-05-27 21:50:24','2025-08-27 22:55:47'),(10,'dosen','$2y$12$6PGYbrXL.lOBhMdT3/5ej.OblG3AKkOvkEzHHC3ybIBlmEj2nTJ6.','dosen','2025-11-03 11:16:30','2025-11-03 11:16:30'),(11,'mahasiswa','$2y$12$fTnemZVZVUVzxs7Rh/cxbexksB6GtcvYhZehJYiF9oJDsb2FMtT/i','mahasiswa','2025-11-13 12:05:24','2025-11-13 12:27:56');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Temporary view structure for view `view_jadwal_lengkap`
@@ -987,4 +1376,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-18 10:09:21
+-- Dump completed on 2025-12-19  9:52:55
