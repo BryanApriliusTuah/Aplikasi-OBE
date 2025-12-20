@@ -623,6 +623,18 @@
 	// Dynamic passing threshold from grade configuration
 	const passingThreshold = <?= json_encode($passing_threshold ?? 65) ?>;
 
+	// Chart.js plugin to add white background
+	const whiteBackgroundPlugin = {
+		id: 'whiteBackground',
+		beforeDraw: (chart) => {
+			const ctx = chart.ctx;
+			ctx.save();
+			ctx.fillStyle = '#ffffff';
+			ctx.fillRect(0, 0, chart.width, chart.height);
+			ctx.restore();
+		}
+	};
+
 	let cpmkChartIndividual = null;
 	let cpmkChartComparative = null;
 	let cpmkChartKeseluruhan = null;
@@ -1465,12 +1477,13 @@
 		const chartHTML = createChartHTML('Individual', 'primary', 'cpmkChartIndividual');
 		$('#chartSectionIndividual').html(chartHTML);
 
-		bindExportButton('#exportChartIndividualBtn', cpmkChartIndividual, 'capaian-cpmk-individual.png');
-
 		const ctx = document.getElementById('cpmkChartIndividual').getContext('2d');
 		if (cpmkChartIndividual) cpmkChartIndividual.destroy();
 
 		cpmkChartIndividual = createBarChart(ctx, response.chartData, 'Capaian CPMK Mahasiswa', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+
+		// Bind export button AFTER chart is created
+		bindExportButton('#exportChartIndividualBtn', cpmkChartIndividual, 'capaian-cpmk-individual.png');
 
 		// Display detailed calculation breakdown
 		displayDetailedCalculation(response);
@@ -1686,12 +1699,13 @@
 		const chartHTML = createChartHTML('Comparative', 'primary', 'cpmkChartComparative');
 		$('#chartSectionComparative').html(chartHTML);
 
-		bindExportButton('#exportChartComparativeBtn', cpmkChartComparative, 'capaian-cpmk-comparative.png');
-
 		const ctx = document.getElementById('cpmkChartComparative').getContext('2d');
 		if (cpmkChartComparative) cpmkChartComparative.destroy();
 
 		cpmkChartComparative = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Angkatan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+
+		// Bind export button AFTER chart is created
+		bindExportButton('#exportChartComparativeBtn', cpmkChartComparative, 'capaian-cpmk-comparative.png');
 
 		// Display detailed calculation
 		displayComparativeDetailedCalculation(response);
@@ -1701,12 +1715,13 @@
 		const chartHTML = createChartHTML('Keseluruhan', 'primary', 'cpmkChartKeseluruhan');
 		$('#chartSectionKeseluruhan').html(chartHTML);
 
-		bindExportButton('#exportChartKeseluruhanBtn', cpmkChartKeseluruhan, 'capaian-cpmk-keseluruhan.png');
-
 		const ctx = document.getElementById('cpmkChartKeseluruhan').getContext('2d');
 		if (cpmkChartKeseluruhan) cpmkChartKeseluruhan.destroy();
 
 		cpmkChartKeseluruhan = createBarChart(ctx, response.chartData, 'Rata-rata Capaian CPMK Keseluruhan', 'rgba(13, 110, 253, 0.8)', 'rgba(13, 110, 253, 1)');
+
+		// Bind export button AFTER chart is created
+		bindExportButton('#exportChartKeseluruhanBtn', cpmkChartKeseluruhan, 'capaian-cpmk-keseluruhan.png');
 
 		// Display detailed calculation
 		displayKeseluruhanDetailedCalculation(response);
@@ -2054,7 +2069,7 @@
 					shadowColor: 'rgba(0, 0, 0, 0.15)'
 				}]
 			},
-			plugins: [ChartDataLabels],
+			plugins: [ChartDataLabels, whiteBackgroundPlugin],
 			options: {
 				responsive: true,
 				maintainAspectRatio: true,
@@ -2316,20 +2331,89 @@
 		$(document).off('click', selector);
 		$(document).on('click', selector, function() {
 			if (chart) {
-				const link = document.createElement('a');
-				link.download = filename;
-				link.href = chart.toBase64Image();
-				link.click();
+				exportChartWithBackground(chart, filename);
 			}
 		});
 	}
 
 	function exportChart(chart, filename) {
 		if (chart) {
+			exportChartWithBackground(chart, filename);
+		}
+	}
+
+	function exportChartWithBackground(chart, filename) {
+		try {
+			if (!chart || !chart.canvas) {
+				console.error('Chart or canvas not found');
+				alert('Error: Chart tidak ditemukan. Silakan refresh halaman.');
+				return;
+			}
+
+			// Get the original canvas
+			const originalCanvas = chart.canvas;
+
+			// Create a new canvas with higher resolution for better quality
+			const exportCanvas = document.createElement('canvas');
+			const exportCtx = exportCanvas.getContext('2d');
+
+			// Set canvas size (multiply by 2 for better quality)
+			const scale = 2;
+			exportCanvas.width = originalCanvas.width * scale;
+			exportCanvas.height = originalCanvas.height * scale;
+
+
+			// Fill with white background FIRST (before scaling)
+			exportCtx.fillStyle = '#ffffff';
+			exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+			// Scale the context to match
+			exportCtx.scale(scale, scale);
+
+			// Fill with white background (matching the card background)
+			// Draw the chart on top of the white background
+			exportCtx.drawImage(originalCanvas, 0, 0, originalCanvas.width, originalCanvas.height);
+
+			// Try using toBlob first (better quality)
+			if (exportCanvas.toBlob) {
+				exportCanvas.toBlob(function(blob) {
+					if (blob) {
+						const url = URL.createObjectURL(blob);
+						const link = document.createElement('a');
+						link.download = filename;
+						link.href = url;
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+
+						// Clean up
+						setTimeout(() => URL.revokeObjectURL(url), 100);
+					} else {
+						// Fallback to dataURL if blob fails
+						downloadUsingDataURL(exportCanvas, filename);
+					}
+				}, 'image/png', 1.0);
+			} else {
+				// Fallback for browsers that don't support toBlob
+				downloadUsingDataURL(exportCanvas, filename);
+			}
+		} catch (error) {
+			console.error('Error exporting chart:', error);
+			alert('Error saat export chart: ' + error.message);
+		}
+	}
+
+	function downloadUsingDataURL(canvas, filename) {
+		try {
+			const dataURL = canvas.toDataURL('image/png', 1.0);
 			const link = document.createElement('a');
 			link.download = filename;
-			link.href = chart.toBase64Image();
+			link.href = dataURL;
+			document.body.appendChild(link);
 			link.click();
+			document.body.removeChild(link);
+		} catch (error) {
+			console.error('Error in downloadUsingDataURL:', error);
+			alert('Error saat download: ' + error.message);
 		}
 	}
 </script>
