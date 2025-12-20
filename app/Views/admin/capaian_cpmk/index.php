@@ -3,38 +3,6 @@
 <?= $this->section('content') ?>
 
 <style>
-	.filter-card {
-		border: 2px solid #e0e0e0;
-		background: #ffffff;
-	}
-
-	.filter-card:hover {
-		transform: translateY(-5px);
-		border-color: #0d6efd !important;
-	}
-
-	.filter-card.border-primary {
-		background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-	}
-
-	.filter-card i {
-		transition: all 0.3s ease;
-	}
-
-	.filter-card:hover i {
-		transform: scale(1.1);
-	}
-
-	.filter-card .card-title {
-		transition: all 0.3s ease;
-		font-size: 1.1rem;
-	}
-
-	.filter-card .card-text {
-		line-height: 1.4;
-		min-height: 40px;
-	}
-
 	/* Modern Chart Styling */
 	canvas {
 		font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -138,42 +106,49 @@
 				<div class="tab-content" id="filterSubTabContent">
 					<!-- Filter 1: CPMK Mahasiswa -->
 					<div class="tab-pane fade show active" id="filter1" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Mahasiswa</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Mahasiswa</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterIndividualForm1">
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="programStudiSelect1" class="form-label">Program Studi</label>
-											<select class="form-select" id="programStudiSelect1" name="program_studi">
-												<option value="">-- Semua Program Studi --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-4">
+											<label for="programStudiSelect1" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiSelect1" name="program_studi">
+												<option value="">Semua Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="tahunAngkatanSelect1" class="form-label">Tahun Angkatan</label>
-											<select class="form-select" id="tahunAngkatanSelect1" name="tahun_angkatan">
-												<option value="">-- Semua Tahun --</option>
+										<div class="col-md-3">
+											<label for="tahunAngkatanSelect1" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanSelect1" name="tahun_angkatan">
+												<option value="">Semua Tahun</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-10">
-											<label for="mahasiswaSelect1" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
-											<select class="form-select" id="mahasiswaSelect1" name="mahasiswa_id">
-												<option value="">-- Pilih Mahasiswa --</option>
+										<div class="col-md-4">
+											<label for="mahasiswaSelect1" class="modern-filter-label">
+												<i class="bi bi-person-fill me-1"></i> Mahasiswa <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="mahasiswaSelect1" name="mahasiswa_id">
+												<option value="">Pilih Mahasiswa</option>
 											</select>
 										</div>
-										<div class="col-md-2 d-flex align-items-end">
-											<button type="submit" class="btn btn-primary w-100">
-												<i class="bi bi-search"></i> Tampilkan
+										<div class="col-md-1 d-flex gap-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
+												<i class="bi bi-search"></i>
 											</button>
 										</div>
 									</div>
@@ -184,52 +159,61 @@
 
 					<!-- Filter 2: CPMK Mahasiswa per Semester -->
 					<div class="tab-pane fade" id="filter2" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Mahasiswa per Semester</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Mahasiswa per Semester</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterIndividualForm2">
 									<div class="row g-3 mb-3">
 										<div class="col-md-6">
-											<label for="programStudiSelect2" class="form-label">Program Studi</label>
-											<select class="form-select" id="programStudiSelect2" name="program_studi">
-												<option value="">-- Semua Program Studi --</option>
+											<label for="programStudiSelect2" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiSelect2" name="program_studi">
+												<option value="">Semua Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
 										<div class="col-md-6">
-											<label for="tahunAngkatanSelect2" class="form-label">Tahun Angkatan</label>
-											<select class="form-select" id="tahunAngkatanSelect2" name="tahun_angkatan">
-												<option value="">-- Semua Tahun --</option>
+											<label for="tahunAngkatanSelect2" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanSelect2" name="tahun_angkatan">
+												<option value="">Semua Tahun</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
 									</div>
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="mahasiswaSelect2" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
-											<select class="form-select" id="mahasiswaSelect2" name="mahasiswa_id">
-												<option value="">-- Pilih Mahasiswa --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-5">
+											<label for="mahasiswaSelect2" class="modern-filter-label">
+												<i class="bi bi-person-fill me-1"></i> Mahasiswa <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="mahasiswaSelect2" name="mahasiswa_id">
+												<option value="">Pilih Mahasiswa</option>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="semesterSelect2" class="form-label">Semester <span class="text-danger">*</span></label>
-											<select class="form-select" id="semesterSelect2" name="semester">
-												<option value="">-- Pilih Semester --</option>
+										<div class="col-md-5">
+											<label for="semesterSelect2" class="modern-filter-label">
+												<i class="bi bi-bookmark-fill me-1"></i> Semester <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="semesterSelect2" name="semester">
+												<option value="">Pilih Semester</option>
 												<?php foreach ($semesterList as $semester): ?>
 													<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-12 text-end">
-											<button type="submit" class="btn btn-primary">
+										<div class="col-md-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 												<i class="bi bi-search"></i> Tampilkan
 											</button>
 										</div>
@@ -241,52 +225,61 @@
 
 					<!-- Filter 3: CPMK Mahasiswa per Tahun Akademik -->
 					<div class="tab-pane fade" id="filter3" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Mahasiswa per Tahun Akademik</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Mahasiswa per Tahun Akademik</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterIndividualForm3">
 									<div class="row g-3 mb-3">
 										<div class="col-md-6">
-											<label for="programStudiSelect3" class="form-label">Program Studi</label>
-											<select class="form-select" id="programStudiSelect3" name="program_studi">
-												<option value="">-- Semua Program Studi --</option>
+											<label for="programStudiSelect3" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiSelect3" name="program_studi">
+												<option value="">Semua Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
 										<div class="col-md-6">
-											<label for="tahunAngkatanSelect3" class="form-label">Tahun Angkatan</label>
-											<select class="form-select" id="tahunAngkatanSelect3" name="tahun_angkatan">
-												<option value="">-- Semua Tahun --</option>
+											<label for="tahunAngkatanSelect3" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanSelect3" name="tahun_angkatan">
+												<option value="">Semua Tahun</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
 									</div>
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="mahasiswaSelect3" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
-											<select class="form-select" id="mahasiswaSelect3" name="mahasiswa_id">
-												<option value="">-- Pilih Mahasiswa --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-5">
+											<label for="mahasiswaSelect3" class="modern-filter-label">
+												<i class="bi bi-person-fill me-1"></i> Mahasiswa <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="mahasiswaSelect3" name="mahasiswa_id">
+												<option value="">Pilih Mahasiswa</option>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="tahunAkademikSelect3" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
-											<select class="form-select" id="tahunAkademikSelect3" name="tahun_akademik_filter">
-												<option value="">-- Pilih Tahun Akademik --</option>
+										<div class="col-md-5">
+											<label for="tahunAkademikSelect3" class="modern-filter-label">
+												<i class="bi bi-calendar-event me-1"></i> Tahun Akademik <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAkademikSelect3" name="tahun_akademik_filter">
+												<option value="">Pilih Tahun Akademik</option>
 												<?php foreach ($tahunAkademikList as $ta): ?>
 													<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-12 text-end">
-											<button type="submit" class="btn btn-primary">
+										<div class="col-md-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 												<i class="bi bi-search"></i> Tampilkan
 											</button>
 										</div>
@@ -358,36 +351,41 @@
 				<div class="tab-content" id="filterComparativeSubTabContent">
 					<!-- Filter 1: CPMK Angkatan -->
 					<div class="tab-pane fade show active" id="filterComparative1" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Angkatan</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Angkatan</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterComparativeForm1">
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="programStudiComparativeSelect1" class="form-label">Program Studi <span class="text-danger">*</span></label>
-											<select class="form-select" id="programStudiComparativeSelect1" name="program_studi" required>
-												<option value="">-- Pilih Program Studi --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-5">
+											<label for="programStudiComparativeSelect1" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiComparativeSelect1" name="program_studi" required>
+												<option value="">Pilih Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="tahunAngkatanComparativeSelect1" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
-											<select class="form-select" id="tahunAngkatanComparativeSelect1" name="tahun_angkatan" required>
-												<option value="">-- Pilih Tahun Angkatan --</option>
+										<div class="col-md-5">
+											<label for="tahunAngkatanComparativeSelect1" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanComparativeSelect1" name="tahun_angkatan" required>
+												<option value="">Pilih Tahun Angkatan</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-12 text-end">
-											<button type="submit" class="btn btn-primary">
-												<i class="bi bi-search"></i> Tampilkan
+										<div class="col-md-2 d-flex gap-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
+												<i class="bi bi-search"></i>
 											</button>
 										</div>
 									</div>
@@ -398,47 +396,52 @@
 
 					<!-- Filter 2: CPMK Angkatan per Semester -->
 					<div class="tab-pane fade" id="filterComparative2" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Angkatan per Semester</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Angkatan per Semester</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterComparativeForm2">
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="programStudiComparativeSelect2" class="form-label">Program Studi <span class="text-danger">*</span></label>
-											<select class="form-select" id="programStudiComparativeSelect2" name="program_studi" required>
-												<option value="">-- Pilih Program Studi --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-4">
+											<label for="programStudiComparativeSelect2" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiComparativeSelect2" name="program_studi" required>
+												<option value="">Pilih Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="tahunAngkatanComparativeSelect2" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
-											<select class="form-select" id="tahunAngkatanComparativeSelect2" name="tahun_angkatan" required>
-												<option value="">-- Pilih Tahun Angkatan --</option>
+										<div class="col-md-3">
+											<label for="tahunAngkatanComparativeSelect2" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanComparativeSelect2" name="tahun_angkatan" required>
+												<option value="">Pilih Tahun Angkatan</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="semesterComparativeSelect2" class="form-label">Semester <span class="text-danger">*</span></label>
-											<select class="form-select" id="semesterComparativeSelect2" name="semester" required>
-												<option value="">-- Pilih Semester --</option>
+										<div class="col-md-3">
+											<label for="semesterComparativeSelect2" class="modern-filter-label">
+												<i class="bi bi-bookmark-fill me-1"></i> Semester <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="semesterComparativeSelect2" name="semester" required>
+												<option value="">Pilih Semester</option>
 												<?php foreach ($semesterList as $semester): ?>
 													<option value="<?= esc($semester) ?>"><?= esc($semester) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-12 text-end">
-											<button type="submit" class="btn btn-primary">
-												<i class="bi bi-search"></i> Tampilkan
+										<div class="col-md-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn w-100">
+												<i class="bi bi-search"></i>
 											</button>
 										</div>
 									</div>
@@ -449,47 +452,52 @@
 
 					<!-- Filter 3: CPMK Angkatan per Tahun Akademik -->
 					<div class="tab-pane fade" id="filterComparative3" role="tabpanel">
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter CPMK Angkatan per Tahun Akademik</h5>
+						<div class="modern-filter-wrapper mb-4">
+							<div class="modern-filter-header">
+								<div class="d-flex align-items-center gap-2">
+									<i class="bi bi-funnel-fill text-primary"></i>
+									<span class="modern-filter-title">Filter CPMK Angkatan per Tahun Akademik</span>
+								</div>
 							</div>
-							<div class="card-body">
+							<div class="modern-filter-body">
 								<form id="filterComparativeForm3">
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="programStudiComparativeSelect3" class="form-label">Program Studi <span class="text-danger">*</span></label>
-											<select class="form-select" id="programStudiComparativeSelect3" name="program_studi" required>
-												<option value="">-- Pilih Program Studi --</option>
+									<div class="row g-3 align-items-end">
+										<div class="col-md-4">
+											<label for="programStudiComparativeSelect3" class="modern-filter-label">
+												<i class="bi bi-mortarboard-fill me-1"></i> Program Studi <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="programStudiComparativeSelect3" name="program_studi" required>
+												<option value="">Pilih Program Studi</option>
 												<?php foreach ($programStudi as $prodi): ?>
 													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-										<div class="col-md-6">
-											<label for="tahunAngkatanComparativeSelect3" class="form-label">Tahun Angkatan <span class="text-danger">*</span></label>
-											<select class="form-select" id="tahunAngkatanComparativeSelect3" name="tahun_angkatan" required>
-												<option value="">-- Pilih Tahun Angkatan --</option>
+										<div class="col-md-3">
+											<label for="tahunAngkatanComparativeSelect3" class="modern-filter-label">
+												<i class="bi bi-calendar3 me-1"></i> Tahun Angkatan <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAngkatanComparativeSelect3" name="tahun_angkatan" required>
+												<option value="">Pilih Tahun Angkatan</option>
 												<?php foreach ($tahunAngkatan as $tahun): ?>
 													<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3 mb-3">
-										<div class="col-md-6">
-											<label for="tahunAkademikComparativeSelect3" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
-											<select class="form-select" id="tahunAkademikComparativeSelect3" name="tahun_akademik_filter" required>
-												<option value="">-- Pilih Tahun Akademik --</option>
+										<div class="col-md-3">
+											<label for="tahunAkademikComparativeSelect3" class="modern-filter-label">
+												<i class="bi bi-calendar-event me-1"></i> Tahun Akademik <span class="text-danger">*</span>
+											</label>
+											<select class="form-select modern-filter-input" id="tahunAkademikComparativeSelect3" name="tahun_akademik_filter" required>
+												<option value="">Pilih Tahun Akademik</option>
 												<?php foreach ($tahunAkademikList as $ta): ?>
 													<option value="<?= esc($ta) ?>"><?= esc($ta) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
-									</div>
-									<div class="row g-3">
-										<div class="col-md-12 text-end">
-											<button type="submit" class="btn btn-primary">
-												<i class="bi bi-search"></i> Tampilkan
+										<div class="col-md-2">
+											<button type="submit" class="btn btn-primary modern-filter-btn w-100">
+												<i class="bi bi-search"></i>
 											</button>
 										</div>
 									</div>
@@ -521,25 +529,30 @@
 			<!-- Keseluruhan Tab -->
 			<div class="tab-pane fade" id="keseluruhan" role="tabpanel">
 				<!-- Filter Section Keseluruhan -->
-				<div class="card mb-4">
-					<div class="card-header bg-light">
-						<h5 class="mb-0"><i class="bi bi-funnel"></i> Filter</h5>
+				<div class="modern-filter-wrapper mb-4">
+					<div class="modern-filter-header">
+						<div class="d-flex align-items-center gap-2">
+							<i class="bi bi-funnel-fill text-primary"></i>
+							<span class="modern-filter-title">Filter CPMK Keseluruhan</span>
+						</div>
 					</div>
-					<div class="card-body">
+					<div class="modern-filter-body">
 						<form id="filterKeseluruhanForm">
-							<div class="row g-3">
+							<div class="row g-3 align-items-end">
 								<div class="col-md-10">
-									<label for="programStudiKeseluruhanSelect" class="form-label">Program Studi <span class="text-danger">*</span></label>
-									<select class="form-select" id="programStudiKeseluruhanSelect" name="program_studi" required>
-										<option value="">-- Pilih Program Studi --</option>
+									<label for="programStudiKeseluruhanSelect" class="modern-filter-label">
+										<i class="bi bi-mortarboard-fill me-1"></i> Program Studi <span class="text-danger">*</span>
+									</label>
+									<select class="form-select modern-filter-input" id="programStudiKeseluruhanSelect" name="program_studi" required>
+										<option value="">Pilih Program Studi</option>
 										<?php foreach ($programStudi as $prodi): ?>
 											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
-								<div class="col-md-2 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">
-										<i class="bi bi-search"></i> Tampilkan
+								<div class="col-md-2 d-flex gap-2">
+									<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
+										<i class="bi bi-search"></i>
 									</button>
 								</div>
 							</div>

@@ -86,39 +86,38 @@
 		</div>
 	<?php endif; ?>
 
-	<div class="card shadow-sm mb-4">
-		<div class="card-header bg-light p-3">
-			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-				<div class="d-flex align-items-center gap-2">
-					<i class="bi bi-funnel-fill fs-5 text-primary"></i>
-					<h5 class="mb-0">Filter Jadwal</h5>
-				</div>
-			</div>
-		</div>
-		<div class="card-body">
-			<form method="GET" action="<?= current_url() ?>">
-				<div class="row g-3 align-items-end">
-					<div class="col-md-4">
-						<label for="filter_program_studi" class="form-label">Program Studi</label>
-						<select class="form-select" id="filter_program_studi" name="program_studi">
-							<option value="">Semua Program Studi</option>
-							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? 'Teknik Informatika') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
-						</select>
-					</div>
-					<div class="col-md-4">
-						<label for="filter_tahun_akademik" class="form-label">Tahun Akademik</label>
-						<input type="text" class="form-control" name="tahun_akademik" value="<?= esc($filters['tahun_akademik'] ?? '') ?>" placeholder="e.g. 2025/2026 Ganjil">
-					</div>
-					<div class="col-md-4 d-flex gap-2">
-						<button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Terapkan</button>
-						<a href="<?= current_url() ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
+	<?= view('components/modern_filter', [
+		'title' => 'Filter Jadwal',
+		'action' => current_url(),
+		'filters' => [
+			[
+				'type' => 'select',
+				'name' => 'program_studi',
+				'label' => 'Program Studi',
+				'icon' => 'bi-mortarboard-fill',
+				'col' => 'col-md-5',
+				'options' => [
+					'' => 'Semua Program Studi',
+					'Teknik Informatika' => 'Teknik Informatika',
+					'Sistem Informasi' => 'Sistem Informasi',
+					'Teknik Komputer' => 'Teknik Komputer'
+				],
+				'selected' => $filters['program_studi'] ?? 'Teknik Informatika'
+			],
+			[
+				'type' => 'text',
+				'name' => 'tahun_akademik',
+				'label' => 'Tahun Akademik',
+				'icon' => 'bi-calendar-event',
+				'col' => 'col-md-5',
+				'placeholder' => 'e.g. 2025/2026 Ganjil',
+				'value' => $filters['tahun_akademik'] ?? ''
+			]
+		],
+		'buttonCol' => 'col-md-2',
+		'buttonText' => 'Terapkan',
+		'showReset' => true
+	]) ?>
 
 	<?php
 	// Flatten the jadwal array from day-based grouping
