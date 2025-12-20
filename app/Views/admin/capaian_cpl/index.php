@@ -77,30 +77,80 @@
 			transform: translateY(0);
 		}
 	}
+
+	/* Segmented Control Tab Navigation Styling */
+	.modern-tab-nav {
+		display: inline-flex;
+		gap: 0.25rem;
+		/* background: #e9ecef; */
+		padding: 0.35rem;
+		border-radius: 10px;
+		margin-bottom: 1.5rem;
+		box-shadow: rgb(204, 219, 232, 0.35) -3px -3px 3px 0 inset, rgba(255, 255, 255, 0.5) 3px 3px 3px 0 inset;
+	}
+
+	.modern-tab-item {
+		background: transparent;
+		border: none;
+		padding: 0.65rem 1.5rem;
+		cursor: pointer;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		color: #495057;
+		font-weight: 500;
+		font-size: 0.9rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		position: relative;
+		border-radius: 8px;
+		z-index: 1;
+	}
+
+	.modern-tab-item i {
+		font-size: 1.1rem;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.modern-tab-item:hover:not(.active) {
+		color: #212529;
+	}
+
+	.modern-tab-item:hover:not(.active) i {
+		transform: scale(1.1);
+	}
+
+	.modern-tab-item.active {
+		background: #ffffff;
+		color: #0d6efd;
+		font-weight: 600;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+			0 1px 2px rgba(0, 0, 0, 0.06);
+	}
+
+	.modern-tab-item.active i {
+		color: #0d6efd;
+	}
 </style>
 
 <div class="card">
 	<div class="card-body">
 		<h2 class="mb-4">Capaian CPL</h2>
 
-		<!-- Tab Navigation -->
-		<ul class="nav nav-tabs mb-4" id="cplTabs" role="tablist">
-			<li class="nav-item" role="presentation">
-				<button class="nav-link active" id="individual-tab" data-bs-toggle="tab" data-bs-target="#individual" type="button" role="tab">
-					<i class="bi bi-person"></i> Mahasiswa
-				</button>
-			</li>
-			<li class="nav-item" role="presentation">
-				<button class="nav-link" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" type="button" role="tab">
-					<i class="bi bi-people"></i> Angkatan
-				</button>
-			</li>
-			<li class="nav-item" role="presentation">
-				<button class="nav-link" id="keseluruhan-tab" data-bs-toggle="tab" data-bs-target="#keseluruhan" type="button" role="tab">
-					<i class="bi bi-bar-chart-line"></i> Keseluruhan
-				</button>
-			</li>
-		</ul>
+		<!-- Modern Tab Navigation -->
+		<div class="modern-tab-nav mb-4" id="cplTabs" role="tablist">
+			<div class="modern-tab-item active" id="individual-tab" data-bs-toggle="tab" data-bs-target="#individual" role="tab">
+				<i class="bi bi-person-fill"></i>
+				<span>Mahasiswa</span>
+			</div>
+			<div class="modern-tab-item" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" role="tab">
+				<i class="bi bi-people-fill"></i>
+				<span>Angkatan</span>
+			</div>
+			<div class="modern-tab-item" id="keseluruhan-tab" data-bs-toggle="tab" data-bs-target="#keseluruhan" role="tab">
+				<i class="bi bi-bar-chart-line-fill"></i>
+				<span>Keseluruhan</span>
+			</div>
+		</div>
 
 		<!-- Tab Content -->
 		<div class="tab-content" id="cplTabContent">
