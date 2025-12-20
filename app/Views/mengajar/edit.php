@@ -75,9 +75,9 @@
 							<hr class="my-3">
 
 							<div class="col-12">
-								<label for="dosen_leader" class="form-label">Dosen Ketua (Penanggung Jawab)</label>
-								<select class="form-select" id="dosen_leader" name="dosen_leader" required>
-									<option value="">-- Pilih Dosen Ketua --</option>
+								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
+								<select class="form-select" id="dosen_leader" name="dosen_leader" disabled>
+									<option value="">-- Pilih Dosen Koordinator --</option>
 									<?php foreach ($dosen_list as $dosen): ?>
 										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader', $jadwal['dosen_leader']) == $dosen['id'] ? 'selected' : '' ?>>
 											<?= esc($dosen['nama_lengkap']) ?>
@@ -87,29 +87,30 @@
 							</div>
 
 							<div class="col-12">
-								<label class="form-label">Dosen Anggota (Team Teaching)</label>
+								<label class="form-label">Dosen Pengampu</label>
 								<div id="dosen-members-container">
 									<?php
 									$old_members = old('dosen_members', $jadwal['dosen_members'] ?? []);
-									foreach ($old_members as $member_id): ?>
-										<div class="input-group mb-2">
-											<select class="form-select" name="dosen_members[]">
-												<option value="">-- Pilih Dosen Anggota --</option>
-												<?php foreach ($dosen_list as $dosen): ?>
-													<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
-														<?= esc($dosen['nama_lengkap']) ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-											<button class="btn btn-outline-danger remove-member-btn" type="button">
-												<i class="bi bi-x-lg"></i>
-											</button>
-										</div>
-									<?php endforeach; ?>
+									if (!empty($old_members)):
+										foreach ($old_members as $member_id): ?>
+											<div class="mb-2">
+												<select class="form-select" name="dosen_members[]" disabled>
+													<option value="">-- Pilih Dosen Pengampu --</option>
+													<?php foreach ($dosen_list as $dosen): ?>
+														<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
+															<?= esc($dosen['nama_lengkap']) ?>
+														</option>
+													<?php endforeach; ?>
+												</select>
+											</div>
+										<?php endforeach;
+									else: ?>
+										<p class="text-muted mb-0">Tidak ada dosen pengampu</p>
+									<?php endif; ?>
 								</div>
-								<button type="button" id="add-member-btn" class="btn btn-outline-primary btn-sm mt-2">
-									<i class="bi bi-plus"></i> Tambah Dosen Anggota
-								</button>
+								<small class="text-muted">
+									<i class="bi bi-info-circle"></i> Dosen dapat diubah melalui RPS (Rencana Pembelajaran Semester)
+								</small>
 							</div>
 						</div>
 					</div>
@@ -125,43 +126,4 @@
 	</div>
 </div>
 
-<div id="dosen-member-template" style="display: none;">
-	<div class="input-group mb-2">
-		<select class="form-select" name="dosen_members[]">
-			<option value="">-- Pilih Dosen Anggota --</option>
-			<?php foreach ($dosen_list as $dosen): ?>
-				<option value="<?= $dosen['id'] ?>"><?= esc($dosen['nama_lengkap']) ?></option>
-			<?php endforeach; ?>
-		</select>
-		<button class="btn btn-outline-danger remove-member-btn" type="button">
-			<i class="bi bi-x-lg"></i>
-		</button>
-	</div>
-</div>
-
-
-<?= $this->endSection() ?>
-
-<?= $this->section('js') ?>
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const container = document.getElementById('dosen-members-container');
-		const addButton = document.getElementById('add-member-btn');
-		const template = document.getElementById('dosen-member-template');
-
-		addButton.addEventListener('click', function() {
-			// Clone the template's first child (the input-group div)
-			const newRow = template.firstElementChild.cloneNode(true);
-			container.appendChild(newRow);
-		});
-
-		container.addEventListener('click', function(event) {
-			// Check if a remove button was clicked
-			if (event.target.closest('.remove-member-btn')) {
-				// Find the parent .input-group and remove it
-				event.target.closest('.input-group').remove();
-			}
-		});
-	});
-</script>
 <?= $this->endSection() ?>
