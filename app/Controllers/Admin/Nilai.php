@@ -485,6 +485,21 @@ class Nilai extends BaseController
 			$teknik_by_tahap[$tahap][] = $item;
 		}
 
+		// Get RPS ID from the first teknik item
+		$rps_id = null;
+		if (!empty($teknik_list)) {
+			$first_rps_mingguan_id = $teknik_list[0]['rps_mingguan_id'] ?? null;
+			if ($first_rps_mingguan_id) {
+				$db = \Config\Database::connect();
+				$first_rps_mingguan = $db->table('rps_mingguan')
+					->select('rps_id')
+					->where('id', $first_rps_mingguan_id)
+					->get()
+					->getRowArray();
+				$rps_id = $first_rps_mingguan['rps_id'] ?? null;
+			}
+		}
+
 		// Get existing scores to pre-fill the form (individual per week)
 		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
@@ -500,6 +515,7 @@ class Nilai extends BaseController
 			'teknik_by_tahap' => $teknik_by_tahap,
 			'existing_scores' => $existing_scores,
 			'grade_config' => $grades,
+			'rps_id' => $rps_id,
 		];
 
 		return view('admin/nilai/input_nilai_teknik', $data);

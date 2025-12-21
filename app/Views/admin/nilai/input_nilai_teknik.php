@@ -22,6 +22,22 @@
 					<?php endif; ?>
 				</div>
 				<div class="d-flex gap-2">
+					<?php if (!empty($rps_id)): ?>
+						<a href="<?= base_url('rps/preview/' . $rps_id) ?>"
+							class="btn btn-secondary"
+							target="_blank"
+							title="Lihat RPS">
+							<i class="bi bi-file-text"></i>
+							<span class="d-none d-lg-inline ms-1">RPS</span>
+						</a>
+						<a href="<?= base_url('rps/mingguan/' . $rps_id) ?>"
+							class="btn btn-secondary"
+							target="_blank"
+							title="Kelola RPS Mingguan">
+							<i class="bi bi-calendar-week"></i>
+							<span class="d-none d-lg-inline ms-1">Mingguan</span>
+						</a>
+					<?php endif; ?>
 					<a href="<?= base_url('admin/nilai/unduh-dpna/' . $jadwal['id']) ?>"
 						class="btn btn-success"
 						target="_blank"
@@ -83,59 +99,6 @@
 			</div>
 		</div>
 	</div>
-
-	<!-- Quick Info & RPS Link -->
-	<?php if (!empty($teknik_by_tahap)): ?>
-		<div class="card border-0 shadow-sm mb-4">
-			<div class="card-body">
-				<div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-					<div class="d-flex align-items-center flex-grow-1">
-						<div class="bg-info bg-opacity-10 rounded-circle p-2 me-3 flex-shrink-0">
-							<i class="bi bi-lightbulb-fill text-info fs-5"></i>
-						</div>
-						<div>
-							<h6 class="fw-bold mb-1">Informasi Mata Kuliah</h6>
-							<small class="text-muted">
-								Berikut adalah informasi singkat mengenai RPS dan teknik penilaian mingguan yang digunakan pada mata kuliah ini.
-							</small>
-						</div>
-					</div>
-					<div class="d-flex gap-2 flex-shrink-0">
-						<?php
-						// Get RPS ID from the first teknik item
-						$db = \Config\Database::connect();
-						$first_rps_mingguan_id = $teknik_list[0]['rps_mingguan_id'] ?? null;
-						$rps_id = null;
-						if ($first_rps_mingguan_id) {
-							$first_rps_mingguan = $db->table('rps_mingguan')
-								->select('rps_id')
-								->where('id', $first_rps_mingguan_id)
-								->get()
-								->getRowArray();
-							$rps_id = $first_rps_mingguan['rps_id'] ?? null;
-						}
-						?>
-						<?php if ($rps_id): ?>
-							<a href="<?= base_url('rps/preview/' . $rps_id) ?>"
-								class="btn btn-sm btn-outline-primary"
-								target="_blank"
-								title="Lihat RPS">
-								<i class="bi bi-file-text"></i>
-								<span class="d-none d-lg-inline ms-1">RPS</span>
-							</a>
-							<a href="<?= base_url('rps/mingguan/' . $rps_id) ?>"
-								class="btn btn-sm btn-outline-secondary"
-								target="_blank"
-								title="Kelola RPS Mingguan">
-								<i class="bi bi-calendar-week"></i>
-								<span class="d-none d-lg-inline ms-1">Mingguan</span>
-							</a>
-						<?php endif; ?>
-					</div>
-				</div>
-			</div>
-		</div>
-	<?php endif; ?>
 
 	<div class="card border-0 shadow-sm">
 		<div class="card-body p-0">
