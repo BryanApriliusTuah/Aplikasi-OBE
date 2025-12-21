@@ -78,102 +78,155 @@
 		</div>
 	</div>
 
-	<div class="row g-3">
-		<?php
-		$status_labels = [
-			'diajukan' => ['label' => 'Diajukan', 'icon' => 'bi-hourglass-split', 'color' => 'warning'],
-			'disetujui' => ['label' => 'Disetujui', 'icon' => 'bi-check-circle', 'color' => 'info'],
-			'ditolak' => ['label' => 'Ditolak', 'icon' => 'bi-x-circle', 'color' => 'danger'],
-			'berlangsung' => ['label' => 'Berlangsung', 'icon' => 'bi-play-circle', 'color' => 'primary'],
-			'selesai' => ['label' => 'Selesai', 'icon' => 'bi-check-circle-fill', 'color' => 'success']
-		];
-		?>
+	<?php
+	$status_labels = [
+		'diajukan' => ['label' => 'Diajukan', 'icon' => 'bi-hourglass-split', 'color' => 'warning'],
+		'disetujui' => ['label' => 'Disetujui', 'icon' => 'bi-check-circle', 'color' => 'info'],
+		'ditolak' => ['label' => 'Ditolak', 'icon' => 'bi-x-circle', 'color' => 'danger'],
+		'berlangsung' => ['label' => 'Berlangsung', 'icon' => 'bi-play-circle', 'color' => 'primary'],
+		'selesai' => ['label' => 'Selesai', 'icon' => 'bi-check-circle-fill', 'color' => 'success']
+	];
 
-		<?php foreach ($status_labels as $status_key => $status_info): ?>
-			<div class="col-12 col-md-6 col-xl-4">
-				<div class="card shadow-sm h-100">
-					<div class="card-header fw-bold text-center bg-<?= $status_info['color'] ?> text-white">
-						<i class="bi <?= $status_info['icon'] ?>"></i> <?= esc($status_info['label']) ?>
-						<span class="badge bg-white text-<?= $status_info['color'] ?> rounded-pill">
-							<?= count($kegiatan_by_status[$status_key] ?? []) ?>
-						</span>
-					</div>
-					<div class="card-body">
-						<?php if (empty($kegiatan_by_status[$status_key])): ?>
-							<div class="text-center text-muted pt-5">
-								<i class="bi bi-inbox fs-1"></i>
-								<p class="mt-2 small">Tidak ada kegiatan</p>
-							</div>
-						<?php else: ?>
-							<?php foreach ($kegiatan_by_status[$status_key] as $kegiatan): ?>
-								<div class="card mb-3 shadow-sm">
-									<div class="card-body p-3">
-										<p class="card-title fw-bold mb-1"><?= esc($kegiatan['judul_kegiatan']) ?></p>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-people"></i> <?= esc($kegiatan['nama_mahasiswa_list'] ?? '-') ?>
-										</div>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-card-text"></i> NIM: <?= esc($kegiatan['nim_list'] ?? '-') ?>
-										</div>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-mortarboard"></i> <?= esc($kegiatan['program_studi'] ?? '-') ?>
-										</div>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-building"></i> <?= esc($kegiatan['tempat_kegiatan']) ?>
-										</div>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-tag"></i> <?= esc($kegiatan['jenis_kegiatan']) ?>
-										</div>
-										<div class="small text-muted mb-2">
-											<i class="bi bi-calendar-range"></i>
-											<?= date('d/m/Y', strtotime($kegiatan['tanggal_mulai'])) ?> -
-											<?= date('d/m/Y', strtotime($kegiatan['tanggal_selesai'])) ?>
-											(<?= $kegiatan['durasi_minggu'] ?> minggu)
-										</div>
-										<?php if (!empty($kegiatan['dosen_pembimbing'])): ?>
-											<div class="small text-muted mb-2">
-												<i class="bi bi-person-check"></i> <?= esc($kegiatan['dosen_pembimbing']) ?>
-											</div>
-										<?php endif; ?>
-										<?php if (!empty($kegiatan['nilai_huruf'])): ?>
-											<div class="mt-2">
-												<span class="badge bg-success">Nilai: <?= esc($kegiatan['nilai_huruf']) ?> (<?= esc($kegiatan['nilai_angka']) ?>)</span>
-												<span class="badge bg-<?= $kegiatan['status_kelulusan'] == 'Lulus' ? 'success' : 'danger' ?>">
-													<?= esc($kegiatan['status_kelulusan']) ?>
-												</span>
-											</div>
-										<?php endif; ?>
-									</div>
-									<div class="card-footer bg-white p-2 border-top-0">
-										<div class="d-flex gap-2 justify-content-end flex-wrap">
-											<button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#detailModal" data-kegiatan-id="<?= $kegiatan['id'] ?>">
-												<i class="bi bi-eye"></i> Detail
-											</button>
+	// Combine all kegiatan into one array with status info
+	$all_kegiatan = [];
+	foreach ($status_labels as $status_key => $status_info) {
+		if (!empty($kegiatan_by_status[$status_key])) {
+			foreach ($kegiatan_by_status[$status_key] as $kegiatan) {
+				$kegiatan['status_info'] = $status_info;
+				$kegiatan['status_key'] = $status_key;
+				$all_kegiatan[] = $kegiatan;
+			}
+		}
+	}
+	?>
 
-											<?php if (session()->get('role') === 'admin'): ?>
-												<?php if ($status_key == 'disetujui' || $status_key == 'berlangsung' || $status_key == 'selesai'): ?>
-													<a href="<?= base_url('admin/mbkm/input-nilai/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-success">
-														<i class="bi bi-pencil-square"></i> Input Nilai
-													</a>
-												<?php endif; ?>
-
-												<a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
-													<i class="bi bi-pencil"></i> Edit
-												</a>
-
-												<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $kegiatan['id'] ?>)">
-													<i class="bi bi-trash"></i> Hapus
-												</button>
-											<?php endif; ?>
-										</div>
-									</div>
-								</div>
-							<?php endforeach; ?>
-						<?php endif; ?>
-					</div>
+	<div class="modern-filter-wrapper mb-4">
+		<div class="modern-filter-header">
+			<div class="d-flex justify-content-between align-items-center">
+				<div class="modern-filter-title">
+					<i class="bi bi-list-check"></i> Daftar Kegiatan MBKM
 				</div>
+				<span class="badge bg-primary rounded-pill">
+					Total: <?= count($all_kegiatan) ?> Kegiatan
+				</span>
 			</div>
-		<?php endforeach; ?>
+		</div>
+
+		<div class="modern-table-wrapper">
+			<?php if (empty($all_kegiatan)): ?>
+				<div class="text-center text-muted py-5">
+					<i class="bi bi-inbox fs-1"></i>
+					<p class="mt-2 small">Tidak ada kegiatan</p>
+				</div>
+			<?php else: ?>
+				<table class="modern-table">
+					<thead>
+						<tr>
+							<th style="min-width: 130px;" class="text-center">Status</th>
+							<th style="min-width: 200px;" class="text-center">Judul Kegiatan</th>
+							<th style="min-width: 150px;" class="text-center">Mahasiswa</th>
+							<th style="min-width: 120px;" class="text-center">NIM</th>
+							<th style="min-width: 150px;" class="text-center">Program Studi</th>
+							<th style="min-width: 150px;" class="text-center">Jenis Kegiatan</th>
+							<th style="min-width: 150px;" class="text-center">Tempat</th>
+							<th style="min-width: 180px;" class="text-center">Periode</th>
+							<th style="min-width: 100px;" class="text-center">Durasi</th>
+							<th style="min-width: 150px;" class="text-center">Dosen Pembimbing</th>
+							<th style="min-width: 120px;" class="text-center">Nilai</th>
+							<th style="min-width: 250px;" class="text-center">Aksi</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ($all_kegiatan as $kegiatan): ?>
+							<tr>
+								<td class="text-center">
+									<span class="badge bg-secondary">
+										<i class="bi <?= $kegiatan['status_info']['icon'] ?>"></i>
+										<?= esc($kegiatan['status_info']['label']) ?>
+									</span>
+								</td>
+								<td class="fw-bold"><?= esc($kegiatan['judul_kegiatan']) ?></td>
+								<td>
+									<?php
+									$mahasiswa_list = $kegiatan['nama_mahasiswa_list'] ?? '-';
+									if ($mahasiswa_list !== '-') {
+										$mahasiswa_array = explode(',', $mahasiswa_list);
+										foreach ($mahasiswa_array as $index => $mhs) {
+											echo esc(trim($mhs));
+											if ($index < count($mahasiswa_array) - 1) {
+												echo '<br>';
+											}
+										}
+									} else {
+										echo '-';
+									}
+									?>
+								</td>
+								<td>
+									<?php
+									$nim_list = $kegiatan['nim_list'] ?? '-';
+									if ($nim_list !== '-') {
+										$nim_array = explode(',', $nim_list);
+										foreach ($nim_array as $index => $nim) {
+											echo esc(trim($nim));
+											if ($index < count($nim_array) - 1) {
+												echo '<br>';
+											}
+										}
+									} else {
+										echo '-';
+									}
+									?>
+								</td>
+								<td><?= esc($kegiatan['program_studi'] ?? '-') ?></td>
+								<td><?= esc($kegiatan['jenis_kegiatan']) ?></td>
+								<td><?= esc($kegiatan['tempat_kegiatan']) ?></td>
+								<td>
+									<?= date('d/m/Y', strtotime($kegiatan['tanggal_mulai'])) ?> -
+									<?= date('d/m/Y', strtotime($kegiatan['tanggal_selesai'])) ?>
+								</td>
+								<td><?= $kegiatan['durasi_minggu'] ?> minggu</td>
+								<td><?= esc($kegiatan['dosen_pembimbing'] ?? '-') ?></td>
+								<td class="text-center">
+									<?php if (!empty($kegiatan['nilai_huruf'])): ?>
+										<span class="badge bg-secondary"><?= esc($kegiatan['nilai_huruf']) ?></span>
+										<br>
+										<span class="badge bg-secondary">
+											<?= esc($kegiatan['status_kelulusan']) ?>
+										</span>
+									<?php else: ?>
+										-
+									<?php endif; ?>
+								</td>
+								<td>
+									<div class="d-flex gap-2 justify-content-center flex-wrap">
+										<button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#detailModal" data-kegiatan-id="<?= $kegiatan['id'] ?>">
+											<i class="bi bi-eye"></i> Detail
+										</button>
+
+										<?php if (session()->get('role') === 'admin'): ?>
+											<?php if ($kegiatan['status_key'] == 'disetujui' || $kegiatan['status_key'] == 'berlangsung' || $kegiatan['status_key'] == 'selesai'): ?>
+												<a href="<?= base_url('admin/mbkm/input-nilai/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-success">
+													<i class="bi bi-pencil-square"></i> Input Nilai
+												</a>
+											<?php endif; ?>
+
+											<a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
+												<i class="bi bi-pencil"></i> Edit
+											</a>
+
+											<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $kegiatan['id'] ?>)">
+												<i class="bi bi-trash"></i> Hapus
+											</button>
+										<?php endif; ?>
+									</div>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
 	</div>
 </div>
 
