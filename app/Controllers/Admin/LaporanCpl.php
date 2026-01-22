@@ -12,6 +12,7 @@ class LaporanCpl extends BaseController
 	protected $analysisCplModel;
 	protected $cqiModel;
 	protected $standarMinimalCapaianModel;
+	protected $analysisTemplateCplModel;
 
 	public function __construct()
 	{
@@ -21,6 +22,7 @@ class LaporanCpl extends BaseController
 		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
 		$this->cqiModel = new \App\Models\CqiModel();
 		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
+		$this->analysisTemplateCplModel = new \App\Models\AnalysisTemplateCplModel();
 	}
 
 	public function index()
@@ -472,12 +474,28 @@ class LaporanCpl extends BaseController
 		$mode = $savedAnalysis['mode'] ?? 'auto';
 		$analysisSummary = '';
 
+		// Get auto_options
+		$autoOptions = [];
+		if (!empty($savedAnalysis['auto_options'])) {
+			$autoOptions = json_decode($savedAnalysis['auto_options'], true);
+			if (!is_array($autoOptions)) {
+				$autoOptions = [];
+			}
+		}
+
+		// Get templates - initialize defaults if empty
+		$templates = $this->analysisTemplateCplModel->getTemplatesAsArray();
+		if (empty($templates)) {
+			$this->initializeDefaultTemplates();
+			$templates = $this->analysisTemplateCplModel->getTemplatesAsArray();
+		}
+
 		if ($mode === 'manual' && !empty($savedAnalysis['analisis_summary'])) {
 			// Use manual analysis
 			$analysisSummary = $savedAnalysis['analisis_summary'];
 		} else {
 			// Use auto-generated analysis
-			$analysisSummary = $this->generateAnalysisSummary($cplTercapai, $cplTidakTercapai);
+			$analysisSummary = $this->generateAnalysisSummary($cplTercapai, $cplTidakTercapai, $passingThreshold, $autoOptions, $templates);
 		}
 
 		return [
@@ -488,21 +506,50 @@ class LaporanCpl extends BaseController
 			'total_cpl' => count($cplAchievementData),
 			'total_tercapai' => count($cplTercapai),
 			'total_tidak_tercapai' => count($cplTidakTercapai),
-			'mode' => $mode
+			'mode' => $mode,
+			'auto_options' => $autoOptions,
+			'templates' => $templates
 		];
 	}
 
-	private function generateAnalysisSummary($cplTercapai, $cplTidakTercapai)
+	private function generateAnalysisSummary($cplTercapai, $cplTidakTercapai, $passingThreshold, $autoOptions = [], $templates = [])
 	{
+		// Get selected template if auto_options is provided
+		$selectedTemplateKey = !empty($autoOptions) && isset($autoOptions[0]) ? $autoOptions[0] : 'default';
+		$template = $templates[$selectedTemplateKey] ?? null;
+
+		// Calculate statistics
+		$totalCpl = count($cplTercapai) + count($cplTidakTercapai);
+		$jumlahTercapai = count($cplTercapai);
+		$jumlahTidakTercapai = count($cplTidakTercapai);
+		$persentaseTercapai = $totalCpl > 0 ? round(($jumlahTercapai / $totalCpl) * 100, 2) : 0;
+		$cplTercapaiList = implode(', ', $cplTercapai);
+		$cplTidakTercapaiList = implode(', ', array_column($cplTidakTercapai, 'kode_cpl'));
+
+		// Use template if available
+		if ($template) {
+			if (empty($cplTidakTercapai)) {
+				$analysisSummary = $template['template_tercapai'] ?? '';
+			} else {
+				$analysisSummary = $template['template_tidak_tercapai'] ?? '';
+			}
+
+			// Replace placeholders
+			$analysisSummary = str_replace(
+				['{total_cpl}', '{jumlah_tercapai}', '{jumlah_tidak_tercapai}', '{persentase_tercapai}', '{cpl_tercapai_list}', '{cpl_tidak_tercapai_list}', '{standar_minimal}'],
+				[$totalCpl, $jumlahTercapai, $jumlahTidakTercapai, $persentaseTercapai, $cplTercapaiList, $cplTidakTercapaiList, $passingThreshold],
+				$analysisSummary
+			);
+
+			return $analysisSummary;
+		}
+
+		// Default analysis if no template
 		if (empty($cplTidakTercapai)) {
 			return 'Semua CPL tercapai dengan baik. Mahasiswa menunjukkan kompetensi yang memadai sesuai dengan profil lulusan yang diharapkan.';
 		}
 
-		$jumlahTidakTercapai = count($cplTidakTercapai);
-		$cplList = array_column($cplTidakTercapai, 'kode_cpl');
-		$cplListStr = implode(', ', $cplList);
-
-		return "Terdapat $jumlahTidakTercapai CPL yang belum tercapai ($cplListStr). Diperlukan evaluasi lebih lanjut terhadap mata kuliah kontributor dan metode pembelajaran untuk meningkatkan capaian CPL tersebut.";
+		return "Terdapat $jumlahTidakTercapai CPL yang belum tercapai ($cplTidakTercapaiList). Diperlukan evaluasi lebih lanjut terhadap mata kuliah kontributor dan metode pembelajaran untuk meningkatkan capaian CPL tersebut.";
 	}
 
 	private function getTahunAkademik()
@@ -1051,6 +1098,65 @@ class LaporanCpl extends BaseController
 		return $cqiByKodeCpl;
 	}
 
+	private function initializeDefaultTemplates()
+	{
+		// Check if templates already exist
+		$existingTemplates = $this->analysisTemplateCplModel->findAll();
+		if (!empty($existingTemplates)) {
+			return; // Templates already exist
+		}
+
+		// Create default templates
+		$defaultTemplates = [
+			[
+				'option_key' => 'default',
+				'option_label' => 'Template 1',
+				'template_tercapai' => 'Semua CPL tercapai dengan baik. Dari total {total_cpl} CPL yang diukur, seluruhnya ({jumlah_tercapai} CPL) telah mencapai standar minimal {standar_minimal}%. Mahasiswa menunjukkan kompetensi yang memadai sesuai dengan profil lulusan yang diharapkan.',
+				'template_tidak_tercapai' => 'Dari {total_cpl} CPL yang diukur, terdapat {jumlah_tidak_tercapai} CPL yang belum mencapai standar minimal {standar_minimal}%, yaitu: {cpl_tidak_tercapai_list}. Sementara itu, {jumlah_tercapai} CPL lainnya ({cpl_tercapai_list}) telah tercapai dengan baik. Diperlukan evaluasi lebih lanjut terhadap mata kuliah kontributor dan metode pembelajaran untuk meningkatkan capaian CPL yang belum tercapai.',
+				'is_active' => 1
+			],
+			[
+				'option_key' => 'formal',
+				'option_label' => 'Template 2',
+				'template_tercapai' => 'Berdasarkan hasil evaluasi capaian pembelajaran lulusan untuk periode ini, dapat dilaporkan bahwa seluruh CPL (total {total_cpl} CPL) telah mencapai standar minimal yang ditetapkan yaitu {standar_minimal}%. Pencapaian ini menunjukkan bahwa proses pembelajaran telah berjalan efektif dan mahasiswa telah menguasai kompetensi yang diharapkan sesuai dengan standar KKNI.',
+				'template_tidak_tercapai' => 'Berdasarkan hasil evaluasi capaian pembelajaran lulusan, dari {total_cpl} CPL yang diukur, sebanyak {jumlah_tercapai} CPL ({persentase_tercapai}%) telah mencapai standar minimal {standar_minimal}%, yaitu: {cpl_tercapai_list}. Namun demikian, masih terdapat {jumlah_tidak_tercapai} CPL yang belum mencapai standar, yaitu: {cpl_tidak_tercapai_list}. Untuk CPL yang belum tercapai, diperlukan tindakan perbaikan berkelanjutan (Continuous Quality Improvement) yang mencakup evaluasi mata kuliah kontributor, perbaikan metode pembelajaran, serta penyesuaian strategi asesmen.',
+				'is_active' => 1
+			],
+			[
+				'option_key' => 'singkat',
+				'option_label' => 'Template 3',
+				'template_tercapai' => 'Seluruh CPL tercapai (100%).',
+				'template_tidak_tercapai' => '{jumlah_tercapai} dari {total_cpl} CPL tercapai ({persentase_tercapai}%). CPL yang belum tercapai: {cpl_tidak_tercapai_list}.',
+				'is_active' => 1
+			],
+			[
+				'option_key' => 'template_4',
+				'option_label' => 'Template 4',
+				'template_tercapai' => 'Analisis capaian pembelajaran menunjukkan bahwa semua CPL telah tercapai dengan persentase keberhasilan 100%. Hasil ini mencerminkan efektivitas strategi pembelajaran yang diterapkan.',
+				'template_tidak_tercapai' => 'Hasil analisis menunjukkan bahwa dari {total_cpl} CPL, sebanyak {jumlah_tercapai} CPL telah tercapai ({persentase_tercapai}%), namun {jumlah_tidak_tercapai} CPL masih perlu perbaikan: {cpl_tidak_tercapai_list}. Rekomendasi tindak lanjut perlu segera dilakukan.',
+				'is_active' => 1
+			],
+			[
+				'option_key' => 'template_5',
+				'option_label' => 'Template 5',
+				'template_tercapai' => 'Evaluasi terhadap {total_cpl} CPL menunjukkan pencapaian yang sangat baik dengan seluruh indikator terpenuhi. Mahasiswa telah mendemonstrasikan kompetensi sesuai dengan standar yang ditetapkan sebesar {standar_minimal}%.',
+				'template_tidak_tercapai' => 'Pencapaian CPL periode ini menunjukkan {persentase_tercapai}% CPL telah memenuhi standar ({cpl_tercapai_list}). Adapun CPL yang masih di bawah standar minimal {standar_minimal}% adalah: {cpl_tidak_tercapai_list}. Diperlukan intervensi pada mata kuliah pendukung CPL tersebut.',
+				'is_active' => 1
+			],
+			[
+				'option_key' => 'template_6',
+				'option_label' => 'Template 6',
+				'template_tercapai' => 'Capaian pembelajaran lulusan untuk periode ini sangat memuaskan dengan tingkat pencapaian 100% untuk semua CPL.',
+				'template_tidak_tercapai' => 'CPL tercapai: {cpl_tercapai_list} ({persentase_tercapai}%). CPL perlu perbaikan: {cpl_tidak_tercapai_list}. Evaluasi dan perbaikan pembelajaran diperlukan untuk CPL yang belum tercapai.',
+				'is_active' => 1
+			]
+		];
+
+		foreach ($defaultTemplates as $template) {
+			$this->analysisTemplateCplModel->insert($template);
+		}
+	}
+
 	public function saveAnalysis()
 	{
 		// Check user role
@@ -1066,6 +1172,8 @@ class LaporanCpl extends BaseController
 		$angkatan = $this->request->getPost('angkatan');
 		$mode = $this->request->getPost('mode');
 		$analysisSummary = $this->request->getPost('analisis_summary');
+		$autoOptionsJson = $this->request->getPost('auto_options');
+		$templatesJson = $this->request->getPost('templates');
 
 		if (!$programStudi || !$tahunAkademik || !$angkatan || !$mode) {
 			return $this->response->setJSON([
@@ -1074,20 +1182,41 @@ class LaporanCpl extends BaseController
 			])->setStatusCode(400);
 		}
 
+		// Decode auto_options if it's in JSON format
+		$autoOptions = null;
+		if ($mode === 'auto' && $autoOptionsJson) {
+			$autoOptions = $autoOptionsJson; // Already JSON string from frontend
+		}
+
 		$data = [
 			'program_studi' => $programStudi,
 			'tahun_akademik' => $tahunAkademik,
 			'angkatan' => $angkatan,
 			'mode' => $mode,
-			'analisis_summary' => $mode === 'manual' ? $analysisSummary : null
+			'analisis_summary' => $mode === 'manual' ? $analysisSummary : null,
+			'auto_options' => $autoOptions
 		];
 
 		try {
+			// Save analysis settings
 			$this->analysisCplModel->saveAnalysis($data);
+
+			// Save templates if provided
+			if ($templatesJson) {
+				$templates = json_decode($templatesJson, true);
+				if (is_array($templates)) {
+					foreach ($templates as $optionKey => $templateData) {
+						$this->analysisTemplateCplModel->updateByKey($optionKey, [
+							'template_tercapai' => $templateData['template_tercapai'] ?? '',
+							'template_tidak_tercapai' => $templateData['template_tidak_tercapai'] ?? ''
+						]);
+					}
+				}
+			}
 
 			return $this->response->setJSON([
 				'success' => true,
-				'message' => 'Analisis berhasil disimpan.'
+				'message' => 'Analisis dan template berhasil disimpan.'
 			]);
 		} catch (\Exception $e) {
 			return $this->response->setJSON([
