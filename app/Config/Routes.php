@@ -207,6 +207,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('settings/toggle/(:num)', 'Settings::toggle/$1');
 	$routes->get('settings/reset-to-default', 'Settings::resetToDefault');
 	$routes->post('settings/update-standar-cpmk', 'Settings::updateStandarCpmk');
+	$routes->post('settings/update-standar-cpl', 'Settings::updateStandarCpl');
 
 	//capaian cpmk
 	$routes->get('capaian-cpmk', 'CapaianCpmk::index');

@@ -21,7 +21,7 @@ class LaporanCpl extends BaseController
 		$this->profilProdiModel = new \App\Models\ProfilProdiModel();
 		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
 		$this->cqiModel = new \App\Models\CqiModel();
-		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
+		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCplModel();
 		$this->analysisTemplateCplModel = new \App\Models\AnalysisTemplateCplModel();
 	}
 

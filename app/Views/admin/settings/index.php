@@ -31,33 +31,69 @@
 			</div>
 		<?php endif; ?>
 
-		<!-- CPMK Threshold -->
-		<div class="border rounded p-4 mb-5">
-			<h6 class="mb-3 fw-semibold">Standar Minimal Portofolio Capaian CPMK / CPL</h6>
-			<form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
-				<?= csrf_field() ?>
-				<div class="col-auto">
-					<label for="persentase" class="form-label small text-muted mb-1">Persentase Minimal (%)</label>
-					<div class="input-group">
-						<input type="number"
-							class="form-control"
-							id="persentase"
-							name="persentase"
-							value="<?= esc($standar_cpmk) ?>"
-							min="0"
-							max="100"
-							step="0.01"
-							style="width: 120px;"
-							required>
-						<span class="input-group-text bg-white">%</span>
-					</div>
+		<!-- CPMK and CPL Thresholds -->
+		<div class="row mb-5">
+			<!-- CPMK Threshold -->
+			<div class="col-md-6">
+				<div class="border rounded p-4 h-100">
+					<h6 class="mb-3 fw-semibold">Standar Minimal Capaian CPMK</h6>
+					<form action="<?= base_url('admin/settings/update-standar-cpmk') ?>" method="post" class="row g-3 align-items-end">
+						<?= csrf_field() ?>
+						<div class="col-auto">
+							<label for="persentase_cpmk" class="form-label small text-muted mb-1">Persentase Minimal (%)</label>
+							<div class="input-group">
+								<input type="number"
+									class="form-control"
+									id="persentase_cpmk"
+									name="persentase"
+									value="<?= esc($standar_cpmk) ?>"
+									min="0"
+									max="100"
+									step="0.01"
+									style="width: 120px;"
+									required>
+								<span class="input-group-text bg-white">%</span>
+							</div>
+						</div>
+						<div class="col-auto">
+							<button type="submit" class="btn btn-dark btn-sm">
+								Simpan
+							</button>
+						</div>
+					</form>
 				</div>
-				<div class="col-auto">
-					<button type="submit" class="btn btn-dark btn-sm">
-						Simpan
-					</button>
+			</div>
+
+			<!-- CPL Threshold -->
+			<div class="col-md-6">
+				<div class="border rounded p-4 h-100">
+					<h6 class="mb-3 fw-semibold">Standar Minimal Capaian CPL</h6>
+					<form action="<?= base_url('admin/settings/update-standar-cpl') ?>" method="post" class="row g-3 align-items-end">
+						<?= csrf_field() ?>
+						<div class="col-auto">
+							<label for="persentase_cpl" class="form-label small text-muted mb-1">Persentase Minimal (%)</label>
+							<div class="input-group">
+								<input type="number"
+									class="form-control"
+									id="persentase_cpl"
+									name="persentase"
+									value="<?= esc($standar_cpl) ?>"
+									min="0"
+									max="100"
+									step="0.01"
+									style="width: 120px;"
+									required>
+								<span class="input-group-text bg-white">%</span>
+							</div>
+						</div>
+						<div class="col-auto">
+							<button type="submit" class="btn btn-dark btn-sm">
+								Simpan
+							</button>
+						</div>
+					</form>
 				</div>
-			</form>
+			</div>
 		</div>
 
 		<!-- Grade Configuration Table -->

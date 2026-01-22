@@ -23,7 +23,7 @@ class LaporanCpmk extends BaseController
 		$this->cpmkModel = new \App\Models\CpmkModel();
 		$this->jadwalMengajarModel = new \App\Models\MengajarModel();
 		$this->nilaiCpmkMahasiswaModel = new \App\Models\NilaiCpmkMahasiswaModel();
-		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
+		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCpmkModel();
 		$this->analysisCpmkModel = new \App\Models\AnalysisCpmkModel();
 		$this->cqiModel = new \App\Models\CqiModel();
 		$this->analysisTemplateModel = new \App\Models\AnalysisTemplateModel();

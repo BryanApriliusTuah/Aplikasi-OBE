@@ -27,9 +27,9 @@ class CapaianCpl extends BaseController
 			return redirect()->to('/')->with('error', 'Akses ditolak.');
 		}
 
-		// Get grade configuration for dynamic thresholds
-		$gradeConfigModel = new \App\Models\GradeConfigModel();
-		$passingThreshold = $gradeConfigModel->getPassingThreshold();
+		// Get CPL passing threshold
+		$standarCplModel = new \App\Models\StandarMinimalCplModel();
+		$passingThreshold = $standarCplModel->getPersentase();
 
 		$data = [
 			'title' => 'Capaian CPL',

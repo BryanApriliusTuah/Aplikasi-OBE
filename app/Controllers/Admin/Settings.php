@@ -4,7 +4,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GradeConfigModel;
-use App\Models\StandarMinimalCapaianModel;
+use App\Models\StandarMinimalCpmkModel;
+use App\Models\StandarMinimalCplModel;
 
 class Settings extends BaseController
 {
@@ -18,10 +19,12 @@ class Settings extends BaseController
         }
 
         $gradeModel = new GradeConfigModel();
-        $standarModel = new StandarMinimalCapaianModel();
+        $standarCpmkModel = new StandarMinimalCpmkModel();
+        $standarCplModel = new StandarMinimalCplModel();
 
         $data['grades'] = $gradeModel->getAllGradesForDisplay();
-        $data['standar_cpmk'] = $standarModel->getPersentase();
+        $data['standar_cpmk'] = $standarCpmkModel->getPersentase();
+        $data['standar_cpl'] = $standarCplModel->getPersentase();
         $data['title'] = 'Pengaturan Sistem Penilaian';
 
         return view('admin/settings/index', $data);
@@ -317,12 +320,43 @@ class Settings extends BaseController
             return redirect()->back()->with('error', 'Persentase harus antara 0 sampai 100.');
         }
 
-        $standarModel = new StandarMinimalCapaianModel();
+        $standarModel = new StandarMinimalCpmkModel();
 
         if ($standarModel->updatePersentase($persentase)) {
             return redirect()->to('/admin/settings')->with('success', 'Standar Minimal Capaian CPMK berhasil diperbarui.');
         } else {
             return redirect()->back()->with('error', 'Gagal memperbarui Standar Minimal Capaian CPMK.');
+        }
+    }
+
+    /**
+     * Update CPL minimum achievement standard (passing threshold)
+     */
+    public function updateStandarCpl()
+    {
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/admin/settings')->with('error', 'Anda tidak memiliki hak akses.');
+        }
+
+        $persentase = $this->request->getPost('persentase');
+
+        // Validate percentage
+        if ($persentase === null || $persentase === '') {
+            return redirect()->back()->with('error', 'Persentase harus diisi.');
+        }
+
+        $persentase = (float)$persentase;
+
+        if ($persentase < 0 || $persentase > 100) {
+            return redirect()->back()->with('error', 'Persentase harus antara 0 sampai 100.');
+        }
+
+        $standarModel = new StandarMinimalCplModel();
+
+        if ($standarModel->updatePersentase($persentase)) {
+            return redirect()->to('/admin/settings')->with('success', 'Standar Minimal Capaian CPL berhasil diperbarui.');
+        } else {
+            return redirect()->back()->with('error', 'Gagal memperbarui Standar Minimal Capaian CPL.');
         }
     }
 }
