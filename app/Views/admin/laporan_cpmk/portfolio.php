@@ -199,6 +199,72 @@
 										Otomatis - Sistem akan menghasilkan analisis berdasarkan data CPMK
 									</label>
 								</div>
+
+								<!-- Auto Analysis Sub-Options -->
+								<div id="auto-analysis-options" class="ms-4 mt-2" style="display: <?= ($portfolio['analysis']['mode'] ?? 'auto') === 'auto' ? 'block' : 'none' ?>;">
+									<small class="text-muted d-block mb-3">Pilih salah satu template analisis yang akan digunakan (atau tidak pilih sama sekali):</small>
+									<?php
+									// Get saved auto_options - should be a single value now
+									$savedAutoOptions = $portfolio['analysis']['auto_options'] ?? [];
+									$selectedOption = is_array($savedAutoOptions) && !empty($savedAutoOptions) ? $savedAutoOptions[0] : 'default'; // Default to 'default' if nothing selected
+									$templates = $portfolio['templates'] ?? [];
+
+									// Sort templates to put 'default' first
+									$sortedTemplates = [];
+									if (isset($templates['default'])) {
+										$sortedTemplates['default'] = $templates['default'];
+									}
+									foreach ($templates as $key => $template) {
+										if ($key !== 'default') {
+											$sortedTemplates[$key] = $template;
+										}
+									}
+									$templates = $sortedTemplates;
+									?>
+
+									<?php foreach ($templates as $key => $template): ?>
+										<div class="mb-3 border rounded p-2 bg-light">
+											<div class="d-flex justify-content-between align-items-center">
+												<div class="form-check flex-grow-1">
+													<input class="form-check-input auto-option-radio" type="radio" name="auto_option_single" id="auto_<?= esc($key) ?>" value="<?= esc($key) ?>" <?= $selectedOption === $key ? 'checked' : '' ?>>
+													<label class="form-check-label" for="auto_<?= esc($key) ?>">
+														<?= esc($template['option_label']) ?>
+													</label>
+												</div>
+												<button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTemplateEdit('<?= esc($key) ?>')">
+													<i class="bi bi-pencil"></i> Edit Template
+												</button>
+											</div>
+
+											<!-- Template Edit Section -->
+											<div id="template-edit-<?= esc($key) ?>" class="mt-3" style="display: none;">
+												<!-- <div class="alert alert-info alert-sm mb-2">
+													<small><strong>Placeholder tersedia:</strong> {total_cpmk}, {jumlah_tercapai}, {jumlah_tidak_tercapai}, {persentase_tercapai}, {cpmk_tercapai_list}, {cpmk_tidak_tercapai_list}, {standar_minimal}</small>
+												</div> -->
+
+												<div class="mb-2">
+													<label class="form-label fw-bold small">Template untuk CPMK Tercapai Semua:</label>
+													<textarea
+														class="form-control form-control-sm font-monospace"
+														name="template_tercapai_<?= esc($key) ?>"
+														rows="3"
+														placeholder="Template ketika semua CPMK tercapai..."><?= esc($template['template_tercapai'] ?? '') ?></textarea>
+												</div>
+
+												<div class="mb-2">
+													<label class="form-label fw-bold small">Template untuk CPMK Tidak Tercapai:</label>
+													<textarea
+														class="form-control form-control-sm font-monospace"
+														class="form-control form-control-sm font-monospace"
+														name="template_tidak_tercapai_<?= esc($key) ?>"
+														rows="3"
+														placeholder="Template ketika ada CPMK tidak tercapai..."><?= esc($template['template_tidak_tercapai'] ?? '') ?></textarea>
+												</div>
+											</div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="analysis_mode" id="mode_manual" value="manual" <?= ($portfolio['analysis']['mode'] ?? 'auto') === 'manual' ? 'checked' : '' ?>>
 									<label class="form-check-label" for="mode_manual">
@@ -397,6 +463,42 @@
 
 <!-- Print Styles -->
 <style>
+	/* Template editor styles */
+	.font-monospace {
+		font-family: 'Courier New', Courier, monospace;
+		font-size: 0.85rem;
+	}
+
+	.alert-sm {
+		padding: 0.5rem 0.75rem;
+		font-size: 0.875rem;
+	}
+
+	#auto-analysis-options .border {
+		transition: all 0.3s ease;
+	}
+
+	#auto-analysis-options .border:hover {
+		border-color: #0d6efd !important;
+	}
+
+	[id^="template-edit-"] {
+		background-color: #f8f9fa;
+		border-top: 1px solid #dee2e6;
+		padding-top: 1rem;
+		margin-top: 0.5rem;
+	}
+
+	[id^="template-edit-"] textarea {
+		border: 1px solid #ced4da;
+		transition: border-color 0.15s ease-in-out;
+	}
+
+	[id^="template-edit-"] textarea:focus {
+		border-color: #86b7fe;
+		box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+	}
+
 	@media print {
 		.no-print {
 			display: none !important;
@@ -525,15 +627,49 @@
 		document.getElementById('analysis-edit').style.display = 'none';
 	}
 
-	// Toggle manual analysis textarea based on selected mode
+	// Toggle manual analysis textarea and auto options based on selected mode
 	document.querySelectorAll('input[name="analysis_mode"]').forEach(radio => {
 		radio.addEventListener('change', function() {
 			const manualContainer = document.getElementById('manual-analysis-container');
+			const autoOptionsContainer = document.getElementById('auto-analysis-options');
+
 			if (this.value === 'manual') {
 				manualContainer.style.display = 'block';
+				autoOptionsContainer.style.display = 'none';
 			} else {
 				manualContainer.style.display = 'none';
+				autoOptionsContainer.style.display = 'block';
 			}
+		});
+	});
+
+	function toggleTemplateEdit(optionKey) {
+		const editDiv = document.getElementById('template-edit-' + optionKey);
+		if (editDiv.style.display === 'none' || editDiv.style.display === '') {
+			editDiv.style.display = 'block';
+		} else {
+			editDiv.style.display = 'none';
+		}
+	}
+
+	// Allow radio button deselection (click again to deselect)
+	let lastCheckedRadio = null;
+	document.addEventListener('DOMContentLoaded', function() {
+		// Initialize lastCheckedRadio with the currently checked radio button
+		const checkedRadio = document.querySelector('.auto-option-radio:checked');
+		if (checkedRadio) {
+			lastCheckedRadio = checkedRadio;
+		}
+
+		document.querySelectorAll('.auto-option-radio').forEach(radio => {
+			radio.addEventListener('click', function() {
+				if (this === lastCheckedRadio) {
+					this.checked = false;
+					lastCheckedRadio = null;
+				} else {
+					lastCheckedRadio = this;
+				}
+			});
 		});
 	});
 
@@ -553,6 +689,32 @@
 		saveBtn.disabled = true;
 		saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
+		// Collect auto analysis option (single selection) if auto mode is selected
+		let autoOptions = [];
+		if (mode === 'auto') {
+			const selectedRadio = document.querySelector('input[name="auto_option_single"]:checked');
+			if (selectedRadio) {
+				autoOptions.push(selectedRadio.value);
+			}
+		}
+
+		// Collect template data
+		const templatesData = {};
+		document.querySelectorAll('[name^="template_tercapai_"]').forEach(textarea => {
+			const optionKey = textarea.name.replace('template_tercapai_', '');
+			if (!templatesData[optionKey]) {
+				templatesData[optionKey] = {};
+			}
+			templatesData[optionKey].template_tercapai = textarea.value;
+		});
+		document.querySelectorAll('[name^="template_tidak_tercapai_"]').forEach(textarea => {
+			const optionKey = textarea.name.replace('template_tidak_tercapai_', '');
+			if (!templatesData[optionKey]) {
+				templatesData[optionKey] = {};
+			}
+			templatesData[optionKey].template_tidak_tercapai = textarea.value;
+		});
+
 		// Prepare data
 		const formData = new FormData();
 		formData.append('mata_kuliah_id', '<?= $portfolio['mata_kuliah_id'] ?>');
@@ -560,6 +722,8 @@
 		formData.append('program_studi', '<?= $portfolio['identitas']['program_studi'] ?>');
 		formData.append('mode', mode);
 		formData.append('analisis_singkat', analysisText);
+		formData.append('auto_options', JSON.stringify(autoOptions));
+		formData.append('templates', JSON.stringify(templatesData));
 
 		// Send AJAX request
 		fetch('<?= base_url('admin/laporan-cpmk/save-analysis') ?>', {

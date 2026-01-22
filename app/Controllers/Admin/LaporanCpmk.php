@@ -14,6 +14,7 @@ class LaporanCpmk extends BaseController
 	protected $standarMinimalCapaianModel;
 	protected $analysisCpmkModel;
 	protected $cqiModel;
+	protected $analysisTemplateModel;
 
 	public function __construct()
 	{
@@ -25,6 +26,7 @@ class LaporanCpmk extends BaseController
 		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCapaianModel();
 		$this->analysisCpmkModel = new \App\Models\AnalysisCpmkModel();
 		$this->cqiModel = new \App\Models\CqiModel();
+		$this->analysisTemplateModel = new \App\Models\AnalysisTemplateModel();
 	}
 
 	public function index()
@@ -164,6 +166,9 @@ class LaporanCpmk extends BaseController
 			->get()
 			->getRow('id');
 
+		// Get templates for inline editing
+		$templates = $this->analysisTemplateModel->getTemplatesAsArray();
+
 		return [
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
@@ -181,7 +186,8 @@ class LaporanCpmk extends BaseController
 			'mata_kuliah_id' => $mataKuliahId,
 			'jadwal_mengajar_id' => $jadwalMengajarId,
 			'rps_id' => $rpsId,
-			'cqi_data' => $cqiData
+			'cqi_data' => $cqiData,
+			'templates' => $templates
 		];
 	}
 
@@ -504,14 +510,23 @@ class LaporanCpmk extends BaseController
 
 		// Determine mode and analysis text
 		$mode = $savedAnalysis['mode'] ?? 'auto';
+		$autoOptions = [];
 		$analysisSingkat = '';
 
 		if ($mode === 'manual' && !empty($savedAnalysis['analisis_singkat'])) {
 			// Use manual analysis
 			$analysisSingkat = $savedAnalysis['analisis_singkat'];
 		} else {
-			// Use auto-generated analysis
-			$analysisSingkat = $this->generateAnalysisSingkat($cpmkTidakTercapai);
+			// Decode auto_options from saved analysis
+			if (!empty($savedAnalysis['auto_options'])) {
+				$autoOptions = json_decode($savedAnalysis['auto_options'], true);
+				if (!is_array($autoOptions)) {
+					$autoOptions = [];
+				}
+			}
+
+			// Use auto-generated analysis with saved options
+			$analysisSingkat = $this->generateAnalysisSingkat($cpmkTercapai, $cpmkTidakTercapai, $passingThreshold, $autoOptions);
 		}
 
 		return [
@@ -519,20 +534,70 @@ class LaporanCpmk extends BaseController
 			'cpmk_tercapai' => $cpmkTercapai,
 			'cpmk_tidak_tercapai' => $cpmkTidakTercapai,
 			'analisis_singkat' => $analysisSingkat,
-			'mode' => $mode
+			'mode' => $mode,
+			'auto_options' => $autoOptions
 		];
 	}
 
-	private function generateAnalysisSingkat($cpmkTidakTercapai)
+	private function generateAnalysisSingkat($cpmkTercapai, $cpmkTidakTercapai, $passingThreshold, $autoOptions = [])
 	{
-		if (empty($cpmkTidakTercapai)) {
-			return 'Semua CPMK tercapai dengan baik. Mahasiswa menunjukkan pemahaman yang memadai terhadap materi pembelajaran.';
+		// If no options specified, use the main default template
+		if (empty($autoOptions)) {
+			$autoOptions = ['default'];
 		}
 
-		$jumlahTidakTercapai = count($cpmkTidakTercapai);
-		$cpmkList = implode(', ', $cpmkTidakTercapai);
+		// Get templates from database
+		$templates = $this->analysisTemplateModel->getTemplatesAsArray();
 
-		return "Terdapat $jumlahTidakTercapai CPMK yang belum tercapai ($cpmkList). Mahasiswa mengalami kesulitan dalam memahami dan menerapkan konsep-konsep tersebut. Diperlukan evaluasi lebih lanjut terhadap metode pengajaran dan materi pembelajaran.";
+		// Prepare placeholder values
+		$totalCpmk = count($cpmkTercapai) + count($cpmkTidakTercapai);
+		$jumlahTercapai = count($cpmkTercapai);
+		$jumlahTidakTercapai = count($cpmkTidakTercapai);
+		$persentaseTercapai = $totalCpmk > 0 ? round(($jumlahTercapai / $totalCpmk) * 100, 2) : 0;
+		$cpmkTercapaiList = implode(', ', $cpmkTercapai);
+		$cpmkTidakTercapaiList = implode(', ', $cpmkTidakTercapai);
+
+		$placeholders = [
+			'{total_cpmk}' => $totalCpmk,
+			'{jumlah_tercapai}' => $jumlahTercapai,
+			'{jumlah_tidak_tercapai}' => $jumlahTidakTercapai,
+			'{persentase_tercapai}' => $persentaseTercapai,
+			'{cpmk_tercapai_list}' => $cpmkTercapaiList,
+			'{cpmk_tidak_tercapai_list}' => $cpmkTidakTercapaiList,
+			'{standar_minimal}' => $passingThreshold,
+		];
+
+		$analysisParts = [];
+
+		// Process each selected option
+		foreach ($autoOptions as $optionKey) {
+			if (!isset($templates[$optionKey])) {
+				continue;
+			}
+
+			$template = $templates[$optionKey];
+
+			// Determine which template to use based on whether all CPMKs are achieved
+			$templateText = empty($cpmkTidakTercapai)
+				? $template['template_tercapai']
+				: $template['template_tidak_tercapai'];
+
+			// Skip if template is empty
+			if (empty(trim($templateText))) {
+				continue;
+			}
+
+			// Replace placeholders with actual values
+			$analysisText = str_replace(
+				array_keys($placeholders),
+				array_values($placeholders),
+				$templateText
+			);
+
+			$analysisParts[] = $analysisText;
+		}
+
+		return implode(' ', $analysisParts);
 	}
 
 	private function getTahunAkademik()
@@ -1505,6 +1570,8 @@ class LaporanCpmk extends BaseController
 		$programStudi = $this->request->getPost('program_studi');
 		$mode = $this->request->getPost('mode');
 		$analysisSingkat = $this->request->getPost('analisis_singkat');
+		$autoOptionsJson = $this->request->getPost('auto_options');
+		$templatesJson = $this->request->getPost('templates');
 
 		if (!$mataKuliahId || !$tahunAkademik || !$mode) {
 			return $this->response->setJSON([
@@ -1513,20 +1580,41 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(400);
 		}
 
+		// Decode auto_options if it's in JSON format
+		$autoOptions = null;
+		if ($mode === 'auto' && $autoOptionsJson) {
+			$autoOptions = $autoOptionsJson; // Already JSON string from frontend
+		}
+
 		$data = [
 			'mata_kuliah_id' => $mataKuliahId,
 			'tahun_akademik' => $tahunAkademik,
 			'program_studi' => $programStudi,
 			'mode' => $mode,
-			'analisis_singkat' => $mode === 'manual' ? $analysisSingkat : null
+			'analisis_singkat' => $mode === 'manual' ? $analysisSingkat : null,
+			'auto_options' => $autoOptions
 		];
 
 		try {
+			// Save analysis settings
 			$this->analysisCpmkModel->saveAnalysis($data);
+
+			// Save templates if provided
+			if ($templatesJson) {
+				$templates = json_decode($templatesJson, true);
+				if (is_array($templates)) {
+					foreach ($templates as $optionKey => $templateData) {
+						$this->analysisTemplateModel->updateByKey($optionKey, [
+							'template_tercapai' => $templateData['template_tercapai'] ?? '',
+							'template_tidak_tercapai' => $templateData['template_tidak_tercapai'] ?? ''
+						]);
+					}
+				}
+			}
 
 			return $this->response->setJSON([
 				'success' => true,
-				'message' => 'Analisis berhasil disimpan.'
+				'message' => 'Analisis dan template berhasil disimpan.'
 			]);
 		} catch (\Exception $e) {
 			return $this->response->setJSON([
@@ -1601,6 +1689,70 @@ class LaporanCpmk extends BaseController
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Gagal menyimpan data CQI: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function templates()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return redirect()->to('/')->with('error', 'Akses ditolak.');
+		}
+
+		$data = [
+			'title' => 'Template Analisis CPMK',
+			'templates' => $this->analysisTemplateModel->getActiveTemplates(),
+			'placeholders' => $this->analysisTemplateModel->getAvailablePlaceholders()
+		];
+
+		return view('admin/laporan_cpmk/templates', $data);
+	}
+
+	public function saveTemplate()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$optionKey = $this->request->getPost('option_key');
+		$templateTercapai = $this->request->getPost('template_tercapai');
+		$templateTidakTercapai = $this->request->getPost('template_tidak_tercapai');
+
+		if (!$optionKey) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Option key tidak valid.'
+			])->setStatusCode(400);
+		}
+
+		$data = [
+			'template_tercapai' => $templateTercapai,
+			'template_tidak_tercapai' => $templateTidakTercapai
+		];
+
+		try {
+			$result = $this->analysisTemplateModel->updateByKey($optionKey, $data);
+
+			if ($result) {
+				return $this->response->setJSON([
+					'success' => true,
+					'message' => 'Template berhasil disimpan.'
+				]);
+			} else {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Template tidak ditemukan.'
+				])->setStatusCode(404);
+			}
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menyimpan template: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}

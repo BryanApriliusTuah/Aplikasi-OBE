@@ -17,7 +17,8 @@ class AnalysisCpmkModel extends Model
         'tahun_akademik',
         'program_studi',
         'mode',
-        'analisis_singkat'
+        'analisis_singkat',
+        'auto_options'
     ];
 
     // Dates

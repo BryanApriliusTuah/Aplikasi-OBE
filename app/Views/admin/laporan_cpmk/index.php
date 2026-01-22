@@ -4,8 +4,15 @@
 <div class="container-fluid">
 	<div class="row mb-4">
 		<div class="col-12">
-			<h2 class="fw-bold">Laporan CPMK</h2>
-			<p class="text-muted">Pilih mata kuliah dan tahun akademik untuk generate portofolio mata kuliah</p>
+			<div class="d-flex justify-content-between align-items-center">
+				<div>
+					<h2 class="fw-bold">Laporan CPMK</h2>
+					<p class="text-muted mb-0">Pilih mata kuliah dan tahun akademik untuk generate portofolio mata kuliah</p>
+				</div>
+				<a href="<?= base_url('admin/laporan-cpmk/templates') ?>" class="btn btn-outline-primary">
+					<i class="bi bi-file-earmark-text"></i> Kelola Template Analisis
+				</a>
+			</div>
 		</div>
 	</div>
 
