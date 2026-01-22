@@ -28,11 +28,12 @@ CREATE TABLE `analisis_cpl` (
   `tahun_akademik` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
   `angkatan` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
   `mode` enum('auto','manual') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'auto',
+  `auto_options` text COLLATE utf8mb4_general_ci,
   `analisis_summary` text COLLATE utf8mb4_general_ci,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +42,7 @@ CREATE TABLE `analisis_cpl` (
 
 LOCK TABLES `analisis_cpl` WRITE;
 /*!40000 ALTER TABLE `analisis_cpl` DISABLE KEYS */;
-INSERT INTO `analisis_cpl` VALUES (1,'Teknik Informatika','2024/2025 Ganjil','2021','manual','Test','2025-12-09 17:06:13','2025-12-09 17:06:13');
+INSERT INTO `analisis_cpl` VALUES (1,'Teknik Informatika','2024/2025 Ganjil','2021','manual',NULL,'Test','2025-12-09 17:06:13','2025-12-09 17:06:13'),(2,'Teknik Informatika','2024/2025','2021','auto','[\"default\"]',NULL,'2026-01-22 11:11:55','2026-01-22 11:11:55');
 /*!40000 ALTER TABLE `analisis_cpl` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -59,12 +60,13 @@ CREATE TABLE `analisis_cpmk` (
   `program_studi` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `mode` enum('auto','manual') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'auto',
   `analisis_singkat` text COLLATE utf8mb4_general_ci,
+  `auto_options` text COLLATE utf8mb4_general_ci,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `analisis_cpmk_mata_kuliah_id_foreign` (`mata_kuliah_id`),
   CONSTRAINT `analisis_cpmk_mata_kuliah_id_foreign` FOREIGN KEY (`mata_kuliah_id`) REFERENCES `mata_kuliah` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,8 +75,70 @@ CREATE TABLE `analisis_cpmk` (
 
 LOCK TABLES `analisis_cpmk` WRITE;
 /*!40000 ALTER TABLE `analisis_cpmk` DISABLE KEYS */;
-INSERT INTO `analisis_cpmk` VALUES (1,8,'2024/2025 Ganjil','Teknik Informatika','auto',NULL,'2025-12-06 09:45:35','2025-12-06 09:48:02');
+INSERT INTO `analisis_cpmk` VALUES (1,8,'2024/2025 Ganjil','Teknik Informatika','auto',NULL,NULL,'2025-12-06 09:45:35','2025-12-06 09:48:02'),(2,8,'2024/2025','Teknik Informatika','auto',NULL,'[\"capaian_keseluruhan\"]','2026-01-22 09:25:48','2026-01-22 10:14:30');
 /*!40000 ALTER TABLE `analisis_cpmk` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `analysis_templates`
+--
+
+DROP TABLE IF EXISTS `analysis_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `analysis_templates` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `option_key` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `option_label` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `template_tercapai` text COLLATE utf8mb4_general_ci,
+  `template_tidak_tercapai` text COLLATE utf8mb4_general_ci,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `option_key` (`option_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `analysis_templates`
+--
+
+LOCK TABLES `analysis_templates` WRITE;
+/*!40000 ALTER TABLE `analysis_templates` DISABLE KEYS */;
+INSERT INTO `analysis_templates` VALUES (1,'capaian_keseluruhan','Template 2','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual. (TEMPLATE2)','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual (TEMPLATE2)',1,'2026-01-22 09:39:11','2026-01-22 10:14:30'),(2,'perbandingan_target','Template 3','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual.','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual.',1,'2026-01-22 09:39:11','2026-01-22 10:14:30'),(3,'analisis_cpmk_rendah','Template 4','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual.','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual.',1,'2026-01-22 09:39:11','2026-01-22 10:14:30'),(4,'rekomendasi_perbaikan','Template 5','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual.','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual.',1,'2026-01-22 09:39:11','2026-01-22 10:14:30'),(5,'kesimpulan_umum','Template 6','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual.','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual.',1,'2026-01-22 09:39:11','2026-01-22 10:14:30'),(6,'default','Template 1','Mahasiswa berhasil mengintegrasikan teori dengan studi kasus nyata. Metode pengajaran saat ini sangat kontekstual.','Mahasiswa mengalami kesulitan dalam mengintegrasikan teori dengan studi kasus nyata. Diduga karena metode pengajaran belum cukup kontekstual.',1,'2026-01-22 10:02:28','2026-01-22 10:14:30');
+/*!40000 ALTER TABLE `analysis_templates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `analysis_templates_cpl`
+--
+
+DROP TABLE IF EXISTS `analysis_templates_cpl`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `analysis_templates_cpl` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `option_key` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `option_label` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `template_tercapai` text COLLATE utf8mb4_general_ci,
+  `template_tidak_tercapai` text COLLATE utf8mb4_general_ci,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `option_key` (`option_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `analysis_templates_cpl`
+--
+
+LOCK TABLES `analysis_templates_cpl` WRITE;
+/*!40000 ALTER TABLE `analysis_templates_cpl` DISABLE KEYS */;
+INSERT INTO `analysis_templates_cpl` VALUES (1,'default','Template 1','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 10:33:02','2026-01-22 11:11:55'),(2,'formal','Template 2','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 10:33:02','2026-01-22 11:11:55'),(3,'singkat','Template 3','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 10:33:02','2026-01-22 11:11:55'),(4,'template_4','Template 4','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 11:07:43','2026-01-22 11:11:55'),(5,'template_5','Template 5','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 11:07:43','2026-01-22 11:11:55'),(6,'template_6','Template 6','Mahasiswa mampu memahami persoalan riil yang dihadapi perusahaan. Materi terserap dengan baik di seluruh MK kontributor.','Kurangnya latihan studi kasus dalam proses pembelajaran untuk memahami persoalan riil yang dihadapi perusahaan. Materi tidak terserap dengan baik di beberapa MK kontributor. Mahasiswa lebih fokus pada aspek teknis dibandingkan soft-skill.',1,'2026-01-22 11:07:43','2026-01-22 11:11:55');
+/*!40000 ALTER TABLE `analysis_templates_cpl` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -722,7 +786,7 @@ CREATE TABLE `mbkm_komponen_nilai` (
 
 LOCK TABLES `mbkm_komponen_nilai` WRITE;
 /*!40000 ALTER TABLE `mbkm_komponen_nilai` DISABLE KEYS */;
-INSERT INTO `mbkm_komponen_nilai` VALUES (1,1,'Kehadiran dan Kedisiplinan',20.00,'Penilaian kehadiran dan kedisiplinan selama magang','2025-10-20 15:39:26'),(2,1,'Kinerja dan Produktivitas',30.00,'Penilaian hasil kerja dan produktivitas','2025-10-20 15:39:26'),(3,1,'Sikap dan Etika Kerja',20.00,'Penilaian sikap profesional dan etika','2025-10-20 15:39:26'),(4,1,'Laporan Akhir',30.00,'Penilaian laporan akhir kegiatan','2025-10-20 15:39:26'),(5,4,'Proposal dan Metodologi',20.00,'Penilaian proposal penelitian dan metodologi','2025-10-20 15:39:26'),(6,4,'Pelaksanaan Penelitian',25.00,'Penilaian proses pelaksanaan','2025-10-20 15:39:26'),(7,4,'Analisis Data dan Hasil',30.00,'Penilaian analisis data','2025-10-20 15:39:26'),(8,4,'Publikasi/Laporan Akhir',25.00,'Penilaian paper atau laporan','2025-10-20 15:39:26'),(9,5,'Perencanaan Program',20.00,'Penilaian perencanaan','2025-10-20 15:39:26'),(10,5,'Pelaksanaan Kegiatan',30.00,'Penilaian pelaksanaan','2025-10-20 15:39:26'),(11,5,'Kolaborasi dan Kepemimpinan',25.00,'Penilaian kerjasama tim','2025-10-20 15:39:26'),(12,5,'Dampak dan Keberlanjutan',25.00,'Penilaian dampak program','2025-10-20 15:39:26'),(13,2,'Adaptasi Budaya dan Bahasa',15.00,'Kemampuan beradaptasi dengan budaya','2025-10-20 16:03:10'),(14,2,'Prestasi Akademik',35.00,'Nilai yang diperoleh di universitas tujuan','2025-10-20 16:03:10'),(15,2,'Kehadiran dan Partisipasi',20.00,'Keaktifan dalam kegiatan','2025-10-20 16:03:10'),(16,2,'Laporan Pengalaman',30.00,'Dokumentasi dan refleksi pengalaman','2025-10-20 16:03:10'),(17,3,'Persiapan Pembelajaran',20.00,'Rencana dan materi pembelajaran','2025-10-20 16:03:10'),(18,3,'Pelaksanaan Mengajar',30.00,'Kualitas penyampaian materi','2025-10-20 16:03:10'),(19,3,'Pengelolaan Kelas',20.00,'Kemampuan mengelola kelas','2025-10-20 16:03:10'),(20,3,'Evaluasi dan Refleksi',30.00,'Penilaian pembelajaran dan refleksi','2025-10-20 16:03:10'),(21,6,'Business Plan',25.00,'Kelengkapan dan kelayakan rencana bisnis','2025-10-20 16:03:10'),(22,6,'Implementasi Bisnis',30.00,'Pelaksanaan kegiatan usaha','2025-10-20 16:03:10'),(23,6,'Inovasi dan Kreativitas',20.00,'Tingkat inovasi produk/layanan','2025-10-20 16:03:10'),(25,6,'Keberlanjutan Usaha',10.00,'Potensi keberlanjutan bisnis','2025-12-01 13:38:36'),(26,6,'Mayrika bau',15.00,'Baunyee','2025-12-01 13:38:52');
+INSERT INTO `mbkm_komponen_nilai` VALUES (1,1,'Kehadiran dan Kedisiplinan',10.00,'Penilaian kehadiran dan kedisiplinan selama magang','2025-10-20 15:39:26'),(2,1,'Kinerja dan Produktivitas',30.00,'Penilaian hasil kerja dan produktivitas','2025-10-20 15:39:26'),(3,1,'Sikap dan Etika Kerja',20.00,'Penilaian sikap profesional dan etika','2025-10-20 15:39:26'),(4,1,'Laporan Akhir',30.00,'Penilaian laporan akhir kegiatan','2025-10-20 15:39:26'),(5,4,'Proposal dan Metodologi',20.00,'Penilaian proposal penelitian dan metodologi','2025-10-20 15:39:26'),(6,4,'Pelaksanaan Penelitian',25.00,'Penilaian proses pelaksanaan','2025-10-20 15:39:26'),(7,4,'Analisis Data dan Hasil',30.00,'Penilaian analisis data','2025-10-20 15:39:26'),(8,4,'Publikasi/Laporan Akhir',25.00,'Penilaian paper atau laporan','2025-10-20 15:39:26'),(9,5,'Perencanaan Program',20.00,'Penilaian perencanaan','2025-10-20 15:39:26'),(10,5,'Pelaksanaan Kegiatan',30.00,'Penilaian pelaksanaan','2025-10-20 15:39:26'),(11,5,'Kolaborasi dan Kepemimpinan',25.00,'Penilaian kerjasama tim','2025-10-20 15:39:26'),(12,5,'Dampak dan Keberlanjutan',25.00,'Penilaian dampak program','2025-10-20 15:39:26'),(13,2,'Adaptasi Budaya dan Bahasa',15.00,'Kemampuan beradaptasi dengan budaya','2025-10-20 16:03:10'),(14,2,'Prestasi Akademik',35.00,'Nilai yang diperoleh di universitas tujuan','2025-10-20 16:03:10'),(15,2,'Kehadiran dan Partisipasi',20.00,'Keaktifan dalam kegiatan','2025-10-20 16:03:10'),(16,2,'Laporan Pengalaman',30.00,'Dokumentasi dan refleksi pengalaman','2025-10-20 16:03:10'),(17,3,'Persiapan Pembelajaran',20.00,'Rencana dan materi pembelajaran','2025-10-20 16:03:10'),(18,3,'Pelaksanaan Mengajar',30.00,'Kualitas penyampaian materi','2025-10-20 16:03:10'),(19,3,'Pengelolaan Kelas',20.00,'Kemampuan mengelola kelas','2025-10-20 16:03:10'),(20,3,'Evaluasi dan Refleksi',30.00,'Penilaian pembelajaran dan refleksi','2025-10-20 16:03:10'),(21,6,'Business Plan',25.00,'Kelengkapan dan kelayakan rencana bisnis','2025-10-20 16:03:10'),(22,6,'Implementasi Bisnis',30.00,'Pelaksanaan kegiatan usaha','2025-10-20 16:03:10'),(23,6,'Inovasi dan Kreativitas',20.00,'Tingkat inovasi produk/layanan','2025-10-20 16:03:10'),(25,6,'Keberlanjutan Usaha',10.00,'Potensi keberlanjutan bisnis','2025-12-01 13:38:36'),(26,6,'Mayrika bau',15.00,'Baunyee','2025-12-01 13:38:52');
 /*!40000 ALTER TABLE `mbkm_komponen_nilai` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -810,7 +874,7 @@ CREATE TABLE `migrations` (
   `time` int NOT NULL,
   `batch` int unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -819,7 +883,7 @@ CREATE TABLE `migrations` (
 
 LOCK TABLES `migrations` WRITE;
 /*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
-INSERT INTO `migrations` VALUES (1,'2025-01-15-100000','App\\Database\\Migrations\\CreateNilaiTeknikPenilaianTable','default','App',1762089800,1),(2,'2025-01-16-100000','App\\Database\\Migrations\\AddValidationToJadwalMengajar','default','App',1762168438,2),(3,'2025-01-17-100000','App\\Database\\Migrations\\CreateGradeConfigTable','default','App',1762700001,3),(4,'2025-01-20-100000','App\\Database\\Migrations\\CreateStandarMinimalCapaianTable','default','App',1765013849,4),(5,'2025-01-21-100000','App\\Database\\Migrations\\CreateAnalysisCpmkTable','default','App',1765014298,5),(6,'2025-01-22-100000','App\\Database\\Migrations\\CreateAnalysisCplTable','default','App',1765299871,6),(7,'2025-01-22-110000','App\\Database\\Migrations\\CreateCqiTable','default','App',1765300607,7);
+INSERT INTO `migrations` VALUES (1,'2025-01-15-100000','App\\Database\\Migrations\\CreateNilaiTeknikPenilaianTable','default','App',1762089800,1),(2,'2025-01-16-100000','App\\Database\\Migrations\\AddValidationToJadwalMengajar','default','App',1762168438,2),(3,'2025-01-17-100000','App\\Database\\Migrations\\CreateGradeConfigTable','default','App',1762700001,3),(4,'2025-01-20-100000','App\\Database\\Migrations\\CreateStandarMinimalCapaianTable','default','App',1765013849,4),(5,'2025-01-21-100000','App\\Database\\Migrations\\CreateAnalysisCpmkTable','default','App',1765014298,5),(6,'2025-01-22-100000','App\\Database\\Migrations\\CreateAnalysisCplTable','default','App',1765299871,6),(7,'2025-01-22-110000','App\\Database\\Migrations\\CreateCqiTable','default','App',1765300607,7),(8,'2026-01-22-100000','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpmk','default','App',1769074751,8),(9,'2026-01-22-110000','App\\Database\\Migrations\\CreateAnalysisTemplatesTable','default','App',1769074751,8),(10,'2026-01-22-120000','App\\Database\\Migrations\\AddDefaultAnalysisTemplate','default','App',1769076148,9),(11,'2026-01-22-103102','App\\Database\\Migrations\\CreateAnalysisTemplatesCplTable','default','App',1769077982,10),(12,'2026-01-22-110710','App\\Database\\Migrations\\UpdateAnalysisTemplatesCplLabels','default','App',1769080063,11),(13,'2026-01-22-111127','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpl','default','App',1769080305,12),(14,'2026-01-23-100000','App\\Database\\Migrations\\SeparateCpmkCplThresholds','default','App',1769080993,13);
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1162,27 +1226,55 @@ LOCK TABLES `rps_referensi` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `standar_minimal_capaian`
+-- Table structure for table `standar_minimal_cpl`
 --
 
-DROP TABLE IF EXISTS `standar_minimal_capaian`;
+DROP TABLE IF EXISTS `standar_minimal_cpl`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `standar_minimal_capaian` (
+CREATE TABLE `standar_minimal_cpl` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `persentase` decimal(5,2) NOT NULL DEFAULT '75.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `standar_minimal_capaian`
+-- Dumping data for table `standar_minimal_cpl`
 --
 
-LOCK TABLES `standar_minimal_capaian` WRITE;
-/*!40000 ALTER TABLE `standar_minimal_capaian` DISABLE KEYS */;
-INSERT INTO `standar_minimal_capaian` VALUES (1,74.00);
-/*!40000 ALTER TABLE `standar_minimal_capaian` ENABLE KEYS */;
+LOCK TABLES `standar_minimal_cpl` WRITE;
+/*!40000 ALTER TABLE `standar_minimal_cpl` DISABLE KEYS */;
+INSERT INTO `standar_minimal_cpl` VALUES (1,75.00,'2026-01-22 11:23:13','2026-01-22 11:26:42');
+/*!40000 ALTER TABLE `standar_minimal_cpl` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `standar_minimal_cpmk`
+--
+
+DROP TABLE IF EXISTS `standar_minimal_cpmk`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `standar_minimal_cpmk` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `persentase` decimal(5,2) NOT NULL DEFAULT '75.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `standar_minimal_cpmk`
+--
+
+LOCK TABLES `standar_minimal_cpmk` WRITE;
+/*!40000 ALTER TABLE `standar_minimal_cpmk` DISABLE KEYS */;
+INSERT INTO `standar_minimal_cpmk` VALUES (1,74.00,'2026-01-22 11:23:13','2026-01-22 11:23:13');
+/*!40000 ALTER TABLE `standar_minimal_cpmk` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1271,7 +1363,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','$2y$10$uCUV3FbS0QoHEGJ5vLKbUetKDUmY09jg.SWhb1iLzvso9mmqm0B2a','admin','2025-05-27 21:50:24','2025-08-27 22:55:47'),(10,'dosen','$2y$12$6PGYbrXL.lOBhMdT3/5ej.OblG3AKkOvkEzHHC3ybIBlmEj2nTJ6.','dosen','2025-11-03 11:16:30','2025-11-03 11:16:30'),(11,'mahasiswa','$2y$12$fTnemZVZVUVzxs7Rh/cxbexksB6GtcvYhZehJYiF9oJDsb2FMtT/i','mahasiswa','2025-11-13 12:05:24','2025-11-13 12:27:56');
+INSERT INTO `users` VALUES (1,'admin','$2y$10$uCUV3FbS0QoHEGJ5vLKbUetKDUmY09jg.SWhb1iLzvso9mmqm0B2a','admin','2025-05-27 21:50:24','2025-08-27 22:55:47'),(10,'dosen','$2y$12$Gm97OV7gpGUwSjfp/J.H4uLBp1KDQ.zXEIaCOicBznkrBit5DAySK','dosen','2025-11-03 11:16:30','2026-01-08 12:38:34'),(11,'mahasiswa','$2y$12$fTnemZVZVUVzxs7Rh/cxbexksB6GtcvYhZehJYiF9oJDsb2FMtT/i','mahasiswa','2025-11-13 12:05:24','2025-11-13 12:27:56');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1376,4 +1468,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-19  9:52:55
+-- Dump completed on 2026-01-22 18:37:46
