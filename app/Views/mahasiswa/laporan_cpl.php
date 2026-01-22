@@ -2,10 +2,15 @@
 
 <?= $this->section('content') ?>
 
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
 <style>
+	/* Filter Card Styling */
 	.filter-card {
 		border: 2px solid #e0e0e0;
 		background: #ffffff;
+		transition: all 0.3s ease;
 	}
 
 	.filter-card:hover {
@@ -41,30 +46,30 @@
 	<p class="text-muted">Laporan Capaian Pembelajaran Lulusan</p>
 </div>
 
-<!-- Sub-tabs for different filter types -->
+<!-- Filter Type Cards -->
 <div class="row g-3 mb-4">
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#semester-filter" id="semester-card-btn">
-			<div class="card filter-card h-100 border-primary shadow-sm" id="semester-card" style="cursor: pointer; transition: all 0.3s;">
+		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#cpl-semester" id="semester-card-btn">
+			<div class="card filter-card h-100 border-primary shadow-sm" id="semester-card" style="cursor: pointer;">
 				<div class="card-body text-center p-3">
 					<div class="mb-2">
-						<i class="bi bi-calendar-week text-primary" style="font-size: 1.8rem;"></i>
+						<i class="bi bi-calendar-range text-primary" style="font-size: 1.8rem;"></i>
 					</div>
 					<h6 class="card-title mb-2 text-primary fw-bold">CPL Per Semester</h6>
-					<p class="card-text text-muted small mb-0">Pilih semester tertentu untuk melihat laporan CPL mahasiswa pada semester tersebut.</p>
+					<p class="card-text text-muted small mb-0">Perhitungan CPL per semester dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam satu semester.</p>
 				</div>
 			</div>
 		</button>
 	</div>
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#tahun-filter" id="tahun-card-btn">
-			<div class="card filter-card h-100 shadow-sm" id="tahun-card" style="cursor: pointer; transition: all 0.3s;">
+		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#cpl-tahun" id="tahun-card-btn">
+			<div class="card filter-card h-100 shadow-sm" id="tahun-card" style="cursor: pointer;">
 				<div class="card-body text-center p-3">
 					<div class="mb-2">
-						<i class="bi bi-calendar-range text-secondary" style="font-size: 1.8rem;"></i>
+						<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
 					</div>
 					<h6 class="card-title mb-2">CPL Per Tahun Akademik</h6>
-					<p class="card-text text-muted small mb-0">Pilih tahun akademik untuk melihat laporan CPL mahasiswa dalam 1 tahun akademik.</p>
+					<p class="card-text text-muted small mb-0">Perhitungan CPL per tahun akademik dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam 1 tahun akademik.</p>
 				</div>
 			</div>
 		</button>
@@ -74,9 +79,13 @@
 <!-- Tab Content -->
 <div class="tab-content" id="filterTabsContent">
 	<!-- Semester Filter Tab -->
-	<div class="tab-pane fade show active" id="semester-filter" role="tabpanel">
+	<div class="tab-pane fade show active" id="cpl-semester" role="tabpanel">
 		<div class="card mb-4">
 			<div class="card-body">
+				<div class="d-flex align-items-center gap-2 mb-3">
+					<i class="bi bi-funnel-fill text-primary"></i>
+					<span class="fw-semibold">Filter CPL Per Semester</span>
+				</div>
 				<form id="filterFormSemester">
 					<div class="row g-3">
 						<div class="col-md-10">
@@ -100,9 +109,13 @@
 	</div>
 
 	<!-- Tahun Akademik Filter Tab -->
-	<div class="tab-pane fade" id="tahun-filter" role="tabpanel">
+	<div class="tab-pane fade" id="cpl-tahun" role="tabpanel">
 		<div class="card mb-4">
 			<div class="card-body">
+				<div class="d-flex align-items-center gap-2 mb-3">
+					<i class="bi bi-funnel-fill text-primary"></i>
+					<span class="fw-semibold">Filter CPL Per Tahun Akademik</span>
+				</div>
 				<form id="filterFormTahun">
 					<div class="row g-3">
 						<div class="col-md-10">
@@ -139,29 +152,30 @@
 	<div class="card-body text-center py-5 text-muted">
 		<i class="bi bi-inbox" style="font-size: 3rem;"></i>
 		<p class="mb-1 mt-3">Belum ada data yang ditampilkan</p>
-		<small>Pilih filter berdasarkan semester atau tahun akademik untuk melihat laporan CPL</small>
+		<small>Pilih filter untuk melihat laporan CPL Anda</small>
 	</div>
 </div>
 
 <!-- Data Table -->
 <div id="dataTable" style="display: none;">
-	<div class="card">
-		<div class="card-body">
-			<div class="table-responsive">
-				<table class="table table-bordered table-hover">
-					<thead class="table-light">
-						<tr>
-							<th width="5%" class="text-center">No</th>
-							<th width="15%">Kode MK</th>
-							<th width="40%">Mata Kuliah</th>
-							<th width="20%" class="text-center">Rata-rata CPL (%)</th>
-							<th width="20%" class="text-center">Detail</th>
-						</tr>
-					</thead>
-					<tbody id="tableBody">
-					</tbody>
-				</table>
-			</div>
+	<div class="shadow-sm mb-4">
+		<div class="modern-table-wrapper">
+			<div class="scroll-indicator"></div>
+			<table id="cplTable" class="modern-table">
+				<thead>
+					<tr>
+						<th class="text-center" style="width: 50px;">No</th>
+						<th class="text-center" style="min-width: 120px;">Kode CPL</th>
+						<th class="text-center" style="min-width: 250px;">Deskripsi</th>
+						<th class="text-center" style="min-width: 100px;">Jumlah MK</th>
+						<th class="text-center" style="width: 120px;">Nilai CPL</th>
+						<th class="text-center" style="width: 120px;">Capaian CPL</th>
+						<th class="text-center" style="width: 100px;">Detail</th>
+					</tr>
+				</thead>
+				<tbody id="tableBody">
+				</tbody>
+			</table>
 		</div>
 	</div>
 </div>
@@ -201,39 +215,34 @@
 		// Handle filter card clicks - update styling and switch tabs
 		$('#semester-card-btn, #semester-card').on('click', function(e) {
 			e.preventDefault();
-
-			// Remove active styling from all cards
-			$('.filter-card').removeClass('border-primary');
-			$('.filter-card .card-title').removeClass('text-primary fw-bold');
-			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
-
-			// Add active styling to semester card
-			$('#semester-card').addClass('border-primary');
-			$('#semester-card').find('.card-title').addClass('text-primary fw-bold');
-			$('#semester-card').find('i').removeClass('text-secondary').addClass('text-primary');
-
-			// Switch to semester tab
-			$('.tab-pane').removeClass('show active');
-			$('#semester-filter').addClass('show active');
+			updateActiveCard('semester');
 		});
 
 		$('#tahun-card-btn, #tahun-card').on('click', function(e) {
 			e.preventDefault();
+			updateActiveCard('tahun');
+		});
 
+		function updateActiveCard(type) {
 			// Remove active styling from all cards
 			$('.filter-card').removeClass('border-primary');
 			$('.filter-card .card-title').removeClass('text-primary fw-bold');
 			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
 
-			// Add active styling to tahun card
-			$('#tahun-card').addClass('border-primary');
-			$('#tahun-card').find('.card-title').addClass('text-primary fw-bold');
-			$('#tahun-card').find('i').removeClass('text-secondary').addClass('text-primary');
+			// Add active styling to selected card
+			const cardId = type + '-card';
+			$('#' + cardId).addClass('border-primary');
+			$('#' + cardId).find('.card-title').addClass('text-primary fw-bold');
+			$('#' + cardId).find('i').removeClass('text-secondary').addClass('text-primary');
 
-			// Switch to tahun akademik tab
+			// Switch to corresponding tab
 			$('.tab-pane').removeClass('show active');
-			$('#tahun-filter').addClass('show active');
-		});
+			$('#cpl-' + type).addClass('show active');
+
+			// Hide data table and show empty state
+			$('#dataTable').hide();
+			$('#emptyState').show();
+		}
 
 		// Handle semester filter form submission
 		$('#filterFormSemester').on('submit', function(e) {
@@ -246,7 +255,7 @@
 				return;
 			}
 
-			loadData(semester, '');
+			loadData(semester, '', 'semester');
 		});
 
 		// Handle tahun akademik filter form submission
@@ -260,10 +269,10 @@
 				return;
 			}
 
-			loadData('', tahunAkademik);
+			loadData('', tahunAkademik, 'tahun');
 		});
 
-		function loadData(semester, tahunAkademik) {
+		function loadData(semester, tahunAkademik, filterType) {
 			// Show loading, hide others
 			$('#loadingSpinner').show();
 			$('#emptyState').hide();
@@ -274,14 +283,15 @@
 				type: 'GET',
 				data: {
 					semester: semester,
-					tahun_akademik: tahunAkademik
+					tahun_akademik: tahunAkademik,
+					filter_type: filterType
 				},
 				dataType: 'json',
 				success: function(response) {
 					$('#loadingSpinner').hide();
 
 					if (response.success && response.data.length > 0) {
-						renderTable(response.data);
+						renderTable(response.data, filterType, semester, tahunAkademik);
 						$('#dataTable').show();
 					} else {
 						alert(response.message || 'Tidak ada data untuk filter yang dipilih');
@@ -297,7 +307,7 @@
 			});
 		}
 
-		function renderTable(data) {
+		function renderTable(data, filterType, semester, tahunAkademik) {
 			const tbody = $('#tableBody');
 			tbody.empty();
 
@@ -305,36 +315,175 @@
 				const row = `
 					<tr>
 						<td class="text-center">${index + 1}</td>
-						<td><strong>${escapeHtml(item.kode_mk)}</strong></td>
-						<td>${escapeHtml(item.nama_mk)}</td>
 						<td class="text-center">
-							<span class="badge bg-success" style="font-size: 1rem;">
-								${item.avg_cpl}%
-							</span>
+							<strong class="text-primary">${escapeHtml(item.kode_cpl)}</strong>
+						</td>
+						<td>
+							<small class="text-dark">${escapeHtml(item.deskripsi)}</small>
 						</td>
 						<td class="text-center">
-							<button class="btn btn-sm btn-info" onclick="showDetail('${escapeHtml(item.kode_mk)}')">
-								<i class="bi bi-eye"></i> Lihat Detail
+							${item.mata_kuliah_count}
+						</td>
+						<td class="text-center">
+							<strong>${parseFloat(item.nilai_cpl).toFixed(2)}</strong>
+						</td>
+						<td class="text-center" data-order="${item.capaian}">
+							${parseFloat(item.capaian).toFixed(2)}%
+						</td>
+						<td class="text-center">
+							<button class="btn btn-sm btn-outline-primary" onclick="showDetail('${escapeHtml(item.kode_cpl)}', '${filterType}', '${semester}', '${tahunAkademik}')" data-bs-toggle="tooltip" title="Lihat detail nilai CPL">
+								<i class="bi bi-eye"></i>
 							</button>
 						</td>
 					</tr>
 				`;
 				tbody.append(row);
 			});
+
+			// Initialize tooltips
+			$('[data-bs-toggle="tooltip"]').tooltip();
+
+			// Initialize custom pagination
+			initPagination('cplTable', 10);
+
+			// Handle scroll indicator for modern table
+			const tableWrapper = document.querySelector('.modern-table-wrapper');
+			if (tableWrapper) {
+				function checkScroll() {
+					const hasHorizontalScroll = tableWrapper.scrollWidth > tableWrapper.clientWidth;
+					const isScrolledToEnd = tableWrapper.scrollLeft >= (tableWrapper.scrollWidth - tableWrapper.clientWidth - 10);
+
+					if (hasHorizontalScroll && !isScrolledToEnd) {
+						tableWrapper.classList.add('has-scroll');
+					} else {
+						tableWrapper.classList.remove('has-scroll');
+					}
+				}
+
+				// Check on load and resize
+				checkScroll();
+				window.addEventListener('resize', checkScroll);
+				tableWrapper.addEventListener('scroll', checkScroll);
+			}
 		}
 
-		window.showDetail = function(kodeMk) {
-			// Get filter values based on active tab
-			let semester = '';
-			let tahunAkademik = '';
+		// Custom Pagination Function
+		function initPagination(tableId, rowsPerPage = 10) {
+			const table = document.getElementById(tableId);
+			if (!table) return;
 
-			if ($('#semester-filter').hasClass('show active')) {
-				semester = $('#semester').val();
-			} else if ($('#tahun-filter').hasClass('show active')) {
-				tahunAkademik = $('#tahun_akademik').val();
+			const tbody = table.querySelector('tbody');
+			const rows = Array.from(tbody.querySelectorAll('tr'));
+			const totalRows = rows.length;
+			const totalPages = Math.ceil(totalRows / rowsPerPage);
+			let currentPage = 1;
+
+			// Create pagination controls
+			const paginationId = `${tableId}_pagination`;
+			let paginationContainer = document.getElementById(paginationId);
+
+			if (!paginationContainer) {
+				paginationContainer = document.createElement('div');
+				paginationContainer.id = paginationId;
+				paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3';
+				table.parentElement.parentElement.appendChild(paginationContainer);
 			}
 
+			function showPage(page) {
+				currentPage = page;
+				const start = (page - 1) * rowsPerPage;
+				const end = start + rowsPerPage;
+
+				rows.forEach((row, index) => {
+					row.style.display = (index >= start && index < end) ? '' : 'none';
+				});
+
+				renderPagination();
+			}
+
+			function renderPagination() {
+				const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+				const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+
+				let html = `
+					<div class="text-muted small">
+						Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+					</div>
+					<nav>
+						<ul class="pagination pagination-sm mb-0">
+				`;
+
+				// Previous button
+				html += `
+					<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+					</li>
+				`;
+
+				// Page numbers
+				const maxVisiblePages = 5;
+				let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+				let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+				if (endPage - startPage + 1 < maxVisiblePages) {
+					startPage = Math.max(1, endPage - maxVisiblePages + 1);
+				}
+
+				if (startPage > 1) {
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+					if (startPage > 2) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+				}
+
+				for (let i = startPage; i <= endPage; i++) {
+					html += `
+						<li class="page-item ${i === currentPage ? 'active' : ''}">
+							<a class="page-link" href="#" data-page="${i}">${i}</a>
+						</li>
+					`;
+				}
+
+				if (endPage < totalPages) {
+					if (endPage < totalPages - 1) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+				}
+
+				// Next button
+				html += `
+					<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+					</li>
+				`;
+
+				html += `
+						</ul>
+					</nav>
+				`;
+
+				paginationContainer.innerHTML = html;
+
+				// Add event listeners
+				paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+					link.addEventListener('click', function(e) {
+						e.preventDefault();
+						const page = parseInt(this.getAttribute('data-page'));
+						if (page >= 1 && page <= totalPages) {
+							showPage(page);
+						}
+					});
+				});
+			}
+
+			// Initialize first page
+			showPage(1);
+		}
+
+		window.showDetail = function(kodeCpl, filterType, semester, tahunAkademik) {
 			$('#detailModal').modal('show');
+			$('#detailModalTitle').text('Detail Perhitungan CPL: ' + kodeCpl);
 			$('#detailModalContent').html(`
 				<div class="text-center py-4">
 					<div class="spinner-border text-primary" role="status">
@@ -347,9 +496,10 @@
 				url: '<?= base_url('mahasiswa/get-cpl-detail-calculation') ?>',
 				type: 'GET',
 				data: {
-					kode_mk: kodeMk,
+					kode_cpl: kodeCpl,
 					semester: semester,
-					tahun_akademik: tahunAkademik
+					tahun_akademik: tahunAkademik,
+					filter_type: filterType
 				},
 				dataType: 'json',
 				success: function(response) {
@@ -376,39 +526,56 @@
 
 		function renderDetailModal(data, summary) {
 			let html = `
-				<div class="mb-3">
-					<h6><strong>Mata Kuliah:</strong> ${escapeHtml(summary.kode_mk)} - ${escapeHtml(summary.nama_mk)}</h6>
-				</div>
-				<div class="table-responsive">
-					<table class="table table-bordered">
-						<thead class="table-light">
+				<div class="modern-table-wrapper">
+					<table class="modern-table mb-0">
+						<thead>
 							<tr>
 								<th width="5%" class="text-center">No</th>
-								<th width="20%">Kode CPL</th>
-								<th width="55%">Deskripsi</th>
-								<th width="20%" class="text-center">Capaian (%)</th>
+								<th width="15%">Kode CPMK</th>
+								<th width="25%">Mata Kuliah</th>
+								<th width="12%" class="text-center">Tahun Akademik</th>
+								<th width="10%" class="text-center">Kelas</th>
+								<th width="10%" class="text-center">Nilai CPMK</th>
+								<th width="10%" class="text-center">Bobot (%)</th>
 							</tr>
 						</thead>
 						<tbody>
 			`;
 
-			data.forEach((item, index) => {
+			if (data.length === 0) {
 				html += `
 					<tr>
-						<td class="text-center">${index + 1}</td>
-						<td><strong>${escapeHtml(item.kode_cpl)}</strong></td>
-						<td>${escapeHtml(item.deskripsi)}</td>
-						<td class="text-center">${item.capaian}%</td>
+						<td colspan="7" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
 					</tr>
 				`;
-			});
+			} else {
+				data.forEach((item, index) => {
+					html += `
+						<tr>
+							<td class="text-center">${index + 1}</td>
+							<td><strong>${escapeHtml(item.kode_cpmk)}</strong></td>
+							<td><small>${escapeHtml(item.kode_mk)} - ${escapeHtml(item.nama_mk)}</small></td>
+							<td class="text-center">${escapeHtml(item.tahun_akademik)}</td>
+							<td class="text-center">${escapeHtml(item.kelas)}</td>
+							<td class="text-center">${parseFloat(item.nilai_cpmk).toFixed(2)}</td>
+							<td class="text-center">${parseFloat(item.bobot).toFixed(0)}%</td>
+						</tr>
+					`;
+				});
+			}
 
+			// Summary row
 			html += `
 						</tbody>
-						<tfoot class="table-secondary">
+						<tfoot>
 							<tr>
-								<td colspan="3" class="text-end"><strong>Rata-rata CPL:</strong></td>
-								<td class="text-center"><strong>${summary.avg_cpl}%</strong></td>
+								<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+								<td class="text-center"><strong>${summary.nilai_cpl.toFixed(2)}</strong></td>
+								<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
+							</tr>
+							<tr style="background-color: #d1e7dd;">
+								<td colspan="6" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
+								<td class="text-center"><h6 class="mb-0"><strong>${summary.capaian_cpl.toFixed(2)}%</strong></h6></td>
 							</tr>
 						</tfoot>
 					</table>
@@ -426,7 +593,7 @@
 				'"': '&quot;',
 				"'": '&#039;'
 			};
-			return text.replace(/[&<>"']/g, m => map[m]);
+			return String(text).replace(/[&<>"']/g, m => map[m]);
 		}
 	});
 </script>

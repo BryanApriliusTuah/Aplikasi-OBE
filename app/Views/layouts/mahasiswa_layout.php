@@ -68,33 +68,31 @@
 					</a>
 				</li>
 
-				<li class="nav-item">
-					<a class="nav-link<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? ' active' : '' ?>"
-						data-bs-toggle="collapse" href="#laporanSubmenu" role="button"
-						aria-expanded="<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? 'true' : 'false' ?>"
-						aria-controls="laporanSubmenu"
-						title="Lihat laporan CPL dan CPMK">
-						<i class="bi bi-file-earmark-text"></i> Laporan
-						<i class="bi bi-chevron-down float-end"></i>
+				<?php
+				$laporanUris = [
+					'mahasiswa/laporan-cpmk',
+					'mahasiswa/laporan-cpl'
+				];
+				$isLaporanOpen = in_array(uri_string(), $laporanUris);
+				?>
+				<li class="nav-item sidebar-dropdown<?= $isLaporanOpen ? ' open has-active-child' : '' ?>">
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat laporan CPL dan CPMK">
+						<span><i class="bi bi-file-earmark-text"></i> Laporan</span>
+						<span class="caret"></span>
 					</a>
-					<div class="collapse<?= strpos(uri_string(), 'mahasiswa/laporan') !== false ? ' show' : '' ?>" id="laporanSubmenu">
-						<ul class="nav flex-column ms-3">
-							<li class="nav-item">
-								<a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpmk' ? ' active' : '' ?>"
+					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isLaporanOpen ? ' show' : '' ?>">
+						<div>
+							<li><a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpmk' ? ' active' : '' ?>"
 									href="<?= base_url('mahasiswa/laporan-cpmk') ?>"
 									data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian CPMK">
-									<i class="bi bi-graph-up"></i> Laporan CPMK
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpl' ? ' active' : '' ?>"
+									Laporan CPMK</a></li>
+							<li><a class="nav-link<?= uri_string() == 'mahasiswa/laporan-cpl' ? ' active' : '' ?>"
 									href="<?= base_url('mahasiswa/laporan-cpl') ?>"
 									data-bs-toggle="tooltip" data-bs-placement="right" title="Laporan Capaian CPL">
-									<i class="bi bi-trophy"></i> Laporan CPL
-								</a>
-							</li>
-						</ul>
-					</div>
+									Laporan CPL</a></li>
+						</div>
+					</ul>
 				</li>
 
 				<!-- <li class="nav-item">
@@ -146,6 +144,44 @@
 		var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
 			return new bootstrap.Tooltip(tooltipTriggerEl)
 		})
+
+		// Script untuk toggle dropdown menu
+		document.querySelectorAll('.sidebar-dropdown-toggle').forEach(function(btn) {
+			btn.addEventListener('click', function(e) {
+				e.preventDefault();
+				var parent = btn.closest('.sidebar-dropdown');
+				var isOpen = parent.classList.contains('open');
+
+				// Tutup semua dropdown lain
+				document.querySelectorAll('.sidebar-dropdown').forEach(function(li) {
+					if (li !== parent) {
+						li.classList.remove('open');
+						var menu = li.querySelector('.sidebar-dropdown-menu');
+						if (menu) menu.classList.remove('show');
+					}
+				});
+
+				// Toggle dropdown yang diklik
+				if (isOpen) {
+					parent.classList.remove('open');
+					parent.querySelector('.sidebar-dropdown-menu').classList.remove('show');
+				} else {
+					parent.classList.add('open');
+					parent.querySelector('.sidebar-dropdown-menu').classList.add('show');
+				}
+			});
+		});
+
+		// Tutup semua dropdown kalau klik di luar sidebar
+		document.body.addEventListener('click', function(e) {
+			if (!e.target.closest('.sidebar')) {
+				document.querySelectorAll('.sidebar-dropdown').forEach(function(li) {
+					li.classList.remove('open');
+					var menu = li.querySelector('.sidebar-dropdown-menu');
+					if (menu) menu.classList.remove('show');
+				});
+			}
+		}, true);
 	</script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

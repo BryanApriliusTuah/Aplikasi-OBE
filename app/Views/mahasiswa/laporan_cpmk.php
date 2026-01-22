@@ -2,6 +2,9 @@
 
 <?= $this->section('content') ?>
 
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
 <style>
 	.filter-card {
 		border: 2px solid #e0e0e0;
@@ -145,23 +148,24 @@
 
 <!-- Data Table -->
 <div id="dataTable" style="display: none;">
-	<div class="card">
-		<div class="card-body">
-			<div class="table-responsive">
-				<table class="table table-bordered table-hover">
-					<thead class="table-light">
-						<tr>
-							<th width="5%" class="text-center">No</th>
-							<th width="15%">Kode MK</th>
-							<th width="40%">Mata Kuliah</th>
-							<th width="20%" class="text-center">Rata-rata CPMK (%)</th>
-							<th width="20%" class="text-center">Detail</th>
-						</tr>
-					</thead>
-					<tbody id="tableBody">
-					</tbody>
-				</table>
-			</div>
+	<div class="shadow-sm mb-4">
+		<div class="modern-table-wrapper">
+			<div class="scroll-indicator"></div>
+			<table id="cpmkTable" class="modern-table">
+				<thead>
+					<tr>
+						<th class="text-center" style="width: 50px;">No</th>
+						<th class="text-center" style="min-width: 120px;">Kode CPMK</th>
+						<th class="text-center" style="min-width: 250px;">Deskripsi</th>
+						<th class="text-center" style="min-width: 100px;">Jumlah MK</th>
+						<th class="text-center" style="width: 120px;">Nilai CPMK</th>
+						<th class="text-center" style="width: 120px;">Capaian CPMK</th>
+						<th class="text-center" style="width: 100px;">Detail</th>
+					</tr>
+				</thead>
+				<tbody id="tableBody">
+				</tbody>
+			</table>
 		</div>
 	</div>
 </div>
@@ -305,25 +309,173 @@
 				const row = `
 					<tr>
 						<td class="text-center">${index + 1}</td>
-						<td><strong>${escapeHtml(item.kode_mk)}</strong></td>
-						<td>${escapeHtml(item.nama_mk)}</td>
 						<td class="text-center">
-							<span class="badge bg-primary" style="font-size: 1rem;">
-								${item.avg_cpmk}%
-							</span>
+							<strong class="text-primary">${escapeHtml(item.kode_cpmk)}</strong>
+						</td>
+						<td>
+							<small class="text-dark">${escapeHtml(item.deskripsi)}</small>
 						</td>
 						<td class="text-center">
-							<button class="btn btn-sm btn-info" onclick="showDetail('${escapeHtml(item.kode_mk)}')">
-								<i class="bi bi-eye"></i> Lihat Detail
+							${item.mata_kuliah_count}
+						</td>
+						<td class="text-center">
+							<strong>${parseFloat(item.nilai_cpmk).toFixed(2)}</strong>
+						</td>
+						<td class="text-center" data-order="${item.capaian}">
+								${parseFloat(item.capaian).toFixed(2)}%
+						</td>
+						<td class="text-center">
+							<button class="btn btn-sm btn-outline-primary" onclick="showDetail('${escapeHtml(item.kode_cpmk)}')" data-bs-toggle="tooltip" title="Lihat detail nilai CPMK">
+								<i class="bi bi-eye"></i>
 							</button>
 						</td>
 					</tr>
 				`;
 				tbody.append(row);
 			});
+
+			// Initialize tooltips
+			$('[data-bs-toggle="tooltip"]').tooltip();
+
+			// Initialize custom pagination
+			initPagination('cpmkTable', 10);
+
+			// Handle scroll indicator for modern table
+			const tableWrapper = document.querySelector('.modern-table-wrapper');
+			if (tableWrapper) {
+				function checkScroll() {
+					const hasHorizontalScroll = tableWrapper.scrollWidth > tableWrapper.clientWidth;
+					const isScrolledToEnd = tableWrapper.scrollLeft >= (tableWrapper.scrollWidth - tableWrapper.clientWidth - 10);
+
+					if (hasHorizontalScroll && !isScrolledToEnd) {
+						tableWrapper.classList.add('has-scroll');
+					} else {
+						tableWrapper.classList.remove('has-scroll');
+					}
+				}
+
+				// Check on load and resize
+				checkScroll();
+				window.addEventListener('resize', checkScroll);
+				tableWrapper.addEventListener('scroll', checkScroll);
+			}
 		}
 
-		window.showDetail = function(kodeMk) {
+		// Custom Pagination Function
+		function initPagination(tableId, rowsPerPage = 10) {
+			const table = document.getElementById(tableId);
+			if (!table) return;
+
+			const tbody = table.querySelector('tbody');
+			const rows = Array.from(tbody.querySelectorAll('tr'));
+			const totalRows = rows.length;
+			const totalPages = Math.ceil(totalRows / rowsPerPage);
+			let currentPage = 1;
+
+			// Create pagination controls
+			const paginationId = `${tableId}_pagination`;
+			let paginationContainer = document.getElementById(paginationId);
+
+			if (!paginationContainer) {
+				paginationContainer = document.createElement('div');
+				paginationContainer.id = paginationId;
+				paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3';
+				table.parentElement.parentElement.appendChild(paginationContainer);
+			}
+
+			function showPage(page) {
+				currentPage = page;
+				const start = (page - 1) * rowsPerPage;
+				const end = start + rowsPerPage;
+
+				rows.forEach((row, index) => {
+					row.style.display = (index >= start && index < end) ? '' : 'none';
+				});
+
+				renderPagination();
+			}
+
+			function renderPagination() {
+				const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+				const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+
+				let html = `
+					<div class="text-muted small">
+						Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+					</div>
+					<nav>
+						<ul class="pagination pagination-sm mb-0">
+				`;
+
+				// Previous button
+				html += `
+					<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+					</li>
+				`;
+
+				// Page numbers
+				const maxVisiblePages = 5;
+				let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+				let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+				if (endPage - startPage + 1 < maxVisiblePages) {
+					startPage = Math.max(1, endPage - maxVisiblePages + 1);
+				}
+
+				if (startPage > 1) {
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+					if (startPage > 2) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+				}
+
+				for (let i = startPage; i <= endPage; i++) {
+					html += `
+						<li class="page-item ${i === currentPage ? 'active' : ''}">
+							<a class="page-link" href="#" data-page="${i}">${i}</a>
+						</li>
+					`;
+				}
+
+				if (endPage < totalPages) {
+					if (endPage < totalPages - 1) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+				}
+
+				// Next button
+				html += `
+					<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+					</li>
+				`;
+
+				html += `
+						</ul>
+					</nav>
+				`;
+
+				paginationContainer.innerHTML = html;
+
+				// Add event listeners
+				paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+					link.addEventListener('click', function(e) {
+						e.preventDefault();
+						const page = parseInt(this.getAttribute('data-page'));
+						if (page >= 1 && page <= totalPages) {
+							showPage(page);
+						}
+					});
+				});
+			}
+
+			// Initialize first page
+			showPage(1);
+		}
+
+		window.showDetail = function(kodeCpmk) {
 			// Get filter values based on active tab
 			let semester = '';
 			let tahunAkademik = '';
@@ -334,12 +486,14 @@
 				tahunAkademik = $('#tahun_akademik').val();
 			}
 
+			$('#detailModalTitle').text(`Detail Perhitungan ${kodeCpmk}`);
 			$('#detailModal').modal('show');
 			$('#detailModalContent').html(`
 				<div class="text-center py-4">
 					<div class="spinner-border text-primary" role="status">
 						<span class="visually-hidden">Loading...</span>
 					</div>
+					<p class="mt-3 text-muted">Memuat detail perhitungan...</p>
 				</div>
 			`);
 
@@ -347,7 +501,7 @@
 				url: '<?= base_url('mahasiswa/get-cpmk-detail-calculation') ?>',
 				type: 'GET',
 				data: {
-					kode_mk: kodeMk,
+					kode_cpmk: kodeCpmk,
 					semester: semester,
 					tahun_akademik: tahunAkademik
 				},
@@ -358,7 +512,7 @@
 					} else {
 						$('#detailModalContent').html(`
 							<div class="alert alert-warning">
-								${response.message || 'Tidak ada data'}
+								<i class="bi bi-exclamation-triangle"></i> ${response.message || 'Tidak ada data'}
 							</div>
 						`);
 					}
@@ -366,7 +520,7 @@
 				error: function(xhr) {
 					$('#detailModalContent').html(`
 						<div class="alert alert-danger">
-							Terjadi kesalahan saat memuat detail
+							<i class="bi bi-exclamation-triangle"></i> Terjadi kesalahan saat memuat detail
 						</div>
 					`);
 					console.error(xhr);
@@ -375,43 +529,65 @@
 		};
 
 		function renderDetailModal(data, summary) {
-			let html = `
-				<div class="mb-3">
-					<h6><strong>Mata Kuliah:</strong> ${escapeHtml(summary.kode_mk)} - ${escapeHtml(summary.nama_mk)}</h6>
-				</div>
-				<div class="table-responsive">
-					<table class="table table-bordered">
-						<thead class="table-light">
-							<tr>
-								<th width="5%" class="text-center">No</th>
-								<th width="20%">Kode CPMK</th>
-								<th width="55%">Deskripsi</th>
-								<th width="20%" class="text-center">Capaian (%)</th>
-							</tr>
-						</thead>
-						<tbody>
-			`;
+			let html = '';
 
-			data.forEach((item, index) => {
+			// Display each course with its assessment breakdown (similar to admin capaian_cpmk)
+			data.forEach((course, idx) => {
 				html += `
-					<tr>
-						<td class="text-center">${index + 1}</td>
-						<td><strong>${escapeHtml(item.kode_cpmk)}</strong></td>
-						<td>${escapeHtml(item.deskripsi)}</td>
-						<td class="text-center">${item.capaian}%</td>
-					</tr>
+					<div class="mb-4">
+						<h6><strong>${escapeHtml(course.kode_mk)}</strong> - ${escapeHtml(course.nama_mk)}</h6>
+						<p class="mb-2"><small class="text-muted">${escapeHtml(course.tahun_akademik)} / ${escapeHtml(course.kelas)}</small></p>
 				`;
+
+				if (course.assessments && course.assessments.length > 0) {
+					html += `
+						<div class="modern-table-wrapper">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Teknik Penilaian</th>
+										<th class="text-center">Nilai</th>
+										<th class="text-center">Bobot (%)</th>
+										<th class="text-center">CPMK</th>
+									</tr>
+								</thead>
+								<tbody>
+					`;
+
+					course.assessments.forEach(assessment => {
+						html += `
+							<tr>
+								<td>${escapeHtml(assessment.teknik)}</td>
+								<td class="text-center">${parseFloat(assessment.nilai).toFixed(2)}</td>
+								<td class="text-center">${parseFloat(assessment.bobot).toFixed(2)}%</td>
+								<td class="text-center"><strong>${parseFloat(assessment.weighted).toFixed(2)}</strong></td>
+							</tr>
+						`;
+					});
+
+					html += `
+								</tbody>
+								<tfoot>
+									<tr>
+										<td colspan="3" class="text-end"><strong>Total</strong></td>
+										<td class="text-center"><strong>${parseFloat(course.total_weighted).toFixed(2)}</strong></td>
+									</tr>
+								</tfoot>
+							</table>
+						</div>
+					`;
+				} else {
+					html += `<p class="text-muted">Belum ada nilai</p>`;
+				}
+
+				html += `</div>`;
 			});
 
+			// Display formula and final capaian
 			html += `
-						</tbody>
-						<tfoot class="table-secondary">
-							<tr>
-								<td colspan="3" class="text-end"><strong>Rata-rata CPMK:</strong></td>
-								<td class="text-center"><strong>${summary.avg_cpmk}%</strong></td>
-							</tr>
-						</tfoot>
-					</table>
+				<div class="alert alert-primary mb-0">
+					<h6 class="mb-2"><i class="bi bi-calculator"></i> Capaian ${escapeHtml(summary.kode_cpmk)}:</h6>
+					<p class="mb-1"><strong>Capaian CPMK</strong> = ${summary.grand_total_weighted} / ${summary.grand_total_bobot} × 100 = ${parseFloat(summary.capaian).toFixed(2)}%</p>
 				</div>
 			`;
 

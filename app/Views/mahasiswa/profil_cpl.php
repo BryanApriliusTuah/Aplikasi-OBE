@@ -16,34 +16,22 @@
 	</div>
 <?php else: ?>
 	<!-- Chart Section -->
-	<div class="card mb-4">
-		<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-			<h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Grafik Capaian CPL</h5>
-			<button class="btn btn-light btn-sm" id="exportChartBtn">
-				<i class="bi bi-download"></i> Export PNG
-			</button>
-		</div>
-		<div class="card-body">
-			<canvas id="cplChart" height="80"></canvas>
-		</div>
-	</div>
+	<div id="cplChartContainer" class="mb-4"></div>
 
 	<!-- Detailed Calculation Table -->
-	<div class="card">
-		<div class="card-header bg-secondary text-white">
-			<h5 class="mb-0"><i class="bi bi-table"></i> Detail Perhitungan CPL</h5>
-		</div>
-		<div class="card-body">
-			<div class="table-responsive">
-				<table id="cplDetailTable" class="table table-bordered table-hover">
-					<thead class="table-light">
+	<div class="card shadow-sm border-0">
+		<div class="card-body p-0">
+			<div class="modern-table-wrapper" style="position: relative;">
+				<div class="scroll-indicator"></div>
+				<table id="cplDetailTable" class="modern-table">
+					<thead>
 						<tr>
 							<th width="5%" class="text-center">No</th>
-							<th width="12%">Kode CPL</th>
-							<th width="40%">Deskripsi</th>
+							<th width="10%" class="text-center">Kode CPL</th>
+							<th width="50%" class="text-center">Deskripsi</th>
 							<th width="15%" class="text-center">Jenis CPL</th>
-							<th width="15%" class="text-center">Capaian (%)</th>
-							<th width="13%" class="text-center">Aksi</th>
+							<th width="10%" class="text-center">Capaian (%)</th>
+							<th width="10%" class="text-center">Aksi</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -62,12 +50,24 @@
 						?>
 									<tr>
 										<td class="text-center"><?= $no++ ?></td>
-										<td><strong><?= esc($cpl['kode']) ?></strong></td>
-										<td><?= esc($cpl['deskripsi']) ?></td>
-										<td class="text-center"><span><?= $categoryName ?></span></td>
-										<td class="text-center"><strong><?= $cpl['nilai'] ?>%</strong></td>
 										<td class="text-center">
-											<button type="button" class="btn btn-sm btn-primary" onclick="showDetail(<?= $cpl['id'] ?>, '<?= esc($cpl['kode']) ?>')">
+											<span style="font-size: 0.85rem; font-weight: 600;">
+												<?= esc($cpl['kode']) ?>
+											</span>
+										</td>
+										<td><?= esc($cpl['deskripsi']) ?></td>
+										<td class="text-center">
+											<span style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+												<?= $categoryName ?>
+											</span>
+										</td>
+										<td class="text-center">
+											<span class="fw-bold">
+												<?= $cpl['nilai'] ?>%
+											</span>
+										</td>
+										<td class="text-center">
+											<button class="btn btn-sm btn-outline-primary" onclick="showDetail(<?= $cpl['id'] ?>, '<?= esc($cpl['kode']) ?>')" data-bs-toggle="tooltip" title="Lihat detail nilai CPL">
 												<i class="bi bi-eye"></i>
 											</button>
 										</td>
@@ -114,38 +114,70 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
 
-<!-- DataTables CSS -->
-<link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<!-- Modern Table CSS -->
+<link href="<?= base_url('css/modern-table.css') ?>" rel="stylesheet" />
 
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<style>
+	/* Sticky column positions */
+	.modern-table .sticky-col:nth-child(1) {
+		left: 0;
+		min-width: 60px;
+	}
+
+	.modern-table .sticky-col:nth-child(2) {
+		left: 60px;
+		min-width: 120px;
+	}
+
+	/* Button hover effect */
+	.btn-primary.rounded-pill:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+	}
+
+	/* Remove default card body padding for seamless table integration */
+	.card-body.p-0 {
+		overflow: hidden;
+	}
+</style>
 
 <script>
 	// Dynamic passing threshold from grade configuration
 	const passingThreshold = <?= json_encode($passing_threshold ?? 65) ?>;
 
-	let cplChart = null;
+	let cplChartComponent = null;
 
 	$(document).ready(function() {
-		// Initialize DataTable
-		if ($('#cplDetailTable').length) {
-			$('#cplDetailTable').DataTable({
-				pageLength: 10,
-				language: {
-					url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-				},
-				columnDefs: [{
-					orderable: false,
-					targets: -1
-				}]
-			});
-		}
+		// Initialize scroll detection for modern table
+		initScrollDetection();
 
 		// Initialize Chart
 		initializeCplChart();
 	});
+
+	// Function to detect and handle horizontal scroll
+	function initScrollDetection() {
+		const wrapper = document.querySelector('.modern-table-wrapper');
+		if (!wrapper) return;
+
+		function checkScroll() {
+			const hasScroll = wrapper.scrollWidth > wrapper.clientWidth;
+			const isScrolledToEnd = wrapper.scrollLeft >= (wrapper.scrollWidth - wrapper.clientWidth - 10);
+
+			if (hasScroll && !isScrolledToEnd) {
+				wrapper.classList.add('has-scroll');
+			} else {
+				wrapper.classList.remove('has-scroll');
+			}
+		}
+
+		// Check on load and scroll
+		checkScroll();
+		wrapper.addEventListener('scroll', checkScroll);
+		window.addEventListener('resize', checkScroll);
+	}
 
 	function initializeCplChart() {
 		const chartData = {
@@ -178,152 +210,33 @@
 			return;
 		}
 
-		// Create conditional colors based on passing threshold
-		const backgroundColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 0.8)' : 'rgba(13, 110, 253, 0.8)'
-		);
-		const borderColors = chartData.data.map(value =>
-			value < passingThreshold ? 'rgba(220, 53, 69, 1)' : 'rgba(13, 110, 253, 1)'
-		);
+		// Destroy existing chart if any
+		if (cplChartComponent) {
+			cplChartComponent.destroy();
+		}
 
-		const ctx = document.getElementById('cplChart').getContext('2d');
-		if (cplChart) cplChart.destroy();
-
-		cplChart = new Chart(ctx, {
-			type: 'bar',
-			data: {
-				labels: chartData.labels,
-				datasets: [{
-					label: 'Capaian CPL',
-					data: chartData.data,
-					backgroundColor: backgroundColors,
-					borderColor: borderColors,
-					borderWidth: 2,
-					borderRadius: 5
-				}]
-			},
-			plugins: [ChartDataLabels],
-			options: {
-				responsive: true,
-				maintainAspectRatio: true,
-				plugins: {
-					legend: {
-						display: true,
-						position: 'top',
-						labels: {
-							generateLabels: function(chart) {
-								const data = chart.data.datasets[0].data;
-								const labels = [];
-
-								// Check if there are values >= threshold (blue bars)
-								const hasAboveThreshold = data.some(value => value >= passingThreshold);
-								if (hasAboveThreshold) {
-									labels.push({
-										text: `Capaian ≥ ${passingThreshold}%`,
-										fillStyle: 'rgba(13, 110, 253, 0.8)',
-										strokeStyle: 'rgba(13, 110, 253, 1)',
-										lineWidth: 2,
-										hidden: false,
-										index: 0
-									});
-								}
-
-								// Check if there are values < threshold (red bars)
-								const hasBelowThreshold = data.some(value => value < passingThreshold);
-								if (hasBelowThreshold) {
-									labels.push({
-										text: `Capaian < ${passingThreshold}%`,
-										fillStyle: 'rgba(220, 53, 69, 0.8)',
-										strokeStyle: 'rgba(220, 53, 69, 1)',
-										lineWidth: 2,
-										hidden: false,
-										index: 1
-									});
-								}
-
-								return labels;
-							}
-						}
-					},
-					title: {
-						display: true,
-						text: 'Capaian Pembelajaran Lulusan (CPL)',
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
-					},
-					tooltip: {
-						backgroundColor: 'rgba(0, 0, 0, 0.8)',
-						padding: 12,
-						callbacks: {
-							label: function(context) {
-								return 'Capaian CPL: ' + context.parsed.y.toFixed(2) + '%';
-							}
-						}
-					},
-					datalabels: {
-						anchor: 'end',
-						align: 'top',
-						formatter: function(value) {
-							return value.toFixed(2) + '%';
-						},
-						font: {
-							weight: 'bold',
-							size: 12
-						},
-						color: '#333'
-					}
-				},
-				scales: {
-					y: {
-						beginAtZero: true,
-						max: 100,
-						title: {
-							display: true,
-							text: 'Capaian CPL (%)',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						},
-						ticks: {
-							callback: function(value) {
-								return value + '%';
-							}
-						},
-						grid: {
-							display: true,
-							color: 'rgba(0, 0, 0, 0.05)'
-						}
-					},
-					x: {
-						title: {
-							display: true,
-							text: 'Kode CPL',
-							font: {
-								size: 14,
-								weight: 'bold'
-							}
-						},
-						grid: {
-							display: false
-						}
-					}
+		// Create and render modern chart
+		cplChartComponent = new ModernChartComponent({
+			containerId: 'cplChartContainer',
+			chartData: chartData,
+			config: {
+				title: 'Grafik Capaian CPL',
+				type: 'bar',
+				passingThreshold: passingThreshold,
+				showExportButton: true,
+				showSubtitle: true,
+				subtitle: 'Visualisasi Capaian Pembelajaran Lulusan (CPL)',
+				exportFilename: 'capaian-cpl-mahasiswa.png',
+				height: 80,
+				labels: {
+					yAxis: 'Capaian CPL (%)',
+					xAxis: 'Kode CPL'
 				}
 			}
 		});
-	}
 
-	// Export Chart
-	$('#exportChartBtn').on('click', function() {
-		if (cplChart) {
-			const link = document.createElement('a');
-			link.download = 'capaian-cpl-mahasiswa.png';
-			link.href = cplChart.toBase64Image();
-			link.click();
-		}
-	});
+		cplChartComponent.render();
+	}
 
 	function showDetail(cplId, cplKode) {
 		document.getElementById('detailCplModalTitle').textContent = `Detail Perhitungan ${cplKode}`;
@@ -353,118 +266,93 @@
 						return;
 					}
 
-					let html = '';
-
-					// Show CPL Summary with calculation formula
-					if (data.summary) {
-						html += `
-						<div class="card mb-4">
-							<div class="card-header bg-light">
-								<h6 class="mb-0"><i class="bi bi-calculator"></i> Ringkasan Perhitungan</h6>
-							</div>
-							<div class="card-body">
-								<div class="row text-center mb-3">
-									<div class="col-4">
-										<small class="text-muted d-block">Total Nilai CPL</small>
-										<h5 class="mb-0">${data.summary.nilai_cpl}</h5>
-									</div>
-									<div class="col-4">
-										<small class="text-muted d-block">Total Bobot</small>
-										<h5 class="mb-0">${data.summary.total_bobot}%</h5>
-									</div>
-									<div class="col-4">
-										<small class="text-muted d-block">Capaian CPL</small>
-										<h5 class="mb-0 text-primary">${data.summary.capaian_cpl}%</h5>
-									</div>
-								</div>
-								<div class="alert alert-info mb-0">
-									<strong><i class="bi bi-info-circle"></i> Formula Perhitungan:</strong><br>
-									Capaian CPL (%) = (Total Nilai CPL / Total Bobot) × 100<br>
-									= (${data.summary.nilai_cpl} / ${data.summary.total_bobot}) × 100 = <strong>${data.summary.capaian_cpl}%</strong>
-								</div>
-							</div>
-						</div>
+					let html = `
+						<div class="modern-table-wrapper">
+							<table class="modern-table mb-0">
+								<thead>
+									<tr>
+										<th width="5%" class="text-center">No</th>
+										<th width="15%">Kode CPMK</th>
+										<th width="30%">Deskripsi CPMK</th>
+										<th width="20%">Mata Kuliah</th>
+										<th width="10%" class="text-center">Nilai CPMK</th>
+										<th width="10%" class="text-center">Bobot (%)</th>
+										<th width="10%" class="text-center">Kontribusi</th>
+									</tr>
+								</thead>
+								<tbody>
 					`;
-					}
 
-					// Show CPMK Details
-					html += '<h6 class="mb-3"><i class="bi bi-list-check"></i> Detail CPMK yang Berkontribusi</h6>';
+					// Flatten the data structure to show all MK for each CPMK
+					let rowNum = 1;
+					let totalNilaiCpl = 0;
+					let totalBobot = 0;
 
 					data.data.forEach(cpmk => {
-						html += `
-						<div class="card mb-3">
-							<div class="card-header bg-primary text-white">
-								<h6 class="mb-0">${cpmk.kode_cpmk} - ${cpmk.deskripsi_cpmk}</h6>
-							</div>
-							<div class="card-body">
-								<div class="row mb-3">
-									<div class="col-6">
-										<strong>Nilai CPMK:</strong> ${cpmk.nilai_cpmk}
-									</div>
-									<div class="col-6">
-										<strong>Bobot:</strong> ${cpmk.bobot}%
-									</div>
-								</div>
-					`;
+						if (cpmk.detail_mk && cpmk.detail_mk.length > 0) {
+							cpmk.detail_mk.forEach((mk, mkIndex) => {
+								const kontribusi = (parseFloat(cpmk.nilai_cpmk) * parseFloat(cpmk.bobot) / 100).toFixed(2);
 
-						if (cpmk.detail_mk.length > 0) {
-							cpmk.detail_mk.forEach(mk => {
 								html += `
-								<div class="mb-3">
-									<div class="d-flex align-items-center mb-2">
-										<span class="badge bg-secondary me-2">${mk.kode_mk}</span>
-										<small>${mk.nama_mk}</small>
-									</div>
-									<div class="table-responsive">
-										<table class="table table-sm table-bordered mb-0">
-											<thead class="table-light">
-												<tr>
-													<th>Teknik Penilaian</th>
-													<th class="text-center" width="15%">Nilai</th>
-													<th class="text-center" width="15%">Bobot (%)</th>
-													<th class="text-center" width="15%">Nilai CPMK</th>
-												</tr>
-											</thead>
-											<tbody>
-							`;
-
-								if (mk.teknik_breakdown && mk.teknik_breakdown.length > 0) {
-									mk.teknik_breakdown.forEach(t => {
-										html += `
-										<tr>
-											<td>${t.teknik}</td>
-											<td class="text-center">${t.nilai}</td>
-											<td class="text-center">${t.bobot}%</td>
-											<td class="text-center">${t.weighted}</td>
-										</tr>
-									`;
-									});
-									html += `
-									<tr class="table-success">
-										<td colspan="3" class="text-end"><strong>Total CPMK</strong></td>
-										<td class="text-center"><strong>${mk.nilai_cpmk}</strong></td>
+									<tr>
+										<td class="text-center">${rowNum++}</td>
+										<td><strong>${cpmk.kode_cpmk}</strong></td>
+										<td><small>${cpmk.deskripsi_cpmk}</small></td>
+										<td><small>${mk.kode_mk} - ${mk.nama_mk}</small></td>
+										<td class="text-center">${parseFloat(cpmk.nilai_cpmk).toFixed(2)}</td>
+										<td class="text-center">${parseFloat(cpmk.bobot).toFixed(0)}%</td>
+										<td class="text-center">${kontribusi}</td>
 									</tr>
 								`;
-								} else {
-									html += `<tr><td colspan="4" class="text-center text-muted">Tidak ada data teknik penilaian</td></tr>`;
-								}
 
-								html += `
-											</tbody>
-										</table>
-									</div>
-								</div>
-							`;
+								// Only count once per CPMK
+								if (mkIndex === 0) {
+									totalNilaiCpl += parseFloat(kontribusi);
+									totalBobot += parseFloat(cpmk.bobot);
+								}
 							});
 						} else {
-							html += '<p class="text-muted mb-0"><i class="bi bi-exclamation-circle"></i> Belum ada nilai untuk CPMK ini</p>';
-						}
+							const kontribusi = (parseFloat(cpmk.nilai_cpmk) * parseFloat(cpmk.bobot) / 100).toFixed(2);
 
-						html += `
-							</div>
+							html += `
+								<tr>
+									<td class="text-center">${rowNum++}</td>
+									<td><strong>${cpmk.kode_cpmk}</strong></td>
+									<td><small>${cpmk.deskripsi_cpmk}</small></td>
+									<td class="text-center text-muted"><small>-</small></td>
+									<td class="text-center">${parseFloat(cpmk.nilai_cpmk).toFixed(2)}</td>
+									<td class="text-center">${parseFloat(cpmk.bobot).toFixed(0)}%</td>
+									<td class="text-center">${kontribusi}</td>
+								</tr>
+							`;
+
+							totalNilaiCpl += parseFloat(kontribusi);
+							totalBobot += parseFloat(cpmk.bobot);
+						}
+					});
+
+					// Calculate final CPL achievement
+					const capaianCpl = data.summary ? parseFloat(data.summary.capaian_cpl).toFixed(2) :
+						(totalBobot > 0 ? (totalNilaiCpl / totalBobot * 100).toFixed(2) : '0.00');
+
+					html += `
+								</tbody>
+								<tfoot>
+									<tr>
+										<td colspan="6" class="text-end"><strong>TOTAL KONTRIBUSI:</strong></td>
+										<td class="text-center"><strong>${totalNilaiCpl.toFixed(2)}</strong></td>
+									</tr>
+									<tr style="background-color: #d1e7dd;">
+										<td colspan="6" class="text-end">
+											<strong>Capaian CPL (%) = (Total Kontribusi / Total Bobot) × 100</strong><br>
+											<small class="text-muted">= (${totalNilaiCpl.toFixed(2)} / ${totalBobot.toFixed(0)}) × 100</small>
+										</td>
+										<td class="text-center"><h6 class="mb-0"><strong>${capaianCpl}%</strong></h6></td>
+									</tr>
+								</tfoot>
+							</table>
 						</div>
 					`;
-					});
 
 					document.getElementById('detailCplModalContent').innerHTML = html;
 				} else {
