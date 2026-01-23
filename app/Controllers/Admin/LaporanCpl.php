@@ -149,6 +149,11 @@ class LaporanCpl extends BaseController
 		// 7. Get CQI data
 		$cqiData = $this->getCqiData($programStudi, $tahunAkademik, $angkatan);
 
+		// 8. Get document files from analysis record
+		$analysisRecord = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+		$buktiDokumentasiFile = $analysisRecord['bukti_dokumentasi_file'] ?? null;
+		$notulensiRapatFile = $analysisRecord['notulensi_rapat_file'] ?? null;
+
 		return [
 			'identitas' => $identitas,
 			'cpl_list' => $cplList,
@@ -156,7 +161,9 @@ class LaporanCpl extends BaseController
 			'cpl_achievement' => $cplAchievementData,
 			'analysis' => $analysis,
 			'lampiran' => $lampiranData,
-			'cqi_data' => $cqiData
+			'cqi_data' => $cqiData,
+			'bukti_dokumentasi_file' => $buktiDokumentasiFile,
+			'notulensi_rapat_file' => $notulensiRapatFile
 		];
 	}
 
@@ -789,6 +796,30 @@ class LaporanCpl extends BaseController
 						}
 					}
 					return true;
+
+				case 'bukti_dokumentasi':
+					// Add bukti dokumentasi asesmen file
+					if (!empty($reportData['bukti_dokumentasi_file'])) {
+						$buktiPath = FCPATH . 'uploads/bukti_dokumentasi/' . $reportData['bukti_dokumentasi_file'];
+						if (file_exists($buktiPath)) {
+							$extension = pathinfo($buktiPath, PATHINFO_EXTENSION);
+							$zip->addFile($buktiPath, 'Bukti_Dokumentasi_Asesmen.' . $extension);
+							return true;
+						}
+					}
+					return false;
+
+				case 'notulensi_rapat':
+					// Add notulensi rapat evaluasi CPL file
+					if (!empty($reportData['notulensi_rapat_file'])) {
+						$notulensiPath = FCPATH . 'uploads/notulensi_cpl/' . $reportData['notulensi_rapat_file'];
+						if (file_exists($notulensiPath)) {
+							$extension = pathinfo($notulensiPath, PATHINFO_EXTENSION);
+							$zip->addFile($notulensiPath, 'Notulensi_Rapat_Evaluasi_CPL.' . $extension);
+							return true;
+						}
+					}
+					return false;
 			}
 		} catch (\Exception $e) {
 			log_message('error', 'Error adding document to ZIP: ' . $e->getMessage());
@@ -1282,6 +1313,324 @@ class LaporanCpl extends BaseController
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Gagal menyimpan data CQI: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	/**
+	 * Upload Bukti Dokumentasi Asesmen
+	 */
+	public function uploadBuktiDokumentasi()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		$file = $this->request->getFile('bukti_dokumentasi_file');
+
+		if (!$file || !$file->isValid()) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'File tidak valid.'
+			])->setStatusCode(400);
+		}
+
+		// Validate file type
+		$allowedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!in_array($file->getMimeType(), $allowedMimes)) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Tipe file tidak didukung. Hanya PDF, DOC, dan DOCX yang diizinkan.'
+			])->setStatusCode(400);
+		}
+
+		// Validate file size (max 5MB)
+		if ($file->getSize() > 5 * 1024 * 1024) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Ukuran file maksimal 5MB.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Create upload directory if not exists
+			$uploadPath = FCPATH . 'uploads/bukti_dokumentasi/';
+			if (!is_dir($uploadPath)) {
+				mkdir($uploadPath, 0755, true);
+			}
+
+			// Get or create analysis record
+			$existingAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+
+			// Delete old file if exists
+			if ($existingAnalysis && !empty($existingAnalysis['bukti_dokumentasi_file'])) {
+				$oldFile = $uploadPath . $existingAnalysis['bukti_dokumentasi_file'];
+				if (file_exists($oldFile)) {
+					@unlink($oldFile);
+				}
+			}
+
+			// Generate new filename
+			$extension = $file->getExtension();
+			$filename = 'bukti_dok_' . str_replace(' ', '_', $programStudi) . '_' . $angkatan . '_' . time() . '.' . $extension;
+
+			// Move file
+			$file->move($uploadPath, $filename);
+
+			// Update or create analysis record
+			$data = [
+				'program_studi' => $programStudi,
+				'tahun_akademik' => $tahunAkademik,
+				'angkatan' => $angkatan,
+				'bukti_dokumentasi_file' => $filename
+			];
+
+			if ($existingAnalysis) {
+				$this->analysisCplModel->update($existingAnalysis['id'], ['bukti_dokumentasi_file' => $filename]);
+			} else {
+				$data['mode'] = 'auto';
+				$this->analysisCplModel->insert($data);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'File berhasil diunggah.',
+				'filename' => $filename
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengunggah file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	/**
+	 * Delete Bukti Dokumentasi Asesmen
+	 */
+	public function deleteBuktiDokumentasi()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			$existingAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+
+			if (!$existingAnalysis || empty($existingAnalysis['bukti_dokumentasi_file'])) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'File tidak ditemukan.'
+				])->setStatusCode(404);
+			}
+
+			// Delete file from storage
+			$uploadPath = FCPATH . 'uploads/bukti_dokumentasi/';
+			$filePath = $uploadPath . $existingAnalysis['bukti_dokumentasi_file'];
+			if (file_exists($filePath)) {
+				@unlink($filePath);
+			}
+
+			// Update database
+			$this->analysisCplModel->update($existingAnalysis['id'], ['bukti_dokumentasi_file' => null]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'File berhasil dihapus.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menghapus file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	/**
+	 * Upload Notulensi Rapat Evaluasi CPL
+	 */
+	public function uploadNotulensiRapat()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		$file = $this->request->getFile('notulensi_rapat_file');
+
+		if (!$file || !$file->isValid()) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'File tidak valid.'
+			])->setStatusCode(400);
+		}
+
+		// Validate file type
+		$allowedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!in_array($file->getMimeType(), $allowedMimes)) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Tipe file tidak didukung. Hanya PDF, DOC, dan DOCX yang diizinkan.'
+			])->setStatusCode(400);
+		}
+
+		// Validate file size (max 5MB)
+		if ($file->getSize() > 5 * 1024 * 1024) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Ukuran file maksimal 5MB.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Create upload directory if not exists
+			$uploadPath = FCPATH . 'uploads/notulensi_cpl/';
+			if (!is_dir($uploadPath)) {
+				mkdir($uploadPath, 0755, true);
+			}
+
+			// Get or create analysis record
+			$existingAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+
+			// Delete old file if exists
+			if ($existingAnalysis && !empty($existingAnalysis['notulensi_rapat_file'])) {
+				$oldFile = $uploadPath . $existingAnalysis['notulensi_rapat_file'];
+				if (file_exists($oldFile)) {
+					@unlink($oldFile);
+				}
+			}
+
+			// Generate new filename
+			$extension = $file->getExtension();
+			$filename = 'notulensi_cpl_' . str_replace(' ', '_', $programStudi) . '_' . $angkatan . '_' . time() . '.' . $extension;
+
+			// Move file
+			$file->move($uploadPath, $filename);
+
+			// Update or create analysis record
+			$data = [
+				'program_studi' => $programStudi,
+				'tahun_akademik' => $tahunAkademik,
+				'angkatan' => $angkatan,
+				'notulensi_rapat_file' => $filename
+			];
+
+			if ($existingAnalysis) {
+				$this->analysisCplModel->update($existingAnalysis['id'], ['notulensi_rapat_file' => $filename]);
+			} else {
+				$data['mode'] = 'auto';
+				$this->analysisCplModel->insert($data);
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'File berhasil diunggah.',
+				'filename' => $filename
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengunggah file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	/**
+	 * Delete Notulensi Rapat Evaluasi CPL
+	 */
+	public function deleteNotulensiRapat()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan = $this->request->getPost('angkatan');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			$existingAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+
+			if (!$existingAnalysis || empty($existingAnalysis['notulensi_rapat_file'])) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'File tidak ditemukan.'
+				])->setStatusCode(404);
+			}
+
+			// Delete file from storage
+			$uploadPath = FCPATH . 'uploads/notulensi_cpl/';
+			$filePath = $uploadPath . $existingAnalysis['notulensi_rapat_file'];
+			if (file_exists($filePath)) {
+				@unlink($filePath);
+			}
+
+			// Update database
+			$this->analysisCplModel->update($existingAnalysis['id'], ['notulensi_rapat_file' => null]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'File berhasil dihapus.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menghapus file: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}

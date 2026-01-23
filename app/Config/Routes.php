@@ -246,6 +246,12 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('laporan-cpmk/export-zip', 'LaporanCpmk::exportZip');
 	$routes->post('laporan-cpmk/save-analysis', 'LaporanCpmk::saveAnalysis');
 	$routes->post('laporan-cpmk/save-cqi', 'LaporanCpmk::saveCqi');
+	$routes->post('laporan-cpmk/upload-rubrik', 'LaporanCpmk::uploadRubrik');
+	$routes->post('laporan-cpmk/delete-rubrik', 'LaporanCpmk::deleteRubrik');
+	$routes->post('laporan-cpmk/upload-contoh-soal', 'LaporanCpmk::uploadContohSoal');
+	$routes->post('laporan-cpmk/delete-contoh-soal', 'LaporanCpmk::deleteContohSoal');
+	$routes->post('laporan-cpmk/upload-notulen', 'LaporanCpmk::uploadNotulen');
+	$routes->post('laporan-cpmk/delete-notulen', 'LaporanCpmk::deleteNotulen');
 
 	//laporan cpl (laporan pemenuhan capaian pembelajaran lulusan)
 	$routes->get('laporan-cpl', 'LaporanCpl::index');
@@ -255,6 +261,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('laporan-cpl/get-angkatan', 'LaporanCpl::getAngkatanByFilter');
 	$routes->post('laporan-cpl/save-analysis', 'LaporanCpl::saveAnalysis');
 	$routes->post('laporan-cpl/save-cqi', 'LaporanCpl::saveCqi');
+	$routes->post('laporan-cpl/upload-bukti-dokumentasi', 'LaporanCpl::uploadBuktiDokumentasi');
+	$routes->post('laporan-cpl/delete-bukti-dokumentasi', 'LaporanCpl::deleteBuktiDokumentasi');
+	$routes->post('laporan-cpl/upload-notulensi-rapat', 'LaporanCpl::uploadNotulensiRapat');
+	$routes->post('laporan-cpl/delete-notulensi-rapat', 'LaporanCpl::deleteNotulensiRapat');
 
 	// MBKM Management Routes
 	$routes->group('mbkm', ['filter' => 'auth'], function ($routes) {

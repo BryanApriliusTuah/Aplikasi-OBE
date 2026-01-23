@@ -169,6 +169,11 @@ class LaporanCpmk extends BaseController
 		// Get templates for inline editing
 		$templates = $this->analysisTemplateModel->getTemplatesAsArray();
 
+		// Get document files
+		$rubrikFile = $jadwalMengajar[0]['rubrik_penilaian_file'] ?? null;
+		$contohSoalFile = $jadwalMengajar[0]['contoh_soal_file'] ?? null;
+		$notulenFile = $jadwalMengajar[0]['notulen_rapat_file'] ?? null;
+
 		return [
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
@@ -187,7 +192,10 @@ class LaporanCpmk extends BaseController
 			'jadwal_mengajar_id' => $jadwalMengajarId,
 			'rps_id' => $rpsId,
 			'cqi_data' => $cqiData,
-			'templates' => $templates
+			'templates' => $templates,
+			'rubrik_penilaian_file' => $rubrikFile,
+			'contoh_soal_file' => $contohSoalFile,
+			'notulen_rapat_file' => $notulenFile
 		];
 	}
 
@@ -902,6 +910,102 @@ class LaporanCpmk extends BaseController
 						log_message('error', 'CPMK Excel file not created or empty: ' . $tempRekapPath);
 						return false;
 					}
+
+				case 'rubrik':
+					if (!$jadwalMengajarId) {
+						log_message('warning', 'Jadwal Mengajar ID is null, skipping Rubrik Penilaian document');
+						return false;
+					}
+
+					log_message('info', 'Adding Rubrik Penilaian for Jadwal ID: ' . $jadwalMengajarId);
+
+					// Get jadwal mengajar data
+					$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+					if (!$jadwal || empty($jadwal['rubrik_penilaian_file'])) {
+						log_message('warning', 'Rubrik Penilaian file not found for Jadwal ID: ' . $jadwalMengajarId);
+						return false;
+					}
+
+					// Get file path
+					$rubrikPath = FCPATH . 'uploads/rubrik/' . $jadwal['rubrik_penilaian_file'];
+
+					if (!file_exists($rubrikPath)) {
+						log_message('error', 'Rubrik Penilaian file does not exist: ' . $rubrikPath);
+						return false;
+					}
+
+					// Get file extension to determine the filename in ZIP
+					$extension = pathinfo($jadwal['rubrik_penilaian_file'], PATHINFO_EXTENSION);
+					$zipFilename = 'Rubrik_Penilaian.' . $extension;
+
+					// Add file to ZIP
+					$zip->addFile($rubrikPath, $zipFilename);
+					log_message('info', 'Successfully added Rubrik Penilaian to ZIP');
+					return true;
+
+				case 'contoh_soal':
+					if (!$jadwalMengajarId) {
+						log_message('warning', 'Jadwal Mengajar ID is null, skipping Contoh Soal document');
+						return false;
+					}
+
+					log_message('info', 'Adding Contoh Soal for Jadwal ID: ' . $jadwalMengajarId);
+
+					// Get jadwal mengajar data
+					$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+					if (!$jadwal || empty($jadwal['contoh_soal_file'])) {
+						log_message('warning', 'Contoh Soal file not found for Jadwal ID: ' . $jadwalMengajarId);
+						return false;
+					}
+
+					// Get file path
+					$contohSoalPath = FCPATH . 'uploads/contoh_soal/' . $jadwal['contoh_soal_file'];
+
+					if (!file_exists($contohSoalPath)) {
+						log_message('error', 'Contoh Soal file does not exist: ' . $contohSoalPath);
+						return false;
+					}
+
+					// Get file extension to determine the filename in ZIP
+					$extension = pathinfo($jadwal['contoh_soal_file'], PATHINFO_EXTENSION);
+					$zipFilename = 'Contoh_Soal_dan_Jawaban.' . $extension;
+
+					// Add file to ZIP
+					$zip->addFile($contohSoalPath, $zipFilename);
+					log_message('info', 'Successfully added Contoh Soal to ZIP');
+					return true;
+
+				case 'notulen':
+					if (!$jadwalMengajarId) {
+						log_message('warning', 'Jadwal Mengajar ID is null, skipping Notulen document');
+						return false;
+					}
+
+					log_message('info', 'Adding Notulen for Jadwal ID: ' . $jadwalMengajarId);
+
+					// Get jadwal mengajar data
+					$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+					if (!$jadwal || empty($jadwal['notulen_rapat_file'])) {
+						log_message('warning', 'Notulen file not found for Jadwal ID: ' . $jadwalMengajarId);
+						return false;
+					}
+
+					// Get file path
+					$notulenPath = FCPATH . 'uploads/notulen/' . $jadwal['notulen_rapat_file'];
+
+					if (!file_exists($notulenPath)) {
+						log_message('error', 'Notulen file does not exist: ' . $notulenPath);
+						return false;
+					}
+
+					// Get file extension to determine the filename in ZIP
+					$extension = pathinfo($jadwal['notulen_rapat_file'], PATHINFO_EXTENSION);
+					$zipFilename = 'Notulen_Rapat_Evaluasi.' . $extension;
+
+					// Add file to ZIP
+					$zip->addFile($notulenPath, $zipFilename);
+					log_message('info', 'Successfully added Notulen to ZIP');
+					return true;
 			}
 		} catch (\Exception $e) {
 			log_message('error', 'Error adding document to ZIP: ' . $e->getMessage());
@@ -1753,6 +1857,408 @@ class LaporanCpmk extends BaseController
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Gagal menyimpan template: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function uploadRubrik()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$file = $this->request->getFile('rubrik_file');
+
+		if (!$jadwalMengajarId || !$file) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Validate file
+			if (!$file->isValid()) {
+				throw new \Exception('File tidak valid.');
+			}
+
+			// Validate file type
+			$allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+			if (!in_array($file->getMimeType(), $allowedTypes)) {
+				throw new \Exception('File harus berformat PDF, DOC, atau DOCX.');
+			}
+
+			// Validate file size (max 5MB)
+			if ($file->getSize() > 5 * 1024 * 1024) {
+				throw new \Exception('Ukuran file maksimal 5MB.');
+			}
+
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Create upload directory if not exists
+			$uploadPath = FCPATH . 'uploads/rubrik/';
+			if (!is_dir($uploadPath)) {
+				mkdir($uploadPath, 0755, true);
+			}
+
+			// Delete old file if exists
+			if (!empty($jadwal['rubrik_penilaian_file'])) {
+				$oldFilePath = $uploadPath . $jadwal['rubrik_penilaian_file'];
+				if (file_exists($oldFilePath)) {
+					@unlink($oldFilePath);
+				}
+			}
+
+			// Generate unique filename
+			$extension = $file->getExtension();
+			$filename = 'rubrik_' . $jadwalMengajarId . '_' . time() . '.' . $extension;
+
+			// Move file to upload directory
+			$file->move($uploadPath, $filename);
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'rubrik_penilaian_file' => $filename
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Rubrik penilaian berhasil diunggah.',
+				'filename' => $filename
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengunggah file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function deleteRubrik()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+
+		if (!$jadwalMengajarId) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Delete file if exists
+			if (!empty($jadwal['rubrik_penilaian_file'])) {
+				$uploadPath = FCPATH . 'uploads/rubrik/';
+				$filePath = $uploadPath . $jadwal['rubrik_penilaian_file'];
+				if (file_exists($filePath)) {
+					@unlink($filePath);
+				}
+			}
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'rubrik_penilaian_file' => null
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Rubrik penilaian berhasil dihapus.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menghapus file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function uploadContohSoal()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$file = $this->request->getFile('contoh_soal_file');
+
+		if (!$jadwalMengajarId || !$file) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Validate file
+			if (!$file->isValid()) {
+				throw new \Exception('File tidak valid.');
+			}
+
+			// Validate file type
+			$allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+			if (!in_array($file->getMimeType(), $allowedTypes)) {
+				throw new \Exception('File harus berformat PDF, DOC, atau DOCX.');
+			}
+
+			// Validate file size (max 5MB)
+			if ($file->getSize() > 5 * 1024 * 1024) {
+				throw new \Exception('Ukuran file maksimal 5MB.');
+			}
+
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Create upload directory if not exists
+			$uploadPath = FCPATH . 'uploads/contoh_soal/';
+			if (!is_dir($uploadPath)) {
+				mkdir($uploadPath, 0755, true);
+			}
+
+			// Delete old file if exists
+			if (!empty($jadwal['contoh_soal_file'])) {
+				$oldFilePath = $uploadPath . $jadwal['contoh_soal_file'];
+				if (file_exists($oldFilePath)) {
+					@unlink($oldFilePath);
+				}
+			}
+
+			// Generate unique filename
+			$extension = $file->getExtension();
+			$filename = 'contoh_soal_' . $jadwalMengajarId . '_' . time() . '.' . $extension;
+
+			// Move file to upload directory
+			$file->move($uploadPath, $filename);
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'contoh_soal_file' => $filename
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Contoh soal berhasil diunggah.',
+				'filename' => $filename
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengunggah file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function deleteContohSoal()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+
+		if (!$jadwalMengajarId) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Delete file if exists
+			if (!empty($jadwal['contoh_soal_file'])) {
+				$uploadPath = FCPATH . 'uploads/contoh_soal/';
+				$filePath = $uploadPath . $jadwal['contoh_soal_file'];
+				if (file_exists($filePath)) {
+					@unlink($filePath);
+				}
+			}
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'contoh_soal_file' => null
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Contoh soal berhasil dihapus.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menghapus file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function uploadNotulen()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$file = $this->request->getFile('notulen_file');
+
+		if (!$jadwalMengajarId || !$file) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Validate file
+			if (!$file->isValid()) {
+				throw new \Exception('File tidak valid.');
+			}
+
+			// Validate file type
+			$allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+			if (!in_array($file->getMimeType(), $allowedTypes)) {
+				throw new \Exception('File harus berformat PDF, DOC, atau DOCX.');
+			}
+
+			// Validate file size (max 5MB)
+			if ($file->getSize() > 5 * 1024 * 1024) {
+				throw new \Exception('Ukuran file maksimal 5MB.');
+			}
+
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Create upload directory if not exists
+			$uploadPath = FCPATH . 'uploads/notulen/';
+			if (!is_dir($uploadPath)) {
+				mkdir($uploadPath, 0755, true);
+			}
+
+			// Delete old file if exists
+			if (!empty($jadwal['notulen_rapat_file'])) {
+				$oldFilePath = $uploadPath . $jadwal['notulen_rapat_file'];
+				if (file_exists($oldFilePath)) {
+					@unlink($oldFilePath);
+				}
+			}
+
+			// Generate unique filename
+			$extension = $file->getExtension();
+			$filename = 'notulen_' . $jadwalMengajarId . '_' . time() . '.' . $extension;
+
+			// Move file to upload directory
+			$file->move($uploadPath, $filename);
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'notulen_rapat_file' => $filename
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Notulen rapat berhasil diunggah.',
+				'filename' => $filename
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengunggah file: ' . $e->getMessage()
+			])->setStatusCode(500);
+		}
+	}
+
+	public function deleteNotulen()
+	{
+		// Check user role
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Akses ditolak.'
+			])->setStatusCode(403);
+		}
+
+		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+
+		if (!$jadwalMengajarId) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Data tidak lengkap.'
+			])->setStatusCode(400);
+		}
+
+		try {
+			// Get jadwal mengajar data
+			$jadwal = $this->jadwalMengajarModel->find($jadwalMengajarId);
+			if (!$jadwal) {
+				throw new \Exception('Jadwal mengajar tidak ditemukan.');
+			}
+
+			// Delete file if exists
+			if (!empty($jadwal['notulen_rapat_file'])) {
+				$uploadPath = FCPATH . 'uploads/notulen/';
+				$filePath = $uploadPath . $jadwal['notulen_rapat_file'];
+				if (file_exists($filePath)) {
+					@unlink($filePath);
+				}
+			}
+
+			// Update database
+			$this->jadwalMengajarModel->update($jadwalMengajarId, [
+				'notulen_rapat_file' => null
+			]);
+
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Notulen rapat berhasil dihapus.'
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'Gagal menghapus file: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}

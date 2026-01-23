@@ -26,7 +26,10 @@ class MengajarModel extends Model
 		'status',
 		'is_nilai_validated',
 		'validated_at',
-		'validated_by'
+		'validated_by',
+		'rubrik_penilaian_file',
+		'contoh_soal_file',
+		'notulen_rapat_file'
 	];
 
 	// Dates

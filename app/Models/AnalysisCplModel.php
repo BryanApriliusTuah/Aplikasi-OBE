@@ -18,7 +18,9 @@ class AnalysisCplModel extends Model
 		'angkatan',
 		'mode',
 		'analisis_summary',
-		'auto_options'
+		'auto_options',
+		'bukti_dokumentasi_file',
+		'notulensi_rapat_file'
 	];
 
 	// Dates

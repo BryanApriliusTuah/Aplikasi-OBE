@@ -542,6 +542,46 @@
 							<?php endif; ?>
 						</ul>
 					</div>
+
+					<!-- Bukti Dokumentasi Asesmen -->
+					<div class="d-flex align-items-center gap-2 mb-2">
+						<input class="form-check-input lampiran-checkbox mt-0" type="checkbox" value="bukti_dokumentasi" id="lampiran_bukti_dokumentasi" data-label="Bukti dokumentasi asesmen" <?= !empty($report['bukti_dokumentasi_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintLampiran()">
+						<?php if (!empty($report['bukti_dokumentasi_file'])): ?>
+							<span>Bukti dokumentasi asesmen <i class="bi bi-file-earmark-pdf text-danger"></i> <span class="badge bg-success">Sudah diunggah</span></span>
+							<a href="<?= base_url('uploads/bukti_dokumentasi/' . $report['bukti_dokumentasi_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+								<i class="bi bi-download"></i> Download
+							</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteBuktiDokumentasi()">
+								<i class="bi bi-trash"></i> Hapus
+							</button>
+						<?php else: ?>
+							<span>Bukti dokumentasi asesmen <span class="badge bg-secondary">Belum diunggah</span></span>
+							<button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('bukti_dokumentasi_file_input').click()">
+								<i class="bi bi-upload"></i> Upload
+							</button>
+						<?php endif; ?>
+						<input type="file" id="bukti_dokumentasi_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadBuktiDokumentasi()">
+					</div>
+
+					<!-- Notulensi Rapat Evaluasi CPL -->
+					<div class="d-flex align-items-center gap-2 mb-2">
+						<input class="form-check-input lampiran-checkbox mt-0" type="checkbox" value="notulensi_rapat" id="lampiran_notulensi" data-label="Notulensi rapat evaluasi CPL" <?= !empty($report['notulensi_rapat_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintLampiran()">
+						<?php if (!empty($report['notulensi_rapat_file'])): ?>
+							<span>Notulensi rapat evaluasi CPL <i class="bi bi-file-earmark-pdf text-danger"></i> <span class="badge bg-success">Sudah diunggah</span></span>
+							<a href="<?= base_url('uploads/notulensi_cpl/' . $report['notulensi_rapat_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+								<i class="bi bi-download"></i> Download
+							</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNotulensiRapat()">
+								<i class="bi bi-trash"></i> Hapus
+							</button>
+						<?php else: ?>
+							<span>Notulensi rapat evaluasi CPL (jika ada) <span class="badge bg-secondary">Belum diunggah</span></span>
+							<button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('notulensi_rapat_file_input').click()">
+								<i class="bi bi-upload"></i> Upload
+							</button>
+						<?php endif; ?>
+						<input type="file" id="notulensi_rapat_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadNotulensiRapat()">
+					</div>
 				</div>
 
 				<!-- Print version (dynamically updated based on selection) -->
@@ -880,6 +920,206 @@
 				alert('Terjadi kesalahan saat menyimpan data CQI.');
 				saveBtn.disabled = false;
 				saveBtn.innerHTML = originalText;
+			});
+	}
+
+	// Upload Bukti Dokumentasi Asesmen
+	function uploadBuktiDokumentasi() {
+		const fileInput = document.getElementById('bukti_dokumentasi_file_input');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			alert('Silakan pilih file terlebih dahulu');
+			return;
+		}
+
+		// Validate file type
+		const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!allowedTypes.includes(file.type)) {
+			alert('Tipe file tidak didukung. Hanya PDF, DOC, dan DOCX yang diizinkan.');
+			fileInput.value = '';
+			return;
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Ukuran file maksimal 5MB');
+			fileInput.value = '';
+			return;
+		}
+
+		// Get URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+
+		const formData = new FormData();
+		formData.append('bukti_dokumentasi_file', file);
+		formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+
+		// Show loading
+		const loadingMsg = document.createElement('div');
+		loadingMsg.id = 'upload-loading';
+		loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;z-index:9999;font-size:16px;';
+		loadingMsg.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengunggah file...';
+		document.body.appendChild(loadingMsg);
+
+		fetch('<?= base_url('admin/laporan-cpl/upload-bukti-dokumentasi') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				document.body.removeChild(loadingMsg);
+				if (data.success) {
+					alert('File berhasil diunggah!');
+					location.reload();
+				} else {
+					alert('Gagal mengunggah: ' + data.message);
+				}
+			})
+			.catch(error => {
+				document.body.removeChild(loadingMsg);
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat mengunggah file.');
+			});
+	}
+
+	// Delete Bukti Dokumentasi Asesmen
+	function deleteBuktiDokumentasi() {
+		if (!confirm('Apakah Anda yakin ingin menghapus file ini?')) {
+			return;
+		}
+
+		const urlParams = new URLSearchParams(window.location.search);
+
+		const formData = new FormData();
+		formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+
+		fetch('<?= base_url('admin/laporan-cpl/delete-bukti-dokumentasi') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('File berhasil dihapus!');
+					location.reload();
+				} else {
+					alert('Gagal menghapus: ' + data.message);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat menghapus file.');
+			});
+	}
+
+	// Upload Notulensi Rapat Evaluasi CPL
+	function uploadNotulensiRapat() {
+		const fileInput = document.getElementById('notulensi_rapat_file_input');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			alert('Silakan pilih file terlebih dahulu');
+			return;
+		}
+
+		// Validate file type
+		const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!allowedTypes.includes(file.type)) {
+			alert('Tipe file tidak didukung. Hanya PDF, DOC, dan DOCX yang diizinkan.');
+			fileInput.value = '';
+			return;
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Ukuran file maksimal 5MB');
+			fileInput.value = '';
+			return;
+		}
+
+		// Get URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+
+		const formData = new FormData();
+		formData.append('notulensi_rapat_file', file);
+		formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+
+		// Show loading
+		const loadingMsg = document.createElement('div');
+		loadingMsg.id = 'upload-loading';
+		loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px 40px;border-radius:8px;z-index:9999;font-size:16px;';
+		loadingMsg.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengunggah file...';
+		document.body.appendChild(loadingMsg);
+
+		fetch('<?= base_url('admin/laporan-cpl/upload-notulensi-rapat') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				document.body.removeChild(loadingMsg);
+				if (data.success) {
+					alert('File berhasil diunggah!');
+					location.reload();
+				} else {
+					alert('Gagal mengunggah: ' + data.message);
+				}
+			})
+			.catch(error => {
+				document.body.removeChild(loadingMsg);
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat mengunggah file.');
+			});
+	}
+
+	// Delete Notulensi Rapat Evaluasi CPL
+	function deleteNotulensiRapat() {
+		if (!confirm('Apakah Anda yakin ingin menghapus file ini?')) {
+			return;
+		}
+
+		const urlParams = new URLSearchParams(window.location.search);
+
+		const formData = new FormData();
+		formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+
+		fetch('<?= base_url('admin/laporan-cpl/delete-notulensi-rapat') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('File berhasil dihapus!');
+					location.reload();
+				} else {
+					alert('Gagal menghapus: ' + data.message);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat menghapus file.');
 			});
 	}
 </script>

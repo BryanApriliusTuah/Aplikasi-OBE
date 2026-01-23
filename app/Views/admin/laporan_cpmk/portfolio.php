@@ -448,6 +448,60 @@
 							<?php endif; ?>
 						</label>
 					</div>
+					<div class="d-flex align-items-center gap-2 mb-2">
+						<input class="form-check-input document-checkbox mt-0" type="checkbox" value="rubrik" id="doc_rubrik" data-label="Rubrik penilaian" <?= !empty($portfolio['rubrik_penilaian_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintDocuments()">
+						<?php if (!empty($portfolio['rubrik_penilaian_file'])): ?>
+							<span>Rubrik penilaian <i class="bi bi-file-earmark-pdf text-danger"></i> <span class="badge bg-success">Sudah diunggah</span></span>
+							<a href="<?= base_url('uploads/rubrik/' . $portfolio['rubrik_penilaian_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+								<i class="bi bi-download"></i> Download
+							</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRubrik(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+								<i class="bi bi-trash"></i> Hapus
+							</button>
+						<?php else: ?>
+							<span>Rubrik penilaian <span class="badge bg-secondary">Belum diunggah</span></span>
+							<button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('rubrik_file_input').click()">
+								<i class="bi bi-upload"></i> Upload
+							</button>
+						<?php endif; ?>
+						<input type="file" id="rubrik_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadRubrik(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+					</div>
+					<div class="d-flex align-items-center gap-2 mb-2">
+						<input class="form-check-input document-checkbox mt-0" type="checkbox" value="contoh_soal" id="doc_contoh_soal" data-label="Contoh soal dan jawaban ujian/tugas" <?= !empty($portfolio['contoh_soal_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintDocuments()">
+						<?php if (!empty($portfolio['contoh_soal_file'])): ?>
+							<span>Contoh soal dan jawaban ujian/tugas <i class="bi bi-file-earmark-pdf text-danger"></i> <span class="badge bg-success">Sudah diunggah</span></span>
+							<a href="<?= base_url('uploads/contoh_soal/' . $portfolio['contoh_soal_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+								<i class="bi bi-download"></i> Download
+							</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteContohSoal(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+								<i class="bi bi-trash"></i> Hapus
+							</button>
+						<?php else: ?>
+							<span>Contoh soal dan jawaban ujian/tugas <span class="badge bg-secondary">Belum diunggah</span></span>
+							<button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('contoh_soal_file_input').click()">
+								<i class="bi bi-upload"></i> Upload
+							</button>
+						<?php endif; ?>
+						<input type="file" id="contoh_soal_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadContohSoal(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+					</div>
+					<div class="d-flex align-items-center gap-2 mb-2">
+						<input class="form-check-input document-checkbox mt-0" type="checkbox" value="notulen" id="doc_notulen" data-label="Notulen rapat evaluasi mata kuliah (jika ada)" <?= !empty($portfolio['notulen_rapat_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintDocuments()">
+						<?php if (!empty($portfolio['notulen_rapat_file'])): ?>
+							<span>Notulen rapat evaluasi mata kuliah <i class="bi bi-file-earmark-pdf text-danger"></i> <span class="badge bg-success">Sudah diunggah</span></span>
+							<a href="<?= base_url('uploads/notulen/' . $portfolio['notulen_rapat_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+								<i class="bi bi-download"></i> Download
+							</a>
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNotulen(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+								<i class="bi bi-trash"></i> Hapus
+							</button>
+						<?php else: ?>
+							<span>Notulen rapat evaluasi mata kuliah (jika ada) <span class="badge bg-secondary">Belum diunggah</span></span>
+							<button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('notulen_file_input').click()">
+								<i class="bi bi-upload"></i> Upload
+							</button>
+						<?php endif; ?>
+						<input type="file" id="notulen_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadNotulen(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+					</div>
 				</div>
 
 				<!-- Print version (dynamically updated based on selection) -->
@@ -455,6 +509,15 @@
 					<li>RPS (Rencana Pembelajaran Semester)</li>
 					<li>Daftar nilai mahasiswa</li>
 					<li>Rekapitulasi nilai per CPMK</li>
+					<?php if (!empty($portfolio['rubrik_penilaian_file'])): ?>
+						<li>Rubrik penilaian</li>
+					<?php endif; ?>
+					<?php if (!empty($portfolio['contoh_soal_file'])): ?>
+						<li>Contoh soal dan jawaban ujian/tugas</li>
+					<?php endif; ?>
+					<?php if (!empty($portfolio['notulen_rapat_file'])): ?>
+						<li>Notulen rapat evaluasi mata kuliah</li>
+					<?php endif; ?>
 				</ul>
 			</div>
 		</div>
@@ -819,6 +882,279 @@
 				alert('Terjadi kesalahan saat menyimpan data CQI.');
 				saveBtn.disabled = false;
 				saveBtn.innerHTML = originalText;
+			});
+	}
+
+	function uploadRubrik(jadwalMengajarId) {
+		const fileInput = document.getElementById('rubrik_file_input');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			return;
+		}
+
+		// Validate file type
+		const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!allowedTypes.includes(file.type)) {
+			alert('File harus berformat PDF, DOC, atau DOCX');
+			fileInput.value = '';
+			return;
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Ukuran file maksimal 5MB');
+			fileInput.value = '';
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('rubrik_file', file);
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		// Show loading
+		const uploadBtn = event.target.previousElementSibling;
+		uploadBtn.disabled = true;
+		uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+		fetch('<?= base_url('admin/laporan-cpmk/upload-rubrik') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Rubrik penilaian berhasil diunggah! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal mengunggah: ' + data.message);
+					uploadBtn.disabled = false;
+					uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat mengunggah file.');
+				uploadBtn.disabled = false;
+				uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+			})
+			.finally(() => {
+				fileInput.value = '';
+			});
+	}
+
+	function deleteRubrik(jadwalMengajarId) {
+		if (!confirm('Apakah Anda yakin ingin menghapus rubrik penilaian ini?')) {
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		fetch('<?= base_url('admin/laporan-cpmk/delete-rubrik') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Rubrik penilaian berhasil dihapus! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal menghapus: ' + data.message);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat menghapus file.');
+			});
+	}
+
+	function uploadContohSoal(jadwalMengajarId) {
+		const fileInput = document.getElementById('contoh_soal_file_input');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			return;
+		}
+
+		// Validate file type
+		const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!allowedTypes.includes(file.type)) {
+			alert('File harus berformat PDF, DOC, atau DOCX');
+			fileInput.value = '';
+			return;
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Ukuran file maksimal 5MB');
+			fileInput.value = '';
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('contoh_soal_file', file);
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		// Show loading
+		const uploadBtn = event.target.previousElementSibling;
+		uploadBtn.disabled = true;
+		uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+		fetch('<?= base_url('admin/laporan-cpmk/upload-contoh-soal') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Contoh soal berhasil diunggah! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal mengunggah: ' + data.message);
+					uploadBtn.disabled = false;
+					uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat mengunggah file.');
+				uploadBtn.disabled = false;
+				uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+			})
+			.finally(() => {
+				fileInput.value = '';
+			});
+	}
+
+	function deleteContohSoal(jadwalMengajarId) {
+		if (!confirm('Apakah Anda yakin ingin menghapus contoh soal ini?')) {
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		fetch('<?= base_url('admin/laporan-cpmk/delete-contoh-soal') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Contoh soal berhasil dihapus! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal menghapus: ' + data.message);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat menghapus file.');
+			});
+	}
+
+	function uploadNotulen(jadwalMengajarId) {
+		const fileInput = document.getElementById('notulen_file_input');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			return;
+		}
+
+		// Validate file type
+		const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+		if (!allowedTypes.includes(file.type)) {
+			alert('File harus berformat PDF, DOC, atau DOCX');
+			fileInput.value = '';
+			return;
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Ukuran file maksimal 5MB');
+			fileInput.value = '';
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('notulen_file', file);
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		// Show loading
+		const uploadBtn = event.target.previousElementSibling;
+		uploadBtn.disabled = true;
+		uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+		fetch('<?= base_url('admin/laporan-cpmk/upload-notulen') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Notulen rapat berhasil diunggah! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal mengunggah: ' + data.message);
+					uploadBtn.disabled = false;
+					uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat mengunggah file.');
+				uploadBtn.disabled = false;
+				uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+			})
+			.finally(() => {
+				fileInput.value = '';
+			});
+	}
+
+	function deleteNotulen(jadwalMengajarId) {
+		if (!confirm('Apakah Anda yakin ingin menghapus notulen rapat ini?')) {
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+
+		fetch('<?= base_url('admin/laporan-cpmk/delete-notulen') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert('Notulen rapat berhasil dihapus! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal menghapus: ' + data.message);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Terjadi kesalahan saat menghapus file.');
 			});
 	}
 </script>
