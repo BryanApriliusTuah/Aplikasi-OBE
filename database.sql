@@ -32,6 +32,8 @@ CREATE TABLE `analisis_cpl` (
   `analisis_summary` text COLLATE utf8mb4_general_ci,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
+  `bukti_dokumentasi_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Path to uploaded bukti dokumentasi asesmen file',
+  `notulensi_rapat_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Path to uploaded notulensi rapat evaluasi CPL file',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -42,7 +44,7 @@ CREATE TABLE `analisis_cpl` (
 
 LOCK TABLES `analisis_cpl` WRITE;
 /*!40000 ALTER TABLE `analisis_cpl` DISABLE KEYS */;
-INSERT INTO `analisis_cpl` VALUES (1,'Teknik Informatika','2024/2025 Ganjil','2021','manual',NULL,'Test','2025-12-09 17:06:13','2025-12-09 17:06:13'),(2,'Teknik Informatika','2024/2025','2021','auto','[\"default\"]',NULL,'2026-01-22 11:11:55','2026-01-22 11:11:55');
+INSERT INTO `analisis_cpl` VALUES (1,'Teknik Informatika','2024/2025 Ganjil','2021','manual',NULL,'Test','2025-12-09 17:06:13','2025-12-09 17:06:13',NULL,NULL),(2,'Teknik Informatika','2024/2025','2021','auto','[\"default\"]',NULL,'2026-01-22 11:11:55','2026-01-22 11:11:55',NULL,NULL);
 /*!40000 ALTER TABLE `analisis_cpl` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -564,6 +566,9 @@ CREATE TABLE `jadwal_mengajar` (
   `is_nilai_validated` tinyint(1) DEFAULT '0' COMMENT '0 = Not validated, 1 = Validated by admin',
   `validated_at` datetime DEFAULT NULL COMMENT 'Timestamp when nilai was validated',
   `validated_by` int DEFAULT NULL COMMENT 'User ID who validated the nilai',
+  `rubrik_penilaian_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Path to uploaded rubrik penilaian file',
+  `contoh_soal_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Path to uploaded contoh soal dan jawaban file',
+  `notulen_rapat_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Path to uploaded notulen rapat evaluasi file',
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_jadwal` (`mata_kuliah_id`,`program_studi`,`tahun_akademik`,`kelas`),
   KEY `idx_program_studi` (`program_studi`),
@@ -581,7 +586,7 @@ CREATE TABLE `jadwal_mengajar` (
 
 LOCK TABLES `jadwal_mengajar` WRITE;
 /*!40000 ALTER TABLE `jadwal_mengajar` DISABLE KEYS */;
-INSERT INTO `jadwal_mengajar` VALUES (9,15,'Teknik Informatika','2024/2025 Ganjil','A','Ft1','Senin','06:30:00','06:31:00','active','2025-11-03 11:01:27','2025-11-03 11:01:27',0,NULL,NULL),(11,8,'Teknik Informatika','2024/2025 Genap','A','FT1','Senin',NULL,NULL,'active','2025-12-18 02:49:17','2025-12-18 02:49:17',0,NULL,NULL);
+INSERT INTO `jadwal_mengajar` VALUES (9,15,'Teknik Informatika','2024/2025 Ganjil','A','Ft1','Senin','06:30:00','06:31:00','active','2025-11-03 11:01:27','2025-11-03 11:01:27',0,NULL,NULL,NULL,NULL,NULL),(11,8,'Teknik Informatika','2024/2025 Genap','A','FT1','Senin',NULL,NULL,'active','2025-12-18 02:49:17','2026-01-25 20:19:46',0,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `jadwal_mengajar` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -874,7 +879,7 @@ CREATE TABLE `migrations` (
   `time` int NOT NULL,
   `batch` int unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -883,7 +888,7 @@ CREATE TABLE `migrations` (
 
 LOCK TABLES `migrations` WRITE;
 /*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
-INSERT INTO `migrations` VALUES (1,'2025-01-15-100000','App\\Database\\Migrations\\CreateNilaiTeknikPenilaianTable','default','App',1762089800,1),(2,'2025-01-16-100000','App\\Database\\Migrations\\AddValidationToJadwalMengajar','default','App',1762168438,2),(3,'2025-01-17-100000','App\\Database\\Migrations\\CreateGradeConfigTable','default','App',1762700001,3),(4,'2025-01-20-100000','App\\Database\\Migrations\\CreateStandarMinimalCapaianTable','default','App',1765013849,4),(5,'2025-01-21-100000','App\\Database\\Migrations\\CreateAnalysisCpmkTable','default','App',1765014298,5),(6,'2025-01-22-100000','App\\Database\\Migrations\\CreateAnalysisCplTable','default','App',1765299871,6),(7,'2025-01-22-110000','App\\Database\\Migrations\\CreateCqiTable','default','App',1765300607,7),(8,'2026-01-22-100000','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpmk','default','App',1769074751,8),(9,'2026-01-22-110000','App\\Database\\Migrations\\CreateAnalysisTemplatesTable','default','App',1769074751,8),(10,'2026-01-22-120000','App\\Database\\Migrations\\AddDefaultAnalysisTemplate','default','App',1769076148,9),(11,'2026-01-22-103102','App\\Database\\Migrations\\CreateAnalysisTemplatesCplTable','default','App',1769077982,10),(12,'2026-01-22-110710','App\\Database\\Migrations\\UpdateAnalysisTemplatesCplLabels','default','App',1769080063,11),(13,'2026-01-22-111127','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpl','default','App',1769080305,12),(14,'2026-01-23-100000','App\\Database\\Migrations\\SeparateCpmkCplThresholds','default','App',1769080993,13);
+INSERT INTO `migrations` VALUES (1,'2025-01-15-100000','App\\Database\\Migrations\\CreateNilaiTeknikPenilaianTable','default','App',1762089800,1),(2,'2025-01-16-100000','App\\Database\\Migrations\\AddValidationToJadwalMengajar','default','App',1762168438,2),(3,'2025-01-17-100000','App\\Database\\Migrations\\CreateGradeConfigTable','default','App',1762700001,3),(4,'2025-01-20-100000','App\\Database\\Migrations\\CreateStandarMinimalCapaianTable','default','App',1765013849,4),(5,'2025-01-21-100000','App\\Database\\Migrations\\CreateAnalysisCpmkTable','default','App',1765014298,5),(6,'2025-01-22-100000','App\\Database\\Migrations\\CreateAnalysisCplTable','default','App',1765299871,6),(7,'2025-01-22-110000','App\\Database\\Migrations\\CreateCqiTable','default','App',1765300607,7),(8,'2026-01-22-100000','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpmk','default','App',1769074751,8),(9,'2026-01-22-110000','App\\Database\\Migrations\\CreateAnalysisTemplatesTable','default','App',1769074751,8),(10,'2026-01-22-120000','App\\Database\\Migrations\\AddDefaultAnalysisTemplate','default','App',1769076148,9),(11,'2026-01-22-103102','App\\Database\\Migrations\\CreateAnalysisTemplatesCplTable','default','App',1769077982,10),(12,'2026-01-22-110710','App\\Database\\Migrations\\UpdateAnalysisTemplatesCplLabels','default','App',1769080063,11),(13,'2026-01-22-111127','App\\Database\\Migrations\\AddAutoOptionsToAnalysisCpl','default','App',1769080305,12),(14,'2026-01-23-100000','App\\Database\\Migrations\\SeparateCpmkCplThresholds','default','App',1769080993,13),(15,'2026-01-23-120000','App\\Database\\Migrations\\AddRubrikPenilaianToJadwalMengajar','default','App',1769082681,14),(16,'2026-01-23-130000','App\\Database\\Migrations\\AddMoreDocumentsToJadwalMengajar','default','App',1769083323,15),(17,'2026-01-23-140000','App\\Database\\Migrations\\AddDocumentsToAnalysisCpl','default','App',1769136290,16);
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1468,4 +1473,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-22 18:37:46
+-- Dump completed on 2026-01-26 10:25:15
