@@ -366,13 +366,6 @@ class Rps extends BaseController
 			return redirect()->back()->withInput()->with('error', "Minggu ke-{$minggu} sudah ada! Silakan pilih minggu yang berbeda.");
 		}
 
-		$duplikat = $mingguanModel->where('rps_id', $rps_id)
-			->where('cpl_id', $cpl_id)->where('cpmk_id', $cpmk_id)->where('sub_cpmk_id', $sub_cpmk_id)
-			->first();
-		if ($duplikat) {
-			return redirect()->back()->withInput()->with('error', "Kombinasi CPL–CPMK–SubCPMK ini sudah ada di Minggu ke-{$duplikat['minggu']}!");
-		}
-
 		$teknik_bobot_assoc = [];
 		$teknik = $this->request->getPost('teknik_penilaian');
 		$bobot_teknik = $this->request->getPost('bobot_teknik');
@@ -506,13 +499,6 @@ class Rps extends BaseController
 			->first();
 		if ($duplikatMinggu) {
 			return redirect()->back()->withInput()->with('error', "Minggu ke-{$minggu} sudah ada! Silakan pilih minggu yang berbeda.");
-		}
-
-		$duplikat = $mingguanModel->where('rps_id', $rps_id)->where('id !=', $id)
-			->where('cpl_id', $cpl_id)->where('cpmk_id', $cpmk_id)->where('sub_cpmk_id', $sub_cpmk_id)
-			->first();
-		if ($duplikat) {
-			return redirect()->back()->withInput()->with('error', "Kombinasi CPL–CPMK–SubCPMK ini sudah ada di Minggu ke-{$duplikat['minggu']}!");
 		}
 
 		$teknik_bobot_assoc = [];
