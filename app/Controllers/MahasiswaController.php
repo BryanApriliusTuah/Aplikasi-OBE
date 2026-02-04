@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\MahasiswaModel;
 use App\Models\NilaiMahasiswaModel;
+use App\Models\ProgramStudiModel;
 use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\MataKuliahModel;
 use App\Models\NilaiTeknikPenilaianModel;
@@ -14,6 +15,7 @@ class MahasiswaController extends BaseController
 {
 	protected $mahasiswaModel;
 	protected $nilaiMahasiswaModel;
+	protected $programStudiModel;
 	protected $nilaiCpmkMahasiswaModel;
 	protected $mataKuliahModel;
 	protected $nilaiTeknikPenilaianModel;
@@ -22,6 +24,7 @@ class MahasiswaController extends BaseController
 	{
 		$this->mahasiswaModel = new MahasiswaModel();
 		$this->nilaiMahasiswaModel = new NilaiMahasiswaModel();
+		$this->programStudiModel = new ProgramStudiModel();
 		$this->nilaiCpmkMahasiswaModel = new NilaiCpmkMahasiswaModel();
 		$this->mataKuliahModel = new MataKuliahModel();
 		$this->nilaiTeknikPenilaianModel = new NilaiTeknikPenilaianModel();
@@ -39,6 +42,9 @@ class MahasiswaController extends BaseController
 
 		$mahasiswaId = session('mahasiswa_id');
 		$mahasiswaData = $this->mahasiswaModel->find($mahasiswaId);
+
+		$programStudi = $this->programStudiModel->find($mahasiswaData['program_studi_kode']);
+		// dd($programStudi);
 
 		// Get total nilai count
 		$totalNilai = $this->nilaiMahasiswaModel
@@ -73,6 +79,7 @@ class MahasiswaController extends BaseController
 		$data = [
 			'title' => 'Dashboard Mahasiswa',
 			'mahasiswa' => $mahasiswaData,
+			'programStudi' => $programStudi['nama_resmi'],
 			'totalNilai' => $totalNilai,
 			'nilaiLulus' => $nilaiLulus,
 			'avgNilai' => round($avgNilai, 2),
@@ -1565,6 +1572,8 @@ class MahasiswaController extends BaseController
 		$mahasiswaId = session('mahasiswa_id');
 		$mahasiswaData = $this->mahasiswaModel->find($mahasiswaId);
 
+		$programStudiData = $this->programStudiModel->find($mahasiswaData['program_studi_kode']);
+
 		// Get user data if user_id exists
 		$userData = null;
 		if ($mahasiswaData['user_id']) {
@@ -1576,6 +1585,7 @@ class MahasiswaController extends BaseController
 		$data = [
 			'title' => 'Profil Saya',
 			'mahasiswa' => $mahasiswaData,
+			'programStudi' => $programStudiData,
 			'user' => $userData
 		];
 

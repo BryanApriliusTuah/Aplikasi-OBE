@@ -34,7 +34,7 @@
 				</div>
 				<h4 class="mb-1"><?= esc($mahasiswa['nama_lengkap']) ?></h4>
 				<p class="text-muted mb-2"><?= esc($mahasiswa['nim']) ?></p>
-				<span class="badge bg-primary mb-3"><?= esc($mahasiswa['program_studi']) ?></span>
+				<span class="badge bg-primary mb-3"><?= esc($programStudi['nama_resmi']) ?></span>
 
 				<hr>
 
@@ -76,7 +76,7 @@
 				</div>
 				<div class="d-flex justify-content-between mb-2">
 					<span class="text-muted">Program Studi</span>
-					<strong><?= esc($mahasiswa['program_studi']) ?></strong>
+					<strong><?= esc($programStudi['nama_resmi']) ?></strong>
 				</div>
 			</div>
 		</div>
@@ -110,7 +110,7 @@
 							<tr>
 								<td class="fw-bold">Program Studi</td>
 								<td>:</td>
-								<td><?= esc($mahasiswa['program_studi']) ?></td>
+								<td><?= esc($programStudi['nama_resmi']) ?></td>
 							</tr>
 							<tr>
 								<td class="fw-bold">Tahun Angkatan</td>

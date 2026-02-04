@@ -4,7 +4,7 @@
 
 <div class="mb-4">
 	<h2 class="mb-1">Selamat Datang, <?= esc($mahasiswa['nama_lengkap']) ?>!</h2>
-	<p class="text-muted">Program Studi: <?= esc($mahasiswa['program_studi']) ?> | Angkatan <?= esc($mahasiswa['tahun_angkatan']) ?></p>
+	<p class="text-muted">Program Studi: <?= esc(ucwords(strtolower($programStudi))) ?> | Angkatan <?= esc($mahasiswa['tahun_angkatan']) ?></p>
 </div>
 
 <!-- Statistics Cards -->
