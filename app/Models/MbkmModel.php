@@ -12,7 +12,7 @@ class MbkmModel extends Model
 	protected $returnType = 'array';
 	protected $useSoftDeletes = false;
 	protected $allowedFields = [
-		'jenis_kegiatan_id',
+		'jenis_kegiatan',
 		'judul_kegiatan',
 		'tempat_kegiatan',
 		'pembimbing_lapangan',
@@ -25,7 +25,10 @@ class MbkmModel extends Model
 		'deskripsi_kegiatan',
 		'dokumen_pendukung',
 		'status_kegiatan',
-		'tahun_akademik'
+		'tahun_akademik',
+		'nilai_type',
+		'cpmk_id',
+		'cpl_id'
 	];
 	protected $useTimestamps = true;
 	protected $createdField = 'created_at';
@@ -59,7 +62,7 @@ class MbkmModel extends Model
 	public function getKegiatanById($id)
 	{
 		return $this->db->table('mbkm_kegiatan k')
-			->select('k.*, m.nim, m.nama_lengkap as nama_mahasiswa, m.program_studi,
+			->select('k.*, m.nim, m.nama_lengkap as nama_mahasiswa, m.program_studi_kode,
                      jk.nama_kegiatan, jk.kode_kegiatan, jk.sks_konversi as sks_default,
                      d.nama_lengkap as nama_dosen_pembimbing, d.nip,
                      na.nilai_angka, na.nilai_huruf, na.status_kelulusan, na.catatan_akhir')
@@ -119,8 +122,14 @@ class MbkmModel extends Model
 		return $gradeConfigModel->getGradeLetter((float)$nilai_angka);
 	}
 
-	// Save or update final score
+	// Save or update final score (legacy method for backward compatibility)
 	public function simpanNilaiAkhir($kegiatan_id, $nilai_angka, $catatan = null)
+	{
+		return $this->simpanNilaiAkhirWithCapaian($kegiatan_id, $nilai_angka, null, null, null, $catatan);
+	}
+
+	// Save or update final score with CPL/CPMK reference
+	public function simpanNilaiAkhirWithCapaian($kegiatan_id, $nilai_angka, $nilai_type = null, $cpmk_id = null, $cpl_id = null, $catatan = null)
 	{
 		$gradeConfigModel = new GradeConfigModel();
 		$nilai_huruf = $gradeConfigModel->getGradeLetter((float)$nilai_angka);
@@ -131,6 +140,9 @@ class MbkmModel extends Model
 			'nilai_angka' => $nilai_angka,
 			'nilai_huruf' => $nilai_huruf,
 			'status_kelulusan' => $status_kelulusan,
+			'nilai_type' => $nilai_type,
+			'cpmk_id' => $cpmk_id,
+			'cpl_id' => $cpl_id,
 			'catatan_akhir' => $catatan,
 			'tanggal_penilaian' => date('Y-m-d')
 		];

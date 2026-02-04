@@ -86,23 +86,24 @@
 		</div>
 	<?php endif; ?>
 
+	<?php
+	$prodiOptions = ['' => 'Semua Program Studi'];
+	foreach ($program_studi_list as $ps) {
+		$prodiOptions[$ps['kode']] = $ps['nama_resmi'];
+	}
+	?>
 	<?= view('components/modern_filter', [
 		'title' => 'Filter Jadwal',
 		'action' => current_url(),
 		'filters' => [
 			[
 				'type' => 'select',
-				'name' => 'program_studi',
+				'name' => 'program_studi_kode',
 				'label' => 'Program Studi',
 				'icon' => 'bi-mortarboard-fill',
 				'col' => 'col-md-5',
-				'options' => [
-					'' => 'Semua Program Studi',
-					'Teknik Informatika' => 'Teknik Informatika',
-					'Sistem Informasi' => 'Sistem Informasi',
-					'Teknik Komputer' => 'Teknik Komputer'
-				],
-				'selected' => $filters['program_studi'] ?? 'Teknik Informatika'
+				'options' => $prodiOptions,
+				'selected' => $filters['program_studi_kode'] ?? ''
 			],
 			[
 				'type' => 'text',

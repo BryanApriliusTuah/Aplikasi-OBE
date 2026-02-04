@@ -21,9 +21,16 @@
 		</div>
 	<?php endif; ?>
 
+	<?php if (session()->getFlashdata('error')): ?>
+		<div class="alert alert-danger alert-dismissible fade show" role="alert">
+			<?= esc(session()->getFlashdata('error')) ?>
+			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+	<?php endif; ?>
+
 	<div class="card shadow-sm">
 		<div class="card-body">
-			<form action="<?= base_url('admin/mbkm/update/' . $kegiatan['id']) ?>" method="POST">
+			<form action="<?= base_url('admin/mbkm/update/' . $kegiatan['id']) ?>" method="POST" enctype="multipart/form-data">
 				<?= csrf_field() ?>
 
 				<div class="row">
@@ -50,7 +57,7 @@
 											<?= in_array($mhs['id'], $selected_ids) ? 'checked' : '' ?>>
 										<label class="form-check-label" for="mhs_<?= $mhs['id'] ?>">
 											<strong><?= esc($mhs['nama_lengkap']) ?></strong><br>
-											<small class="text-muted"><?= esc($mhs['nim']) ?> - <?= esc($mhs['program_studi']) ?></small>
+											<small class="text-muted"><?= esc($mhs['nim']) ?> - <?= esc($mhs['program_studi_kode'] ?? '-') ?></small>
 										</label>
 									</div>
 								<?php endforeach; ?>
@@ -72,28 +79,21 @@
 						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-bookmark"></i> Detail Kegiatan</h5>
 
 						<div class="mb-3">
-							<label for="jenis_kegiatan_id" class="form-label">Jenis Kegiatan <span class="text-danger">*</span></label>
-							<select class="form-select" id="jenis_kegiatan_id" name="jenis_kegiatan_id" required>
-								<option value="">Pilih Jenis Kegiatan</option>
-								<?php foreach ($jenis_kegiatan as $jk): ?>
-									<option value="<?= $jk['id'] ?>" data-sks="<?= $jk['sks_konversi'] ?>"
-										<?= $kegiatan['jenis_kegiatan_id'] == $jk['id'] ? 'selected' : '' ?>>
-										<?= esc($jk['nama_kegiatan']) ?> (<?= $jk['sks_konversi'] ?> SKS)
-									</option>
-								<?php endforeach; ?>
-							</select>
+							<label for="jenis_kegiatan" class="form-label">Jenis Kegiatan <span class="text-danger">*</span></label>
+							<input type="text" class="form-control" id="jenis_kegiatan" name="jenis_kegiatan"
+								value="<?= esc($kegiatan['jenis_kegiatan'] ?? '') ?>" required placeholder="Contoh: Magang, Pertukaran Mahasiswa, Studi Independen, dll.">
 						</div>
 
 						<div class="mb-3">
 							<label for="judul_kegiatan" class="form-label">Judul Kegiatan <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="judul_kegiatan" name="judul_kegiatan"
-								value="<?= esc($kegiatan['judul_kegiatan']) ?>" required>
+								value="<?= esc($kegiatan['judul_kegiatan']) ?>" required placeholder="Contoh: Magang di PT. XYZ sebagai Software Developer">
 						</div>
 
 						<div class="mb-3">
 							<label for="tempat_kegiatan" class="form-label">Tempat Kegiatan <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="tempat_kegiatan" name="tempat_kegiatan"
-								value="<?= esc($kegiatan['tempat_kegiatan']) ?>" required>
+								value="<?= esc($kegiatan['tempat_kegiatan']) ?>" required placeholder="Contoh: PT. XYZ, Jakarta">
 						</div>
 
 						<div class="row">
@@ -118,7 +118,7 @@
 							<div class="col-md-6 mb-3">
 								<label for="tahun_akademik" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
 								<input type="text" class="form-control" id="tahun_akademik" name="tahun_akademik"
-									value="<?= esc($kegiatan['tahun_akademik']) ?>" required>
+									value="<?= esc($kegiatan['tahun_akademik']) ?>" required placeholder="2025/2026">
 							</div>
 						</div>
 
@@ -136,30 +136,86 @@
 
 					<!-- Right Column -->
 					<div class="col-md-6">
-						<h5 class="mb-3 text-primary"><i class="bi bi-people"></i> Pembimbing</h5>
+						<h5 class="mb-3 text-primary"><i class="bi bi-award"></i> Capaian Pembelajaran</h5>
+
+						<div class="mb-3">
+							<label class="form-label">Jenis Capaian <span class="text-danger">*</span></label>
+							<div class="d-flex gap-4">
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="nilai_type" id="nilai_type_cpmk" value="cpmk"
+										<?= ($kegiatan['nilai_type'] ?? '') === 'cpmk' ? 'checked' : '' ?> required>
+									<label class="form-check-label" for="nilai_type_cpmk">
+										<strong>CPMK</strong> (Capaian Pembelajaran Mata Kuliah)
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="nilai_type" id="nilai_type_cpl" value="cpl"
+										<?= ($kegiatan['nilai_type'] ?? '') === 'cpl' ? 'checked' : '' ?>>
+									<label class="form-check-label" for="nilai_type_cpl">
+										<strong>CPL</strong> (Capaian Pembelajaran Lulusan)
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<!-- CPMK Selection -->
+						<div class="mb-3" id="cpmk_selection" style="display: none;">
+							<label for="cpmk_id" class="form-label">Pilih CPMK <span class="text-danger">*</span></label>
+							<select class="form-select" id="cpmk_id" name="cpmk_id">
+								<option value="">-- Pilih CPMK --</option>
+								<?php foreach ($cpmk_list as $cpmk): ?>
+									<option value="<?= $cpmk['id'] ?>"
+										<?= ($kegiatan['cpmk_id'] ?? '') == $cpmk['id'] ? 'selected' : '' ?>
+										data-deskripsi="<?= esc($cpmk['deskripsi']) ?>">
+										<?= esc($cpmk['kode_cpmk']) ?> - <?= esc(substr($cpmk['deskripsi'], 0, 60)) ?>...
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<div id="cpmk_deskripsi" class="form-text text-muted mt-2"></div>
+						</div>
+
+						<!-- CPL Selection -->
+						<div class="mb-3" id="cpl_selection" style="display: none;">
+							<label for="cpl_id" class="form-label">Pilih CPL <span class="text-danger">*</span></label>
+							<select class="form-select" id="cpl_id" name="cpl_id">
+								<option value="">-- Pilih CPL --</option>
+								<?php foreach ($cpl_list as $cpl): ?>
+									<option value="<?= $cpl['id'] ?>"
+										<?= ($kegiatan['cpl_id'] ?? '') == $cpl['id'] ? 'selected' : '' ?>
+										data-deskripsi="<?= esc($cpl['deskripsi']) ?>">
+										<?= esc($cpl['kode_cpl']) ?> - <?= esc(substr($cpl['deskripsi'], 0, 60)) ?>...
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<div id="cpl_deskripsi" class="form-text text-muted mt-2"></div>
+						</div>
+
+						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-people"></i> Pembimbing</h5>
 
 						<div class="mb-3">
 							<label for="dosen_pembimbing_id" class="form-label">Dosen Pembimbing</label>
 							<select class="form-select" id="dosen_pembimbing_id" name="dosen_pembimbing_id">
 								<option value="">Pilih Dosen Pembimbing</option>
 								<?php foreach ($dosen as $d): ?>
-									<option value="<?= $d['id'] ?>" <?= $kegiatan['dosen_pembimbing_id'] == $d['id'] ? 'selected' : '' ?>>
+									<option value="<?= $d['id'] ?>" <?= ($kegiatan['dosen_pembimbing_id'] ?? '') == $d['id'] ? 'selected' : '' ?>>
 										<?= esc($d['nama_lengkap']) ?> (<?= esc($d['nip']) ?>)
 									</option>
 								<?php endforeach; ?>
 							</select>
+							<small class="text-muted">Pilih dosen pembimbing dari kampus</small>
 						</div>
 
 						<div class="mb-3">
 							<label for="pembimbing_lapangan" class="form-label">Pembimbing Lapangan</label>
 							<input type="text" class="form-control" id="pembimbing_lapangan" name="pembimbing_lapangan"
-								value="<?= esc($kegiatan['pembimbing_lapangan'] ?? '') ?>">
+								value="<?= esc($kegiatan['pembimbing_lapangan'] ?? '') ?>" placeholder="Nama pembimbing di tempat kegiatan">
+							<small class="text-muted">Nama pembimbing dari tempat kegiatan (perusahaan/instansi)</small>
 						</div>
 
 						<div class="mb-3">
 							<label for="kontak_pembimbing" class="form-label">Kontak Pembimbing Lapangan</label>
 							<input type="text" class="form-control" id="kontak_pembimbing" name="kontak_pembimbing"
-								value="<?= esc($kegiatan['kontak_pembimbing'] ?? '') ?>">
+								value="<?= esc($kegiatan['kontak_pembimbing'] ?? '') ?>" placeholder="Email atau nomor telepon">
 						</div>
 
 						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-text"></i> Informasi Tambahan</h5>
@@ -167,10 +223,10 @@
 						<div class="mb-3">
 							<label for="deskripsi_kegiatan" class="form-label">Deskripsi Kegiatan</label>
 							<textarea class="form-control" id="deskripsi_kegiatan" name="deskripsi_kegiatan"
-								rows="6"><?= esc($kegiatan['deskripsi_kegiatan'] ?? '') ?></textarea>
+								rows="4" placeholder="Deskripsikan kegiatan yang akan dilakukan..."><?= esc($kegiatan['deskripsi_kegiatan'] ?? '') ?></textarea>
 						</div>
 
-						<?php if ($kegiatan['nilai_huruf']): ?>
+						<?php if (!empty($kegiatan['nilai_huruf'])): ?>
 							<div class="alert alert-success">
 								<h6 class="alert-heading"><i class="bi bi-check-circle"></i> Status Penilaian</h6>
 								<hr>
@@ -244,22 +300,65 @@
 			cb.addEventListener('change', updateSelectedStudents);
 		});
 
-		// Initialize count on page load (already done, but we update the list)
+		// Initialize count on page load
 		updateSelectedStudents();
 
-		// Auto-fill SKS based on jenis kegiatan
-		const jenisSelect = document.getElementById('jenis_kegiatan_id');
-		const sksInput = document.getElementById('sks_dikonversi');
+		// CPL/CPMK toggle
+		const nilaiTypeRadios = document.querySelectorAll('input[name="nilai_type"]');
+		const cpmkSelection = document.getElementById('cpmk_selection');
+		const cplSelection = document.getElementById('cpl_selection');
+		const cpmkSelect = document.getElementById('cpmk_id');
+		const cplSelect = document.getElementById('cpl_id');
 
-		jenisSelect.addEventListener('change', function() {
-			const selectedOption = this.options[this.selectedIndex];
-			const sksDefault = selectedOption.getAttribute('data-sks');
-			if (sksDefault) {
-				if (confirm('Apakah Anda ingin mengubah SKS ke nilai default (' + sksDefault + ')?')) {
-					sksInput.value = sksDefault;
-				}
+		function toggleSelections() {
+			const selectedType = document.querySelector('input[name="nilai_type"]:checked')?.value;
+
+			if (selectedType === 'cpmk') {
+				cpmkSelection.style.display = 'block';
+				cplSelection.style.display = 'none';
+				cpmkSelect.required = true;
+				cplSelect.required = false;
+				cplSelect.value = '';
+			} else if (selectedType === 'cpl') {
+				cpmkSelection.style.display = 'none';
+				cplSelection.style.display = 'block';
+				cpmkSelect.required = false;
+				cplSelect.required = true;
+				cpmkSelect.value = '';
+			} else {
+				cpmkSelection.style.display = 'none';
+				cplSelection.style.display = 'none';
 			}
+		}
+
+		nilaiTypeRadios.forEach(radio => {
+			radio.addEventListener('change', toggleSelections);
 		});
+
+		// Initialize on page load
+		toggleSelections();
+
+		// Show description when CPMK is selected
+		cpmkSelect.addEventListener('change', function() {
+			const selectedOption = this.options[this.selectedIndex];
+			const deskripsi = selectedOption.getAttribute('data-deskripsi') || '';
+			document.getElementById('cpmk_deskripsi').textContent = deskripsi;
+		});
+
+		// Show description when CPL is selected
+		cplSelect.addEventListener('change', function() {
+			const selectedOption = this.options[this.selectedIndex];
+			const deskripsi = selectedOption.getAttribute('data-deskripsi') || '';
+			document.getElementById('cpl_deskripsi').textContent = deskripsi;
+		});
+
+		// Trigger description display for existing selections
+		if (cpmkSelect.value) {
+			cpmkSelect.dispatchEvent(new Event('change'));
+		}
+		if (cplSelect.value) {
+			cplSelect.dispatchEvent(new Event('change'));
+		}
 
 		// Calculate duration in weeks
 		const tanggalMulai = document.getElementById('tanggal_mulai');

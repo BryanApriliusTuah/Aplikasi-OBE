@@ -55,10 +55,13 @@ class CreateNilaiTeknikPenilaianTable extends Migration
         $this->forge->addForeignKey('jadwal_mengajar_id', 'jadwal_mengajar', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('rps_mingguan_id', 'rps_mingguan', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('nilai_teknik_penilaian');
+        $this->forge->createTable('nilai_teknik_penilaian', true);
 
-        // Add composite index with custom shorter name
-        $this->db->query('ALTER TABLE `nilai_teknik_penilaian` ADD INDEX `idx_nilai_teknik` (`mahasiswa_id`, `jadwal_mengajar_id`, `rps_mingguan_id`, `teknik_penilaian_key`)');
+        // Add composite index with custom shorter name (skip if already exists)
+        $existingKeys = $this->db->query("SHOW INDEX FROM `nilai_teknik_penilaian` WHERE Key_name = 'idx_nilai_teknik'")->getResultArray();
+        if (empty($existingKeys)) {
+            $this->db->query('ALTER TABLE `nilai_teknik_penilaian` ADD INDEX `idx_nilai_teknik` (`mahasiswa_id`, `jadwal_mengajar_id`, `rps_mingguan_id`, `teknik_penilaian_key`)');
+        }
     }
 
     public function down()

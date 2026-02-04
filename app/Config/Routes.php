@@ -11,8 +11,15 @@ $routes->get('/', 'Auth::login');
 $routes->get('logout', 'Auth::logout');
 $routes->get('admin', 'Admin\Dashboard::index');
 $routes->get('admin/dashboard', 'Admin\Dashboard::index');
-
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
+
+	// Fakultas
+	$routes->get('fakultas', 'Fakultas::index');
+	$routes->post('fakultas/sync', 'Fakultas::syncFromApi');
+
+	// Program Studi
+	$routes->get('program-studi', 'ProgramStudi::index');
+	$routes->post('program-studi/sync', 'ProgramStudi::syncFromApi');
 
 	// profil lulusan
 	$routes->get('profil-lulusan', 'ProfilLulusan::index');
@@ -61,6 +68,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mata-kuliah/edit/(:num)', 'MataKuliah::edit/$1');
 	$routes->post('mata-kuliah/update/(:num)', 'MataKuliah::update/$1');
 	$routes->post('mata-kuliah/delete/(:num)', 'MataKuliah::delete/$1');
+	$routes->post('mata-kuliah/sync', 'MataKuliah::syncFromApi');
 
 
 
@@ -144,6 +152,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('dosen/delete/(:num)', 'Dosen::delete/$1');
 	$routes->get('dosen/edit/(:num)', 'Dosen::edit/$1');
 	$routes->post('dosen/update/(:num)', 'Dosen::update/$1');
+	$routes->post('dosen/sync', 'Dosen::syncFromApi');
 
 	// Rute untuk Master Data Mahasiswa
 	$routes->get('mahasiswa', 'Mahasiswa::index');
@@ -152,6 +161,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mahasiswa/edit/(:num)', 'Mahasiswa::edit/$1');
 	$routes->post('mahasiswa/update/(:num)', 'Mahasiswa::update/$1');
 	$routes->get('mahasiswa/delete/(:num)', 'Mahasiswa::delete/$1');
+	$routes->post('mahasiswa/sync', 'Mahasiswa::syncFromApi');
 
 	//matriks pemetaan cpl-cpmk-mk persemester
 	$routes->get('cpl-cpmk-mk-per-semester', 'CplCpmkMkPerSemester::index');
@@ -170,6 +180,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mengajar/getRpsDosen/(:num)', 'Mengajar::getRpsDosen/$1');
 	$routes->get('mengajar/exportExcel', 'Mengajar::exportExcel');
 	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
+	$routes->get('mengajar/syncFromApi', 'Mengajar::syncFromApi');
+	$routes->get('mengajar/getApiKelas', 'Mengajar::getApiKelas');
 
 	//nilai
 	$routes->get('nilai', 'Nilai::index');
@@ -419,6 +431,7 @@ $routes->group('admin', [
 	$routes->get('user/edit/(:num)', 'User::edit/$1');
 	$routes->post('user/update/(:num)', 'User::update/$1');
 	$routes->post('user/delete/(:num)', 'User::delete/$1');
+	$routes->post('user/generate', 'User::generateUsers');
 });
 
 // //EXPORT

@@ -1,263 +1,573 @@
 <?= $this->extend('layouts/admin_layout') ?>
+<?= $this->section('css') ?>
+<style>
+	/* Page-specific modern styles */
+	.page-header {
+		background: linear-gradient(135deg, #f8fafc 0%, #e3eafc 100%);
+		border: 1px solid var(--modern-table-border, #e5e7eb);
+		border-radius: 0.75rem;
+		padding: 1.5rem 2rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.page-header h2 {
+		color: #1e293b;
+		font-size: 1.5rem;
+		letter-spacing: -0.01em;
+	}
+
+	.info-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+	}
+
+	@media (max-width: 768px) {
+		.info-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.info-item {
+		display: flex;
+		align-items: flex-start;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid #f1f5f9;
+	}
+
+	.info-item:last-child {
+		border-bottom: none;
+	}
+
+	.info-label {
+		flex: 0 0 140px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #64748b;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+	}
+
+	.info-value {
+		flex: 1;
+		font-size: 0.9375rem;
+		color: #1e293b;
+		font-weight: 500;
+	}
+
+	/* Capaian badge */
+	.capaian-card {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 1.25rem;
+		background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+		border: 1px solid #e0f2fe;
+		border-radius: 0.5rem;
+		transition: all 0.2s ease;
+	}
+
+	.capaian-card:hover {
+		box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1);
+		transform: translateY(-1px);
+	}
+
+	.capaian-card .capaian-badge {
+		flex-shrink: 0;
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		font-weight: 700;
+		font-size: 0.875rem;
+		letter-spacing: 0.05em;
+	}
+
+	.capaian-card .capaian-badge.cpmk {
+		background: linear-gradient(135deg, #224abe, #0d6efd);
+		color: white;
+	}
+
+	.capaian-card .capaian-badge.cpl {
+		background: linear-gradient(135deg, #059669, #10b981);
+		color: white;
+	}
+
+	.capaian-card .capaian-text strong {
+		color: #1e293b;
+		font-size: 0.9375rem;
+	}
+
+	.capaian-card .capaian-text p {
+		color: #64748b;
+		font-size: 0.8125rem;
+		margin: 0.25rem 0 0 0;
+	}
+
+	/* Modern form input */
+	.modern-input {
+		border: 2px solid #e5e7eb;
+		border-radius: 0.75rem;
+		padding: 0.875rem 1rem;
+		font-size: 1.5rem;
+		font-weight: 700;
+		text-align: center;
+		color: #1e293b;
+		transition: all 0.2s ease;
+		background: #fafbfc;
+	}
+
+	.modern-input:focus {
+		border-color: #224abe;
+		box-shadow: 0 0 0 4px rgba(34, 74, 190, 0.1);
+		background: #fff;
+		outline: none;
+	}
+
+	.modern-input::placeholder {
+		font-size: 0.875rem;
+		font-weight: 400;
+		color: #94a3b8;
+	}
+
+	.modern-textarea {
+		border: 2px solid #e5e7eb;
+		border-radius: 0.75rem;
+		padding: 0.75rem 1rem;
+		font-size: 0.875rem;
+		color: #1e293b;
+		transition: all 0.2s ease;
+		background: #fafbfc;
+		resize: vertical;
+	}
+
+	.modern-textarea:focus {
+		border-color: #224abe;
+		box-shadow: 0 0 0 4px rgba(34, 74, 190, 0.1);
+		background: #fff;
+		outline: none;
+	}
+
+	/* Preview card */
+	.preview-card {
+		background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+		border: 1px solid #e5e7eb;
+		border-radius: 0.75rem;
+		overflow: hidden;
+	}
+
+	.preview-header {
+		background: linear-gradient(135deg, #e3eafc 0%, #f1f5f9 100%);
+		padding: 0.75rem 1.25rem;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.preview-header strong {
+		font-size: 0.8125rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #475569;
+	}
+
+	.preview-body {
+		padding: 1.5rem;
+	}
+
+	.preview-stat {
+		text-align: center;
+		padding: 0.5rem;
+	}
+
+	.preview-stat .stat-label {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #94a3b8;
+		margin-bottom: 0.5rem;
+	}
+
+	.preview-stat .stat-value {
+		font-size: 1.75rem;
+		font-weight: 800;
+		line-height: 1;
+		transition: all 0.3s ease;
+	}
+
+	.preview-stat .stat-value.primary {
+		color: #224abe;
+	}
+
+	.preview-stat .stat-value.success {
+		color: #059669;
+	}
+
+	.preview-stat .stat-value.danger {
+		color: #dc2626;
+	}
+
+	/* Grade chips */
+	.grade-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.grade-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.375rem 0.75rem;
+		border-radius: 2rem;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		border: 1px solid;
+		transition: all 0.2s ease;
+	}
+
+	.grade-chip:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.grade-chip.excellent {
+		background: #f0fdf4;
+		color: #166534;
+		border-color: #bbf7d0;
+	}
+
+	.grade-chip.good {
+		background: #f0f9ff;
+		color: #0c4a6e;
+		border-color: #bae6fd;
+	}
+
+	.grade-chip.fair {
+		background: #fffbeb;
+		color: #92400e;
+		border-color: #fde68a;
+	}
+
+	.grade-chip.poor {
+		background: #fef2f2;
+		color: #991b1b;
+		border-color: #fecaca;
+	}
+
+	/* Modern form label */
+	.modern-label {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
+		color: #475569;
+		margin-bottom: 0.625rem;
+	}
+
+	/* Action buttons */
+	.btn-modern-save {
+		background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+		color: white;
+		border: none;
+		padding: 0.75rem 2rem;
+		border-radius: 0.75rem;
+		font-weight: 600;
+		font-size: 0.9375rem;
+		transition: all 0.2s ease;
+		box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+	}
+
+	.btn-modern-save:hover:not(:disabled) {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+		color: white;
+	}
+
+	.btn-modern-save:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-modern-cancel {
+		background: white;
+		color: #475569;
+		border: 2px solid #e5e7eb;
+		padding: 0.75rem 2rem;
+		border-radius: 0.75rem;
+		font-weight: 600;
+		font-size: 0.9375rem;
+		transition: all 0.2s ease;
+	}
+
+	.btn-modern-cancel:hover {
+		background: #f8fafc;
+		border-color: #cbd5e1;
+		color: #1e293b;
+	}
+
+	/* Divider */
+	.modern-divider {
+		height: 1px;
+		background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+		border: none;
+		margin: 1.5rem 0;
+	}
+
+	/* Mhs chip */
+	.mhs-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.25rem 0.75rem;
+		background: #f1f5f9;
+		border: 1px solid #e2e8f0;
+		border-radius: 2rem;
+		font-size: 0.8125rem;
+		color: #334155;
+		margin: 0.125rem 0;
+	}
+
+	.mhs-chip .nim {
+		color: #94a3b8;
+		font-size: 0.75rem;
+	}
+</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="container-fluid px-4">
-	<div class="d-flex justify-content-between align-items-center my-4">
-		<h2 class="fw-bold">Input Nilai MBKM</h2>
-		<a href="<?= base_url('admin/mbkm') ?>" class="btn btn-outline-secondary">
-			<i class="bi bi-arrow-left"></i> Kembali
+	<!-- Page Header -->
+	<div class="page-header d-flex justify-content-between align-items-center">
+		<div>
+			<h2 class="fw-bold mb-1">Input Nilai MBKM</h2>
+			<p class="text-muted mb-0" style="font-size: 0.875rem;">Penilaian kegiatan Merdeka Belajar Kampus Merdeka</p>
+		</div>
+		<a href="<?= base_url('admin/mbkm') ?>" class="btn-modern-cancel">
+			<i class="bi bi-arrow-left me-1"></i> Kembali
 		</a>
 	</div>
 
 	<?php if (session()->getFlashdata('success')): ?>
 		<div class="alert alert-success alert-dismissible fade show" role="alert">
-			<?= esc(session()->getFlashdata('success')) ?>
+			<i class="bi bi-check-circle me-2"></i><?= esc(session()->getFlashdata('success')) ?>
 			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 		</div>
 	<?php endif; ?>
 
 	<?php if (session()->getFlashdata('error')): ?>
 		<div class="alert alert-danger alert-dismissible fade show" role="alert">
-			<?= esc(session()->getFlashdata('error')) ?>
+			<i class="bi bi-exclamation-triangle me-2"></i><?= esc(session()->getFlashdata('error')) ?>
 			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 		</div>
 	<?php endif; ?>
 
 	<!-- Informasi Kegiatan -->
-	<div class="card shadow-sm mb-4">
-		<div class="card-header bg-primary text-white">
-			<h5 class="mb-0"><i class="bi bi-info-circle"></i> Informasi Kegiatan</h5>
+	<div class="modern-filter-wrapper mb-4">
+		<div class="modern-filter-header">
+			<div class="modern-filter-title">
+				<i class="bi bi-info-circle me-1"></i> Informasi Kegiatan
+			</div>
 		</div>
-		<div class="card-body">
-			<div class="row">
-				<div class="col-md-6">
-					<table class="table table-sm">
-						<tr>
-							<th width="35%">Judul Kegiatan</th>
-							<td><?= esc($kegiatan['judul_kegiatan']) ?></td>
-						</tr>
-						<tr>
-							<th>Jenis Kegiatan</th>
-							<td><?= esc($kegiatan['nama_kegiatan']) ?></td>
-						</tr>
-						<tr>
-							<th>Mahasiswa</th>
-							<td>
-								<?php if (!empty($mahasiswa)): ?>
-									<?php foreach ($mahasiswa as $mhs): ?>
-										<?= esc($mhs['nama_lengkap']) ?> (<?= esc($mhs['nim']) ?>)<br>
-									<?php endforeach; ?>
-								<?php else: ?>
-									-
-								<?php endif; ?>
-							</td>
-						</tr>
-						<tr>
-							<th>Program Studi</th>
-							<td><?= esc($mahasiswa[0]['program_studi'] ?? '-') ?></td>
-						</tr>
-					</table>
+		<div class="modern-filter-body">
+			<div class="info-grid">
+				<div>
+					<div class="info-item">
+						<span class="info-label">Judul Kegiatan</span>
+						<span class="info-value"><?= esc($kegiatan['judul_kegiatan']) ?></span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">Jenis Kegiatan</span>
+						<span class="info-value"><?= esc($kegiatan['jenis_kegiatan']) ?></span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">Mahasiswa</span>
+						<span class="info-value">
+							<?php if (!empty($mahasiswa)): ?>
+								<?php foreach ($mahasiswa as $mhs): ?>
+									<div class="mhs-chip">
+										<?= esc($mhs['nama_lengkap']) ?>
+										<span class="nim"><?= esc($mhs['nim']) ?></span>
+									</div>
+								<?php endforeach; ?>
+							<?php else: ?>
+								<span class="text-muted">-</span>
+							<?php endif; ?>
+						</span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">Program Studi</span>
+						<span class="info-value"><?= esc($mahasiswa[0]['program_studi_kode'] ?? '-') ?></span>
+					</div>
 				</div>
-				<div class="col-md-6">
-					<table class="table table-sm">
-						<tr>
-							<th width="35%">Tempat Kegiatan</th>
-							<td><?= esc($kegiatan['tempat_kegiatan']) ?></td>
-						</tr>
-						<tr>
-							<th>Periode</th>
-							<td>
-								<?= date('d/m/Y', strtotime($kegiatan['tanggal_mulai'])) ?> -
-								<?= date('d/m/Y', strtotime($kegiatan['tanggal_selesai'])) ?>
-								<span class="badge bg-info"><?= $kegiatan['durasi_minggu'] ?> minggu</span>
-							</td>
-						</tr>
-						<tr>
-							<th>Dosen Pembimbing</th>
-							<td><?= esc($kegiatan['nama_dosen_pembimbing'] ?? '-') ?></td>
-						</tr>
-						<tr>
-							<th>SKS Dikonversi</th>
-							<td><span class="badge bg-success"><?= $kegiatan['sks_dikonversi'] ?> SKS</span></td>
-						</tr>
-					</table>
+				<div>
+					<div class="info-item">
+						<span class="info-label">Tempat Kegiatan</span>
+						<span class="info-value"><?= esc($kegiatan['tempat_kegiatan']) ?></span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">Periode</span>
+						<span class="info-value">
+							<?= date('d/m/Y', strtotime($kegiatan['tanggal_mulai'])) ?> -
+							<?= date('d/m/Y', strtotime($kegiatan['tanggal_selesai'])) ?>
+							<?php if (!empty($kegiatan['durasi_minggu'])): ?>
+								<span class="badge bg-info ms-1" style="font-size: 0.75rem;"><?= $kegiatan['durasi_minggu'] ?> minggu</span>
+							<?php endif; ?>
+						</span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">Dosen Pembimbing</span>
+						<span class="info-value"><?= esc($kegiatan['nama_dosen_pembimbing'] ?? '-') ?></span>
+					</div>
+					<div class="info-item">
+						<span class="info-label">SKS Dikonversi</span>
+						<span class="info-value">
+							<span class="badge" style="background: linear-gradient(135deg, #059669, #10b981); font-size: 0.8125rem;"><?= $kegiatan['sks_dikonversi'] ?> SKS</span>
+						</span>
+					</div>
 				</div>
 			</div>
+		</div>
+	</div>
+
+	<!-- Capaian Pembelajaran yang Diterapkan -->
+	<div class="modern-filter-wrapper mb-4">
+		<div class="modern-filter-header">
+			<div class="modern-filter-title">
+				<i class="bi bi-award me-1"></i> Capaian Pembelajaran
+			</div>
+		</div>
+		<div class="modern-filter-body">
+			<?php if ($kegiatan['nilai_type'] === 'cpmk'): ?>
+				<div class="capaian-card">
+					<span class="capaian-badge cpmk">CPMK</span>
+					<div class="capaian-text">
+						<strong><?= esc($kegiatan['kode_cpmk'] ?? '-') ?></strong>
+						<p><?= esc($kegiatan['cpmk_deskripsi'] ?? '') ?></p>
+					</div>
+				</div>
+			<?php elseif ($kegiatan['nilai_type'] === 'cpl'): ?>
+				<div class="capaian-card">
+					<span class="capaian-badge cpl">CPL</span>
+					<div class="capaian-text">
+						<strong><?= esc($kegiatan['kode_cpl'] ?? '-') ?></strong>
+						<p><?= esc($kegiatan['cpl_deskripsi'] ?? '') ?></p>
+					</div>
+				</div>
+			<?php else: ?>
+				<div class="alert alert-warning mb-0" style="border-radius: 0.5rem;">
+					<i class="bi bi-exclamation-triangle me-1"></i> Capaian pembelajaran belum ditentukan untuk kegiatan ini. Silakan edit kegiatan terlebih dahulu.
+				</div>
+			<?php endif; ?>
 		</div>
 	</div>
 
 	<!-- Form Penilaian -->
-	<div class="card shadow-sm">
-		<div class="card-header bg-success text-white">
-			<h5 class="mb-0"><i class="bi bi-pencil-square"></i> Form Penilaian</h5>
-		</div>
-		<div class="card-body">
-			<form action="<?= base_url('admin/mbkm/save-nilai/' . $kegiatan['id']) ?>" method="POST" id="formNilai">
-				<?= csrf_field() ?>
-
-				<?php if (empty($komponen)): ?>
-					<div class="alert alert-warning">
-						<i class="bi bi-exclamation-triangle"></i>
-						Belum ada komponen penilaian untuk jenis kegiatan ini. Silakan hubungi administrator.
-					</div>
-				<?php else: ?>
-					<div class="table-responsive">
-						<table class="table table-bordered table-hover">
-							<thead class="table-light">
-								<tr>
-									<th width="5%" class="text-center">#</th>
-									<th width="30%">Komponen Penilaian</th>
-									<th width="35%">Deskripsi</th>
-									<th width="10%" class="text-center">Bobot (%)</th>
-									<th width="15%" class="text-center">Nilai (0-100)</th>
-									<th width="5%" class="text-center">Skor</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php
-								$no = 1;
-								$total_bobot = 0;
-								foreach ($komponen as $k):
-									$nilai_existing = $nilai_map[$k['id']] ?? null;
-									$nilai = $nilai_existing['nilai'] ?? 0;
-									$total_bobot += $k['bobot'];
-								?>
-									<tr>
-										<td class="text-center"><?= $no++ ?></td>
-										<td>
-											<strong><?= esc($k['nama_komponen']) ?></strong>
-											<input type="hidden" name="komponen_id[]" value="<?= $k['id'] ?>">
-										</td>
-										<td class="small text-muted"><?= esc($k['deskripsi'] ?? '-') ?></td>
-										<td class="text-center">
-											<span class="badge bg-primary"><?= number_format($k['bobot'], 0) ?>%</span>
-											<input type="hidden" class="bobot" value="<?= $k['bobot'] ?>">
-										</td>
-										<td>
-											<input type="number"
-												class="form-control form-control-sm text-center nilai-input"
-												name="nilai[]"
-												value="<?= $nilai ?>"
-												min="0"
-												max="100"
-												step="0.01"
-												data-komponen-id="<?= $k['id'] ?>"
-												required>
-										</td>
-										<td class="text-center">
-											<strong class="skor-display">0.00</strong>
-										</td>
-									</tr>
-									<tr>
-										<td colspan="6">
-											<textarea class="form-control form-control-sm"
-												name="catatan[]"
-												rows="2"
-												placeholder="Catatan penilaian untuk <?= esc($k['nama_komponen']) ?> (opsional)"><?= esc($nilai_existing['catatan'] ?? '') ?></textarea>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-							<tfoot class="table-light">
-								<tr>
-									<th colspan="3" class="text-end">Total</th>
-									<th class="text-center">
-										<span class="badge bg-<?= $total_bobot == 100 ? 'success' : 'danger' ?>" id="totalBobot">
-											<?= number_format($total_bobot, 0) ?>%
-										</span>
-									</th>
-									<th colspan="2" class="text-center">
-										<h5 class="mb-0">
-											<span class="badge bg-success" id="nilaiAkhir">0.00</span>
-										</h5>
-									</th>
-								</tr>
-							</tfoot>
-						</table>
-					</div>
-
-					<?php if ($total_bobot != 100): ?>
-						<div class="alert alert-warning">
-							<i class="bi bi-exclamation-triangle"></i>
-							<strong>Perhatian:</strong> Total bobot komponen penilaian bukan 100%. Hubungi administrator untuk memperbaiki komponen penilaian.
-						</div>
-					<?php endif; ?>
-
-					<div class="alert alert-info">
-						<i class="bi bi-info-circle"></i> <strong>Informasi Perhitungan:</strong>
-						<ul class="mb-0 mt-2">
-							<li>Nilai akhir dihitung dari: Σ (Nilai × Bobot / 100)</li>
-							<li>Rentang nilai: 0 - 100</li>
-							<li>Konversi nilai huruf:
-								<?php if (!empty($grade_config)): ?>
-									<?php foreach ($grade_config as $grade): ?>
-										<?php
-										$badgeClass = $grade['is_passing'] ? ($grade['min_score'] >= 75 ? 'bg-success' : ($grade['min_score'] >= 65 ? 'bg-info' : 'bg-warning')) : 'bg-danger';
-										$rangeText = $grade['grade_letter'] . ' (' . number_format($grade['min_score'], 0) . '-' . number_format($grade['max_score'], 0) . ')';
-										?>
-										<span class="badge <?= $badgeClass ?>"><?= esc($rangeText) ?></span>
-									<?php endforeach; ?>
-								<?php else: ?>
-									<span class="text-muted">Konfigurasi nilai tidak tersedia</span>
-								<?php endif; ?>
-							</li>
-							<?php
-							$minPassing = 65;
-							if (!empty($grade_config)) {
-								foreach ($grade_config as $grade) {
-									if ($grade['is_passing']) {
-										$minPassing = $grade['min_score'];
-									}
-								}
-							}
-							?>
-							<li>Minimum kelulusan: <?= number_format($minPassing, 0) ?></li>
-						</ul>
-					</div>
-
-					<hr>
-
-					<div class="d-flex justify-content-end gap-2">
-						<a href="<?= base_url('admin/mbkm') ?>" class="btn btn-secondary">
-							<i class="bi bi-x-circle"></i> Batal
-						</a>
-						<button type="submit" class="btn btn-success">
-							<i class="bi bi-save"></i> Simpan Nilai
-						</button>
-					</div>
-				<?php endif; ?>
-			</form>
-		</div>
-	</div>
-
-	<!-- Preview Nilai Akhir -->
-	<?php if (!empty($komponen)): ?>
-		<div class="card shadow-sm mt-4">
-			<div class="card-header bg-warning">
-				<h5 class="mb-0"><i class="bi bi-eye"></i> Preview Nilai Akhir</h5>
-			</div>
-			<div class="card-body">
-				<div class="row text-center">
-					<div class="col-md-3">
-						<h6 class="text-muted">Nilai Angka</h6>
-						<h2 id="previewNilaiAngka" class="text-primary">0.00</h2>
-					</div>
-					<div class="col-md-3">
-						<h6 class="text-muted">Nilai Huruf</h6>
-						<h2 id="previewNilaiHuruf" class="text-success">-</h2>
-					</div>
-					<div class="col-md-3">
-						<h6 class="text-muted">Status</h6>
-						<h2 id="previewStatus" class="text-info">-</h2>
-					</div>
-					<div class="col-md-3">
-						<h6 class="text-muted">Keterangan</h6>
-						<h2 id="previewKeterangan" class="text-secondary">-</h2>
-					</div>
+	<div class="modern-filter-wrapper mb-4">
+		<div class="modern-filter-header">
+			<div class="d-flex justify-content-between align-items-center">
+				<div class="modern-filter-title">
+					<i class="bi bi-pencil-square me-1"></i> Form Penilaian
 				</div>
 			</div>
 		</div>
-	<?php endif; ?>
+		<div class="modern-filter-body">
+			<form action="<?= base_url('admin/mbkm/save-nilai/' . $kegiatan['id']) ?>" method="POST" id="formNilai">
+				<?= csrf_field() ?>
+
+				<div class="row g-4">
+					<div class="col-lg-5">
+						<!-- Nilai Input -->
+						<div class="mb-4">
+							<label for="nilai_angka" class="modern-label">Nilai Akhir (0-100) <span class="text-danger">*</span></label>
+							<input type="number"
+								class="form-control modern-input"
+								id="nilai_angka"
+								name="nilai_angka"
+								value="<?= esc($nilai_akhir['nilai_angka'] ?? '') ?>"
+								min="0"
+								max="100"
+								step="0.01"
+								placeholder="0 - 100"
+								required>
+						</div>
+
+						<!-- Catatan -->
+						<div class="mb-3">
+							<label for="catatan" class="modern-label">Catatan <span class="text-muted" style="text-transform: none; font-weight: 400;">(Opsional)</span></label>
+							<textarea class="form-control modern-textarea" id="catatan" name="catatan" rows="3"
+								placeholder="Tambahkan catatan penilaian jika diperlukan"><?= esc($nilai_akhir['catatan_akhir'] ?? '') ?></textarea>
+						</div>
+					</div>
+
+					<div class="col-lg-7">
+						<!-- Preview Nilai -->
+						<div class="preview-card mb-3">
+							<div class="preview-header">
+								<strong><i class="bi bi-eye me-1"></i> Preview Nilai</strong>
+							</div>
+							<div class="preview-body">
+								<div class="row g-3">
+									<div class="col-4">
+										<div class="preview-stat">
+											<div class="stat-label">Nilai Angka</div>
+											<div class="stat-value primary" id="previewNilaiAngka"><?= esc($nilai_akhir['nilai_angka'] ?? '-') ?></div>
+										</div>
+									</div>
+									<div class="col-4">
+										<div class="preview-stat">
+											<div class="stat-label">Nilai Huruf</div>
+											<div class="stat-value success" id="previewNilaiHuruf"><?= esc($nilai_akhir['nilai_huruf'] ?? '-') ?></div>
+										</div>
+									</div>
+									<div class="col-4">
+										<div class="preview-stat">
+											<div class="stat-label">Status</div>
+											<div class="stat-value <?= ($nilai_akhir['status_kelulusan'] ?? '') === 'Lulus' ? 'success' : 'danger' ?>" id="previewStatus">
+												<?= esc($nilai_akhir['status_kelulusan'] ?? '-') ?>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Grade Info -->
+						<div class="preview-card">
+							<div class="preview-header">
+								<strong><i class="bi bi-bar-chart me-1"></i> Konversi Nilai</strong>
+							</div>
+							<div class="preview-body">
+								<?php if (!empty($grade_config)): ?>
+									<div class="grade-chips">
+										<?php foreach ($grade_config as $grade): ?>
+											<?php
+											$chipClass = $grade['is_passing'] ? ($grade['min_score'] >= 75 ? 'excellent' : ($grade['min_score'] >= 65 ? 'good' : 'fair')) : 'poor';
+											$rangeText = $grade['grade_letter'] . ' (' . number_format($grade['min_score'], 0) . '-' . number_format($grade['max_score'], 0) . ')';
+											?>
+											<span class="grade-chip <?= $chipClass ?>"><?= esc($rangeText) ?></span>
+										<?php endforeach; ?>
+									</div>
+								<?php else: ?>
+									<span class="text-muted" style="font-size: 0.875rem;">Konfigurasi nilai tidak tersedia</span>
+								<?php endif; ?>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<hr class="modern-divider">
+
+				<div class="d-flex justify-content-end gap-2">
+					<a href="<?= base_url('admin/mbkm') ?>" class="btn-modern-cancel">
+						<i class="bi bi-x-circle me-1"></i> Batal
+					</a>
+					<button type="submit" class="btn-modern-save" <?= empty($kegiatan['nilai_type']) ? 'disabled' : '' ?>>
+						<i class="bi bi-save me-1"></i> Simpan Nilai
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
 </div>
 
 <?= $this->endSection() ?>
@@ -268,6 +578,8 @@
 	const gradeConfig = <?= json_encode($grade_config ?? []) ?>;
 
 	document.addEventListener('DOMContentLoaded', function() {
+		const nilaiInput = document.getElementById('nilai_angka');
+
 		// Function to get grade info from dynamic configuration
 		function getGradeInfo(score) {
 			if (gradeConfig && gradeConfig.length > 0) {
@@ -276,7 +588,7 @@
 					const minScore = parseFloat(grade.min_score);
 					const maxScore = parseFloat(grade.max_score);
 
-					if (score > minScore && score <= maxScore) {
+					if (score >= minScore && score <= maxScore) {
 						return {
 							letter: grade.grade_letter,
 							isPassing: grade.is_passing == 1,
@@ -294,73 +606,46 @@
 			};
 		}
 
-		// Function to calculate scores
-		function hitungNilai() {
-			let totalNilai = 0;
-			const rows = document.querySelectorAll('tbody tr:nth-child(odd)');
+		// Function to update preview
+		function updatePreview() {
+			const nilai = parseFloat(nilaiInput.value) || 0;
 
-			rows.forEach(row => {
-				const nilaiInput = row.querySelector('.nilai-input');
-				const bobotInput = row.querySelector('.bobot');
-				const skorDisplay = row.querySelector('.skor-display');
+			document.getElementById('previewNilaiAngka').textContent = nilai.toFixed(2);
 
-				if (nilaiInput && bobotInput && skorDisplay) {
-					const nilai = parseFloat(nilaiInput.value) || 0;
-					const bobot = parseFloat(bobotInput.value) || 0;
-					const skor = (nilai * bobot) / 100;
+			if (nilai > 0) {
+				const gradeInfo = getGradeInfo(nilai);
+				document.getElementById('previewNilaiHuruf').textContent = gradeInfo.letter;
 
-					skorDisplay.textContent = skor.toFixed(2);
-					totalNilai += skor;
-				}
-			});
+				const status = gradeInfo.isPassing ? 'Lulus' : 'Tidak Lulus';
+				const statusElement = document.getElementById('previewStatus');
+				statusElement.textContent = status;
+				statusElement.className = gradeInfo.isPassing ? 'stat-value success' : 'stat-value danger';
 
-			// Update nilai akhir
-			document.getElementById('nilaiAkhir').textContent = totalNilai.toFixed(2);
-			document.getElementById('previewNilaiAngka').textContent = totalNilai.toFixed(2);
-
-			// Konversi ke nilai huruf using dynamic configuration
-			const gradeInfo = getGradeInfo(totalNilai);
-			const nilaiHuruf = gradeInfo.letter;
-			const status = gradeInfo.isPassing ? 'Lulus' : 'Tidak Lulus';
-			const keterangan = gradeInfo.description || (gradeInfo.isPassing ? 'Baik' : 'Kurang');
-
-			document.getElementById('previewNilaiHuruf').textContent = nilaiHuruf;
-			document.getElementById('previewStatus').textContent = status;
-			document.getElementById('previewKeterangan').textContent = keterangan;
-
-			// Change status color
-			const statusElement = document.getElementById('previewStatus');
-			statusElement.className = status === 'Lulus' ? 'text-success' : 'text-danger';
+				// Update letter class
+				const hurufElement = document.getElementById('previewNilaiHuruf');
+				hurufElement.className = gradeInfo.isPassing ? 'stat-value success' : 'stat-value danger';
+			} else {
+				document.getElementById('previewNilaiHuruf').textContent = '-';
+				document.getElementById('previewNilaiHuruf').className = 'stat-value success';
+				document.getElementById('previewStatus').textContent = '-';
+				document.getElementById('previewStatus').className = 'stat-value';
+			}
 		}
 
-		// Add event listeners to all nilai inputs
-		const nilaiInputs = document.querySelectorAll('.nilai-input');
-		nilaiInputs.forEach(input => {
-			input.addEventListener('input', hitungNilai);
-			input.addEventListener('change', hitungNilai);
-		});
+		// Event listener for nilai input
+		nilaiInput.addEventListener('input', updatePreview);
+		nilaiInput.addEventListener('change', updatePreview);
 
-		// Initial calculation
-		hitungNilai();
+		// Initialize on page load
+		updatePreview();
 
 		// Form validation
 		document.getElementById('formNilai')?.addEventListener('submit', function(e) {
-			const nilaiInputs = document.querySelectorAll('.nilai-input');
-			let isValid = true;
-
-			nilaiInputs.forEach(input => {
-				const nilai = parseFloat(input.value);
-				if (isNaN(nilai) || nilai < 0 || nilai > 100) {
-					isValid = false;
-					input.classList.add('is-invalid');
-				} else {
-					input.classList.remove('is-invalid');
-				}
-			});
-
-			if (!isValid) {
+			const nilai = parseFloat(nilaiInput.value);
+			if (isNaN(nilai) || nilai < 0 || nilai > 100) {
 				e.preventDefault();
-				alert('Pastikan semua nilai berada dalam rentang 0-100');
+				alert('Nilai harus berada dalam rentang 0-100');
+				return false;
 			}
 		});
 	});

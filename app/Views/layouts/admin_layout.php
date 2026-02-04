@@ -9,6 +9,8 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 	<link rel="stylesheet" href="<?= base_url('css/custom.css') ?>">
 	<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+	<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 	<style>
 		/* Remove arrows/spinners from number input */
 
@@ -31,6 +33,7 @@
 			appearance: textfield;
 		}
 	</style>
+	<?= $this->renderSection('css') ?>
 
 </head>
 
@@ -71,6 +74,8 @@
 
 				<?php
 				$masterDataUris = [
+					'admin/fakultas',
+					'admin/program-studi',
 					'admin/profil-lulusan',
 					'admin/cpl',
 					'admin/bahan-kajian',
@@ -89,6 +94,8 @@
 					</a>
 					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isMasterDataOpen ? ' show' : '' ?>">
 						<div>
+							<li><a class="nav-link <?= uri_string() == 'admin/fakultas' ? 'active' : '' ?>" href="<?= base_url('admin/fakultas') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Fakultas">Fakultas</a></li>
+							<li><a class="nav-link <?= uri_string() == 'admin/program-studi' ? 'active' : '' ?>" href="<?= base_url('admin/program-studi') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Program Studi">Program Studi</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/profil-lulusan' ? 'active' : '' ?>" href="<?= base_url('admin/profil-lulusan') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Profil Lulusan Program Studi">Profil Lulusan</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/cpl' ? 'active' : '' ?>" href="<?= base_url('admin/cpl') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Capaian Pembelajaran Lulusan (CPL)">CPL</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/bahan-kajian' ? 'active' : '' ?>" href="<?= base_url('admin/bahan-kajian') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Bahan Kajian Kurikulum">Bahan Kajian</a></li>
@@ -219,34 +226,11 @@
 						<i class="bi bi-journal-text"></i> Nilai
 					</a>
 				</li>
-				<?php
-				$mbkmUris = [
-					'admin/mbkm',
-					'admin/mbkm-jenis',
-				];
-				$isMbkmOpen = in_array(uri_string(), $mbkmUris);
-				?>
-
-				<li class="nav-item sidebar-dropdown<?= $isMbkmOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+				<li class="nav-item">
+					<a class="nav-link<?= uri_string() == 'admin/mbkm' ? ' active' : '' ?>" href="<?= base_url('admin/mbkm') ?>"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola kegiatan MBKM">
-						<span><i class="bi bi-backpack"></i> MBKM </span>
-						<span class="caret"></span>
+						<i class="bi bi-backpack"></i> MBKM
 					</a>
-					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isMbkmOpen ? ' show' : '' ?>">
-						<div>
-							<li><a class="nav-link <?= uri_string() == 'admin/mbkm' ? 'active' : '' ?>"
-									href="<?= base_url('admin/mbkm') ?>"
-									data-bs-toggle="tooltip" data-bs-placement="right"
-									title="Kelola kegiatan MBKM mahasiswa">
-									Kegiatan MBKM</a></li>
-							<li><a class="nav-link <?= uri_string() == 'admin/mbkm-jenis' ? 'active' : '' ?>"
-									href="<?= base_url('admin/mbkm-jenis') ?>"
-									data-bs-toggle="tooltip" data-bs-placement="right"
-									title="Kelola jenis kegiatan MBKM">
-									Jenis Kegiatan</a></li>
-						</div>
-					</ul>
 				</li>
 				<?php
 				$profilCplUris = [
@@ -357,6 +341,7 @@
 		}, true);
 	</script>
 
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 	<?= $this->renderSection('js') ?>

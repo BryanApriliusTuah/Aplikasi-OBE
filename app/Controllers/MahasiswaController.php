@@ -62,9 +62,9 @@ class MahasiswaController extends BaseController
 
 		// Get recent nilai (last 5)
 		$recentNilai = $this->nilaiMahasiswaModel
-			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas')
-			->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, jadwal.tahun_akademik, jadwal.kelas')
+			->join('jadwal', 'nilai_mahasiswa.jadwal_id = jadwal.id')
+			->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id')
 			->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId)
 			->orderBy('nilai_mahasiswa.updated_at', 'DESC')
 			->limit(5)
@@ -96,11 +96,11 @@ class MahasiswaController extends BaseController
 
 		// Get all nilai for this mahasiswa
 		$nilaiList = $this->nilaiMahasiswaModel
-			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas, jadwal_mengajar.id as jadwal_id')
-			->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal.tahun_akademik, jadwal.kelas, jadwal.id as jadwal_id')
+			->join('jadwal', 'nilai_mahasiswa.jadwal_id = jadwal.id')
+			->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id')
 			->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId)
-			->orderBy('jadwal_mengajar.tahun_akademik', 'DESC')
+			->orderBy('jadwal.tahun_akademik', 'DESC')
 			->orderBy('mata_kuliah.semester', 'ASC')
 			->findAll();
 
@@ -126,11 +126,11 @@ class MahasiswaController extends BaseController
 
 		// Get nilai mahasiswa for this jadwal
 		$nilai = $this->nilaiMahasiswaModel
-			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas')
-			->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+			->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal.tahun_akademik, jadwal.kelas')
+			->join('jadwal', 'nilai_mahasiswa.jadwal_id = jadwal.id')
+			->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id')
 			->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId)
-			->where('nilai_mahasiswa.jadwal_mengajar_id', $jadwalId)
+			->where('nilai_mahasiswa.jadwal_id', $jadwalId)
 			->first();
 
 		if (!$nilai) {
@@ -160,7 +160,7 @@ class MahasiswaController extends BaseController
 			->select('nilai_cpmk_mahasiswa.*, cpmk.kode_cpmk, cpmk.deskripsi')
 			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
 			->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
-			->where('nilai_cpmk_mahasiswa.jadwal_mengajar_id', $jadwalId)
+			->where('nilai_cpmk_mahasiswa.jadwal_id', $jadwalId)
 			->orderBy('cpmk.kode_cpmk', 'ASC')
 			->findAll();
 
@@ -192,9 +192,9 @@ class MahasiswaController extends BaseController
 		$builder = $db->table('nilai_mahasiswa nm');
 		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.sks, 
 						  GROUP_CONCAT(DISTINCT d.nama_lengkap ORDER BY jd.role DESC SEPARATOR ", ") as dosen_pengampu');
-		$builder->join('jadwal_mengajar jm', 'nm.jadwal_mengajar_id = jm.id');
+		$builder->join('jadwal jm', 'nm.jadwal_id = jm.id');
 		$builder->join('mata_kuliah mk', 'jm.mata_kuliah_id = mk.id');
-		$builder->join('jadwal_dosen jd', 'jm.id = jd.jadwal_mengajar_id', 'left');
+		$builder->join('jadwal_dosen jd', 'jm.id = jd.jadwal_id', 'left');
 		$builder->join('dosen d', 'jd.dosen_id = d.id', 'left');
 		$builder->where('nm.mahasiswa_id', $mahasiswaId);
 		$builder->groupBy('jm.id');
@@ -296,8 +296,8 @@ class MahasiswaController extends BaseController
 
 			// Get all nilai_cpmk for this student for these CPMK
 			$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
-				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_mengajar_id, jm.mata_kuliah_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.jadwal_id, jm.mata_kuliah_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->where('ncm.mahasiswa_id', $mahasiswaId)
 				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->get()
@@ -447,9 +447,9 @@ class MahasiswaController extends BaseController
 		foreach ($cpmkLinked as $cpmk) {
 			// Get all nilai_cpmk for this CPMK and mahasiswa (grouped by jadwal)
 			$nilaiCpmkList = $db->table('nilai_cpmk_mahasiswa')
-				->select('nilai_cpmk_mahasiswa.nilai_cpmk, nilai_cpmk_mahasiswa.jadwal_mengajar_id, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal_mengajar.mata_kuliah_id')
-				->join('jadwal_mengajar', 'jadwal_mengajar.id = nilai_cpmk_mahasiswa.jadwal_mengajar_id')
-				->join('mata_kuliah', 'mata_kuliah.id = jadwal_mengajar.mata_kuliah_id')
+				->select('nilai_cpmk_mahasiswa.nilai_cpmk, nilai_cpmk_mahasiswa.jadwal_id, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal.mata_kuliah_id')
+				->join('jadwal', 'jadwal.id = nilai_cpmk_mahasiswa.jadwal_id')
+				->join('mata_kuliah', 'mata_kuliah.id = jadwal.mata_kuliah_id')
 				->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
 				->where('nilai_cpmk_mahasiswa.cpmk_id', $cpmk['id'])
 				->get()
@@ -458,7 +458,7 @@ class MahasiswaController extends BaseController
 			// For each jadwal, get the teknik penilaian breakdown
 			$detailMk = [];
 			foreach ($nilaiCpmkList as $nilaiCpmk) {
-				$jadwalId = $nilaiCpmk['jadwal_mengajar_id'];
+				$jadwalId = $nilaiCpmk['jadwal_id'];
 
 				// Get rps_mingguan for this CPMK
 				$rps = $db->table('rps')
@@ -501,7 +501,7 @@ class MahasiswaController extends BaseController
 									$nilaiTeknik = $db->table('nilai_teknik_penilaian')
 										->select('nilai')
 										->where('mahasiswa_id', $mahasiswaId)
-										->where('jadwal_mengajar_id', $jadwalId)
+										->where('jadwal_id', $jadwalId)
 										->where('rps_mingguan_id', $rpsMingguan['id'])
 										->where('teknik_penilaian_key', $teknikKey)
 										->get()
@@ -878,7 +878,7 @@ class MahasiswaController extends BaseController
 				         mk.kode_mk, mk.nama_mk, mk.id as mata_kuliah_id,
 				         jm.tahun_akademik, jm.kelas, jm.id as jadwal_id')
 				->join('cpmk', 'cpmk.id = ncm.cpmk_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 				->where('ncm.mahasiswa_id', $mahasiswaId);
 
@@ -1044,7 +1044,7 @@ class MahasiswaController extends BaseController
 				         mk_join.kode_mk, mk_join.nama_mk, mk_join.id as mata_kuliah_id,
 				         jm.tahun_akademik, jm.kelas, jm.id as jadwal_id')
 				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 				->join('mata_kuliah mk_join', 'mk_join.id = jm.mata_kuliah_id')
 				->where('ntp.mahasiswa_id', $mahasiswaId)
 				->where('rm.cpmk_id', $cpmk['id']);
@@ -1238,7 +1238,7 @@ class MahasiswaController extends BaseController
 				// Get nilai_cpmk for this student and these CPMK (with filters)
 				$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 					->select('ncm.nilai_cpmk, ncm.cpmk_id, jm.mata_kuliah_id, mk.kode_mk')
-					->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+					->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 					->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 					->where('ncm.mahasiswa_id', $mahasiswaId)
 					->whereIn('ncm.cpmk_id', $cpmkIds);
@@ -1386,7 +1386,7 @@ class MahasiswaController extends BaseController
 			// Get nilai_cpmk for this student and these CPMK (with filters)
 			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, jm.mata_kuliah_id, mk.kode_mk, mk.nama_mk')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 				->where('ncm.mahasiswa_id', $mahasiswaId)
 				->whereIn('ncm.cpmk_id', $cpmkIds);
@@ -1415,7 +1415,7 @@ class MahasiswaController extends BaseController
 			// Get jadwal information
 			$jadwalBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, jm.mata_kuliah_id, mk.kode_mk, mk.nama_mk, jm.tahun_akademik, jm.kelas')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 				->where('ncm.mahasiswa_id', $mahasiswaId)
 				->whereIn('ncm.cpmk_id', $cpmkIds);
@@ -1496,7 +1496,7 @@ class MahasiswaController extends BaseController
 	private function getSemesterList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -1514,7 +1514,7 @@ class MahasiswaController extends BaseController
 	private function getTahunAkademikList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()

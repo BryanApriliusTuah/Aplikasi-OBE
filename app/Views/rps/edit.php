@@ -7,10 +7,10 @@
 
     <div class="mb-2">
         <label>Mata Kuliah</label>
-        <select name="mata_kuliah_id" class="form-control" required>
+        <select name="mata_kuliah_id" class="form-control select2-mk" required>
             <option value="">--Pilih--</option>
             <?php foreach($mata_kuliah as $mk): ?>
-                <option value="<?= $mk['id'] ?>" <?= $mk['id']==$rps['mata_kuliah_id']?'selected':'' ?>><?= esc($mk['nama_mk']) ?></option>
+                <option value="<?= $mk['id'] ?>" <?= $mk['id']==$rps['mata_kuliah_id']?'selected':'' ?>><?= esc($mk['kode_mk']) ?> - <?= esc($mk['nama_mk']) ?></option>
             <?php endforeach ?>
         </select>
     </div>
@@ -23,7 +23,7 @@
         foreach ($pengampu_ids as $i => $pid): ?>
         <div class="row pengampu-row mb-1">
             <div class="col-10">
-                <select class="form-control" name="dosen_pengampu_ids[]" required>
+                <select class="form-control select2-dosen" name="dosen_pengampu_ids[]" required>
                     <option value="">--Pilih Dosen--</option>
                     <?php foreach($dosen as $d): ?>
                         <option value="<?= $d['id'] ?>" <?= $pid == $d['id'] ? 'selected' : '' ?>>
@@ -45,7 +45,7 @@
     
     <div class="mb-2">
         <label>Koordinator Mata Kuliah</label>
-        <select class="form-control" name="koordinator_id" id="koordinator_id" required>
+        <select class="form-control select2-koordinator" name="koordinator_id" id="koordinator_id" required>
             <option value="">--Pilih Koordinator--</option>
             <?php
             foreach ($dosen as $d):
@@ -84,6 +84,15 @@
 
 <?= $this->section('js') ?>
 <script>
+    function initSelect2Dosen($el) {
+        $el.select2({
+            theme: 'bootstrap-5',
+            placeholder: '--Pilih Dosen--',
+            allowClear: true,
+            width: '100%'
+        });
+    }
+
     function updatePengampuDropdown() {
         let selected = [];
         $('#pengampu-wrapper select[name="dosen_pengampu_ids[]"]').each(function() {
@@ -121,21 +130,51 @@
         if (currentKoor && !$koor.find('option[value="'+currentKoor+'"]').length) {
             $koor.val('');
         }
+        $koor.trigger('change.select2');
     }
 
     $(document).on('change', 'select[name="dosen_pengampu_ids[]"]', updatePengampuDropdown);
+
     $(document).on('click', '.btn-add-pengampu', function() {
-        let row = $(this).closest('.pengampu-row').clone();
-        row.find('select').val('');
-        row.find('.btn-add-pengampu').removeClass('btn-success btn-add-pengampu').addClass('btn-danger btn-remove-pengampu').text('-');
-        $('#pengampu-wrapper').append(row);
+        let $row = $(this).closest('.pengampu-row');
+        let $newRow = $row.clone();
+
+        $newRow.find('.select2-container').remove();
+        $newRow.find('select').val('').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex');
+        $newRow.find('option').removeAttr('data-select2-id');
+        $newRow.find('.btn-add-pengampu').removeClass('btn-success btn-add-pengampu').addClass('btn-danger btn-remove-pengampu').text('-');
+
+        $('#pengampu-wrapper').append($newRow);
+        initSelect2Dosen($newRow.find('select.select2-dosen'));
         updatePengampuDropdown();
     });
+
     $(document).on('click', '.btn-remove-pengampu', function() {
+        $(this).closest('.pengampu-row').find('select').select2('destroy');
         $(this).closest('.pengampu-row').remove();
         updatePengampuDropdown();
     });
+
     $(function() {
+        // Init Select2 for Mata Kuliah
+        $('.select2-mk').select2({
+            theme: 'bootstrap-5',
+            placeholder: '--Pilih--',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Init Select2 for Dosen Pengampu
+        initSelect2Dosen($('.select2-dosen'));
+
+        // Init Select2 for Koordinator
+        $('.select2-koordinator').select2({
+            theme: 'bootstrap-5',
+            placeholder: '--Pilih Koordinator--',
+            allowClear: true,
+            width: '100%'
+        });
+
         updatePengampuDropdown();
     });
 </script>

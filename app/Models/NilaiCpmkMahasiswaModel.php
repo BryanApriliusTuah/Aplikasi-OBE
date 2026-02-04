@@ -16,7 +16,7 @@ class NilaiCpmkMahasiswaModel extends Model
 	// Note: 'bobot_cpmk' is no longer here.
 	protected $allowedFields    = [
 		'mahasiswa_id',
-		'jadwal_mengajar_id',
+		'jadwal_id',
 		'cpmk_id',
 		'nilai_cpmk'
 	];
@@ -37,7 +37,7 @@ class NilaiCpmkMahasiswaModel extends Model
 		$results = $this->select('m.id as mahasiswa_id, m.nim, m.nama_lengkap, nc.cpmk_id, nc.nilai_cpmk')
 			->from('mahasiswa m')
 			->join('nilai_cpmk_mahasiswa nc', 'm.id = nc.mahasiswa_id', 'left')
-			->where('nc.jadwal_mengajar_id', $jadwal_id)
+			->where('nc.jadwal_id', $jadwal_id)
 			->where('m.status_mahasiswa', 'Aktif')
 			->orderBy('m.nim', 'ASC')
 			->get()->getResultArray();
@@ -67,7 +67,7 @@ class NilaiCpmkMahasiswaModel extends Model
 	 */
 	public function getScoresByJadwalForInput(int $jadwal_id): array
 	{
-		$results = $this->where('jadwal_mengajar_id', $jadwal_id)->findAll();
+		$results = $this->where('jadwal_id', $jadwal_id)->findAll();
 		$scores = [];
 		foreach ($results as $row) {
 			$scores[$row['mahasiswa_id']][$row['cpmk_id']] = $row['nilai_cpmk'];
@@ -85,7 +85,7 @@ class NilaiCpmkMahasiswaModel extends Model
 	{
 		$existing = $this->where([
 			'mahasiswa_id' => $data['mahasiswa_id'],
-			'jadwal_mengajar_id' => $data['jadwal_mengajar_id'],
+			'jadwal_id' => $data['jadwal_id'],
 			'cpmk_id' => $data['cpmk_id']
 		])->first();
 
@@ -104,7 +104,7 @@ class NilaiCpmkMahasiswaModel extends Model
 		return $this->select('nilai_cpmk_mahasiswa.*, cpmk.kode_cpmk, cpmk.deskripsi')
 			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
 			->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
-			->where('nilai_cpmk_mahasiswa.jadwal_mengajar_id', $jadwalId)
+			->where('nilai_cpmk_mahasiswa.jadwal_id', $jadwalId)
 			->orderBy('cpmk.kode_cpmk', 'ASC')
 			->findAll();
 	}
@@ -116,7 +116,7 @@ class NilaiCpmkMahasiswaModel extends Model
 	{
 		$result = $this->selectAvg('nilai_cpmk')
 			->where('mahasiswa_id', $mahasiswaId)
-			->where('jadwal_mengajar_id', $jadwalId)
+			->where('jadwal_id', $jadwalId)
 			->get()
 			->getRow();
 
@@ -139,8 +139,8 @@ class NilaiCpmkMahasiswaModel extends Model
 			->join('cpmk', 'nilai_cpmk_mahasiswa.cpmk_id = cpmk.id')
 			->join('cpl_cpmk', 'cpmk.id = cpl_cpmk.cpmk_id')
 			->join('cpl', 'cpl_cpmk.cpl_id = cpl.id')
-			->join('jadwal_mengajar', 'nilai_cpmk_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+			->join('jadwal', 'nilai_cpmk_mahasiswa.jadwal_id = jadwal.id')
+			->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id')
 			->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
 			->groupBy('cpl.id, cpmk.id, mata_kuliah.id')
 			->orderBy('cpl.kode_cpl', 'ASC')

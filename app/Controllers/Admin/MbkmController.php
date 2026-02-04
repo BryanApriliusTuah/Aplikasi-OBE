@@ -79,21 +79,28 @@ class MbkmController extends BaseController
 			->get()
 			->getResultArray();
 
-		$jenis_kegiatan = $this->db->table('mbkm_jenis_kegiatan')
-			->where('status', 'aktif')
-			->get()
-			->getResultArray();
-
 		$dosen = $this->db->table('dosen')
 			->where('status_keaktifan', 'Aktif')
 			->orderBy('nama_lengkap', 'ASC')
 			->get()
 			->getResultArray();
 
+		// Get CPL and CPMK lists
+		$cpl_list = $this->db->table('cpl')
+			->orderBy('kode_cpl', 'ASC')
+			->get()
+			->getResultArray();
+
+		$cpmk_list = $this->db->table('cpmk')
+			->orderBy('kode_cpmk', 'ASC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'mahasiswa' => $mahasiswa,
-			'jenis_kegiatan' => $jenis_kegiatan,
-			'dosen' => $dosen
+			'dosen' => $dosen,
+			'cpl_list' => $cpl_list,
+			'cpmk_list' => $cpmk_list
 		];
 
 		return view('admin/mbkm/create', $data);
@@ -110,17 +117,31 @@ class MbkmController extends BaseController
 
 		$rules = [
 			'mahasiswa_ids' => 'required',
-			'jenis_kegiatan_id' => 'required|integer',
+			'jenis_kegiatan' => 'required|min_length[3]|max_length[100]',
 			'judul_kegiatan' => 'required|min_length[5]|max_length[255]',
 			'tempat_kegiatan' => 'required|max_length[255]',
 			'tanggal_mulai' => 'required|valid_date',
 			'tanggal_selesai' => 'required|valid_date',
 			'tahun_akademik' => 'required|max_length[20]',
-			'sks_dikonversi' => 'required|integer|greater_than[0]'
+			'sks_dikonversi' => 'required|integer|greater_than[0]',
+			'nilai_type' => 'required|in_list[cpmk,cpl]'
 		];
 
 		if (!$this->validate($rules)) {
 			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
+
+		// Validate CPL/CPMK selection
+		$nilai_type = $this->request->getPost('nilai_type');
+		$cpmk_id = $this->request->getPost('cpmk_id');
+		$cpl_id = $this->request->getPost('cpl_id');
+
+		if ($nilai_type === 'cpmk' && empty($cpmk_id)) {
+			return redirect()->back()->withInput()->with('error', 'Pilih CPMK yang akan dicapai');
+		}
+
+		if ($nilai_type === 'cpl' && empty($cpl_id)) {
+			return redirect()->back()->withInput()->with('error', 'Pilih CPL yang akan dicapai');
 		}
 
 		// Calculate duration in weeks
@@ -135,11 +156,9 @@ class MbkmController extends BaseController
 			return redirect()->back()->withInput()->with('error', 'Pilih minimal satu mahasiswa');
 		}
 
-		$this->db->transStart(); // Start transaction
-
-		// Prepare kegiatan data (without mahasiswa_id)
+		// Prepare kegiatan data
 		$data = [
-			'jenis_kegiatan_id' => $this->request->getPost('jenis_kegiatan_id'),
+			'jenis_kegiatan' => $this->request->getPost('jenis_kegiatan'),
 			'judul_kegiatan' => $this->request->getPost('judul_kegiatan'),
 			'tempat_kegiatan' => $this->request->getPost('tempat_kegiatan'),
 			'pembimbing_lapangan' => $this->request->getPost('pembimbing_lapangan'),
@@ -150,9 +169,14 @@ class MbkmController extends BaseController
 			'durasi_minggu' => $durasi_minggu,
 			'sks_dikonversi' => $this->request->getPost('sks_dikonversi'),
 			'deskripsi_kegiatan' => $this->request->getPost('deskripsi_kegiatan'),
-			'status_kegiatan' => 'diajukan',
-			'tahun_akademik' => $this->request->getPost('tahun_akademik')
+			'status_kegiatan' => 'berlangsung',
+			'tahun_akademik' => $this->request->getPost('tahun_akademik'),
+			'nilai_type' => $nilai_type,
+			'cpmk_id' => $nilai_type === 'cpmk' ? $cpmk_id : null,
+			'cpl_id' => $nilai_type === 'cpl' ? $cpl_id : null
 		];
+
+		$this->db->transBegin();
 
 		// Insert kegiatan
 		if (!$this->mbkmModel->insert($data)) {
@@ -173,11 +197,12 @@ class MbkmController extends BaseController
 			$this->db->table('mbkm_kegiatan_mahasiswa')->insert($relasi_data);
 		}
 
-		$this->db->transComplete(); // Complete transaction
-
 		if ($this->db->transStatus() === false) {
+			$this->db->transRollback();
 			return redirect()->back()->withInput()->with('error', 'Gagal menambahkan kegiatan MBKM');
 		}
+
+		$this->db->transCommit();
 
 		return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil ditambahkan dengan ' . count($mahasiswa_ids) . ' mahasiswa');
 	}
@@ -197,7 +222,7 @@ class MbkmController extends BaseController
 
 		// Get students associated with this activity
 		$kegiatan_mahasiswa = $this->db->table('mbkm_kegiatan_mahasiswa km')
-			->select('km.mahasiswa_id, m.nim, m.nama_lengkap, m.program_studi')
+			->select('km.mahasiswa_id, m.nim, m.nama_lengkap, m.program_studi_kode')
 			->join('mahasiswa m', 'm.id = km.mahasiswa_id')
 			->where('km.kegiatan_id', $id)
 			->get()
@@ -209,14 +234,20 @@ class MbkmController extends BaseController
 			->get()
 			->getResultArray();
 
-		$jenis_kegiatan = $this->db->table('mbkm_jenis_kegiatan')
-			->where('status', 'aktif')
-			->get()
-			->getResultArray();
-
 		$dosen = $this->db->table('dosen')
 			->where('status_keaktifan', 'Aktif')
 			->orderBy('nama_lengkap', 'ASC')
+			->get()
+			->getResultArray();
+
+		// Get CPL and CPMK lists
+		$cpl_list = $this->db->table('cpl')
+			->orderBy('kode_cpl', 'ASC')
+			->get()
+			->getResultArray();
+
+		$cpmk_list = $this->db->table('cpmk')
+			->orderBy('kode_cpmk', 'ASC')
 			->get()
 			->getResultArray();
 
@@ -240,14 +271,14 @@ class MbkmController extends BaseController
 			'kegiatan' => $kegiatan,
 			'kegiatan_mahasiswa' => $kegiatan_mahasiswa,
 			'mahasiswa' => $mahasiswa,
-			'jenis_kegiatan' => $jenis_kegiatan,
-			'dosen' => $dosen
+			'dosen' => $dosen,
+			'cpl_list' => $cpl_list,
+			'cpmk_list' => $cpmk_list
 		];
 
 		return view('admin/mbkm/edit', $data);
 	}
 
-	// Update - Save changes (Admin Only)
 	// Update - Save changes (Admin Only)
 	public function update($id)
 	{
@@ -259,17 +290,31 @@ class MbkmController extends BaseController
 
 		$rules = [
 			'mahasiswa_ids' => 'required',
-			'jenis_kegiatan_id' => 'required|integer',
+			'jenis_kegiatan' => 'required|min_length[3]|max_length[100]',
 			'judul_kegiatan' => 'required|min_length[5]|max_length[255]',
 			'tempat_kegiatan' => 'required|max_length[255]',
 			'tanggal_mulai' => 'required|valid_date',
 			'tanggal_selesai' => 'required|valid_date',
 			'tahun_akademik' => 'required|max_length[20]',
-			'sks_dikonversi' => 'required|integer|greater_than[0]'
+			'sks_dikonversi' => 'required|integer|greater_than[0]',
+			'nilai_type' => 'required|in_list[cpmk,cpl]'
 		];
 
 		if (!$this->validate($rules)) {
 			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
+
+		// Validate CPL/CPMK selection
+		$nilai_type = $this->request->getPost('nilai_type');
+		$cpmk_id = $this->request->getPost('cpmk_id');
+		$cpl_id = $this->request->getPost('cpl_id');
+
+		if ($nilai_type === 'cpmk' && empty($cpmk_id)) {
+			return redirect()->back()->withInput()->with('error', 'Pilih CPMK yang akan dicapai');
+		}
+
+		if ($nilai_type === 'cpl' && empty($cpl_id)) {
+			return redirect()->back()->withInput()->with('error', 'Pilih CPL yang akan dicapai');
 		}
 
 		// Calculate duration in weeks
@@ -287,7 +332,7 @@ class MbkmController extends BaseController
 		$this->db->transStart(); // Start transaction
 
 		$data = [
-			'jenis_kegiatan_id' => $this->request->getPost('jenis_kegiatan_id'),
+			'jenis_kegiatan' => $this->request->getPost('jenis_kegiatan'),
 			'judul_kegiatan' => $this->request->getPost('judul_kegiatan'),
 			'tempat_kegiatan' => $this->request->getPost('tempat_kegiatan'),
 			'pembimbing_lapangan' => $this->request->getPost('pembimbing_lapangan'),
@@ -299,7 +344,10 @@ class MbkmController extends BaseController
 			'sks_dikonversi' => $this->request->getPost('sks_dikonversi'),
 			'deskripsi_kegiatan' => $this->request->getPost('deskripsi_kegiatan'),
 			'status_kegiatan' => $this->request->getPost('status_kegiatan'),
-			'tahun_akademik' => $this->request->getPost('tahun_akademik')
+			'tahun_akademik' => $this->request->getPost('tahun_akademik'),
+			'nilai_type' => $nilai_type,
+			'cpmk_id' => $nilai_type === 'cpmk' ? $cpmk_id : null,
+			'cpl_id' => $nilai_type === 'cpl' ? $cpl_id : null
 		];
 
 		// Update kegiatan
@@ -354,10 +402,11 @@ class MbkmController extends BaseController
 			return $this->unauthorizedAccess();
 		}
 
-		// Get kegiatan with full details
+		// Get kegiatan with full details including CPL/CPMK info
 		$kegiatan = $this->db->table('mbkm_kegiatan k')
-			->select('k.*, jk.nama_kegiatan, jk.kode_kegiatan')
-			->join('mbkm_jenis_kegiatan jk', 'jk.id = k.jenis_kegiatan_id')
+			->select('k.*, cpmk.kode_cpmk, cpmk.deskripsi as cpmk_deskripsi, cpl.kode_cpl, cpl.deskripsi as cpl_deskripsi')
+			->join('cpmk', 'cpmk.id = k.cpmk_id', 'left')
+			->join('cpl', 'cpl.id = k.cpl_id', 'left')
 			->where('k.id', $kegiatan_id)
 			->get()
 			->getRowArray();
@@ -368,24 +417,17 @@ class MbkmController extends BaseController
 
 		// Get mahasiswa for this kegiatan
 		$mahasiswa = $this->db->table('mbkm_kegiatan_mahasiswa km')
-			->select('m.id, m.nim, m.nama_lengkap, m.program_studi')
+			->select('m.id, m.nim, m.nama_lengkap, m.program_studi_kode')
 			->join('mahasiswa m', 'm.id = km.mahasiswa_id')
 			->where('km.kegiatan_id', $kegiatan_id)
 			->get()
 			->getResultArray();
 
-		// Get komponen nilai
-		$komponen = $this->db->table('mbkm_komponen_nilai')
-			->where('jenis_kegiatan_id', $kegiatan['jenis_kegiatan_id'])
+		// Get existing nilai_akhir if exists
+		$nilai_akhir = $this->db->table('mbkm_nilai_akhir')
+			->where('kegiatan_id', $kegiatan_id)
 			->get()
-			->getResultArray();
-
-		// Get existing nilai
-		$nilai_existing = $this->mbkmModel->getNilaiKomponen($kegiatan_id);
-		$nilai_map = [];
-		foreach ($nilai_existing as $n) {
-			$nilai_map[$n['komponen_id']] = $n;
-		}
+			->getRowArray();
 
 		// Get grade configuration for dynamic grading
 		$gradeConfigModel = new \App\Models\GradeConfigModel();
@@ -394,8 +436,7 @@ class MbkmController extends BaseController
 		$data = [
 			'kegiatan' => $kegiatan,
 			'mahasiswa' => $mahasiswa,
-			'komponen' => $komponen,
-			'nilai_map' => $nilai_map,
+			'nilai_akhir' => $nilai_akhir,
 			'grade_config' => $grade_config
 		];
 
@@ -409,53 +450,34 @@ class MbkmController extends BaseController
 			return $this->unauthorizedAccess();
 		}
 
-		$komponen_ids = $this->request->getPost('komponen_id');
-		$nilai_array = $this->request->getPost('nilai');
-		$catatan_array = $this->request->getPost('catatan');
+		// Get kegiatan to get CPL/CPMK info
+		$kegiatan = $this->mbkmModel->find($kegiatan_id);
+		if (!$kegiatan) {
+			return redirect()->to('/admin/mbkm')->with('error', 'Kegiatan tidak ditemukan');
+		}
 
-		if (empty($komponen_ids)) {
-			return redirect()->back()->with('error', 'Tidak ada komponen nilai');
+		$nilai_angka = $this->request->getPost('nilai_angka');
+		$catatan = $this->request->getPost('catatan');
+
+		// Validate nilai_angka
+		if ($nilai_angka === null || $nilai_angka === '' || $nilai_angka < 0 || $nilai_angka > 100) {
+			return redirect()->back()->withInput()->with('error', 'Nilai harus antara 0-100');
 		}
 
 		$this->db->transStart();
 
-		foreach ($komponen_ids as $index => $komponen_id) {
-			$nilai = $nilai_array[$index] ?? 0;
-			$catatan = $catatan_array[$index] ?? null;
+		// Save final score using CPL/CPMK from kegiatan
+		$this->mbkmModel->simpanNilaiAkhirWithCapaian(
+			$kegiatan_id,
+			$nilai_angka,
+			$kegiatan['nilai_type'],
+			$kegiatan['cpmk_id'],
+			$kegiatan['cpl_id'],
+			$catatan
+		);
 
-			$data = [
-				'kegiatan_id' => $kegiatan_id,
-				'komponen_id' => $komponen_id,
-				'nilai' => $nilai,
-				'catatan' => $catatan,
-				'penilai' => 'dosen_pembimbing'
-			];
-
-			// Check if exists
-			$existing = $this->db->table('mbkm_nilai')
-				->where('kegiatan_id', $kegiatan_id)
-				->where('komponen_id', $komponen_id)
-				->get()
-				->getRowArray();
-
-			if ($existing) {
-				$this->db->table('mbkm_nilai')
-					->where('kegiatan_id', $kegiatan_id)
-					->where('komponen_id', $komponen_id)
-					->update($data);
-			} else {
-				$this->db->table('mbkm_nilai')->insert($data);
-			}
-		}
-
-		// Calculate and save final score
-		$nilai_akhir = $this->mbkmModel->hitungNilaiAkhir($kegiatan_id);
-		if ($nilai_akhir !== null) {
-			$this->mbkmModel->simpanNilaiAkhir($kegiatan_id, $nilai_akhir);
-
-			// Update status kegiatan
-			$this->mbkmModel->update($kegiatan_id, ['status_kegiatan' => 'selesai']);
-		}
+		// Update status kegiatan to selesai
+		$this->mbkmModel->update($kegiatan_id, ['status_kegiatan' => 'selesai']);
 
 		$this->db->transComplete();
 
@@ -473,15 +495,17 @@ class MbkmController extends BaseController
 			return $this->response->setStatusCode(403)->setJSON(['error' => 'Invalid request']);
 		}
 
-		// Get kegiatan with full details including mahasiswa information
+		// Get kegiatan with full details including CPL/CPMK from kegiatan table
 		$kegiatan = $this->db->table('mbkm_kegiatan k')
-			->select('k.*, 
-					jk.nama_kegiatan, jk.kode_kegiatan, jk.sks_konversi as sks_default,
+			->select('k.*,
 					d.nama_lengkap as nama_dosen_pembimbing, d.nip,
-					na.nilai_angka, na.nilai_huruf, na.status_kelulusan, na.catatan_akhir')
-			->join('mbkm_jenis_kegiatan jk', 'jk.id = k.jenis_kegiatan_id')
+					na.nilai_angka, na.nilai_huruf, na.status_kelulusan, na.catatan_akhir,
+					cpmk.kode_cpmk, cpmk.deskripsi as cpmk_deskripsi,
+					cpl.kode_cpl, cpl.deskripsi as cpl_deskripsi')
 			->join('dosen d', 'd.id = k.dosen_pembimbing_id', 'left')
 			->join('mbkm_nilai_akhir na', 'na.kegiatan_id = k.id', 'left')
+			->join('cpmk', 'cpmk.id = k.cpmk_id', 'left')
+			->join('cpl', 'cpl.id = k.cpl_id', 'left')
 			->where('k.id', $kegiatan_id)
 			->get()
 			->getRowArray();
@@ -492,7 +516,7 @@ class MbkmController extends BaseController
 
 		// Get mahasiswa for this kegiatan
 		$mahasiswa_list = $this->db->table('mbkm_kegiatan_mahasiswa km')
-			->select('m.nim, m.nama_lengkap, m.program_studi')
+			->select('m.nim, m.nama_lengkap, m.program_studi_kode')
 			->join('mahasiswa m', 'm.id = km.mahasiswa_id')
 			->where('km.kegiatan_id', $kegiatan_id)
 			->get()
@@ -502,19 +526,34 @@ class MbkmController extends BaseController
 		if (!empty($mahasiswa_list)) {
 			$kegiatan['nim'] = implode(', ', array_column($mahasiswa_list, 'nim'));
 			$kegiatan['nama_mahasiswa'] = implode(', ', array_column($mahasiswa_list, 'nama_lengkap'));
-			$kegiatan['program_studi'] = $mahasiswa_list[0]['program_studi'] ?? '-';
+			$kegiatan['program_studi_kode'] = $mahasiswa_list[0]['program_studi_kode'] ?? '-';
 		} else {
 			$kegiatan['nim'] = '-';
 			$kegiatan['nama_mahasiswa'] = '-';
-			$kegiatan['program_studi'] = '-';
+			$kegiatan['program_studi_kode'] = '-';
 		}
 
-		// Get komponen nilai
-		$komponen = $this->mbkmModel->getNilaiKomponen($kegiatan_id);
+		// Build capaian info from kegiatan (not nilai_akhir)
+		$capaian = null;
+		if (!empty($kegiatan['nilai_type'])) {
+			if ($kegiatan['nilai_type'] === 'cpmk' && !empty($kegiatan['kode_cpmk'])) {
+				$capaian = [
+					'type' => 'CPMK',
+					'kode' => $kegiatan['kode_cpmk'],
+					'deskripsi' => $kegiatan['cpmk_deskripsi']
+				];
+			} elseif ($kegiatan['nilai_type'] === 'cpl' && !empty($kegiatan['kode_cpl'])) {
+				$capaian = [
+					'type' => 'CPL',
+					'kode' => $kegiatan['kode_cpl'],
+					'deskripsi' => $kegiatan['cpl_deskripsi']
+				];
+			}
+		}
 
 		return $this->response->setJSON([
 			'kegiatan' => $kegiatan,
-			'komponen' => $komponen,
+			'capaian' => $capaian,
 			'mahasiswa_list' => $mahasiswa_list
 		]);
 	}

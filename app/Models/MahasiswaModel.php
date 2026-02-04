@@ -43,7 +43,10 @@ class MahasiswaModel extends Model
 		'user_id',
 		'nim',
 		'nama_lengkap',
-		'program_studi',
+		'jenis_kelamin',
+		'email',
+		'no_hp',
+		'program_studi_kode',
 		'tahun_angkatan',
 		'status_mahasiswa'
 	];
@@ -69,17 +72,26 @@ class MahasiswaModel extends Model
 	 */
 	protected $updatedField = 'updated_at';
 
-	public function getStudentsForScoring(string $program_studi, int $semester): array
+	public function getStudentsForScoring($program_studi_kode, int $semester): array
 	{
 		// This is a heuristic to determine the likely year of the students
 		$currentYear = date('Y');
 		$academicYear = (int)ceil($semester / 2);
 		$targetYear = $currentYear - $academicYear + 1;
 
-		return $this->where('program_studi', $program_studi)
+		return $this->where('program_studi_kode', $program_studi_kode)
 			// ->where('tahun_angkatan', $targetYear) // Optional: uncomment to filter by year
 			->where('status_mahasiswa', 'Aktif')
 			->orderBy('nim', 'ASC')
+			->findAll();
+	}
+
+	public function getStudentsByJadwal(int $jadwalId): array
+	{
+		return $this->select('mahasiswa.*')
+			->join('jadwal_mahasiswa jm', 'jm.nim = mahasiswa.nim')
+			->where('jm.jadwal_id', $jadwalId)
+			->orderBy('mahasiswa.nim', 'ASC')
 			->findAll();
 	}
 }

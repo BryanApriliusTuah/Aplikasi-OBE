@@ -37,8 +37,8 @@ class CpmkModel extends Model
 	{
 		$db = \Config\Database::connect();
 
-		// Get mata_kuliah_id from jadwal_mengajar
-		$jadwal = $db->table('jadwal_mengajar')
+		// Get mata_kuliah_id from jadwal
+		$jadwal = $db->table('jadwal')
 			->select('mata_kuliah_id')
 			->where('id', $jadwal_id)
 			->get()

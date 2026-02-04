@@ -274,7 +274,7 @@
 					.then(response => response.json())
 					.then(data => {
 						const kegiatan = data.kegiatan;
-						const komponen = data.komponen;
+						const capaian = data.capaian;
 
 						let html = `
 						<div class="row">
@@ -283,7 +283,7 @@
 								<table class="table table-sm">
 									<tr><th width="40%">Judul Kegiatan</th><td>${kegiatan.judul_kegiatan}</td></tr>
 									<tr><th>Mahasiswa</th><td>${kegiatan.nama_mahasiswa} (${kegiatan.nim})</td></tr>
-									<tr><th>Program Studi</th><td>${kegiatan.program_studi}</td></tr>
+									<tr><th>Program Studi</th><td>${kegiatan.program_studi_kode || '-'}</td></tr>
 									<tr><th>Jenis Kegiatan</th><td>${kegiatan.nama_kegiatan}</td></tr>
 									<tr><th>Tempat Kegiatan</th><td>${kegiatan.tempat_kegiatan}</td></tr>
 									<tr><th>Periode</th><td>${new Date(kegiatan.tanggal_mulai).toLocaleDateString('id-ID')} - ${new Date(kegiatan.tanggal_selesai).toLocaleDateString('id-ID')}</td></tr>
@@ -295,32 +295,39 @@
 								</table>
 							</div>
 							<div class="col-md-6">
-								<h6 class="fw-bold">Rincian Nilai</h6>
-								${komponen.length > 0 ? `
-									<table class="table table-sm table-bordered">
-										<thead>
-											<tr>
-												<th>Komponen</th>
-												<th class="text-center">Bobot</th>
-												<th class="text-center">Nilai</th>
-											</tr>
-										</thead>
-										<tbody>
-											${komponen.map(k => `
-												<tr>
-													<td>${k.nama_komponen}</td>
-													<td class="text-center">${k.bobot}%</td>
-													<td class="text-center">${k.nilai}</td>
-												</tr>
-											`).join('')}
-										</tbody>
-									</table>
-									${kegiatan.nilai_huruf ? `
-										<div class="alert alert-success mt-3">
-											<strong>Nilai Akhir:</strong> ${kegiatan.nilai_huruf} (${kegiatan.nilai_angka})
-											<br><strong>Status:</strong> ${kegiatan.status_kelulusan}
+								<h6 class="fw-bold">Penilaian & Capaian</h6>
+								${kegiatan.nilai_huruf ? `
+									<div class="card bg-light mb-3">
+										<div class="card-body text-center">
+											<div class="row">
+												<div class="col-4">
+													<h6 class="text-muted mb-1">Nilai Angka</h6>
+													<h3 class="text-primary mb-0">${kegiatan.nilai_angka}</h3>
+												</div>
+												<div class="col-4">
+													<h6 class="text-muted mb-1">Nilai Huruf</h6>
+													<h3 class="text-success mb-0">${kegiatan.nilai_huruf}</h3>
+												</div>
+												<div class="col-4">
+													<h6 class="text-muted mb-1">Status</h6>
+													<h3 class="mb-0 ${kegiatan.status_kelulusan === 'Lulus' ? 'text-success' : 'text-danger'}">${kegiatan.status_kelulusan}</h3>
+												</div>
+											</div>
 										</div>
-									` : '<div class="alert alert-warning mt-3">Nilai belum lengkap</div>'}
+									</div>
+									${capaian ? `
+										<div class="alert alert-info">
+											<strong>Capaian ${capaian.type}:</strong><br>
+											<span class="badge bg-primary">${capaian.kode}</span><br>
+											<small class="text-muted">${capaian.deskripsi}</small>
+										</div>
+									` : ''}
+									${kegiatan.catatan_akhir ? `
+										<div class="alert alert-secondary">
+											<strong>Catatan:</strong><br>
+											${kegiatan.catatan_akhir}
+										</div>
+									` : ''}
 								` : '<div class="alert alert-warning">Belum ada penilaian</div>'}
 							</div>
 						</div>

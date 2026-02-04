@@ -33,7 +33,20 @@ class CplMk extends BaseController
 
     public function index()
     {
-        return view('admin/cpl_mk/index', $this->getMatriksData());
+        $data = $this->getMatriksData();
+
+        $search = $this->request->getGet('search');
+        $data['filters'] = ['search' => $search ?? ''];
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $data['mataKuliah'] = array_values(array_filter($data['mataKuliah'], function ($mk) use ($searchLower) {
+                return str_contains(strtolower($mk['kode_mk']), $searchLower)
+                    || str_contains(strtolower($mk['nama_mk']), $searchLower);
+            }));
+        }
+
+        return view('admin/cpl_mk/index', $data);
     }
 
     public function create()
@@ -57,25 +70,27 @@ class CplMk extends BaseController
             return redirect()->to('/admin/cpl-mk')->with('error', 'Akses ditolak!');
         }
 
-        $mkId = $this->request->getPost('mata_kuliah_id');
+        $mkIds = $this->request->getPost('mata_kuliah_id');
         $cplIds = $this->request->getPost('cpl_id');
 
-        if (!$mkId || !$cplIds || count($cplIds) == 0) {
-            return redirect()->back()->withInput()->with('error', 'Mata Kuliah dan minimal satu CPL wajib dipilih!');
+        if (!$mkIds || !is_array($mkIds) || count($mkIds) == 0 || !$cplIds || count($cplIds) == 0) {
+            return redirect()->back()->withInput()->with('error', 'Minimal satu Mata Kuliah dan satu CPL wajib dipilih!');
         }
 
         $model = new CplMkModel();
         $inserted = 0;
-        foreach ($cplIds as $cplId) {
-            $exist = $model->where('mata_kuliah_id', $mkId)
-                           ->where('cpl_id', $cplId)
-                           ->first();
-            if (!$exist) {
-                $model->insert([
-                    'mata_kuliah_id' => $mkId,
-                    'cpl_id'         => $cplId
-                ]);
-                $inserted++;
+        foreach ($mkIds as $mkId) {
+            foreach ($cplIds as $cplId) {
+                $exist = $model->where('mata_kuliah_id', $mkId)
+                               ->where('cpl_id', $cplId)
+                               ->first();
+                if (!$exist) {
+                    $model->insert([
+                        'mata_kuliah_id' => $mkId,
+                        'cpl_id'         => $cplId
+                    ]);
+                    $inserted++;
+                }
             }
         }
 

@@ -24,19 +24,59 @@
 								<select class="form-select" id="mata_kuliah_id" name="mata_kuliah_id" required>
 									<option value="">-- Pilih Mata Kuliah --</option>
 									<?php foreach ($mata_kuliah_list as $mk): ?>
-										<option value="<?= $mk['id'] ?>" <?= old('mata_kuliah_id', $jadwal['mata_kuliah_id']) == $mk['id'] ? 'selected' : '' ?>>
+										<option value="<?= $mk['id'] ?>" data-kode="<?= esc($mk['kode_mk']) ?>" <?= old('mata_kuliah_id', $jadwal['mata_kuliah_id']) == $mk['id'] ? 'selected' : '' ?>>
 											[SMT <?= esc($mk['semester']) ?>] <?= esc($mk['kode_mk']) ?> - <?= esc($mk['nama_mk']) ?>
 										</option>
 									<?php endforeach; ?>
 								</select>
 							</div>
 
+							<!-- API Kelas Info -->
+							<?php if (!empty($jadwal['kelas_id'])): ?>
+								<div class="col-12">
+									<div class="alert alert-info mb-0">
+										<i class="bi bi-cloud-check me-1"></i>
+										<strong>Data API SIUBER:</strong>
+										Kelas ID: <?= esc($jadwal['kelas_id']) ?>
+										<?php if (!empty($jadwal['kelas_jenis'])): ?>
+											&bull; <?= esc($jadwal['kelas_jenis']) ?>
+										<?php endif; ?>
+										<?php if (!empty($jadwal['kelas_semester'])): ?>
+											&bull; Semester: <?= esc($jadwal['kelas_semester']) ?>
+										<?php endif; ?>
+										<?php if (!empty($jadwal['kelas_status'])): ?>
+											&bull; Status: <?= esc($jadwal['kelas_status']) ?>
+										<?php endif; ?>
+										<?php if (!empty($jadwal['total_mahasiswa'])): ?>
+											&bull; <i class="bi bi-people"></i> <?= (int) $jadwal['total_mahasiswa'] ?> mahasiswa
+										<?php endif; ?>
+									</div>
+								</div>
+							<?php endif; ?>
+
+							<!-- API Kelas Selection (for re-sync) -->
+							<div class="col-12" id="api-kelas-section" style="display: none;">
+								<label class="form-label">Kelas dari API <span class="badge bg-info">SIUBER</span></label>
+								<div id="api-kelas-loading" class="text-muted small" style="display: none;">
+									<div class="spinner-border spinner-border-sm me-1" role="status"></div> Memuat data kelas dari API...
+								</div>
+								<div id="api-kelas-container"></div>
+							</div>
+							<input type="hidden" id="kelas_id" name="kelas_id" value="<?= old('kelas_id', $jadwal['kelas_id'] ?? '') ?>">
+							<input type="hidden" id="kelas_jenis" name="kelas_jenis" value="<?= old('kelas_jenis', $jadwal['kelas_jenis'] ?? '') ?>">
+							<input type="hidden" id="kelas_semester" name="kelas_semester" value="<?= old('kelas_semester', $jadwal['kelas_semester'] ?? '') ?>">
+							<input type="hidden" id="mk_kurikulum_kode" name="mk_kurikulum_kode" value="<?= old('mk_kurikulum_kode', $jadwal['mk_kurikulum_kode'] ?? '') ?>">
+							<input type="hidden" id="total_mahasiswa" name="total_mahasiswa" value="<?= old('total_mahasiswa', $jadwal['total_mahasiswa'] ?? '') ?>">
+
 							<div class="col-md-6">
-								<label for="program_studi" class="form-label">Program Studi</label>
-								<select class="form-select" id="program_studi" name="program_studi" required>
-									<option value="Teknik Informatika" <?= old('program_studi', $jadwal['program_studi']) == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-									<option value="Sistem Informasi" <?= old('program_studi', $jadwal['program_studi']) == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-									<option value="Teknik Komputer" <?= old('program_studi', $jadwal['program_studi']) == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
+								<label for="program_studi_kode" class="form-label">Program Studi</label>
+								<select class="form-select" id="program_studi_kode" name="program_studi_kode" required>
+									<option value="">-- Pilih Program Studi --</option>
+									<?php foreach ($program_studi_list as $prodi): ?>
+										<option value="<?= esc($prodi['kode']) ?>" <?= old('program_studi_kode', $jadwal['program_studi_kode'] ?? '') == $prodi['kode'] ? 'selected' : '' ?>>
+											<?= esc($prodi['nama_resmi']) ?>
+										</option>
+									<?php endforeach; ?>
 								</select>
 							</div>
 							<div class="col-md-6">
@@ -76,7 +116,7 @@
 
 							<div class="col-12">
 								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
-								<select class="form-select" id="dosen_leader" name="dosen_leader" disabled>
+								<select class="form-select" id="dosen_leader" disabled>
 									<option value="">-- Pilih Dosen Koordinator --</option>
 									<?php foreach ($dosen_list as $dosen): ?>
 										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader', $jadwal['dosen_leader']) == $dosen['id'] ? 'selected' : '' ?>>
@@ -84,6 +124,7 @@
 										</option>
 									<?php endforeach; ?>
 								</select>
+								<input type="hidden" name="dosen_leader" value="<?= old('dosen_leader', $jadwal['dosen_leader']) ?>">
 							</div>
 
 							<div class="col-12">
@@ -94,7 +135,7 @@
 									if (!empty($old_members)):
 										foreach ($old_members as $member_id): ?>
 											<div class="mb-2">
-												<select class="form-select" name="dosen_members[]" disabled>
+												<select class="form-select select2-dosen-member" disabled>
 													<option value="">-- Pilih Dosen Pengampu --</option>
 													<?php foreach ($dosen_list as $dosen): ?>
 														<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
@@ -102,6 +143,7 @@
 														</option>
 													<?php endforeach; ?>
 												</select>
+												<input type="hidden" name="dosen_members[]" value="<?= $member_id ?>">
 											</div>
 										<?php endforeach;
 									else: ?>
@@ -117,6 +159,9 @@
 
 					<div class="card-footer text-end">
 						<a href="<?= base_url('admin/mengajar') ?>" class="btn btn-secondary">Batal</a>
+						<button type="button" class="btn btn-info text-white" id="btn-resync-kelas">
+							<i class="bi bi-cloud-arrow-down"></i> Re-sync Kelas
+						</button>
 						<button type="submit" class="btn btn-primary">Simpan Perubahan</button>
 					</div>
 				</div>
@@ -126,4 +171,148 @@
 	</div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('js') ?>
+<script>
+	$(document).ready(function() {
+		// Initialize Select2 on dropdowns
+		$('#mata_kuliah_id').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Mata Kuliah --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		$('#program_studi_kode').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		$('#hari').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Hari --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		$('#dosen_leader').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Dosen Koordinator --',
+			width: '100%'
+		});
+
+		$('.select2-dosen-member').each(function() {
+			$(this).select2({
+				theme: 'bootstrap-5',
+				placeholder: '-- Pilih Dosen Pengampu --',
+				width: '100%'
+			});
+		});
+
+		var $apiKelasSection = $('#api-kelas-section');
+		var $apiKelasLoading = $('#api-kelas-loading');
+		var $apiKelasContainer = $('#api-kelas-container');
+
+		function fetchApiKelas() {
+			var $selectedOption = $('#mata_kuliah_id').find(':selected');
+			var kodeMk = $selectedOption.data('kode') || '';
+
+			if (!kodeMk) {
+				$apiKelasContainer.html('<div class="alert alert-warning mb-0">Pilih mata kuliah terlebih dahulu.</div>');
+				return;
+			}
+
+			$apiKelasSection.show();
+			$apiKelasLoading.show();
+			$apiKelasContainer.html('');
+
+			$.ajax({
+				url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
+				method: 'GET',
+				data: {
+					kode_mk: kodeMk
+				},
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				},
+				dataType: 'json',
+				success: function(data) {
+					$apiKelasLoading.hide();
+
+					if (data.success && data.data.length > 0) {
+						var currentKelasId = $('#kelas_id').val();
+						var html = '<div class="list-group">';
+						$.each(data.data, function(index, kelas) {
+							var semester = kelas.jadwal_kelas_semester || '-';
+							var totalMhs = kelas.jadwal_kelas_mahasiswa ? kelas.jadwal_kelas_mahasiswa.total : 0;
+							var isSelected = String(kelas.jadwal_kelas_id) === String(currentKelasId);
+							html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isSelected ? 'active' : '') + '" style="cursor: pointer;">' +
+								'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
+								(isSelected ? ' checked' : '') +
+								' data-kelas-id="' + (kelas.jadwal_kelas_id || '') + '"' +
+								' data-kelas-nama="' + (kelas.jadwal_kelas_nama || '') + '"' +
+								' data-kelas-jenis="' + (kelas.jadwal_kelas_jenis || '') + '"' +
+								' data-kelas-semester="' + semester + '"' +
+								' data-kelas-status="' + (kelas.jadwal_kelas_status || '') + '"' +
+								' data-mk-kode="' + (kelas.jadwal_mk_kurikulum_kode || '') + '"' +
+								' data-total-mhs="' + totalMhs + '">' +
+								'<div class="flex-grow-1">' +
+								'<div class="fw-semibold">Kelas ' + (kelas.jadwal_kelas_nama || '-') + (isSelected ? ' (Saat ini)' : '') + '</div>' +
+								'<div class="small ' + (isSelected ? '' : 'text-muted') + '">' +
+								(kelas.jadwal_kelas_jenis || '-') + ' &bull; ' +
+								'Semester: ' + semester + ' &bull; ' +
+								'Status: <span class="badge ' + (kelas.jadwal_kelas_status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.jadwal_kelas_status || '-') + '</span> &bull; ' +
+								'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
+								'</div></div></label>';
+						});
+						html += '</div>';
+						$apiKelasContainer.html(html);
+
+						// Event delegation for radio buttons
+						$apiKelasContainer.off('change', 'input[name="api_kelas_select"]').on('change', 'input[name="api_kelas_select"]', function() {
+							var $radio = $(this);
+							$('#kelas').val($radio.data('kelas-nama'));
+							$('#kelas_id').val($radio.data('kelas-id'));
+							$('#kelas_jenis').val($radio.data('kelas-jenis'));
+							$('#kelas_semester').val($radio.data('kelas-semester'));
+							$('#mk_kurikulum_kode').val($radio.data('mk-kode'));
+							$('#total_mahasiswa').val($radio.data('total-mhs'));
+
+							// Update active state styling
+							$apiKelasContainer.find('label').removeClass('active');
+							$radio.closest('label').addClass('active');
+
+							// Auto-fill tahun_akademik
+							var semCode = String($radio.data('kelas-semester'));
+							if (semCode && semCode.length >= 5) {
+								var year = parseInt(semCode.substring(0, 4));
+								var term = semCode.substring(4, 5);
+								if (term === '1') {
+									$('#tahun_akademik').val((year - 1) + '/' + year + ' Ganjil');
+								} else {
+									$('#tahun_akademik').val(year + '/' + (year + 1) + ' Genap');
+								}
+							}
+						});
+					} else {
+						$apiKelasContainer.html('<div class="alert alert-warning mb-0"><i class="bi bi-info-circle me-1"></i> Tidak ada data kelas dari API untuk mata kuliah ini.</div>');
+					}
+				},
+				error: function(xhr, status, error) {
+					$apiKelasLoading.hide();
+					$apiKelasContainer.html('<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Gagal memuat data kelas dari API.</div>');
+					console.error('Error fetching API kelas:', error);
+				}
+			});
+		}
+
+		// Re-sync button
+		$('#btn-resync-kelas').on('click', function() {
+			fetchApiKelas();
+		});
+	});
+</script>
 <?= $this->endSection() ?>

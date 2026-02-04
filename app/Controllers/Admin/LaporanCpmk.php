@@ -85,7 +85,7 @@ class LaporanCpmk extends BaseController
 
 		$mataKuliahId = $this->request->getGet('mata_kuliah_id');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
-		$programStudi = $this->request->getGet('program_studi');
+		$programStudi = $this->request->getGet('program_studi_kode');
 		$documents = $this->request->getGet('documents');
 
 		if (!$mataKuliahId || !$tahunAkademik) {
@@ -123,11 +123,11 @@ class LaporanCpmk extends BaseController
 		}
 
 		// Get teaching schedule
-		$builder = $this->db->table('jadwal_mengajar');
+		$builder = $this->db->table('jadwal');
 		$builder->where('mata_kuliah_id', $mataKuliahId);
 		$builder->like('tahun_akademik', $tahunAkademik, 'both');
 		if ($programStudi) {
-			$builder->where('program_studi', $programStudi);
+			$builder->where('program_studi_kode', $programStudi);
 		}
 		$jadwalMengajar = $builder->get()->getResultArray();
 
@@ -140,7 +140,7 @@ class LaporanCpmk extends BaseController
 		$dosenPengampu = $this->db->table('jadwal_dosen jd')
 			->select('d.nama_lengkap, d.nip, jd.role')
 			->join('dosen d', 'd.id = jd.dosen_id')
-			->whereIn('jd.jadwal_mengajar_id', $jadwalIds)
+			->whereIn('jd.jadwal_id', $jadwalIds)
 			->get()
 			->getResultArray();
 
@@ -178,7 +178,7 @@ class LaporanCpmk extends BaseController
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
 				'kode_mata_kuliah' => $mataKuliah['kode_mk'],
-				'program_studi' => $jadwalMengajar[0]['program_studi'] ?? '-',
+				'program_studi_kode' => $jadwalMengajar[0]['program_studi_kode'] ?? '-',
 				'semester' => $mataKuliah['semester'],
 				'jumlah_sks' => $mataKuliah['sks'],
 				'tahun_akademik' => $tahunAkademik,
@@ -189,7 +189,7 @@ class LaporanCpmk extends BaseController
 			'analysis' => $analysis,
 			'passing_threshold' => $passingThreshold,
 			'mata_kuliah_id' => $mataKuliahId,
-			'jadwal_mengajar_id' => $jadwalMengajarId,
+			'jadwal_id' => $jadwalMengajarId,
 			'rps_id' => $rpsId,
 			'cqi_data' => $cqiData,
 			'templates' => $templates,
@@ -356,7 +356,7 @@ class LaporanCpmk extends BaseController
                         COUNT(DISTINCT ntp.mahasiswa_id) as jml_mhs
                     FROM nilai_teknik_penilaian ntp
                     WHERE ntp.rps_mingguan_id IN (" . implode(',', array_fill(0, count($rpsMingguan_ids), '?')) . ")
-                    AND ntp.jadwal_mengajar_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
+                    AND ntp.jadwal_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
                     AND ntp.nilai IS NOT NULL
                 ";
 
@@ -411,7 +411,7 @@ class LaporanCpmk extends BaseController
                         ntp.rps_mingguan_id
                     FROM nilai_teknik_penilaian ntp
                     WHERE ntp.rps_mingguan_id IN (" . implode(',', array_fill(0, count($rpsMingguan_ids), '?')) . ")
-                    AND ntp.jadwal_mengajar_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
+                    AND ntp.jadwal_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
                     AND ntp.nilai IS NOT NULL
                 ";
 
@@ -610,7 +610,7 @@ class LaporanCpmk extends BaseController
 
 	private function getTahunAkademik()
 	{
-		return $this->db->table('jadwal_mengajar')
+		return $this->db->table('jadwal')
 			->select('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", "")) as tahun_akademik')
 			->groupBy('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", ""))')
 			->orderBy('tahun_akademik', 'DESC')
@@ -620,11 +620,15 @@ class LaporanCpmk extends BaseController
 
 	private function getProgramStudi()
 	{
-		return [
-			['program_studi' => 'Teknik Informatika'],
-			['program_studi' => 'Sistem Informasi'],
-			['program_studi' => 'Teknik Komputer']
-		];
+		$builder = $this->db->table('program_studi');
+		$result = $builder
+			->select('kode, nama_resmi')
+			->distinct()
+			->orderBy('nama_resmi', 'ASC')
+			->get()
+			->getResultArray();
+
+		return array_column($result, 'nama_resmi', 'kode');
 	}
 
 	public function exportZip()
@@ -637,7 +641,7 @@ class LaporanCpmk extends BaseController
 
 			$mataKuliahId = $this->request->getGet('mata_kuliah_id');
 			$tahunAkademik = $this->request->getGet('tahun_akademik');
-			$programStudi = $this->request->getGet('program_studi');
+			$programStudi = $this->request->getGet('program_studi_kode');
 			$documents = $this->request->getGet('documents');
 
 			// Log the request parameters
@@ -661,12 +665,12 @@ class LaporanCpmk extends BaseController
 				$selectedDocuments = explode(',', $documents);
 			}
 
-			// Get jadwal_mengajar ID for nilai exports
-			$builder = $this->db->table('jadwal_mengajar');
+			// Get jadwal ID for nilai exports
+			$builder = $this->db->table('jadwal');
 			$builder->where('mata_kuliah_id', $mataKuliahId);
 			$builder->like('tahun_akademik', $tahunAkademik, 'both');
 			if ($programStudi) {
-				$builder->where('program_studi', $programStudi);
+				$builder->where('program_studi_kode', $programStudi);
 			}
 			$jadwalMengajar = $builder->get()->getFirstRow();
 			$jadwalMengajarId = $jadwalMengajar ? $jadwalMengajar->id : null;
@@ -1032,7 +1036,7 @@ class LaporanCpmk extends BaseController
 			}
 
 			// Get students for this class
-			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi_kode'], $jadwal['semester']);
 
 			// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
 			$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwalId);
@@ -1190,7 +1194,7 @@ class LaporanCpmk extends BaseController
 			$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 			$row++;
 			$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 			$row++;
 			$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 			$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -1316,7 +1320,7 @@ class LaporanCpmk extends BaseController
 			$dosenKetuaNip = $db->table('jadwal_dosen jd')
 				->select('d.nip')
 				->join('dosen d', 'd.id = jd.dosen_id')
-				->where('jd.jadwal_mengajar_id', $jadwalId)
+				->where('jd.jadwal_id', $jadwalId)
 				->where('jd.role', 'leader')
 				->get()
 				->getRowArray();
@@ -1389,7 +1393,7 @@ class LaporanCpmk extends BaseController
 			}
 
 			// Get students for this class
-			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+			$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi_kode'], $jadwal['semester']);
 
 			// Get CPMK list for this jadwal
 			$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwalId);
@@ -1472,7 +1476,7 @@ class LaporanCpmk extends BaseController
 			$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 			$row++;
 			$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 			$row++;
 			$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 			$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -1600,7 +1604,7 @@ class LaporanCpmk extends BaseController
 			$dosenKetuaNip = $db->table('jadwal_dosen jd')
 				->select('d.nip')
 				->join('dosen d', 'd.id = jd.dosen_id')
-				->where('jd.jadwal_mengajar_id', $jadwalId)
+				->where('jd.jadwal_id', $jadwalId)
 				->where('jd.role', 'leader')
 				->get()
 				->getRowArray();
@@ -1671,7 +1675,7 @@ class LaporanCpmk extends BaseController
 
 		$mataKuliahId = $this->request->getPost('mata_kuliah_id');
 		$tahunAkademik = $this->request->getPost('tahun_akademik');
-		$programStudi = $this->request->getPost('program_studi');
+		$programStudi = $this->request->getPost('program_studi_kode');
 		$mode = $this->request->getPost('mode');
 		$analysisSingkat = $this->request->getPost('analisis_singkat');
 		$autoOptionsJson = $this->request->getPost('auto_options');
@@ -1693,7 +1697,7 @@ class LaporanCpmk extends BaseController
 		$data = [
 			'mata_kuliah_id' => $mataKuliahId,
 			'tahun_akademik' => $tahunAkademik,
-			'program_studi' => $programStudi,
+			'program_studi_kode' => $programStudi,
 			'mode' => $mode,
 			'analisis_singkat' => $mode === 'manual' ? $analysisSingkat : null,
 			'auto_options' => $autoOptions
@@ -1751,7 +1755,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 		$cqiDataJson = $this->request->getPost('cqi_data');
 
 		if (!$jadwalMengajarId || !$cqiDataJson) {
@@ -1773,7 +1777,7 @@ class LaporanCpmk extends BaseController
 			foreach ($cqiData as $cqi) {
 				if (!empty($cqi['kode_cpmk'])) {
 					$data = [
-						'jadwal_mengajar_id' => $jadwalMengajarId,
+						'jadwal_id' => $jadwalMengajarId,
 						'kode_cpmk' => $cqi['kode_cpmk'],
 						'masalah' => $cqi['masalah'] ?? null,
 						'rencana_perbaikan' => $cqi['rencana_perbaikan'] ?? null,
@@ -1871,7 +1875,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 		$file = $this->request->getFile('rubrik_file');
 
 		if (!$jadwalMengajarId || !$file) {
@@ -1953,7 +1957,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 
 		if (!$jadwalMengajarId) {
 			return $this->response->setJSON([
@@ -2005,7 +2009,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 		$file = $this->request->getFile('contoh_soal_file');
 
 		if (!$jadwalMengajarId || !$file) {
@@ -2087,7 +2091,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 
 		if (!$jadwalMengajarId) {
 			return $this->response->setJSON([
@@ -2139,7 +2143,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 		$file = $this->request->getFile('notulen_file');
 
 		if (!$jadwalMengajarId || !$file) {
@@ -2221,7 +2225,7 @@ class LaporanCpmk extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$jadwalMengajarId = $this->request->getPost('jadwal_mengajar_id');
+		$jadwalMengajarId = $this->request->getPost('jadwal_id');
 
 		if (!$jadwalMengajarId) {
 			return $this->response->setJSON([

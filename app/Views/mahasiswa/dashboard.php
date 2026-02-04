@@ -118,7 +118,7 @@
 									<?php endif; ?>
 								</td>
 								<td>
-									<a href="<?= base_url('mahasiswa/nilai/detail/' . $nilai['jadwal_mengajar_id']) ?>"
+									<a href="<?= base_url('mahasiswa/nilai/detail/' . $nilai['jadwal_id']) ?>"
 										class="btn btn-sm btn-outline-primary">
 										<i class="bi bi-eye"></i> Detail
 									</a>

@@ -172,8 +172,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiSelect1" name="program_studi">
 												<option value="">Semua Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -225,8 +225,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiSelect2" name="program_studi">
 												<option value="">Semua Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -291,8 +291,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiSelect3" name="program_studi">
 												<option value="">Semua Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -417,8 +417,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiComparativeSelect1" name="program_studi" required>
 												<option value="">Pilih Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -462,8 +462,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiComparativeSelect2" name="program_studi" required>
 												<option value="">Pilih Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -518,8 +518,8 @@
 											</label>
 											<select class="form-select modern-filter-input" id="programStudiComparativeSelect3" name="program_studi" required>
 												<option value="">Pilih Program Studi</option>
-												<?php foreach ($programStudi as $prodi): ?>
-													<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+												<?php foreach ($programStudi as $kode => $prodi): ?>
+													<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 												<?php endforeach; ?>
 											</select>
 										</div>
@@ -595,8 +595,8 @@
 									</label>
 									<select class="form-select modern-filter-input" id="programStudiKeseluruhanSelect" name="program_studi" required>
 										<option value="">Pilih Program Studi</option>
-										<?php foreach ($programStudi as $prodi): ?>
-											<option value="<?= esc($prodi) ?>" <?= $prodi === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
+										<?php foreach ($programStudi as $kode => $prodi): ?>
+											<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($prodi)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($prodi) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>

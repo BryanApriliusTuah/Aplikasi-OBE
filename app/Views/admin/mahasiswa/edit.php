@@ -52,17 +52,52 @@
 			</div>
 
 			<div class="mb-3">
-				<label for="program_studi" class="form-label">Program Studi</label>
-				<select class="form-select <?= isset($errors['program_studi']) ? 'is-invalid' : '' ?>" id="program_studi" name="program_studi" required>
-					<option value="" disabled>-- Pilih Program Studi --</option>
-					<?php $currentProdi = old('program_studi', $mahasiswa['program_studi']); ?>
-					<option value="Teknik Informatika" <?= $currentProdi === 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-					<option value="Sistem Informasi" <?= $currentProdi === 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-					<option value="Teknik Komputer" <?= $currentProdi === 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
+				<label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
+				<select class="form-select <?= isset($errors['jenis_kelamin']) ? 'is-invalid' : '' ?>" id="jenis_kelamin" name="jenis_kelamin">
+					<?php $currentJK = old('jenis_kelamin', $mahasiswa['jenis_kelamin']); ?>
+					<option value="" <?= empty($currentJK) ? 'selected' : '' ?>>-- Pilih Jenis Kelamin --</option>
+					<option value="L" <?= $currentJK === 'L' ? 'selected' : '' ?>>Laki-laki</option>
+					<option value="P" <?= $currentJK === 'P' ? 'selected' : '' ?>>Perempuan</option>
 				</select>
-				<?php if (isset($errors['program_studi'])) : ?>
+				<?php if (isset($errors['jenis_kelamin'])) : ?>
 					<div class="invalid-feedback">
-						<?= esc($errors['program_stdi']) ?>
+						<?= esc($errors['jenis_kelamin']) ?>
+					</div>
+				<?php endif; ?>
+			</div>
+
+			<div class="mb-3">
+				<label for="email" class="form-label">Email</label>
+				<input type="email" class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" id="email" name="email" value="<?= old('email', esc($mahasiswa['email'])) ?>" placeholder="Masukkan email">
+				<?php if (isset($errors['email'])) : ?>
+					<div class="invalid-feedback">
+						<?= esc($errors['email']) ?>
+					</div>
+				<?php endif; ?>
+			</div>
+
+			<div class="mb-3">
+				<label for="no_hp" class="form-label">No. HP</label>
+				<input type="text" class="form-control <?= isset($errors['no_hp']) ? 'is-invalid' : '' ?>" id="no_hp" name="no_hp" value="<?= old('no_hp', esc($mahasiswa['no_hp'])) ?>" placeholder="Masukkan nomor HP">
+				<?php if (isset($errors['no_hp'])) : ?>
+					<div class="invalid-feedback">
+						<?= esc($errors['no_hp']) ?>
+					</div>
+				<?php endif; ?>
+			</div>
+
+			<div class="mb-3">
+				<label for="program_studi_kode" class="form-label">Program Studi</label>
+				<select class="form-select <?= isset($errors['program_studi_kode']) ? 'is-invalid' : '' ?>" id="program_studi_kode" name="program_studi_kode">
+					<option value="" disabled <?= empty(old('program_studi_kode', $mahasiswa['program_studi_kode'])) ? 'selected' : '' ?>>-- Pilih Program Studi --</option>
+					<?php $currentProdi = old('program_studi_kode', $mahasiswa['program_studi_kode']); ?>
+					<?php foreach ($programStudi as $prodi) : ?>
+						<option value="<?= esc($prodi['kode']) ?>" <?= (string)$currentProdi === (string)$prodi['kode'] ? 'selected' : '' ?>><?= esc($prodi['nama_resmi']) ?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php if (isset($errors['program_studi_kode'])) : ?>
+					<div class="invalid-feedback">
+						<?= esc($errors['program_studi_kode']) ?>
 					</div>
 				<?php endif; ?>
 			</div>

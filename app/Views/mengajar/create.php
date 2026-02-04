@@ -24,19 +24,36 @@
 								<select class="form-select" id="mata_kuliah_id" name="mata_kuliah_id" required>
 									<option value="">-- Pilih Mata Kuliah --</option>
 									<?php foreach ($mata_kuliah_list as $mk): ?>
-										<option value="<?= $mk['id'] ?>" <?= old('mata_kuliah_id') == $mk['id'] ? 'selected' : '' ?>>
+										<option value="<?= $mk['id'] ?>" data-kode="<?= esc($mk['kode_mk']) ?>" <?= old('mata_kuliah_id') == $mk['id'] ? 'selected' : '' ?>>
 											[SMT <?= esc($mk['semester']) ?>] <?= esc($mk['kode_mk']) ?> - <?= esc($mk['nama_mk']) ?>
 										</option>
 									<?php endforeach; ?>
 								</select>
 							</div>
 
+							<!-- API Kelas Selection -->
+							<div class="col-12" id="api-kelas-section" style="display: none;">
+								<label class="form-label">Kelas dari API <span class="badge bg-info">SIUBER</span></label>
+								<div id="api-kelas-loading" class="text-muted small" style="display: none;">
+									<div class="spinner-border spinner-border-sm me-1" role="status"></div> Memuat data kelas dari API...
+								</div>
+								<div id="api-kelas-container"></div>
+								<input type="hidden" id="kelas_id" name="kelas_id">
+								<input type="hidden" id="kelas_jenis" name="kelas_jenis">
+								<input type="hidden" id="kelas_semester" name="kelas_semester">
+								<input type="hidden" id="mk_kurikulum_kode" name="mk_kurikulum_kode">
+								<input type="hidden" id="total_mahasiswa" name="total_mahasiswa">
+							</div>
+
 							<div class="col-md-6">
-								<label for="program_studi" class="form-label">Program Studi</label>
-								<select class="form-select" id="program_studi" name="program_studi" required>
-									<option value="Teknik Informatika" <?= old('program_studi') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-									<option value="Sistem Informasi" <?= old('program_studi') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-									<option value="Teknik Komputer" <?= old('program_studi') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
+								<label for="program_studi_kode" class="form-label">Program Studi</label>
+								<select class="form-select" id="program_studi_kode" name="program_studi_kode" required>
+									<option value="">-- Pilih Program Studi --</option>
+									<?php foreach ($program_studi_list as $prodi): ?>
+										<option value="<?= esc($prodi['kode']) ?>" <?= old('program_studi_kode') == $prodi['kode'] ? 'selected' : '' ?>>
+											<?= esc($prodi['nama_resmi']) ?>
+										</option>
+									<?php endforeach; ?>
 								</select>
 							</div>
 							<div class="col-md-6">
@@ -114,104 +131,211 @@
 
 <?= $this->section('js') ?>
 <script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const mataKuliahSelect = document.getElementById('mata_kuliah_id');
-		const dosenLeaderDisplay = document.getElementById('dosen_leader_display');
-		const dosenLeaderInput = document.getElementById('dosen_leader');
-		const dosenMembersDisplay = document.getElementById('dosen-members-display');
-		const dosenMembersContainer = document.getElementById('dosen-members-container');
-		const rpsInfo = document.getElementById('rps-info');
-		const rpsMessage = document.getElementById('rps-message');
-		const submitButton = document.querySelector('button[type="submit"]');
+	$(document).ready(function() {
+		// Initialize Select2 on dropdowns
+		$('#mata_kuliah_id').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Mata Kuliah --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		$('#program_studi_kode').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Program Studi --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		$('#hari').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Hari --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		var $dosenLeaderDisplay = $('#dosen_leader_display');
+		var $dosenLeaderInput = $('#dosen_leader');
+		var $dosenMembersDisplay = $('#dosen-members-display');
+		var $dosenMembersContainer = $('#dosen-members-container');
+		var $rpsInfo = $('#rps-info');
+		var $rpsMessage = $('#rps-message');
+		var $submitButton = $('button[type="submit"]');
+
+		// API kelas elements
+		var $apiKelasSection = $('#api-kelas-section');
+		var $apiKelasLoading = $('#api-kelas-loading');
+		var $apiKelasContainer = $('#api-kelas-container');
 
 		// Initially disable submit button
-		submitButton.disabled = true;
+		$submitButton.prop('disabled', true);
 
-		// Fetch RPS dosen data when mata kuliah is selected
-		mataKuliahSelect.addEventListener('change', function() {
-			const mataKuliahId = this.value;
+		// Listen for Select2 change on mata kuliah
+		$('#mata_kuliah_id').on('change', function() {
+			var mataKuliahId = $(this).val();
+			var $selectedOption = $(this).find(':selected');
+			var kodeMk = $selectedOption.data('kode') || '';
 
 			// Reset fields
-			dosenLeaderDisplay.value = '';
-			dosenLeaderInput.value = '';
-			dosenMembersDisplay.innerHTML = '';
-			dosenMembersContainer.innerHTML = '';
-			rpsInfo.classList.add('d-none');
-			rpsInfo.className = 'alert d-none';
-			submitButton.disabled = true;
+			$dosenLeaderDisplay.val('');
+			$dosenLeaderInput.val('');
+			$dosenMembersDisplay.html('');
+			$dosenMembersContainer.html('');
+			$rpsInfo.addClass('d-none').attr('class', 'alert d-none');
+			$submitButton.prop('disabled', true);
+
+			// Reset API kelas fields
+			$apiKelasSection.hide();
+			$apiKelasContainer.html('');
+			$('#kelas_id').val('');
+			$('#kelas_jenis').val('');
+			$('#kelas_semester').val('');
+			$('#mk_kurikulum_kode').val('');
+			$('#total_mahasiswa').val('');
 
 			if (!mataKuliahId) {
-				dosenLeaderDisplay.placeholder = 'Pilih mata kuliah terlebih dahulu';
+				$dosenLeaderDisplay.attr('placeholder', 'Pilih mata kuliah terlebih dahulu');
 				return;
 			}
 
-			dosenLeaderDisplay.placeholder = 'Memuat data RPS...';
+			$dosenLeaderDisplay.attr('placeholder', 'Memuat data RPS...');
 
 			// Fetch RPS dosen data via AJAX
-			fetch('<?= base_url('admin/mengajar/getRpsDosen') ?>/' + mataKuliahId, {
-					method: 'GET',
-					headers: {
-						'X-Requested-With': 'XMLHttpRequest'
-					}
-				})
-				.then(response => response.json())
-				.then(data => {
+			$.ajax({
+				url: '<?= base_url('admin/mengajar/getRpsDosen') ?>/' + mataKuliahId,
+				method: 'GET',
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				},
+				dataType: 'json',
+				success: function(data) {
 					if (data.success) {
-						// Show success message
-						rpsInfo.classList.remove('d-none');
-						rpsInfo.classList.add('alert-success');
-						rpsMessage.textContent = 'Data dosen berhasil dimuat dari RPS';
+						$rpsInfo.removeClass('d-none').addClass('alert-success');
+						$rpsMessage.text('Data dosen berhasil dimuat dari RPS');
 
-						// Set dosen koordinator
 						if (data.data.koordinator) {
-							dosenLeaderDisplay.value = data.data.koordinator.nama_lengkap;
-							dosenLeaderInput.value = data.data.koordinator.id;
+							$dosenLeaderDisplay.val(data.data.koordinator.nama_lengkap);
+							$dosenLeaderInput.val(data.data.koordinator.id);
 						} else {
-							dosenLeaderDisplay.value = 'Tidak ada koordinator di RPS';
-							rpsInfo.classList.remove('alert-success');
-							rpsInfo.classList.add('alert-danger');
-							rpsMessage.textContent = 'RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.';
+							$dosenLeaderDisplay.val('Tidak ada koordinator di RPS');
+							$rpsInfo.removeClass('alert-success').addClass('alert-danger');
+							$rpsMessage.text('RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.');
 							return;
 						}
 
-						// Display members from RPS
 						if (data.data.members && data.data.members.length > 0) {
-							let membersHtml = '<div class="list-group">';
-							data.data.members.forEach(member => {
-								membersHtml += `<div class="list-group-item">${member.nama_lengkap}</div>`;
-								// Add hidden inputs for submission
-								const input = document.createElement('input');
-								input.type = 'hidden';
-								input.name = 'dosen_members[]';
-								input.value = member.id;
-								dosenMembersContainer.appendChild(input);
+							var membersHtml = '<div class="list-group">';
+							$.each(data.data.members, function(i, member) {
+								membersHtml += '<div class="list-group-item">' + member.nama_lengkap + '</div>';
+								$dosenMembersContainer.append('<input type="hidden" name="dosen_members[]" value="' + member.id + '">');
 							});
 							membersHtml += '</div>';
-							dosenMembersDisplay.innerHTML = membersHtml;
+							$dosenMembersDisplay.html(membersHtml);
 						} else {
-							dosenMembersDisplay.innerHTML = '<p class="text-muted mb-0">Tidak ada dosen anggota</p>';
+							$dosenMembersDisplay.html('<p class="text-muted mb-0">Tidak ada dosen anggota</p>');
 						}
 
-						// Enable submit button
-						submitButton.disabled = false;
+						$submitButton.prop('disabled', false);
 					} else {
-						// Show error message
-						rpsInfo.classList.remove('d-none');
-						rpsInfo.classList.add('alert-danger');
-						rpsMessage.textContent = data.message || 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.';
-						dosenLeaderDisplay.value = '';
-						dosenLeaderDisplay.placeholder = 'RPS tidak tersedia';
-						submitButton.disabled = true;
+						$rpsInfo.removeClass('d-none').addClass('alert-danger');
+						$rpsMessage.text(data.message || 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.');
+						$dosenLeaderDisplay.val('').attr('placeholder', 'RPS tidak tersedia');
+						$submitButton.prop('disabled', true);
 					}
-				})
-				.catch(error => {
+				},
+				error: function(xhr, status, error) {
 					console.error('Error fetching RPS data:', error);
-					rpsInfo.classList.remove('d-none');
-					rpsInfo.classList.add('alert-danger');
-					rpsMessage.textContent = 'Terjadi kesalahan saat mengambil data RPS.';
-					dosenLeaderDisplay.placeholder = 'Error memuat data';
-					submitButton.disabled = true;
+					$rpsInfo.removeClass('d-none').addClass('alert-danger');
+					$rpsMessage.text('Terjadi kesalahan saat mengambil data RPS.');
+					$dosenLeaderDisplay.attr('placeholder', 'Error memuat data');
+					$submitButton.prop('disabled', true);
+				}
+			});
+
+			// Fetch API kelas data
+			if (kodeMk) {
+				$apiKelasSection.show();
+				$apiKelasLoading.show();
+				$apiKelasContainer.html('');
+
+				$.ajax({
+					url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
+					method: 'GET',
+					data: {
+						kode_mk: kodeMk
+					},
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					},
+					dataType: 'json',
+					success: function(data) {
+						$apiKelasLoading.hide();
+
+						// Auto-fill program studi from API response
+						if (data.program_studi_kode) {
+							$('#program_studi_kode').val(data.program_studi_kode).trigger('change');
+						}
+
+						if (data.success && data.data.length > 0) {
+							var html = '<div class="list-group">';
+							$.each(data.data, function(index, kelas) {
+								var semester = kelas.jadwal_kelas_semester || '-';
+								var totalMhs = kelas.jadwal_kelas_mahasiswa ? kelas.jadwal_kelas_mahasiswa.total : 0;
+								html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3" style="cursor: pointer;">' +
+									'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
+									' data-kelas-id="' + (kelas.jadwal_kelas_id || '') + '"' +
+									' data-kelas-nama="' + (kelas.jadwal_kelas_nama || '') + '"' +
+									' data-kelas-jenis="' + (kelas.jadwal_kelas_jenis || '') + '"' +
+									' data-kelas-semester="' + semester + '"' +
+									' data-kelas-status="' + (kelas.jadwal_kelas_status || '') + '"' +
+									' data-mk-kode="' + (kelas.jadwal_mk_kurikulum_kode || '') + '"' +
+									' data-total-mhs="' + totalMhs + '">' +
+									'<div class="flex-grow-1">' +
+									'<div class="fw-semibold">Kelas ' + (kelas.jadwal_kelas_nama || '-') + '</div>' +
+									'<div class="small text-muted">' +
+									(kelas.jadwal_kelas_jenis || '-') + ' &bull; ' +
+									'Semester: ' + semester + ' &bull; ' +
+									'Status: <span class="badge ' + (kelas.jadwal_kelas_status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.jadwal_kelas_status || '-') + '</span> &bull; ' +
+									'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
+									'</div></div></label>';
+							});
+							html += '</div>';
+							html += '<small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> Pilih kelas untuk mengisi otomatis data kelas dari API.</small>';
+							$apiKelasContainer.html(html);
+
+							// Event delegation for radio buttons
+							$apiKelasContainer.off('change', 'input[name="api_kelas_select"]').on('change', 'input[name="api_kelas_select"]', function() {
+								var $radio = $(this);
+								$('#kelas').val($radio.data('kelas-nama'));
+								$('#kelas_id').val($radio.data('kelas-id'));
+								$('#kelas_jenis').val($radio.data('kelas-jenis'));
+								$('#kelas_semester').val($radio.data('kelas-semester'));
+								$('#mk_kurikulum_kode').val($radio.data('mk-kode'));
+								$('#total_mahasiswa').val($radio.data('total-mhs'));
+
+								// Auto-fill tahun_akademik from semester code
+								var semCode = String($radio.data('kelas-semester'));
+								if (semCode && semCode.length >= 5) {
+									var year = parseInt(semCode.substring(0, 4));
+									var term = semCode.substring(4, 5);
+									if (term === '1') {
+										$('#tahun_akademik').val((year - 1) + '/' + year + ' Ganjil');
+									} else {
+										$('#tahun_akademik').val(year + '/' + (year + 1) + ' Genap');
+									}
+								}
+							});
+						} else {
+							$apiKelasContainer.html('<div class="alert alert-warning mb-0"><i class="bi bi-info-circle me-1"></i> Tidak ada data kelas dari API untuk mata kuliah ini.</div>');
+						}
+					},
+					error: function(xhr, status, error) {
+						$apiKelasLoading.hide();
+						$apiKelasContainer.html('<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Gagal memuat data kelas dari API.</div>');
+						console.error('Error fetching API kelas:', error);
+					}
 				});
+			}
 		});
 	});
 </script>

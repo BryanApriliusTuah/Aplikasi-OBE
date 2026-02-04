@@ -48,6 +48,18 @@ class PemetaanCplMkCpmk extends BaseController
         $data['title'] = 'Pemetaan CPL - CPMK - MK';
         $data['rows'] = $this->getQueryData();
 
+        $search = $this->request->getGet('search');
+        $data['filters'] = ['search' => $search ?? ''];
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $data['rows'] = array_values(array_filter($data['rows'], function ($r) use ($searchLower) {
+                return str_contains(strtolower($r['kode_cpl']), $searchLower)
+                    || str_contains(strtolower($r['kode_cpmk']), $searchLower)
+                    || str_contains(strtolower($r['mk_list'] ?? ''), $searchLower);
+            }));
+        }
+
         return view('admin/pemetaan_cpl_mk_cpmk/index', $data);
     }
 
@@ -126,7 +138,7 @@ class PemetaanCplMkCpmk extends BaseController
     public function getMataKuliahByCpl($cpl_id)
     {
         $builder = $this->db->table('cpl_mk')
-            ->select('mata_kuliah.id, mata_kuliah.nama_mk')
+            ->select('mata_kuliah.id, mata_kuliah.kode_mk, mata_kuliah.nama_mk')
             ->join('mata_kuliah', 'mata_kuliah.id = cpl_mk.mata_kuliah_id')
             ->where('cpl_mk.cpl_id', $cpl_id);
 
@@ -228,7 +240,7 @@ class PemetaanCplMkCpmk extends BaseController
             ->join('cpl_mk', 'mata_kuliah.id = cpl_mk.mata_kuliah_id')
             ->where('cpl_mk.cpl_id', $cplId)
             ->orderBy('mata_kuliah.nama_mk', 'asc')
-            ->select('mata_kuliah.id, mata_kuliah.nama_mk')
+            ->select('mata_kuliah.id, mata_kuliah.kode_mk, mata_kuliah.nama_mk')
             ->get()->getResultArray();
 
         return view('admin/pemetaan_cpl_mk_cpmk/edit', [

@@ -112,7 +112,7 @@ class CapaianCpmk extends BaseController
 			$result = $avgBuilder
 				->select('AVG(nilai_cpmk) as rata_rata, COUNT(*) as jumlah_mahasiswa')
 				->where('cpmk_id', $cpmk['id'])
-				->where('jadwal_mengajar_id', $jadwal['id'])
+				->where('jadwal_id', $jadwal['id'])
 				->get()
 				->getRowArray();
 
@@ -183,7 +183,7 @@ class CapaianCpmk extends BaseController
 			->select('mahasiswa.nim, mahasiswa.nama_lengkap, nilai_cpmk_mahasiswa.nilai_cpmk')
 			->join('mahasiswa', 'mahasiswa.id = nilai_cpmk_mahasiswa.mahasiswa_id')
 			->where('nilai_cpmk_mahasiswa.cpmk_id', $cpmkId)
-			->where('nilai_cpmk_mahasiswa.jadwal_mengajar_id', $jadwal['id'])
+			->where('nilai_cpmk_mahasiswa.jadwal_id', $jadwal['id'])
 			->orderBy('mahasiswa.nama_lengkap', 'ASC')
 			->get()
 			->getResultArray();
@@ -201,7 +201,7 @@ class CapaianCpmk extends BaseController
 	private function getTahunAkademik()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -215,15 +215,15 @@ class CapaianCpmk extends BaseController
 	private function getProgramStudi()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('mahasiswa');
+		$builder = $db->table('program_studi');
 		$result = $builder
-			->select('program_studi')
+			->select('kode, nama_resmi')
 			->distinct()
-			->orderBy('program_studi', 'ASC')
+			->orderBy('nama_resmi', 'ASC')
 			->get()
 			->getResultArray();
 
-		return array_column($result, 'program_studi');
+		return array_column($result, 'nama_resmi', 'kode');
 	}
 
 	private function getTahunAngkatan()
@@ -243,7 +243,7 @@ class CapaianCpmk extends BaseController
 	private function getSemesterList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -258,7 +258,7 @@ class CapaianCpmk extends BaseController
 	private function getTahunAkademikList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -290,7 +290,7 @@ class CapaianCpmk extends BaseController
 		}
 
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$builder->select('kelas')
 			->where('mata_kuliah_id', $mataKuliahId);
 
@@ -373,7 +373,7 @@ class CapaianCpmk extends BaseController
 				$result = $avgBuilder
 					->select('AVG(nilai_cpmk) as rata_rata')
 					->where('cpmk_id', $cpmk['id'])
-					->where('jadwal_mengajar_id', $jadwal['id'])
+					->where('jadwal_id', $jadwal['id'])
 					->get()
 					->getRowArray();
 
@@ -411,11 +411,11 @@ class CapaianCpmk extends BaseController
 		$db = \Config\Database::connect();
 
 		// Get all jadwal that have CPMK data
-		$jadwalBuilder = $db->table('jadwal_mengajar jm')
+		$jadwalBuilder = $db->table('jadwal jm')
 			->select('jm.id as jadwal_id, jm.mata_kuliah_id, jm.tahun_akademik, jm.kelas, 
                   mk.kode_mk, mk.nama_mk, mk.semester')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
-			->join('nilai_cpmk_mahasiswa ncm', 'ncm.jadwal_mengajar_id = jm.id')
+			->join('nilai_cpmk_mahasiswa ncm', 'ncm.jadwal_id = jm.id')
 			->groupBy('jm.id');
 
 		if ($tahunAkademik) {
@@ -472,7 +472,7 @@ class CapaianCpmk extends BaseController
 				$result = $avgBuilder
 					->select('AVG(nilai_cpmk) as rata_rata, COUNT(DISTINCT mahasiswa_id) as jumlah')
 					->where('cpmk_id', $cpmk['id'])
-					->where('jadwal_mengajar_id', $jadwal['jadwal_id'])
+					->where('jadwal_id', $jadwal['jadwal_id'])
 					->get()
 					->getRowArray();
 
@@ -533,11 +533,11 @@ class CapaianCpmk extends BaseController
 
 		$db = \Config\Database::connect();
 		$builder = $db->table('mahasiswa');
-		$builder->select('id, nim, nama_lengkap, program_studi, tahun_angkatan')
+		$builder->select('id, nim, nama_lengkap, program_studi_kode, tahun_angkatan')
 			->where('status_mahasiswa', 'Aktif');
 
 		if ($programStudi) {
-			$builder->where('program_studi', $programStudi);
+			$builder->where('program_studi_kode', $programStudi);
 		}
 
 		if ($tahunAngkatan) {
@@ -587,7 +587,7 @@ class CapaianCpmk extends BaseController
 			         jm.mata_kuliah_id')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
 			->join('cpmk', 'cpmk.id = rm.cpmk_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('ntp.mahasiswa_id', $mahasiswaId);
 
@@ -721,7 +721,7 @@ class CapaianCpmk extends BaseController
 		// Get students in this cohort
 		$mahasiswaList = $db->table('mahasiswa')
 			->select('id')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('tahun_angkatan', $tahunAngkatan)
 			->where('status_mahasiswa', 'Aktif')
 			->get()
@@ -745,7 +745,7 @@ class CapaianCpmk extends BaseController
 			         mk.kode_mk, mk.nama_mk')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
 			->join('cpmk', 'cpmk.id = rm.cpmk_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->whereIn('ntp.mahasiswa_id', $mahasiswaIds);
 
@@ -942,7 +942,7 @@ class CapaianCpmk extends BaseController
 		// Get all active students in this program
 		$mahasiswaList = $db->table('mahasiswa')
 			->select('id, tahun_angkatan')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('status_mahasiswa', 'Aktif')
 			->get()
 			->getResultArray();
@@ -967,7 +967,7 @@ class CapaianCpmk extends BaseController
 			         mk.kode_mk, mk.nama_mk')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
 			->join('cpmk', 'cpmk.id = rm.cpmk_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->whereIn('ntp.mahasiswa_id', $mahasiswaIds);
 
@@ -1166,7 +1166,7 @@ class CapaianCpmk extends BaseController
 		// Get students in this cohort
 		$mahasiswaList = $db->table('mahasiswa')
 			->select('id, nim, nama_lengkap')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('tahun_angkatan', $tahunAngkatan)
 			->where('status_mahasiswa', 'Aktif')
 			->get()
@@ -1180,7 +1180,7 @@ class CapaianCpmk extends BaseController
 			->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id,
 			         rm.teknik_penilaian')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->where('rm.cpmk_id', $cpmkId)
 			->whereIn('ntp.mahasiswa_id', $mahasiswaIds);
 
@@ -1269,7 +1269,7 @@ class CapaianCpmk extends BaseController
 		// Get all active students in this program
 		$mahasiswaList = $db->table('mahasiswa')
 			->select('id, nim, nama_lengkap, tahun_angkatan')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('status_mahasiswa', 'Aktif')
 			->get()
 			->getResultArray();
@@ -1282,7 +1282,7 @@ class CapaianCpmk extends BaseController
 			->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id,
 			         rm.teknik_penilaian')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->where('rm.cpmk_id', $cpmkId)
 			->whereIn('ntp.mahasiswa_id', $mahasiswaIds);
 
@@ -1389,7 +1389,7 @@ class CapaianCpmk extends BaseController
 			         mk.kode_mk, mk.nama_mk,
 			         jm.tahun_akademik, jm.kelas')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('ntp.mahasiswa_id', $mahasiswaId)
 			->where('rm.cpmk_id', $cpmk['id']);

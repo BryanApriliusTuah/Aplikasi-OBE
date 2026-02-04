@@ -30,8 +30,8 @@
 									<label for="program_studi" class="form-label fw-bold">Program Studi <span class="text-danger">*</span></label>
 									<select class="form-select" id="program_studi" name="program_studi" required>
 										<option value="">-- Pilih Program Studi --</option>
-										<?php foreach ($programStudi as $ps): ?>
-											<option value="<?= esc($ps['program_studi']) ?>" <?= $ps['program_studi'] === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($ps['program_studi']) ?></option>
+										<?php foreach ($programStudi as $kode => $nama): ?>
+											<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($nama)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($nama) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
@@ -140,7 +140,7 @@
 					url: '<?= base_url('admin/laporan-cpl/get-angkatan') ?>',
 					type: 'GET',
 					data: {
-						program_studi: programStudi
+						program_studi_kode: programStudi
 					},
 					dataType: 'json',
 					success: function(response) {

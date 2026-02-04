@@ -21,18 +21,19 @@ class Mengajar extends BaseController
 	{
 		// Get filters from query parameters
 		$filters = [
-			'program_studi' => $this->request->getGet('program_studi'),
+			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
 			'tahun_akademik' => $this->request->getGet('tahun_akademik')
 		];
 
 		// Build query
-		$builder = $this->db->table('jadwal_mengajar jm');
-		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks');
+		$builder = $this->db->table('jadwal jm');
+		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama');
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
+		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
 		// Apply filters
-		if (!empty($filters['program_studi'])) {
-			$builder->where('jm.program_studi', $filters['program_studi']);
+		if (!empty($filters['program_studi_kode'])) {
+			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
 		if (!empty($filters['tahun_akademik'])) {
 			// MODIFIED: Use 'like' for partial "starts with" matching
@@ -51,7 +52,7 @@ class Mengajar extends BaseController
 			$dosenBuilder = $this->db->table('jadwal_dosen jd');
 			$dosenBuilder->select('d.id, d.nama_lengkap, jd.role');
 			$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
-			$dosenBuilder->where('jd.jadwal_mengajar_id', $jadwal['id']);
+			$dosenBuilder->where('jd.jadwal_id', $jadwal['id']);
 			$dosenBuilder->orderBy('jd.role', 'DESC');
 			$jadwal['dosen_list'] = $dosenBuilder->get()->getResultArray();
 		}
@@ -75,18 +76,16 @@ class Mengajar extends BaseController
 		}
 
 		// Get distinct tahun akademik for filter dropdown
-		$tahun_akademik_list = $this->db->table('jadwal_mengajar')
+		$tahun_akademik_list = $this->db->table('jadwal')
 			->distinct()
 			->select('tahun_akademik')
 			->orderBy('tahun_akademik', 'DESC')
 			->get()
 			->getResultArray();
 
-		// Get distinct program studi for filter dropdown
-		$program_studi_list = $this->db->table('jadwal_mengajar')
-			->distinct()
-			->select('program_studi')
-			->orderBy('program_studi', 'ASC')
+		// Get program studi list for filter dropdown
+		$program_studi_list = $this->db->table('program_studi')
+			->orderBy('nama_resmi', 'ASC')
 			->get()
 			->getResultArray();
 
@@ -96,7 +95,7 @@ class Mengajar extends BaseController
 			'filters' => $filters,
 			'total_jadwal' => count($jadwal_list),
 			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
-			'program_studi_list' => array_column($program_studi_list, 'program_studi')
+			'program_studi_list' => $program_studi_list
 		];
 
 		// Note: We are not sending a $pager object anymore
@@ -121,10 +120,16 @@ class Mengajar extends BaseController
 
 		// Get distinct tahun akademik for suggestions
 		// CORRECTED QUERY:
-		$tahun_akademik_list = $this->db->table('jadwal_mengajar')
+		$tahun_akademik_list = $this->db->table('jadwal')
 			->distinct() // Use the distinct() method
 			->select('tahun_akademik') // Select only the column name
 			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
+
+		// Get program studi list
+		$program_studi_list = $this->db->table('program_studi')
+			->orderBy('nama_resmi', 'ASC')
 			->get()
 			->getResultArray();
 
@@ -132,7 +137,8 @@ class Mengajar extends BaseController
 			'title' => 'Tambah Jadwal Mengajar',
 			'dosen_list' => $dosen_list,
 			'mata_kuliah_list' => $mata_kuliah_list,
-			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik')
+			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
+			'program_studi_list' => $program_studi_list
 		];
 
 		return view('mengajar/create', $data);
@@ -142,7 +148,7 @@ class Mengajar extends BaseController
 	{
 		$rules = [
 			'mata_kuliah_id' => 'required|integer',
-			'program_studi' => 'required|in_list[Teknik Informatika,Sistem Informasi,Teknik Komputer]',
+			'program_studi_kode' => 'permit_empty|integer',
 			'tahun_akademik' => 'required',
 			'kelas' => 'required|max_length[5]',
 			'ruang' => 'permit_empty|max_length[20]',
@@ -150,7 +156,12 @@ class Mengajar extends BaseController
 			'jam_mulai' => 'permit_empty',
 			'jam_selesai' => 'permit_empty',
 			'dosen_leader' => 'required|integer',
-			'dosen_members.*' => 'permit_empty|integer'
+			'dosen_members.*' => 'permit_empty|integer',
+			'kelas_id' => 'permit_empty|integer',
+			'kelas_jenis' => 'permit_empty|max_length[50]',
+			'kelas_semester' => 'permit_empty|integer',
+			'mk_kurikulum_kode' => 'permit_empty|max_length[20]',
+			'total_mahasiswa' => 'permit_empty|integer'
 		];
 
 		if (!$this->validate($rules)) {
@@ -158,7 +169,7 @@ class Mengajar extends BaseController
 		}
 
 		$mata_kuliah_id = $this->request->getPost('mata_kuliah_id');
-		$program_studi = $this->request->getPost('program_studi');
+		$program_studi_kode = $this->request->getPost('program_studi_kode') ?: null;
 		$tahun_akademik = $this->request->getPost('tahun_akademik');
 		$kelas = $this->request->getPost('kelas');
 		$ruang = $this->request->getPost('ruang');
@@ -167,6 +178,9 @@ class Mengajar extends BaseController
 		$jam_selesai = $this->request->getPost('jam_selesai');
 		$dosen_leader = $this->request->getPost('dosen_leader');
 		$dosen_members = array_filter($this->request->getPost('dosen_members') ?? []);
+		$kelas_jenis = $this->request->getPost('kelas_jenis');
+		$kelas_semester = $this->request->getPost('kelas_semester');
+		$mk_kurikulum_kode = $this->request->getPost('mk_kurikulum_kode');
 
 		// Validate that RPS exists for this mata kuliah
 		$rps = $this->db->table('rps')
@@ -213,10 +227,10 @@ class Mengajar extends BaseController
 			$this->db->transStart();
 
 			// Check if jadwal exists
-			$existing = $this->db->table('jadwal_mengajar')
+			$existing = $this->db->table('jadwal')
 				->where([
 					'mata_kuliah_id' => $mata_kuliah_id,
-					'program_studi' => $program_studi,
+					'program_studi_kode' => $program_studi_kode,
 					'tahun_akademik' => $tahun_akademik,
 					'kelas' => $kelas
 				])->countAllResults();
@@ -226,24 +240,32 @@ class Mengajar extends BaseController
 			}
 
 			// Insert jadwal
+			$kelas_id = $this->request->getPost('kelas_id');
+			$total_mahasiswa = $this->request->getPost('total_mahasiswa');
+
 			$jadwalData = [
 				'mata_kuliah_id' => $mata_kuliah_id,
-				'program_studi' => $program_studi,
+				'program_studi_kode' => $program_studi_kode,
 				'tahun_akademik' => $tahun_akademik,
 				'kelas' => $kelas,
 				'ruang' => $ruang ?: null,
 				'hari' => $hari ?: null,
 				'jam_mulai' => $jam_mulai ?: null,
 				'jam_selesai' => $jam_selesai ?: null,
-				'status' => 'active'
+				'status' => 'active',
+				'kelas_id' => $kelas_id ?: null,
+				'kelas_jenis' => $kelas_jenis ?: null,
+				'kelas_semester' => $kelas_semester ?: null,
+				'mk_kurikulum_kode' => $mk_kurikulum_kode ?: null,
+				'total_mahasiswa' => $total_mahasiswa ?: 0
 			];
 
-			$this->db->table('jadwal_mengajar')->insert($jadwalData);
+			$this->db->table('jadwal')->insert($jadwalData);
 			$jadwal_id = $this->db->insertID();
 
 			// Insert dosen leader
 			$this->db->table('jadwal_dosen')->insert([
-				'jadwal_mengajar_id' => $jadwal_id,
+				'jadwal_id' => $jadwal_id,
 				'dosen_id' => $dosen_leader,
 				'role' => 'leader'
 			]);
@@ -252,7 +274,7 @@ class Mengajar extends BaseController
 			foreach ($dosen_members as $member_id) {
 				if ($member_id) {
 					$this->db->table('jadwal_dosen')->insert([
-						'jadwal_mengajar_id' => $jadwal_id,
+						'jadwal_id' => $jadwal_id,
 						'dosen_id' => $member_id,
 						'role' => 'member'
 					]);
@@ -263,14 +285,14 @@ class Mengajar extends BaseController
 
 			if ($this->db->transStatus() === false) {
 				$error = $this->db->error();
-				log_message('error', 'Failed to insert jadwal_mengajar: ' . print_r($error, true));
+				log_message('error', 'Failed to insert jadwal: ' . print_r($error, true));
 				return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan data. Error: ' . ($error['message'] ?? 'Unknown error'));
 			}
 
 			return redirect()->to(base_url('admin/mengajar'))->with('success', 'Jadwal mengajar berhasil ditambahkan.');
 		} catch (\Exception $e) {
 			$this->db->transRollback();
-			log_message('error', 'Exception in store jadwal_mengajar: ' . $e->getMessage());
+			log_message('error', 'Exception in store jadwal: ' . $e->getMessage());
 			return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
 		}
 	}
@@ -278,9 +300,10 @@ class Mengajar extends BaseController
 	public function show($id)
 	{
 		// Get schedule data with course info
-		$jadwalBuilder = $this->db->table('jadwal_mengajar jm');
-		$jadwalBuilder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks');
+		$jadwalBuilder = $this->db->table('jadwal jm');
+		$jadwalBuilder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi');
 		$jadwalBuilder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
+		$jadwalBuilder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 		$jadwalBuilder->where('jm.id', $id);
 		$jadwal = $jadwalBuilder->get()->getRowArray();
 
@@ -296,7 +319,7 @@ class Mengajar extends BaseController
 		$dosenBuilder = $this->db->table('jadwal_dosen jd');
 		$dosenBuilder->select('d.nama_lengkap, jd.role');
 		$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
-		$dosenBuilder->where('jd.jadwal_mengajar_id', $id);
+		$dosenBuilder->where('jd.jadwal_id', $id);
 		$dosenBuilder->orderBy('jd.role', 'DESC'); // Leader first
 		$dosenBuilder->orderBy('d.nama_lengkap', 'ASC');
 		$jadwal['dosen_list'] = $dosenBuilder->get()->getResultArray();
@@ -319,7 +342,7 @@ class Mengajar extends BaseController
 	public function edit($id)
 	{
 		// Get jadwal data
-		$jadwalBuilder = $this->db->table('jadwal_mengajar jm');
+		$jadwalBuilder = $this->db->table('jadwal jm');
 		$jadwalBuilder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks');
 		$jadwalBuilder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 		$jadwalBuilder->where('jm.id', $id);
@@ -333,7 +356,7 @@ class Mengajar extends BaseController
 		$dosenBuilder = $this->db->table('jadwal_dosen jd');
 		$dosenBuilder->select('jd.*, d.nama_lengkap');
 		$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
-		$dosenBuilder->where('jd.jadwal_mengajar_id', $id);
+		$dosenBuilder->where('jd.jadwal_id', $id);
 		$dosenAssigned = $dosenBuilder->get()->getResultArray();
 
 		$jadwal['dosen_leader'] = null;
@@ -361,11 +384,18 @@ class Mengajar extends BaseController
 			->get()
 			->getResultArray();
 
+		// Get program studi list
+		$program_studi_list = $this->db->table('program_studi')
+			->orderBy('nama_resmi', 'ASC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'title' => 'Edit Jadwal Mengajar',
 			'jadwal' => $jadwal,
 			'dosen_list' => $dosen_list,
-			'mata_kuliah_list' => $mata_kuliah_list
+			'mata_kuliah_list' => $mata_kuliah_list,
+			'program_studi_list' => $program_studi_list
 		];
 
 		return view('mengajar/edit', $data);
@@ -375,7 +405,7 @@ class Mengajar extends BaseController
 	{
 		$rules = [
 			'mata_kuliah_id' => 'required|integer',
-			'program_studi' => 'required|in_list[Teknik Informatika,Sistem Informasi,Teknik Komputer]',
+			'program_studi_kode' => 'permit_empty|integer',
 			'tahun_akademik' => 'required',
 			'kelas' => 'required|max_length[5]',
 			'ruang' => 'permit_empty|max_length[20]',
@@ -383,7 +413,12 @@ class Mengajar extends BaseController
 			'jam_mulai' => 'permit_empty',
 			'jam_selesai' => 'permit_empty',
 			'dosen_leader' => 'required|integer',
-			'dosen_members.*' => 'permit_empty|integer'
+			'dosen_members.*' => 'permit_empty|integer',
+			'kelas_id' => 'permit_empty|integer',
+			'kelas_jenis' => 'permit_empty|max_length[50]',
+			'total_mahasiswa' => 'permit_empty|integer',
+			'kelas_semester' => 'permit_empty|integer',
+			'mk_kurikulum_kode' => 'permit_empty|max_length[20]'
 		];
 
 		if (!$this->validate($rules)) {
@@ -391,7 +426,7 @@ class Mengajar extends BaseController
 		}
 
 		$mata_kuliah_id = $this->request->getPost('mata_kuliah_id');
-		$program_studi = $this->request->getPost('program_studi');
+		$program_studi_kode = $this->request->getPost('program_studi_kode') ?: null;
 		$tahun_akademik = $this->request->getPost('tahun_akademik');
 		$kelas = $this->request->getPost('kelas');
 		$ruang = $this->request->getPost('ruang');
@@ -400,12 +435,11 @@ class Mengajar extends BaseController
 		$jam_selesai = $this->request->getPost('jam_selesai');
 		$dosen_leader = $this->request->getPost('dosen_leader');
 		$dosen_members = array_filter($this->request->getPost('dosen_members') ?? []);
+		$kelas_jenis = $this->request->getPost('kelas_jenis');
+		$kelas_semester = $this->request->getPost('kelas_semester');
+		$mk_kurikulum_kode = $this->request->getPost('mk_kurikulum_kode');
 
 		// Validation
-		if (in_array($dosen_leader, $dosen_members)) {
-			return redirect()->back()->withInput()->with('error', 'Dosen ketua tidak boleh sama dengan dosen anggota.');
-		}
-
 		if (count($dosen_members) !== count(array_unique($dosen_members))) {
 			return redirect()->back()->withInput()->with('error', 'Dosen anggota tidak boleh ada yang sama.');
 		}
@@ -414,7 +448,7 @@ class Mengajar extends BaseController
 			$this->db->transStart();
 
 			// Check if jadwal exists (excluding current)
-			$existing = $this->db->table('jadwal_mengajar')
+			$existing = $this->db->table('jadwal')
 				->where([
 					'mata_kuliah_id' => $mata_kuliah_id,
 					'tahun_akademik' => $tahun_akademik,
@@ -428,25 +462,33 @@ class Mengajar extends BaseController
 			}
 
 			// Update jadwal
+			$kelas_id = $this->request->getPost('kelas_id');
+			$total_mahasiswa = $this->request->getPost('total_mahasiswa');
+
 			$jadwalData = [
 				'mata_kuliah_id' => $mata_kuliah_id,
-				'program_studi' => $program_studi,
+				'program_studi_kode' => $program_studi_kode,
 				'tahun_akademik' => $tahun_akademik,
 				'kelas' => $kelas,
 				'ruang' => $ruang ?: null,
 				'hari' => $hari ?: null,
 				'jam_mulai' => $jam_mulai ?: null,
-				'jam_selesai' => $jam_selesai ?: null
+				'jam_selesai' => $jam_selesai ?: null,
+				'kelas_id' => $kelas_id ?: null,
+				'kelas_jenis' => $kelas_jenis ?: null,
+				'kelas_semester' => $kelas_semester ?: null,
+				'mk_kurikulum_kode' => $mk_kurikulum_kode ?: null,
+				'total_mahasiswa' => $total_mahasiswa ?: 0
 			];
 
-			$this->db->table('jadwal_mengajar')->where('id', $id)->update($jadwalData);
+			$this->db->table('jadwal')->where('id', $id)->update($jadwalData);
 
 			// Delete existing dosen assignments
-			$this->db->table('jadwal_dosen')->where('jadwal_mengajar_id', $id)->delete();
+			$this->db->table('jadwal_dosen')->where('jadwal_id', $id)->delete();
 
 			// Insert new dosen leader
 			$this->db->table('jadwal_dosen')->insert([
-				'jadwal_mengajar_id' => $id,
+				'jadwal_id' => $id,
 				'dosen_id' => $dosen_leader,
 				'role' => 'leader'
 			]);
@@ -455,7 +497,7 @@ class Mengajar extends BaseController
 			foreach ($dosen_members as $member_id) {
 				if ($member_id) {
 					$this->db->table('jadwal_dosen')->insert([
-						'jadwal_mengajar_id' => $id,
+						'jadwal_id' => $id,
 						'dosen_id' => $member_id,
 						'role' => 'member'
 					]);
@@ -479,10 +521,364 @@ class Mengajar extends BaseController
 	{
 		try {
 			// Delete will cascade to jadwal_dosen
-			$this->db->table('jadwal_mengajar')->where('id', $id)->delete();
+			$this->db->table('jadwal')->where('id', $id)->delete();
 			return redirect()->to(base_url('admin/mengajar'))->with('success', 'Jadwal mengajar berhasil dihapus.');
 		} catch (\Exception $e) {
 			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Sync jadwal/kelas data from external API.
+	 * Only creates jadwal for mata kuliah that already have RPS.
+	 */
+	public function syncFromApi()
+	{
+		if (session()->get('role') !== 'admin') {
+			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
+		}
+
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal';
+		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+
+		$client = \Config\Services::curlrequest();
+
+		try {
+			$response = $client->request('GET', $apiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 60,
+			]);
+
+			$body = json_decode($response->getBody(), true);
+			$jadwalRaw = $body['jadwal'] ?? [];
+
+			// Flatten: each jadwal item contains a 'kelas' sub-array
+			$kelasList = [];
+			foreach ($jadwalRaw as $item) {
+				if (isset($item['kelas']) && is_array($item['kelas'])) {
+					foreach ($item['kelas'] as $k) {
+						$kelasList[] = $k;
+					}
+				}
+			}
+
+			if (empty($kelasList)) {
+				return redirect()->back()->with('error', 'Format response API tidak valid.');
+			}
+
+			// Pre-sync: fetch kelas data from kelas API and populate kelas table
+			try {
+				$kelasApiUrl = 'https://tik.upr.ac.id/api/siuber/kelas';
+				$kelasResponse = $client->request('GET', $kelasApiUrl, [
+					'headers' => [
+						'x-api-key' => $apiKey,
+						'Accept'    => 'application/json',
+					],
+					'timeout' => 30,
+				]);
+				$kelasBody = json_decode($kelasResponse->getBody(), true);
+				$kelasApiList = $kelasBody['data'] ?? [];
+
+				$kelasModel = new \App\Models\KelasModel();
+				foreach ($kelasApiList as $kls) {
+					$klsId = $kls['kelas_id'] ?? null;
+					if (!$klsId) continue;
+
+					$existing = $kelasModel->find($klsId);
+					$kelasData = [
+						'kelas_id'              => $klsId,
+						'kelas_sem_id'          => $kls['kelas_sem_id'] ?? 0,
+						'kelas_nama'            => $kls['kelas_nama'] ?? '',
+						'matakuliah_kurikulum_id' => $kls['matakuliah_kurikulum_id'] ?? 0,
+						'matakuliah_kode'       => $kls['matakuliah_kode'] ?? '',
+						'matakuliah_nama'       => $kls['matakuliah_nama'] ?? '',
+						'kurikulum_id'          => $kls['kurikulum_id'] ?? 0,
+						'kurikulum_status'      => $kls['kurikulum_status'] ?? null,
+						'fakultas_kode'         => $kls['fakultas_kode'] ?? null,
+						'fakultas_nama'         => $kls['fakultas_nama'] ?? null,
+						'program_studi_kode'    => $kls['program_studi_kode'] ?? null,
+						'program_studi_nama'    => $kls['program_studi_nama'] ?? null,
+					];
+
+					if ($existing) {
+						$kelasModel->update($klsId, $kelasData);
+					} else {
+						$kelasModel->insert($kelasData);
+					}
+				}
+			} catch (\Exception $e) {
+				log_message('warning', 'Kelas pre-sync failed: ' . $e->getMessage());
+			}
+
+			// Build a set of valid kelas_ids for quick lookup
+			$validKelasIds = [];
+			$allKelas = $this->db->table('kelas')->select('kelas_id')->get()->getResultArray();
+			foreach ($allKelas as $k) {
+				$validKelasIds[$k['kelas_id']] = true;
+			}
+
+			// Get all mata kuliah that have RPS, indexed by kode_mk
+			$rpsData = $this->db->table('rps r')
+				->select('r.id as rps_id, r.mata_kuliah_id, mk.kode_mk, mk.nama_mk')
+				->join('mata_kuliah mk', 'mk.id = r.mata_kuliah_id')
+				->get()
+				->getResultArray();
+
+			$mkWithRps = [];
+			foreach ($rpsData as $rps) {
+				$mkWithRps[$rps['kode_mk']] = $rps;
+			}
+
+			$inserted = 0;
+			$updated = 0;
+			$studentsInserted = 0;
+			$skipped = 0;
+
+			foreach ($kelasList as $kelas) {
+				$mkKode = $kelas['jadwal_mk_kurikulum_kode'] ?? null;
+				$kelasId = $kelas['jadwal_kelas_id'] ?? null;
+				// Validate kelas_id exists in kelas table to avoid FK constraint violation
+				if ($kelasId && !isset($validKelasIds[$kelasId])) {
+					$kelasId = null;
+				}
+				$kelasNama = $kelas['jadwal_kelas_nama'] ?? 'A';
+				$kelasJenis = $kelas['jadwal_kelas_jenis'] ?? null;
+				$kelasSemester = $kelas['jadwal_kelas_semester'] ?? null;
+				$kelasStatus = $kelas['jadwal_kelas_status'] ?? 'Aktif';
+				$mahasiswaData = $kelas['jadwal_kelas_mahasiswa'] ?? [];
+				$totalMahasiswa = $mahasiswaData['total'] ?? 0;
+				$nimList = $mahasiswaData['NIM'] ?? [];
+
+				// Only process if this MK has RPS
+				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
+					$skipped++;
+					continue;
+				}
+
+				$matchedMk = $mkWithRps[$mkKode];
+				$mataKuliahId = $matchedMk['mata_kuliah_id'];
+
+				// Derive tahun_akademik from kelas_semester (e.g. 20252 -> "2025/2026 Genap")
+				$tahunAkademik = $this->deriveTahunAkademik($kelasSemester);
+
+				// Get program_studi_kode from mata_kuliah or kelas data
+				$mk = $this->db->table('mata_kuliah')
+					->where('id', $mataKuliahId)
+					->get()
+					->getRowArray();
+
+				$programStudiKode = $mk['program_studi_kode'] ?? null;
+
+				// Check if jadwal already exists by kelas_id
+				$existing = $this->db->table('jadwal')
+					->where('kelas_id', $kelasId)
+					->get()
+					->getRowArray();
+
+				if ($existing) {
+					// Update existing jadwal
+					$this->db->table('jadwal')->where('id', $existing['id'])->update([
+						'kelas'             => $kelasNama,
+						'kelas_jenis'       => $kelasJenis,
+						'kelas_semester'    => $kelasSemester,
+						'kelas_status'      => $kelasStatus,
+						'mk_kurikulum_kode' => $mkKode,
+						'total_mahasiswa'   => $totalMahasiswa,
+					]);
+					$jadwalId = $existing['id'];
+					$updated++;
+				} else {
+					// Also check by mata_kuliah_id + kelas + tahun_akademik
+					$existingByMk = $this->db->table('jadwal')
+						->where('mata_kuliah_id', $mataKuliahId)
+						->where('kelas', $kelasNama)
+						->where('tahun_akademik', $tahunAkademik)
+						->get()
+						->getRowArray();
+
+					if ($existingByMk) {
+						$this->db->table('jadwal')->where('id', $existingByMk['id'])->update([
+							'kelas_id'          => $kelasId,
+							'kelas_jenis'       => $kelasJenis,
+							'kelas_semester'    => $kelasSemester,
+							'kelas_status'      => $kelasStatus,
+							'mk_kurikulum_kode' => $mkKode,
+							'total_mahasiswa'   => $totalMahasiswa,
+						]);
+						$jadwalId = $existingByMk['id'];
+						$updated++;
+					} else {
+						// Insert new jadwal
+						$this->db->table('jadwal')->insert([
+							'mata_kuliah_id'    => $mataKuliahId,
+							'program_studi_kode' => $programStudiKode,
+							'tahun_akademik'    => $tahunAkademik,
+							'kelas'             => $kelasNama,
+							'status'            => 'active',
+							'kelas_id'          => $kelasId,
+							'kelas_jenis'       => $kelasJenis,
+							'kelas_semester'    => $kelasSemester,
+							'kelas_status'      => $kelasStatus,
+							'mk_kurikulum_kode' => $mkKode,
+							'total_mahasiswa'   => $totalMahasiswa,
+						]);
+						$jadwalId = $this->db->insertID();
+						$inserted++;
+
+						// Auto-assign dosen from RPS
+						$rpsId = $matchedMk['rps_id'];
+						$rpsDosen = $this->db->table('rps_pengampu')
+							->where('rps_id', $rpsId)
+							->get()
+							->getResultArray();
+
+						foreach ($rpsDosen as $rd) {
+							$role = ($rd['peran'] === 'koordinator') ? 'leader' : 'member';
+							$this->db->table('jadwal_dosen')->insert([
+								'jadwal_id' => $jadwalId,
+								'dosen_id'  => $rd['dosen_id'],
+								'role'      => $role,
+							]);
+						}
+					}
+				}
+
+				// Sync mahasiswa for this jadwal
+				if (!empty($nimList)) {
+					// Remove existing mahasiswa for this jadwal
+					$this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
+
+					foreach ($nimList as $nim) {
+						// Only insert if the mahasiswa exists in our database
+						$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
+						if ($mhsExists > 0) {
+							$this->db->table('jadwal_mahasiswa')->insert([
+								'jadwal_id' => $jadwalId,
+								'nim'       => $nim,
+							]);
+							$studentsInserted++;
+						}
+					}
+				}
+			}
+
+			$message = "Sinkronisasi berhasil! $inserted jadwal baru ditambahkan, $updated diperbarui, $studentsInserted mahasiswa disinkronkan.";
+			if ($skipped > 0) {
+				$message .= " $skipped kelas dilewati (MK belum memiliki RPS).";
+			}
+
+			return redirect()->back()->with('success', $message);
+		} catch (\Exception $e) {
+			log_message('error', 'Jadwal sync error: ' . $e->getMessage());
+			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * AJAX endpoint to get kelas data from API for a specific mata kuliah
+	 */
+	public function getApiKelas()
+	{
+		if (!$this->request->isAJAX()) {
+			return $this->response->setStatusCode(403)->setJSON(['error' => 'Invalid request']);
+		}
+
+		$mkKode = $this->request->getGet('kode_mk');
+
+		if (!$mkKode) {
+			return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
+		}
+
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal';
+		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+
+		$client = \Config\Services::curlrequest();
+
+		try {
+			$response = $client->request('GET', $apiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 30,
+			]);
+
+			$body = json_decode($response->getBody(), true);
+
+			$jadwalRaw = $body['jadwal'] ?? [];
+
+			// Flatten: each jadwal item contains a 'kelas' sub-array
+			$kelasList = [];
+			foreach ($jadwalRaw as $item) {
+				if (isset($item['kelas']) && is_array($item['kelas'])) {
+					foreach ($item['kelas'] as $k) {
+						$kelasList[] = $k;
+					}
+				}
+			}
+
+			// Filter kelas matching the given kode_mk
+			$matchedKelas = [];
+			foreach ($kelasList as $kelas) {
+				if (($kelas['jadwal_mk_kurikulum_kode'] ?? '') === $mkKode && ($kelas['jadwal_kelas_status'] ?? '') === 'Aktif') {
+					$matchedKelas[] = $kelas;
+				}
+			}
+
+			// Get program_studi_kode from API
+			$apiUrl2 = 'https://tik.upr.ac.id/api/siuber/kelas';
+			$response2 = $client->request('GET', $apiUrl2, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 30,
+			]);
+			$body2 = json_decode($response2->getBody(), true);
+			$kelasApiList = $body2['data'] ?? [];
+
+			$programStudiKode = null;
+			foreach ($kelasApiList as $kls) {
+				if (($kls['matakuliah_kode'] ?? '') === $mkKode) {
+					$programStudiKode = $kls['program_studi_kode'] ?? null;
+					break;
+				}
+			}
+
+			return $this->response->setJSON([
+				'success' => true,
+				'data'    => $matchedKelas,
+				'program_studi_kode' => $programStudiKode,
+			]);
+		} catch (\Exception $e) {
+			return $this->response->setStatusCode(500)->setJSON([
+				'success' => false,
+				'message' => 'Gagal mengambil data: ' . $e->getMessage(),
+			]);
+		}
+	}
+
+	/**
+	 * Derive tahun akademik string from semester code.
+	 * e.g. 20252 -> "2025/2026 Genap", 20251 -> "2024/2025 Ganjil"
+	 */
+	private function deriveTahunAkademik($semesterCode)
+	{
+		if (!$semesterCode) {
+			return date('Y') . '/' . (date('Y') + 1);
+		}
+
+		$code = (string) $semesterCode;
+		$year = (int) substr($code, 0, 4);
+		$term = substr($code, 4, 1);
+
+		if ($term === '1') {
+			return $year . ' Ganjil';
+		} else {
+			return $year . ' Genap';
 		}
 	}
 
@@ -548,18 +944,19 @@ class Mengajar extends BaseController
 	{
 		// Get filters from query parameters
 		$filters = [
-			'program_studi' => $this->request->getGet('program_studi'),
+			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
 			'tahun_akademik' => $this->request->getGet('tahun_akademik')
 		];
 
 		// Build query
-		$builder = $this->db->table('jadwal_mengajar jm');
-		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks');
+		$builder = $this->db->table('jadwal jm');
+		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama');
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
+		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
 		// Apply filters
-		if (!empty($filters['program_studi'])) {
-			$builder->where('jm.program_studi', $filters['program_studi']);
+		if (!empty($filters['program_studi_kode'])) {
+			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
 		if (!empty($filters['tahun_akademik'])) {
 			// MODIFIED: Use 'like' for partial "starts with" matching
@@ -577,7 +974,7 @@ class Mengajar extends BaseController
 			$dosenBuilder = $this->db->table('jadwal_dosen jd');
 			$dosenBuilder->select('d.nama_lengkap, jd.role');
 			$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
-			$dosenBuilder->where('jd.jadwal_mengajar_id', $jadwal['id']);
+			$dosenBuilder->where('jd.jadwal_id', $jadwal['id']);
 			$dosenBuilder->orderBy('jd.role', 'DESC');
 			$dosenBuilder->orderBy('d.nama_lengkap', 'ASC');
 			$jadwal['dosen_list'] = $dosenBuilder->get()->getResultArray();
@@ -616,7 +1013,7 @@ class Mengajar extends BaseController
 			}
 
 			$sheet->setCellValue('A' . $row, $key + 1);
-			$sheet->setCellValue('B' . $row, $jadwal['program_studi']);
+			$sheet->setCellValue('B' . $row, $jadwal['program_studi_nama'] ?? $jadwal['program_studi_kode']);
 			$sheet->setCellValue('C' . $row, $jadwal['tahun_akademik']);
 			$sheet->setCellValue('D' . $row, $jadwal['kode_mk']);
 			$sheet->setCellValue('E' . $row, $jadwal['nama_mk']);
@@ -631,7 +1028,7 @@ class Mengajar extends BaseController
 		}
 
 		// Set Headers for download
-		$filename = 'jadwal_mengajar_' . date('YmdHis') . '.xlsx';
+		$filename = 'jadwal_' . date('YmdHis') . '.xlsx';
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		header('Content-Disposition: attachment;filename="' . $filename . '"');
 		header('Cache-Control: max-age=0');
@@ -644,7 +1041,7 @@ class Mengajar extends BaseController
 	public function exportPdf()
 	{
 		$data['jadwal_list'] = $this->_getFilteredJadwalData();
-		$filename = 'jadwal_mengajar_' . date('YmdHis');
+		$filename = 'jadwal_' . date('YmdHis');
 
 		// instantiate and use the dompdf class
 		$options = new Options();

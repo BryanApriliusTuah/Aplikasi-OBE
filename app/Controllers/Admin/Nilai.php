@@ -17,7 +17,7 @@ class Nilai extends BaseController
 	{
 		$jadwalModel = new MengajarModel();
 		$filters = [
-			'program_studi' => $this->request->getGet('program_studi') ?? 'Teknik Informatika',
+			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
 			'tahun_akademik' => $this->request->getGet('tahun_akademik'),
 		];
 
@@ -49,7 +49,7 @@ class Nilai extends BaseController
 
 		if (!empty($jadwal_ids)) {
 			$db = \Config\Database::connect();
-			$validation_results = $db->table('jadwal_mengajar')
+			$validation_results = $db->table('jadwal')
 				->select('id, is_nilai_validated')
 				->whereIn('id', $jadwal_ids)
 				->get()
@@ -69,7 +69,7 @@ class Nilai extends BaseController
 				if (!$jadwal_info) continue;
 
 				$mahasiswaModel = new MahasiswaModel();
-				$students = $mahasiswaModel->getStudentsForScoring($jadwal_info['program_studi'], $jadwal_info['semester']);
+				$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 				$total_students = count($students);
 
 				if ($total_students == 0) {
@@ -96,7 +96,7 @@ class Nilai extends BaseController
 					$student_scores = $db->table('nilai_teknik_penilaian')
 						->select('rps_mingguan_id, teknik_penilaian_key')
 						->where('mahasiswa_id', $student['id'])
-						->where('jadwal_mengajar_id', $jadwal_id)
+						->where('jadwal_id', $jadwal_id)
 						->where('nilai IS NOT NULL')
 						->get()
 						->getResultArray();
@@ -127,11 +127,19 @@ class Nilai extends BaseController
 			}
 		}
 
+		$db = \Config\Database::connect();
+		$program_studi_list = $db->table('program_studi')
+			->select('kode, nama_resmi')
+			->orderBy('nama_resmi', 'ASC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'title' => 'Penilaian Jadwal Ajar',
 			'jadwal_by_day' => $jadwal_by_day,
 			'filters' => $filters,
 			'current_dosen_id' => $currentDosenId,
+			'program_studi_list' => $program_studi_list,
 		];
 
 		// dd($data);
@@ -158,7 +166,7 @@ class Nilai extends BaseController
 		$db = \Config\Database::connect();
 		$builder = $db->table('jadwal_dosen');
 		$result = $builder->where([
-			'jadwal_mengajar_id' => $jadwal_id,
+			'jadwal_id' => $jadwal_id,
 			'dosen_id' => $current_dosen_id
 		])->get()->getRowArray();
 
@@ -232,7 +240,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get CPMK list with weights from rps_mingguan
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
@@ -312,7 +320,7 @@ class Nilai extends BaseController
 			foreach ($cpmk_scores as $cpmk_id => $score) {
 				$cpmkData = [
 					'mahasiswa_id' => $mahasiswa_id,
-					'jadwal_mengajar_id' => $jadwal_id,
+					'jadwal_id' => $jadwal_id,
 					'cpmk_id' => $cpmk_id,
 					'nilai_cpmk' => empty($score) ? null : $score,
 				];
@@ -352,7 +360,7 @@ class Nilai extends BaseController
 
 			$finalData = [
 				'mahasiswa_id' => $mahasiswa_id,
-				'jadwal_mengajar_id' => $jadwal_id,
+				'jadwal_id' => $jadwal_id,
 				'nilai_akhir' => round($nilai_akhir, 2),
 				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
 				'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),
@@ -431,7 +439,7 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
-		// Get validation status directly from jadwal_mengajar table (not from view)
+		// Get validation status directly from jadwal table (not from view)
 		$jadwalValidation = $jadwalModel->find($jadwal_id);
 		if ($jadwalValidation) {
 			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
@@ -466,7 +474,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
 		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
@@ -566,7 +574,7 @@ class Nilai extends BaseController
 				foreach ($teknik_scores as $teknik_key => $score) {
 					$scoreData = [
 						'mahasiswa_id' => $mahasiswa_id,
-						'jadwal_mengajar_id' => $jadwal_id,
+						'jadwal_id' => $jadwal_id,
 						'rps_mingguan_id' => $rps_mingguan_id,
 						'teknik_penilaian_key' => $teknik_key,
 						'nilai' => empty($score) ? null : $score,
@@ -584,7 +592,7 @@ class Nilai extends BaseController
 			foreach ($cpmk_data as $cpmk_id => $cpmk_score) {
 				$cpmkData = [
 					'mahasiswa_id' => $mahasiswa_id,
-					'jadwal_mengajar_id' => $jadwal_id,
+					'jadwal_id' => $jadwal_id,
 					'cpmk_id' => $cpmk_id,
 					'nilai_cpmk' => $cpmk_score,
 				];
@@ -603,7 +611,7 @@ class Nilai extends BaseController
 
 			$finalData = [
 				'mahasiswa_id' => $mahasiswa_id,
-				'jadwal_mengajar_id' => $jadwal_id,
+				'jadwal_id' => $jadwal_id,
 				'nilai_akhir' => round($nilai_akhir, 2),
 				'nilai_huruf' => $this->calculateGrade($nilai_akhir),
 				'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),
@@ -635,7 +643,7 @@ class Nilai extends BaseController
 		$jadwalModel = new MengajarModel();
 		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
 
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
 		$scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
 
@@ -764,7 +772,7 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
-		// Get validation status directly from jadwal_mengajar table
+		// Get validation status directly from jadwal table
 		$jadwalValidation = $jadwalModel->find($jadwal_id);
 		if ($jadwalValidation) {
 			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
@@ -773,7 +781,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get CPMK list for this jadwal
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
@@ -833,7 +841,7 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
-		// Get validation status directly from jadwal_mengajar table
+		// Get validation status directly from jadwal table
 		$jadwalValidation = $jadwalModel->find($jadwal_id);
 		if ($jadwalValidation) {
 			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
@@ -842,7 +850,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get CPMK list for this jadwal
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
@@ -872,8 +880,8 @@ class Nilai extends BaseController
 		// Calculate CPL data
 		$db = \Config\Database::connect();
 
-		// Get mata_kuliah_id from jadwal_mengajar table
-		$jadwal_data = $db->table('jadwal_mengajar')
+		// Get mata_kuliah_id from jadwal table
+		$jadwal_data = $db->table('jadwal')
 			->select('mata_kuliah_id')
 			->where('id', $jadwal_id)
 			->get()
@@ -1025,7 +1033,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get CPMK list for this jadwal
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
@@ -1108,7 +1116,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -1236,7 +1244,7 @@ class Nilai extends BaseController
 		$dosenKetuaNip = $db->table('jadwal_dosen jd')
 			->select('d.nip')
 			->join('dosen d', 'd.id = jd.dosen_id')
-			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.jadwal_id', $jadwal_id)
 			->where('jd.role', 'leader')
 			->get()
 			->getRowArray();
@@ -1312,7 +1320,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get CPMK list for this jadwal
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
@@ -1342,8 +1350,8 @@ class Nilai extends BaseController
 		// Calculate CPL data
 		$db = \Config\Database::connect();
 
-		// Get mata_kuliah_id from jadwal_mengajar table
-		$jadwal_data = $db->table('jadwal_mengajar')
+		// Get mata_kuliah_id from jadwal table
+		$jadwal_data = $db->table('jadwal')
 			->select('mata_kuliah_id')
 			->where('id', $jadwal_id)
 			->get()
@@ -1532,7 +1540,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -1675,7 +1683,7 @@ class Nilai extends BaseController
 		$dosenKetuaNip = $db->table('jadwal_dosen jd')
 			->select('d.nip')
 			->join('dosen d', 'd.id = jd.dosen_id')
-			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.jadwal_id', $jadwal_id)
 			->where('jd.role', 'leader')
 			->get()
 			->getRowArray();
@@ -1751,7 +1759,7 @@ class Nilai extends BaseController
 			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
 		}
 
-		// Get validation status directly from jadwal_mengajar table
+		// Get validation status directly from jadwal table
 		$jadwalValidation = $jadwalModel->find($jadwal_id);
 		if ($jadwalValidation) {
 			$jadwal['is_nilai_validated'] = $jadwalValidation['is_nilai_validated'];
@@ -1786,7 +1794,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
 		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
@@ -1852,7 +1860,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
 		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
@@ -1928,7 +1936,7 @@ class Nilai extends BaseController
 		$dosenKetuaNip = $db->table('jadwal_dosen jd')
 			->select('d.nip')
 			->join('dosen d', 'd.id = jd.dosen_id')
-			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.jadwal_id', $jadwal_id)
 			->where('jd.role', 'leader')
 			->get()
 			->getRowArray();
@@ -1963,7 +1971,7 @@ class Nilai extends BaseController
 		}
 
 		// Get students for this class
-		$students = $mahasiswaModel->getStudentsForScoring($jadwal['program_studi'], $jadwal['semester']);
+		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
 		// Get SEPARATED teknik_penilaian list (NOT grouped/combined by type)
 		$teknik_list = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
@@ -2072,7 +2080,7 @@ class Nilai extends BaseController
 		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
 
 		// Helper function to convert column index to Excel column letter
-		$getColumnLetter = function($index) {
+		$getColumnLetter = function ($index) {
 			$letter = '';
 			while ($index >= 0) {
 				$letter = chr($index % 26 + 65) . $letter;
@@ -2121,7 +2129,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi']));
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -2247,7 +2255,7 @@ class Nilai extends BaseController
 		$dosenKetuaNip = $db->table('jadwal_dosen jd')
 			->select('d.nip')
 			->join('dosen d', 'd.id = jd.dosen_id')
-			->where('jd.jadwal_mengajar_id', $jadwal_id)
+			->where('jd.jadwal_id', $jadwal_id)
 			->where('jd.role', 'leader')
 			->get()
 			->getRowArray();
@@ -2433,7 +2441,7 @@ class Nilai extends BaseController
 			}
 
 			// Helper function to convert column index to Excel column letter
-			$getColumnLetter = function($index) {
+			$getColumnLetter = function ($index) {
 				$letter = '';
 				$index++; // Excel columns are 1-based
 				while ($index > 0) {
@@ -2575,7 +2583,7 @@ class Nilai extends BaseController
 			// Get mahasiswa data for this jadwal
 			$mahasiswaModel = new MahasiswaModel();
 			$jadwalDetails = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
-			$students = $mahasiswaModel->getStudentsForScoring($jadwalDetails['program_studi'], $jadwalDetails['semester']);
+			$students = $mahasiswaModel->getStudentsForScoring($jadwalDetails['program_studi_kode'], $jadwalDetails['semester']);
 
 			// Create NIM to mahasiswa_id mapping
 			$nimToId = [];
@@ -2651,7 +2659,7 @@ class Nilai extends BaseController
 
 					$scoreData = [
 						'mahasiswa_id' => $mahasiswa_id,
-						'jadwal_mengajar_id' => $jadwal_id,
+						'jadwal_id' => $jadwal_id,
 						'rps_mingguan_id' => $score_info['rps_mingguan_id'],
 						'teknik_penilaian_key' => $score_info['teknik_key'],
 						'nilai' => $score_info['score'],
@@ -2671,7 +2679,7 @@ class Nilai extends BaseController
 				foreach ($cpmk_data as $cpmk_id => $cpmk_score) {
 					$cpmkData = [
 						'mahasiswa_id' => $mahasiswa_id,
-						'jadwal_mengajar_id' => $jadwal_id,
+						'jadwal_id' => $jadwal_id,
 						'cpmk_id' => $cpmk_id,
 						'nilai_cpmk' => $cpmk_score,
 					];
@@ -2689,7 +2697,7 @@ class Nilai extends BaseController
 
 				$finalData = [
 					'mahasiswa_id' => $mahasiswa_id,
-					'jadwal_mengajar_id' => $jadwal_id,
+					'jadwal_id' => $jadwal_id,
 					'nilai_akhir' => round($nilai_akhir, 2),
 					'nilai_huruf' => $this->calculateGrade($nilai_akhir),
 					'status_kelulusan' => $this->calculatePassingStatus($nilai_akhir),

@@ -315,7 +315,7 @@ class Rps extends BaseController
 		$db = \Config\Database::connect();
 
 		$cpl = $db->table('cpl')
-			->select('cpl.id, cpl.kode_cpl')
+			->select('cpl.id, cpl.kode_cpl, cpl.deskripsi')
 			->join('cpl_mk', 'cpl.id = cpl_mk.cpl_id')
 			->where('cpl_mk.mata_kuliah_id', $mk_id)
 			->orderBy('cpl.kode_cpl', 'ASC')
@@ -423,7 +423,7 @@ class Rps extends BaseController
 		$db = \Config\Database::connect();
 
 		$cpl = $db->table('cpl')
-			->select('cpl.id, cpl.kode_cpl')
+			->select('cpl.id, cpl.kode_cpl, cpl.deskripsi')
 			->join('cpl_mk', 'cpl.id = cpl_mk.cpl_id')
 			->where('cpl_mk.mata_kuliah_id', $mk_id)
 			->orderBy('cpl.kode_cpl', 'ASC')
@@ -559,7 +559,7 @@ class Rps extends BaseController
 		$db = \Config\Database::connect();
 
 		$cpmk = $db->table('cpmk')
-			->select('cpmk.id, cpmk.kode_cpmk')
+			->select('cpmk.id, cpmk.kode_cpmk, cpmk.deskripsi')
 			->join('cpl_cpmk', 'cpl_cpmk.cpmk_id = cpmk.id')
 			->join('cpmk_mk', 'cpmk_mk.cpmk_id = cpmk.id')
 			->where('cpl_cpmk.cpl_id', $cpl_id)
@@ -576,7 +576,7 @@ class Rps extends BaseController
 		$db = \Config\Database::connect();
 
 		$subcpmk = $db->table('sub_cpmk')
-			->select('sub_cpmk.id, sub_cpmk.kode_sub_cpmk')
+			->select('sub_cpmk.id, sub_cpmk.kode_sub_cpmk, sub_cpmk.deskripsi')
 			->join('sub_cpmk_mk', 'sub_cpmk_mk.sub_cpmk_id = sub_cpmk.id')
 			->where('sub_cpmk.cpmk_id', $cpmk_id)
 			->where('sub_cpmk_mk.mata_kuliah_id', $mk_id)

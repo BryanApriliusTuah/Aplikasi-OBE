@@ -6,17 +6,17 @@ use CodeIgniter\Model;
 
 class MengajarModel extends Model
 {
-	protected $table            = 'jadwal_mengajar';
+	protected $table            = 'jadwal';
 	protected $primaryKey       = 'id';
 	protected $useAutoIncrement = true;
 	protected $returnType       = 'array';
 	protected $useSoftDeletes   = false;
 	protected $protectFields    = true;
 
-	// Fields from the 'jadwal_mengajar' table that are allowed to be mass-assigned.
+	// Fields from the 'jadwal' table that are allowed to be mass-assigned.
 	protected $allowedFields    = [
 		'mata_kuliah_id',
-		'program_studi',
+		'program_studi_kode',
 		'tahun_akademik',
 		'kelas',
 		'ruang',
@@ -29,7 +29,13 @@ class MengajarModel extends Model
 		'validated_by',
 		'rubrik_penilaian_file',
 		'contoh_soal_file',
-		'notulen_rapat_file'
+		'notulen_rapat_file',
+		'kelas_id',
+		'kelas_jenis',
+		'kelas_semester',
+		'kelas_status',
+		'mk_kurikulum_kode',
+		'total_mahasiswa'
 	];
 
 	// Dates
@@ -49,7 +55,7 @@ class MengajarModel extends Model
 		$builder = $this->db->table($this->table . ' jm');
 		$builder->select('
             jm.id,
-            jm.program_studi,
+            jm.program_studi_kode,
             jm.tahun_akademik,
             jm.kelas,
             jm.ruang,
@@ -61,12 +67,12 @@ class MengajarModel extends Model
             GROUP_CONCAT(d.nama_lengkap SEPARATOR ", ") as dosen_pengampu
         ');
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
-		$builder->join('jadwal_dosen jd', 'jd.jadwal_mengajar_id = jm.id', 'left');
+		$builder->join('jadwal_dosen jd', 'jd.jadwal_id = jm.id', 'left');
 		$builder->join('dosen d', 'd.id = jd.dosen_id', 'left');
 
 		// Apply filters
-		if (!empty($filters['program_studi'])) {
-			$builder->where('jm.program_studi', $filters['program_studi']);
+		if (!empty($filters['program_studi_kode'])) {
+			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
 		if (!empty($filters['tahun_akademik'])) {
 			$builder->like('jm.tahun_akademik', $filters['tahun_akademik']);
@@ -84,16 +90,18 @@ class MengajarModel extends Model
 	public function getJadwalWithDetails(array $filters = [], bool $singleResult = false)
 	{
 		// We can use the view you already have in your database dump.
-		$builder = $this->db->table('view_jadwal_lengkap');
+		$builder = $this->db->table('view_jadwal_lengkap vjl');
+		$builder->select('vjl.*, ps.nama_resmi as program_studi');
+		$builder->join('program_studi ps', 'ps.kode = vjl.program_studi_kode', 'left');
 
 		if (!empty($filters['id'])) {
-			$builder->where('id', $filters['id']);
+			$builder->where('vjl.id', $filters['id']);
 		}
-		if (!empty($filters['program_studi'])) {
-			$builder->where('program_studi', $filters['program_studi']);
+		if (!empty($filters['program_studi_kode'])) {
+			$builder->where('vjl.program_studi_kode', $filters['program_studi_kode']);
 		}
 		if (!empty($filters['tahun_akademik'])) {
-			$builder->like('tahun_akademik', $filters['tahun_akademik'], 'both');
+			$builder->like('vjl.tahun_akademik', $filters['tahun_akademik'], 'both');
 		}
 
 		if ($singleResult) {
@@ -127,7 +135,7 @@ class MengajarModel extends Model
 		$dosenBuilder = $this->db->table('jadwal_dosen jd');
 		$dosenBuilder->select('d.nama_lengkap, jd.role');
 		$dosenBuilder->join('dosen d', 'd.id = jd.dosen_id');
-		$dosenBuilder->where('jd.jadwal_mengajar_id', $jadwal['id']);
+		$dosenBuilder->where('jd.jadwal_id', $jadwal['id']);
 		$dosenBuilder->orderBy('jd.role', 'DESC'); // coordinator/ketua first
 		$dosenList = $dosenBuilder->get()->getResultArray();
 

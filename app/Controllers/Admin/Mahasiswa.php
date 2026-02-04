@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MahasiswaModel;
+use App\Models\ProgramStudiModel;
 
 class Mahasiswa extends BaseController
 {
@@ -20,13 +21,165 @@ class Mahasiswa extends BaseController
 	 */
 	public function index()
 	{
-		$data = [
-			'title'     => 'Master Data Mahasiswa',
-			'mahasiswa' => $this->mahasiswaModel->orderBy('nim', 'ASC')->findAll()
+		$filters = [
+			'status_mahasiswa' => $this->request->getGet('status_mahasiswa'),
+			'tahun_angkatan'   => $this->request->getGet('tahun_angkatan'),
+			'search'           => $this->request->getGet('search'),
 		];
 
-		// The view path assumes your 'index.php' is in 'app/Views/admin/mahasiswa/'
+		$builder = $this->mahasiswaModel
+			->select('mahasiswa.*, program_studi.nama_resmi as program_studi')
+			->join('program_studi', 'program_studi.kode = mahasiswa.program_studi_kode', 'left')
+			->orderBy('mahasiswa.nim', 'ASC');
+
+		if (!empty($filters['status_mahasiswa'])) {
+			$builder->where('mahasiswa.status_mahasiswa', $filters['status_mahasiswa']);
+		}
+
+		if (!empty($filters['tahun_angkatan'])) {
+			$builder->where('mahasiswa.tahun_angkatan', $filters['tahun_angkatan']);
+		}
+
+		if (!empty($filters['search'])) {
+			$search = $filters['search'];
+			$builder->groupStart()
+				->like('mahasiswa.nim', $search)
+				->orLike('mahasiswa.nama_lengkap', $search)
+				->orLike('mahasiswa.email', $search)
+				->groupEnd();
+		}
+
+		$data = [
+			'title'     => 'Master Data Mahasiswa',
+			'mahasiswa' => $builder->findAll(),
+			'filters'   => $filters,
+		];
+
 		return view('admin/mahasiswa/index', $data);
+	}
+
+	public function syncFromApi()
+	{
+		if (session()->get('role') !== 'admin') {
+			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
+		}
+
+		// Increase time limit for long-running sync operation
+		set_time_limit(600);
+
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/mahasiswa';
+		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+
+		$client = \Config\Services::curlrequest();
+
+		try {
+			$model = new MahasiswaModel();
+			$programStudiModel = new ProgramStudiModel();
+			$inserted = 0;
+			$updated = 0;
+			$skipped = 0;
+			$page = 1;
+
+			// Pre-fetch all existing mahasiswa NIMs with their IDs in one query
+			$existingRows = $model->select('id, nim')->findAll();
+			$existingNims = [];
+			foreach ($existingRows as $row) {
+				$existingNims[$row['nim']] = $row['id'];
+			}
+
+			// Cache program studi lookup
+			$prodiExists = (bool) $programStudiModel->find(58);
+
+			while (true) {
+				$response = $client->request('GET', $apiUrl, [
+					'headers' => [
+						'x-api-key' => $apiKey,
+						'Accept'    => 'application/json',
+					],
+					'query' => [
+						'page' => $page,
+					],
+					'timeout' => 120,
+				]);
+
+				$body = json_decode($response->getBody(), true);
+				$items = $body['data'] ?? null;
+
+				if (!is_array($items) || empty($items)) {
+					break;
+				}
+
+				$insertBatch = [];
+				$updateBatch = [];
+
+				foreach ($items as $item) {
+					if ($item['mhsProdiKode'] == 58) {
+						$prodiKode = $item['mhsProdiKode'] ?? null;
+
+						if ($prodiKode && !$prodiExists) {
+							$skipped++;
+							continue;
+						}
+
+						$nim = $item['mhsNiu'] ?? null;
+						$nama = $item['mhsNama'] ?? null;
+
+						if (!$nim || !$nama) {
+							continue;
+						}
+
+						$jenisKelamin = $item['mhsJenisKelamin'] ?? null;
+						if ($jenisKelamin && !in_array($jenisKelamin, ['L', 'P'])) {
+							$jenisKelamin = null;
+						}
+
+						$data = [
+							'nim'                => $nim,
+							'nama_lengkap'       => $nama,
+							'jenis_kelamin'      => $jenisKelamin,
+							'email'              => $item['mhsEmail'] ?? null,
+							'no_hp'              => $item['mhsNoHp'] ?? null,
+							'program_studi_kode' => $prodiKode,
+							'tahun_angkatan'     => (string)($item['mhsAngkatan'] ?? ''),
+							'status_mahasiswa'   => 'Aktif',
+						];
+
+						if (isset($existingNims[$nim])) {
+							// Skip existing data to avoid timeout
+							// $data['id'] = $existingNims[$nim];
+							// $updateBatch[] = $data;
+							$skipped++;
+							continue;
+						} else {
+							$insertBatch[] = $data;
+							// Track newly inserted NIMs to avoid duplicates in subsequent pages
+							$existingNims[$nim] = true;
+						}
+					}
+				}
+
+				if (!empty($insertBatch)) {
+					$model->insertBatch($insertBatch);
+					$inserted += count($insertBatch);
+				}
+
+				if (!empty($updateBatch)) {
+					$model->updateBatch($updateBatch, 'id');
+					$updated += count($updateBatch);
+				}
+
+				$page++;
+			}
+
+			$message = "Sinkronisasi berhasil! $inserted data baru ditambahkan, $updated data diperbarui.";
+			if ($skipped > 0) {
+				$message .= " $skipped data dilewati.";
+			}
+
+			return redirect()->back()->with('success', $message);
+		} catch (\Exception $e) {
+			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
+		}
 	}
 
 	/**
@@ -49,7 +202,10 @@ class Mahasiswa extends BaseController
 		$data = [
 			'nim' => $this->request->getPost('nim'),
 			'nama_lengkap' => $this->request->getPost('nama_lengkap'),
-			'program_studi' => $this->request->getPost('program_studi'),
+			'jenis_kelamin' => $this->request->getPost('jenis_kelamin') ?: null,
+			'email' => $this->request->getPost('email'),
+			'no_hp' => $this->request->getPost('no_hp'),
+			'program_studi_kode' => $this->request->getPost('program_studi_kode') ?: null,
 			'tahun_angkatan' => $this->request->getPost('tahun_angkatan'),
 			'status_mahasiswa' => $this->request->getPost('status_mahasiswa'),
 		];
@@ -66,10 +222,6 @@ class Mahasiswa extends BaseController
 
 		if (empty($data['nama_lengkap'])) {
 			$errors['nama_lengkap'] = 'Nama Lengkap wajib diisi.';
-		}
-
-		if (empty($data['program_studi'])) {
-			$errors['program_studi'] = 'Program Studi wajib dipilih.';
 		}
 
 		if (empty($data['tahun_angkatan'])) {
@@ -104,9 +256,12 @@ class Mahasiswa extends BaseController
 			throw new \CodeIgniter\Exceptions\PageNotFoundException('Data mahasiswa dengan ID ' . $id . ' tidak ditemukan.');
 		}
 
+		$programStudiModel = new ProgramStudiModel();
+
 		$data = [
-			'title'     => 'Edit Data Mahasiswa',
-			'mahasiswa' => $mahasiswaData
+			'title'        => 'Edit Data Mahasiswa',
+			'mahasiswa'    => $mahasiswaData,
+			'programStudi' => $programStudiModel->orderBy('nama_resmi', 'ASC')->findAll(),
 		];
 		return view('admin/mahasiswa/edit', $data);
 	}
@@ -121,7 +276,10 @@ class Mahasiswa extends BaseController
 		$data = [
 			'nim' => $this->request->getPost('nim'),
 			'nama_lengkap' => $this->request->getPost('nama_lengkap'),
-			'program_studi' => $this->request->getPost('program_studi'),
+			'jenis_kelamin' => $this->request->getPost('jenis_kelamin') ?: null,
+			'email' => $this->request->getPost('email'),
+			'no_hp' => $this->request->getPost('no_hp'),
+			'program_studi_kode' => $this->request->getPost('program_studi_kode') ?: null,
 			'tahun_angkatan' => $this->request->getPost('tahun_angkatan'),
 			'status_mahasiswa' => $this->request->getPost('status_mahasiswa'),
 		];
@@ -141,10 +299,6 @@ class Mahasiswa extends BaseController
 
 		if (empty($data['nama_lengkap'])) {
 			$errors['nama_lengkap'] = 'Nama Lengkap wajib diisi.';
-		}
-
-		if (empty($data['program_studi'])) {
-			$errors['program_studi'] = 'Program Studi wajib dipilih.';
 		}
 
 		if (empty($data['tahun_angkatan'])) {

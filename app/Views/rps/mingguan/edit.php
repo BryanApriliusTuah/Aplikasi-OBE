@@ -31,21 +31,24 @@
         <select name="cpl_id" id="select-cpl" class="form-control" required>
             <option value="">--Pilih--</option>
             <?php foreach ($cpl as $c) : ?>
-                <option value="<?= $c['id'] ?>" <?= (old('cpl_id', $rencana_mingguan['cpl_id']) == $c['id']) ? 'selected' : '' ?>><?= esc($c['kode_cpl']) ?></option>
+                <option value="<?= $c['id'] ?>" data-deskripsi="<?= esc($c['deskripsi'] ?? '') ?>" <?= (old('cpl_id', $rencana_mingguan['cpl_id']) == $c['id']) ? 'selected' : '' ?>><?= esc($c['kode_cpl']) ?></option>
             <?php endforeach ?>
         </select>
+        <small id="cpl-deskripsi" class="form-text text-muted" style="display:none;"></small>
     </div>
     <div class="mb-2">
         <label>CPMK</label>
         <select name="cpmk_id" id="select-cpmk" class="form-select" required>
             <option value="">-- Pilih CPL dahulu --</option>
         </select>
+        <small id="cpmk-deskripsi" class="form-text text-muted" style="display:none;"></small>
     </div>
     <div class="mb-2">
         <label>SubCPMK</label>
         <select name="sub_cpmk_id" id="select-subcpmk" class="form-select" required>
             <option value="">-- Pilih CPMK dahulu --</option>
         </select>
+        <small id="subcpmk-deskripsi" class="form-text text-muted" style="display:none;"></small>
     </div>
     <div class="mb-2">
         <label>Indikator</label>
@@ -332,7 +335,9 @@
                 data.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.id;
-                    option.textContent = item.kode_cpmk || item.kode_sub_cpmk;
+                    const kode = item.kode_cpmk || item.kode_sub_cpmk;
+                    option.textContent = kode;
+                    if (item.deskripsi) option.dataset.deskripsi = item.deskripsi;
                     if (item.id == selectedValue) {
                         option.selected = true;
                     }
@@ -384,11 +389,41 @@
             fetchSubcpmk(this.value);
         });
         
+        function setupDeskripsiDisplay(dropdown, deskripsiId) {
+            const el = document.getElementById(deskripsiId);
+            dropdown.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                if (selected && selected.dataset.deskripsi) {
+                    el.textContent = selected.dataset.deskripsi;
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+            return el;
+        }
+        const cplDeskripsiEl = setupDeskripsiDisplay(cplDropdown, 'cpl-deskripsi');
+        const cpmkDeskripsiEl = setupDeskripsiDisplay(cpmkDropdown, 'cpmk-deskripsi');
+        const subcpmkDeskripsiEl = setupDeskripsiDisplay(subcpmkDropdown, 'subcpmk-deskripsi');
+
+        function showInitialDeskripsi(dropdown, el) {
+            const selected = dropdown.options[dropdown.selectedIndex];
+            if (selected && selected.dataset.deskripsi) {
+                el.textContent = selected.dataset.deskripsi;
+                el.style.display = 'block';
+            }
+        }
+
+        // Show CPL description on load
+        showInitialDeskripsi(cplDropdown, cplDeskripsiEl);
+
         if (cplDropdown.value) {
             (async () => {
                 await fetchCpmk(cplDropdown.value, initialCpmkId);
+                showInitialDeskripsi(cpmkDropdown, cpmkDeskripsiEl);
                 if (cpmkDropdown.value) {
                     await fetchSubcpmk(cpmkDropdown.value, initialSubcpmkId);
+                    showInitialDeskripsi(subcpmkDropdown, subcpmkDeskripsiEl);
                 }
             })();
         }

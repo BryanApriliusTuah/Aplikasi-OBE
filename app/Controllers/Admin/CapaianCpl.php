@@ -117,9 +117,9 @@ class CapaianCpl extends BaseController
 
 			// Get all assessment scores from nilai_teknik_penilaian for this student and these CPMK
 			$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
-				->select('ntp.nilai, ntp.teknik_penilaian_key, rm.cpmk_id, rm.teknik_penilaian, jm.mata_kuliah_id, jm.id as jadwal_mengajar_id')
+				->select('ntp.nilai, ntp.teknik_penilaian_key, rm.cpmk_id, rm.teknik_penilaian, jm.mata_kuliah_id, jm.id as jadwal_id')
 				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 				->where('ntp.mahasiswa_id', $mahasiswaId)
 				->whereIn('rm.cpmk_id', $cpmkIds);
 
@@ -159,7 +159,7 @@ class CapaianCpl extends BaseController
 				}
 
 				$distinctCpmk[$cpmkId] = true;
-				$distinctMk[$row['jadwal_mengajar_id']] = true;
+				$distinctMk[$row['jadwal_id']] = true;
 			}
 
 			// Calculate average CPL from CPMK percentages
@@ -248,7 +248,7 @@ class CapaianCpl extends BaseController
 			$nilaiList = $db->table('nilai_teknik_penilaian ntp')
 				->select('ntp.nilai, ntp.teknik_penilaian_key, rm.teknik_penilaian, mk.kode_mk, mk.nama_mk, jm.tahun_akademik, jm.kelas, jm.id as jadwal_id')
 				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 				->where('ntp.mahasiswa_id', $mahasiswaId)
 				->where('rm.cpmk_id', $cpmk['id'])
@@ -332,20 +332,20 @@ class CapaianCpl extends BaseController
 		// If semester or tahun_akademik filters are applied, we need to filter mahasiswa who have grades in matching jadwal
 		if ($semester || $tahunAkademik) {
 			$builder = $db->table('mahasiswa m')
-				->select('DISTINCT m.id, m.nim, m.nama_lengkap, m.program_studi, m.tahun_angkatan')
+				->select('DISTINCT m.id, m.nim, m.nama_lengkap, m.program_studi_kode, m.tahun_angkatan')
 				->join('nilai_cpmk_mahasiswa ncm', 'ncm.mahasiswa_id = m.id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->where('m.status_mahasiswa', 'Aktif');
 
 			if ($programStudi) {
-				$builder->where('m.program_studi', $programStudi);
+				$builder->where('m.program_studi_kode', $programStudi);
 			}
 
 			if ($tahunAngkatan) {
 				$builder->where('m.tahun_angkatan', $tahunAngkatan);
 			}
 
-			// Filter by semester and/or tahun akademik in jadwal_mengajar
+			// Filter by semester and/or tahun akademik in jadwal
 			if ($semester && $tahunAkademik) {
 				// Both filters: tahun_akademik should be "YYYY/YYYY Semester"
 				$builder->where('jm.tahun_akademik', $tahunAkademik . ' ' . $semester);
@@ -364,11 +364,11 @@ class CapaianCpl extends BaseController
 		} else {
 			// No semester/tahun_akademik filter, use simple query
 			$builder = $this->mahasiswaModel
-				->select('id, nim, nama_lengkap, program_studi, tahun_angkatan')
+				->select('id, nim, nama_lengkap, program_studi_kode, tahun_angkatan')
 				->where('status_mahasiswa', 'Aktif');
 
 			if ($programStudi) {
-				$builder->where('program_studi', $programStudi);
+				$builder->where('program_studi_kode', $programStudi);
 			}
 
 			if ($tahunAngkatan) {
@@ -401,7 +401,7 @@ class CapaianCpl extends BaseController
 
 		// Get all mahasiswa in this filter
 		$mahasiswaList = $this->mahasiswaModel
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('tahun_angkatan', $tahunAngkatan)
 			->where('status_mahasiswa', 'Aktif')
 			->findAll();
@@ -455,7 +455,7 @@ class CapaianCpl extends BaseController
 			$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
 				->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id, rm.cpmk_id, rm.teknik_penilaian')
 				->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-				->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 				->whereIn('ntp.mahasiswa_id', $mahasiswaIds)
 				->whereIn('rm.cpmk_id', $cpmkIds);
 
@@ -546,15 +546,14 @@ class CapaianCpl extends BaseController
 	private function getProgramStudi()
 	{
 		$db = \Config\Database::connect();
-		$result = $db->table('mahasiswa')
-			->select('program_studi')
+		$result = $db->table('program_studi')
+			->select('kode, nama_resmi')
 			->distinct()
-			->where('status_mahasiswa', 'Aktif')
-			->orderBy('program_studi', 'ASC')
+			->orderBy('nama_resmi', 'ASC')
 			->get()
 			->getResultArray();
 
-		return array_column($result, 'program_studi');
+		return array_column($result, 'nama_resmi', 'kode');
 	}
 
 	private function getTahunAngkatan()
@@ -586,7 +585,7 @@ class CapaianCpl extends BaseController
 	private function getSemesterList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -597,7 +596,7 @@ class CapaianCpl extends BaseController
 		// Extract semester part (e.g., "Ganjil" or "Genap" from "2024/2025 Ganjil")
 		$semesterList = [];
 		foreach ($result as $row) {
-			$semesterList[] = $row['tahun_akademik'];	
+			$semesterList[] = $row['tahun_akademik'];
 		}
 
 		return $semesterList;
@@ -606,7 +605,7 @@ class CapaianCpl extends BaseController
 	private function getTahunAkademikList()
 	{
 		$db = \Config\Database::connect();
-		$builder = $db->table('jadwal_mengajar');
+		$builder = $db->table('jadwal');
 		$result = $builder
 			->select('tahun_akademik')
 			->distinct()
@@ -657,7 +656,7 @@ class CapaianCpl extends BaseController
 		// Get all mahasiswa in this angkatan
 		$mahasiswaList = $this->mahasiswaModel
 			->select('id, nim, nama_lengkap')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('tahun_angkatan', $tahunAngkatan)
 			->where('status_mahasiswa', 'Aktif')
 			->orderBy('nim', 'ASC')
@@ -698,7 +697,7 @@ class CapaianCpl extends BaseController
 		$nilaiBuilder = $db->table('nilai_teknik_penilaian ntp')
 			->select('ntp.nilai, ntp.teknik_penilaian_key, ntp.mahasiswa_id, rm.cpmk_id, rm.teknik_penilaian')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->whereIn('ntp.mahasiswa_id', $mahasiswaIds)
 			->whereIn('rm.cpmk_id', $cpmkIds);
 
@@ -848,7 +847,7 @@ class CapaianCpl extends BaseController
 			->select('ntp.nilai, ntp.teknik_penilaian_key, rm.cpmk_id, rm.teknik_penilaian,
 			         cpmk.kode_cpmk, mk.kode_mk, mk.nama_mk, jm.tahun_akademik, jm.kelas')
 			->join('rps_mingguan rm', 'rm.id = ntp.rps_mingguan_id')
-			->join('jadwal_mengajar jm', 'jm.id = ntp.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ntp.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->join('cpmk', 'cpmk.id = rm.cpmk_id')
 			->where('ntp.mahasiswa_id', $mahasiswaId)
@@ -945,7 +944,7 @@ class CapaianCpl extends BaseController
 
 		$db = \Config\Database::connect();
 
-		$builder = $db->table('jadwal_mengajar jm')
+		$builder = $db->table('jadwal jm')
 			->select('jm.id as jadwal_id, mk.id as mata_kuliah_id, mk.kode_mk, mk.nama_mk, mk.semester, jm.kelas, jm.tahun_akademik, jm.program_studi')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('jm.status', 'active')
@@ -979,7 +978,7 @@ class CapaianCpl extends BaseController
 		$db = \Config\Database::connect();
 
 		// Get jadwal info
-		$jadwal = $db->table('jadwal_mengajar jm')
+		$jadwal = $db->table('jadwal jm')
 			->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('jm.id', $jadwalId)
@@ -1009,7 +1008,7 @@ class CapaianCpl extends BaseController
 		// Get all students in this class
 		$studentsInClass = $db->table('nilai_cpmk_mahasiswa')
 			->select('DISTINCT mahasiswa_id')
-			->where('jadwal_mengajar_id', $jadwalId)
+			->where('jadwal_id', $jadwalId)
 			->get()
 			->getResultArray();
 
@@ -1057,7 +1056,7 @@ class CapaianCpl extends BaseController
 			// Get average nilai_cpmk for students in this class for this CPL
 			$result = $db->table('nilai_cpmk_mahasiswa')
 				->select('AVG(nilai_cpmk) as rata_rata, COUNT(DISTINCT mahasiswa_id) as jumlah_mahasiswa, COUNT(DISTINCT cpmk_id) as jumlah_cpmk')
-				->where('jadwal_mengajar_id', $jadwalId)
+				->where('jadwal_id', $jadwalId)
 				->whereIn('mahasiswa_id', $studentIds)
 				->whereIn('cpmk_id', $cpmkIds)
 				->get()
@@ -1107,12 +1106,12 @@ class CapaianCpl extends BaseController
 		$db = \Config\Database::connect();
 
 		// Get jadwal for selected mata kuliah
-		$jadwalBuilder = $db->table('jadwal_mengajar')
+		$jadwalBuilder = $db->table('jadwal')
 			->whereIn('mata_kuliah_id', $mkIds)
 			->where('status', 'active');
 
 		if ($programStudi) {
-			$jadwalBuilder->where('program_studi', $programStudi);
+			$jadwalBuilder->where('program_studi_kode', $programStudi);
 		}
 
 		if ($tahunAkademik) {
@@ -1186,7 +1185,7 @@ class CapaianCpl extends BaseController
 				// Get average for this mata kuliah
 				$result = $db->table('nilai_cpmk_mahasiswa')
 					->select('AVG(nilai_cpmk) as rata_rata')
-					->whereIn('jadwal_mengajar_id', $mkJadwalIds)
+					->whereIn('jadwal_id', $mkJadwalIds)
 					->whereIn('cpmk_id', $cpmkIds)
 					->get()
 					->getRowArray();
@@ -1233,7 +1232,7 @@ class CapaianCpl extends BaseController
 
 		// Get all active mahasiswa in this program studi (across all angkatan)
 		$mahasiswaList = $this->mahasiswaModel
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('status_mahasiswa', 'Aktif')
 			->findAll();
 
@@ -1285,7 +1284,7 @@ class CapaianCpl extends BaseController
 			// Get all nilai_cpmk for all students for these CPMK
 			$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
 				->whereIn('ncm.cpmk_id', $cpmkIds);
 
@@ -1410,7 +1409,7 @@ class CapaianCpl extends BaseController
 		// Get all mahasiswa in this program studi (across all angkatan)
 		$mahasiswaList = $this->mahasiswaModel
 			->select('id, nim, nama_lengkap, tahun_angkatan')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('status_mahasiswa', 'Aktif')
 			->orderBy('tahun_angkatan', 'DESC')
 			->orderBy('nim', 'ASC')
@@ -1450,7 +1449,7 @@ class CapaianCpl extends BaseController
 		// Get all nilai_cpmk for all students for these CPMK
 		$nilaiBuilder = $db->table('nilai_cpmk_mahasiswa ncm')
 			->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
-			->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 			->whereIn('ncm.mahasiswa_id', $mahasiswaIds)
 			->whereIn('ncm.cpmk_id', $cpmkIds);
 
@@ -1561,7 +1560,7 @@ class CapaianCpl extends BaseController
 		$db = \Config\Database::connect();
 
 		// Get all active jadwal for the selected program studi (across all years)
-		$jadwalList = $db->table('jadwal_mengajar jm')
+		$jadwalList = $db->table('jadwal jm')
 			->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('jm.program_studi', $programStudi)
@@ -1633,7 +1632,7 @@ class CapaianCpl extends BaseController
 				// Get all nilai_cpmk for this jadwal for these CPMK
 				$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
 					->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id')
-					->where('ncm.jadwal_mengajar_id', $jadwal['id'])
+					->where('ncm.jadwal_id', $jadwal['id'])
 					->whereIn('ncm.cpmk_id', $cpmkIds)
 					->get()
 					->getResultArray();
@@ -1729,7 +1728,7 @@ class CapaianCpl extends BaseController
 					// Get all nilai_cpmk for this jadwal for these CPMK
 					$nilaiList = $db->table('nilai_cpmk_mahasiswa ncm')
 						->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id')
-						->where('ncm.jadwal_mengajar_id', $jadwal['id'])
+						->where('ncm.jadwal_id', $jadwal['id'])
 						->whereIn('ncm.cpmk_id', $cpmkIds)
 						->get()
 						->getResultArray();
@@ -1800,7 +1799,7 @@ class CapaianCpl extends BaseController
 			// Get student count
 			$studentCount = $db->table('nilai_cpmk_mahasiswa')
 				->select('COUNT(DISTINCT mahasiswa_id) as total')
-				->where('jadwal_mengajar_id', $jadwal['id'])
+				->where('jadwal_id', $jadwal['id'])
 				->get()
 				->getRowArray();
 

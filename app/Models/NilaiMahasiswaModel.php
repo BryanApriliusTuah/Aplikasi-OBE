@@ -16,7 +16,7 @@ class NilaiMahasiswaModel extends Model
 	// These are the fields from the 'nilai_mahasiswa' table that are allowed to be saved.
 	protected $allowedFields    = [
 		'mahasiswa_id',
-		'jadwal_mengajar_id',
+		'jadwal_id',
 		'nilai_akhir',
 		'nilai_huruf',
 		'status_kelulusan',
@@ -51,7 +51,7 @@ class NilaiMahasiswaModel extends Model
             nilai_mahasiswa.status_kelulusan
         ')
 			->join('mahasiswa m', 'm.id = nilai_mahasiswa.mahasiswa_id')
-			->join('jadwal_mengajar jm', 'jm.id = nilai_mahasiswa.jadwal_mengajar_id')
+			->join('jadwal jm', 'jm.id = nilai_mahasiswa.jadwal_id')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 
 		// Apply filters
@@ -84,7 +84,7 @@ class NilaiMahasiswaModel extends Model
 	{
 		return $this->select('nilai_mahasiswa.*, m.nim, m.nama_lengkap')
 			->join('mahasiswa m', 'm.id = nilai_mahasiswa.mahasiswa_id')
-			->where('nilai_mahasiswa.jadwal_mengajar_id', $jadwal_id)
+			->where('nilai_mahasiswa.jadwal_id', $jadwal_id)
 			->orderBy('m.nim', 'ASC')
 			->findAll();
 	}
@@ -99,7 +99,7 @@ class NilaiMahasiswaModel extends Model
 	{
 		$existing = $this->where([
 			'mahasiswa_id' => $data['mahasiswa_id'],
-			'jadwal_mengajar_id' => $data['jadwal_mengajar_id']
+			'jadwal_id' => $data['jadwal_id']
 		])->first();
 
 		if ($existing) {
@@ -114,15 +114,15 @@ class NilaiMahasiswaModel extends Model
 	 */
 	public function getNilaiWithDetails($mahasiswaId = null)
 	{
-		$builder = $this->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal_mengajar.tahun_akademik, jadwal_mengajar.kelas')
-			->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-			->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id');
+		$builder = $this->select('nilai_mahasiswa.*, mata_kuliah.nama_mk, mata_kuliah.kode_mk, mata_kuliah.sks, mata_kuliah.semester, jadwal.tahun_akademik, jadwal.kelas')
+			->join('jadwal', 'nilai_mahasiswa.jadwal_id = jadwal.id')
+			->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id');
 
 		if ($mahasiswaId) {
 			$builder->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId);
 		}
 
-		return $builder->orderBy('jadwal_mengajar.tahun_akademik', 'DESC')
+		return $builder->orderBy('jadwal.tahun_akademik', 'DESC')
 			->orderBy('mata_kuliah.semester', 'ASC')
 			->findAll();
 	}
@@ -133,8 +133,8 @@ class NilaiMahasiswaModel extends Model
     public function calculateIPK($mahasiswaId)
     {
         $nilai = $this->select('nilai_mahasiswa.nilai_akhir, mata_kuliah.sks')
-            ->join('jadwal_mengajar', 'nilai_mahasiswa.jadwal_mengajar_id = jadwal_mengajar.id')
-            ->join('mata_kuliah', 'jadwal_mengajar.mata_kuliah_id = mata_kuliah.id')
+            ->join('jadwal', 'nilai_mahasiswa.jadwal_id = jadwal.id')
+            ->join('mata_kuliah', 'jadwal.mata_kuliah_id = mata_kuliah.id')
             ->where('nilai_mahasiswa.mahasiswa_id', $mahasiswaId)
             ->where('nilai_mahasiswa.status_kelulusan', 'Lulus')
             ->findAll();

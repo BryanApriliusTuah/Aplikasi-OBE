@@ -43,11 +43,26 @@ class PemetaanMkCpmkSub extends BaseController
 
     public function index()
     {
-        $query = $this->getQueryBuilder();
-        
+        $rows = $this->getQueryBuilder()->findAll();
+
+        $search = $this->request->getGet('search');
+        $filters = ['search' => $search ?? ''];
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $rows = array_values(array_filter($rows, function ($r) use ($searchLower) {
+                return str_contains(strtolower($r['kode_cpl']), $searchLower)
+                    || str_contains(strtolower($r['kode_cpmk']), $searchLower)
+                    || str_contains(strtolower($r['kode_sub_cpmk'] ?? ''), $searchLower)
+                    || str_contains(strtolower($r['mata_kuliah'] ?? ''), $searchLower)
+                    || str_contains(strtolower($r['deskripsi'] ?? ''), $searchLower);
+            }));
+        }
+
         return view('admin/pemetaan_mk_cpmk_subcpmk/index', [
             'title'   => 'Pemetaan MK – CPMK – SubCPMK',
-            'rows'    => $query->findAll()
+            'rows'    => $rows,
+            'filters' => $filters
         ]);
     }
 
@@ -76,7 +91,7 @@ class PemetaanMkCpmkSub extends BaseController
     {
         return $this->response->setJSON(
             $this->db->table('cpmk_mk')
-                ->select('mata_kuliah.id, mata_kuliah.nama_mk')
+                ->select('mata_kuliah.id, mata_kuliah.kode_mk, mata_kuliah.nama_mk')
                 ->join('mata_kuliah', 'mata_kuliah.id = cpmk_mk.mata_kuliah_id')
                 ->where('cpmk_mk.cpmk_id', $cpmkId)
                 ->get()->getResult()

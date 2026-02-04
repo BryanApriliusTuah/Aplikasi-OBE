@@ -78,7 +78,7 @@ class Auth extends BaseController
 				$sessionData['mahasiswa_id'] = $mahasiswa['id'];
 				$sessionData['nama_lengkap'] = $mahasiswa['nama_lengkap'];
 				$sessionData['nim'] = $mahasiswa['nim'];
-				$sessionData['program_studi'] = $mahasiswa['program_studi'];
+				$sessionData['program_studi_kode'] = $mahasiswa['program_studi_kode'];
 				$sessionData['tahun_angkatan'] = $mahasiswa['tahun_angkatan'];
 				$sessionData['nama'] = $mahasiswa['nama_lengkap']; // For backward compatibility
 			} else {

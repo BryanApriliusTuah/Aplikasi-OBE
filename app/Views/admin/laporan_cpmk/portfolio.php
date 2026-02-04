@@ -41,7 +41,7 @@
 							</tr>
 							<tr>
 								<td class="fw-bold">Program Studi</td>
-								<td><?= esc($portfolio['identitas']['program_studi']) ?></td>
+								<td><?= esc($portfolio['identitas']['program_studi_kode']) ?></td>
 							</tr>
 							<tr>
 								<td class="fw-bold">Semester</td>
@@ -427,8 +427,8 @@
 					<div class="form-check mb-2">
 						<input class="form-check-input document-checkbox" type="checkbox" value="nilai" id="doc_nilai" data-label="Daftar nilai mahasiswa" checked onchange="updatePrintDocuments()">
 						<label class="form-check-label" for="doc_nilai">
-							<?php if ($portfolio['jadwal_mengajar_id']): ?>
-								<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_mengajar_id']) ?>" class="text-decoration-none" target="_blank">
+							<?php if ($portfolio['jadwal_id']): ?>
+								<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_id']) ?>" class="text-decoration-none" target="_blank">
 									Daftar nilai mahasiswa <i class="bi bi-file-earmark-excel"></i>
 								</a>
 							<?php else: ?>
@@ -439,8 +439,8 @@
 					<div class="form-check mb-2">
 						<input class="form-check-input document-checkbox" type="checkbox" value="rekapitulasi" id="doc_rekapitulasi" data-label="Rekapitulasi nilai per CPMK" checked onchange="updatePrintDocuments()">
 						<label class="form-check-label" for="doc_rekapitulasi">
-							<?php if ($portfolio['jadwal_mengajar_id']): ?>
-								<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_mengajar_id']) ?>" class="text-decoration-none" target="_blank">
+							<?php if ($portfolio['jadwal_id']): ?>
+								<a href="<?= base_url('admin/nilai/export-cpmk-excel/' . $portfolio['jadwal_id']) ?>" class="text-decoration-none" target="_blank">
 									Rekapitulasi nilai per CPMK <i class="bi bi-file-earmark-excel"></i>
 								</a>
 							<?php else: ?>
@@ -455,7 +455,7 @@
 							<a href="<?= base_url('uploads/rubrik/' . $portfolio['rubrik_penilaian_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
 								<i class="bi bi-download"></i> Download
 							</a>
-							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRubrik(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRubrik(<?= $portfolio['jadwal_id'] ?>)">
 								<i class="bi bi-trash"></i> Hapus
 							</button>
 						<?php else: ?>
@@ -464,7 +464,7 @@
 								<i class="bi bi-upload"></i> Upload
 							</button>
 						<?php endif; ?>
-						<input type="file" id="rubrik_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadRubrik(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+						<input type="file" id="rubrik_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadRubrik(<?= $portfolio['jadwal_id'] ?>)">
 					</div>
 					<div class="d-flex align-items-center gap-2 mb-2">
 						<input class="form-check-input document-checkbox mt-0" type="checkbox" value="contoh_soal" id="doc_contoh_soal" data-label="Contoh soal dan jawaban ujian/tugas" <?= !empty($portfolio['contoh_soal_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintDocuments()">
@@ -473,7 +473,7 @@
 							<a href="<?= base_url('uploads/contoh_soal/' . $portfolio['contoh_soal_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
 								<i class="bi bi-download"></i> Download
 							</a>
-							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteContohSoal(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteContohSoal(<?= $portfolio['jadwal_id'] ?>)">
 								<i class="bi bi-trash"></i> Hapus
 							</button>
 						<?php else: ?>
@@ -482,7 +482,7 @@
 								<i class="bi bi-upload"></i> Upload
 							</button>
 						<?php endif; ?>
-						<input type="file" id="contoh_soal_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadContohSoal(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+						<input type="file" id="contoh_soal_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadContohSoal(<?= $portfolio['jadwal_id'] ?>)">
 					</div>
 					<div class="d-flex align-items-center gap-2 mb-2">
 						<input class="form-check-input document-checkbox mt-0" type="checkbox" value="notulen" id="doc_notulen" data-label="Notulen rapat evaluasi mata kuliah (jika ada)" <?= !empty($portfolio['notulen_rapat_file']) ? 'checked' : 'disabled' ?> onchange="updatePrintDocuments()">
@@ -491,7 +491,7 @@
 							<a href="<?= base_url('uploads/notulen/' . $portfolio['notulen_rapat_file']) ?>" class="btn btn-sm btn-outline-primary" target="_blank">
 								<i class="bi bi-download"></i> Download
 							</a>
-							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNotulen(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+							<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNotulen(<?= $portfolio['jadwal_id'] ?>)">
 								<i class="bi bi-trash"></i> Hapus
 							</button>
 						<?php else: ?>
@@ -500,7 +500,7 @@
 								<i class="bi bi-upload"></i> Upload
 							</button>
 						<?php endif; ?>
-						<input type="file" id="notulen_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadNotulen(<?= $portfolio['jadwal_mengajar_id'] ?>)">
+						<input type="file" id="notulen_file_input" accept=".pdf,.doc,.docx" style="display: none;" onchange="uploadNotulen(<?= $portfolio['jadwal_id'] ?>)">
 					</div>
 				</div>
 
@@ -782,7 +782,7 @@
 		const formData = new FormData();
 		formData.append('mata_kuliah_id', '<?= $portfolio['mata_kuliah_id'] ?>');
 		formData.append('tahun_akademik', '<?= $portfolio['identitas']['tahun_akademik'] ?>');
-		formData.append('program_studi', '<?= $portfolio['identitas']['program_studi'] ?>');
+		formData.append('program_studi_kode', '<?= $portfolio['identitas']['program_studi_kode'] ?>');
 		formData.append('mode', mode);
 		formData.append('analisis_singkat', analysisText);
 		formData.append('auto_options', JSON.stringify(autoOptions));
@@ -855,7 +855,7 @@
 
 		// Prepare data
 		const formData = new FormData();
-		formData.append('jadwal_mengajar_id', '<?= $portfolio['jadwal_mengajar_id'] ?>');
+		formData.append('jadwal_id', '<?= $portfolio['jadwal_id'] ?>');
 		formData.append('cqi_data', JSON.stringify(cqiData));
 
 		// Send AJAX request
@@ -910,7 +910,7 @@
 
 		const formData = new FormData();
 		formData.append('rubrik_file', file);
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		// Show loading
 		const uploadBtn = event.target.previousElementSibling;
@@ -952,7 +952,7 @@
 		}
 
 		const formData = new FormData();
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		fetch('<?= base_url('admin/laporan-cpmk/delete-rubrik') ?>', {
 				method: 'POST',
@@ -1001,7 +1001,7 @@
 
 		const formData = new FormData();
 		formData.append('contoh_soal_file', file);
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		// Show loading
 		const uploadBtn = event.target.previousElementSibling;
@@ -1043,7 +1043,7 @@
 		}
 
 		const formData = new FormData();
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		fetch('<?= base_url('admin/laporan-cpmk/delete-contoh-soal') ?>', {
 				method: 'POST',
@@ -1092,7 +1092,7 @@
 
 		const formData = new FormData();
 		formData.append('notulen_file', file);
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		// Show loading
 		const uploadBtn = event.target.previousElementSibling;
@@ -1134,7 +1134,7 @@
 		}
 
 		const formData = new FormData();
-		formData.append('jadwal_mengajar_id', jadwalMengajarId);
+		formData.append('jadwal_id', jadwalMengajarId);
 
 		fetch('<?= base_url('admin/laporan-cpmk/delete-notulen') ?>', {
 				method: 'POST',

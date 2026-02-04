@@ -17,7 +17,7 @@ class CqiModel extends Model
         'program_studi',
         'tahun_akademik',
         'angkatan',
-        'jadwal_mengajar_id',
+        'jadwal_id',
         'kode_cpl',
         'kode_cpmk',
         'masalah',
@@ -75,7 +75,7 @@ class CqiModel extends Model
     public function getCqiCpmkList($jadwalMengajarId)
     {
         return $this->where('type', 'cpmk')
-                    ->where('jadwal_mengajar_id', $jadwalMengajarId)
+                    ->where('jadwal_id', $jadwalMengajarId)
                     ->findAll();
     }
 
@@ -85,7 +85,7 @@ class CqiModel extends Model
     public function getCqiByCpmk($jadwalMengajarId, $kodeCpmk)
     {
         return $this->where('type', 'cpmk')
-                    ->where('jadwal_mengajar_id', $jadwalMengajarId)
+                    ->where('jadwal_id', $jadwalMengajarId)
                     ->where('kode_cpmk', $kodeCpmk)
                     ->first();
     }
@@ -117,7 +117,7 @@ class CqiModel extends Model
     public function saveCqiCpmk($data)
     {
         $existing = $this->getCqiByCpmk(
-            $data['jadwal_mengajar_id'],
+            $data['jadwal_id'],
             $data['kode_cpmk']
         );
 
@@ -148,7 +148,7 @@ class CqiModel extends Model
     public function deleteCqiCpmk($jadwalMengajarId)
     {
         return $this->where('type', 'cpmk')
-                    ->where('jadwal_mengajar_id', $jadwalMengajarId)
+                    ->where('jadwal_id', $jadwalMengajarId)
                     ->delete();
     }
 }

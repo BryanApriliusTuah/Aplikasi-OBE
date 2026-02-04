@@ -21,12 +21,33 @@ class User extends BaseController
 
     public function index()
     {
-        $data['users'] = $this->userModel
+        $filters = [
+            'role'   => $this->request->getGet('role'),
+            'search' => $this->request->getGet('search'),
+        ];
+
+        $builder = $this->userModel
             ->select('users.id, users.username, users.role, COALESCE(dosen.nama_lengkap, mahasiswa.nama_lengkap) as nama_lengkap')
             ->join('dosen', 'dosen.user_id = users.id', 'left')
             ->join('mahasiswa', 'mahasiswa.user_id = users.id', 'left')
-            ->findAll();
-            
+            ->orderBy('users.id', 'ASC');
+
+        if (!empty($filters['role'])) {
+            $builder->where('users.role', $filters['role']);
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $builder->groupStart()
+                ->like('users.username', $search)
+                ->orLike('dosen.nama_lengkap', $search)
+                ->orLike('mahasiswa.nama_lengkap', $search)
+                ->groupEnd();
+        }
+
+        $data['users']   = $builder->findAll();
+        $data['filters'] = $filters;
+
         return view('admin/user/index', $data);
     }
 
@@ -112,5 +133,64 @@ class User extends BaseController
 
         $this->userModel->delete($id);
         return redirect()->to(base_url('admin/user'))->with('success', 'User berhasil dihapus');
+    }
+
+    public function generateUsers()
+    {
+        set_time_limit(600);
+
+        $usersCreated = 0;
+
+        // Generate user accounts for dosen without user_id
+        $unlinkedDosen = $this->dosenModel->where('user_id', null)->findAll();
+        foreach ($unlinkedDosen as $dosen) {
+            $username = $dosen['nip'];
+            if (empty($username)) {
+                continue;
+            }
+
+            if ($this->userModel->where('username', $username)->first()) {
+                continue;
+            }
+
+            $this->userModel->insert([
+                'username' => $username,
+                'password' => password_hash($username, PASSWORD_DEFAULT),
+                'role'     => 'dosen',
+            ]);
+
+            $newUserId = $this->userModel->getInsertID();
+            $this->dosenModel->update($dosen['id'], ['user_id' => $newUserId]);
+            $usersCreated++;
+        }
+
+        // Generate user accounts for mahasiswa without user_id
+        $unlinkedMahasiswa = $this->mahasiswaModel->where('user_id', null)->findAll();
+        foreach ($unlinkedMahasiswa as $mhs) {
+            $username = $mhs['nim'];
+            if (empty($username)) {
+                continue;
+            }
+
+            if ($this->userModel->where('username', $username)->first()) {
+                continue;
+            }
+
+            $this->userModel->insert([
+                'username' => $username,
+                'password' => password_hash($username, PASSWORD_DEFAULT),
+                'role'     => 'mahasiswa',
+            ]);
+
+            $newUserId = $this->userModel->getInsertID();
+            $this->mahasiswaModel->update($mhs['id'], ['user_id' => $newUserId]);
+            $usersCreated++;
+        }
+
+        if ($usersCreated > 0) {
+            return redirect()->to(base_url('admin/user'))->with('success', "$usersCreated akun user baru berhasil dibuat.");
+        }
+
+        return redirect()->to(base_url('admin/user'))->with('success', 'Tidak ada data dosen/mahasiswa yang perlu dibuatkan akun.');
     }
 }

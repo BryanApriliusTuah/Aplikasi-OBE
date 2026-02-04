@@ -15,7 +15,7 @@ class NilaiTeknikPenilaianModel extends Model
 
     protected $allowedFields    = [
         'mahasiswa_id',
-        'jadwal_mengajar_id',
+        'jadwal_id',
         'rps_mingguan_id',
         'teknik_penilaian_key',
         'nilai'
@@ -38,7 +38,7 @@ class NilaiTeknikPenilaianModel extends Model
         $db = \Config\Database::connect();
 
         // Get mata_kuliah_id from jadwal
-        $jadwal = $db->table('jadwal_mengajar')
+        $jadwal = $db->table('jadwal')
             ->select('mata_kuliah_id')
             ->where('id', $jadwal_id)
             ->get()
@@ -205,7 +205,7 @@ class NilaiTeknikPenilaianModel extends Model
      */
     public function getCombinedScoresForInput(int $jadwal_id): array
     {
-        $results = $this->where('jadwal_mengajar_id', $jadwal_id)->findAll();
+        $results = $this->where('jadwal_id', $jadwal_id)->findAll();
 
         $scores = [];
         foreach ($results as $row) {
@@ -230,7 +230,7 @@ class NilaiTeknikPenilaianModel extends Model
      */
     public function getScoresByJadwalForInput(int $jadwal_id): array
     {
-        $results = $this->where('jadwal_mengajar_id', $jadwal_id)->findAll();
+        $results = $this->where('jadwal_id', $jadwal_id)->findAll();
 
         $scores = [];
         foreach ($results as $row) {
@@ -250,7 +250,7 @@ class NilaiTeknikPenilaianModel extends Model
     {
         $existing = $this->where([
             'mahasiswa_id' => $data['mahasiswa_id'],
-            'jadwal_mengajar_id' => $data['jadwal_mengajar_id'],
+            'jadwal_id' => $data['jadwal_id'],
             'rps_mingguan_id' => $data['rps_mingguan_id'],
             'teknik_penilaian_key' => $data['teknik_penilaian_key']
         ])->first();
@@ -275,7 +275,7 @@ class NilaiTeknikPenilaianModel extends Model
         // Get all scores
         $scores = $this->select('nilai_teknik_penilaian.*, rps_mingguan.cpmk_id, rps_mingguan.teknik_penilaian')
             ->join('rps_mingguan', 'rps_mingguan.id = nilai_teknik_penilaian.rps_mingguan_id')
-            ->where('nilai_teknik_penilaian.jadwal_mengajar_id', $jadwal_id)
+            ->where('nilai_teknik_penilaian.jadwal_id', $jadwal_id)
             ->findAll();
 
         // Group by mahasiswa and cpmk

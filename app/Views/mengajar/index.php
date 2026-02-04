@@ -25,6 +25,10 @@
 	<!-- Action Buttons -->
 	<div class="d-flex justify-content-end gap-2 mb-3">
 		<?php if (session()->get('role') === 'admin'): ?>
+			<a href="<?= base_url('admin/mengajar/syncFromApi') ?>" class="btn btn-info text-white"
+				onclick="return confirm('Sinkronisasi jadwal dari API? Hanya mata kuliah yang sudah memiliki RPS yang akan disinkronkan.');">
+				<i class="bi bi-cloud-arrow-down"></i> Sync dari API
+			</a>
 			<a href="<?= base_url('admin/mengajar/create') ?>" class="btn btn-primary">
 				<i class="bi bi-plus-lg"></i> Tambah Jadwal
 			</a>
@@ -56,10 +60,11 @@
 							<i class="bi bi-mortarboard-fill me-1"></i>
 							Program Studi
 						</label>
-						<select class="form-select modern-filter-input" id="filter_program_studi" name="program_studi">
+						<select class="form-select modern-filter-input" id="filter_program_studi" name="program_studi_kode">
+							<option value="">Semua Program Studi</option>
 							<?php foreach ($program_studi_list as $prodi): ?>
-								<option value="<?= esc($prodi) ?>" <?= (empty($filters['program_studi']) && $prodi == 'Teknik Informatika') || ($filters['program_studi'] ?? '') == $prodi ? 'selected' : '' ?>>
-									<?= esc($prodi) ?>
+								<option value="<?= esc($prodi['kode']) ?>" <?= ($filters['program_studi_kode'] ?? '') == $prodi['kode'] ? 'selected' : '' ?>>
+									<?= esc($prodi['nama_resmi']) ?>
 								</option>
 							<?php endforeach; ?>
 						</select>
@@ -171,10 +176,25 @@
 												<i class="bi bi-clock me-1"></i>
 												<?= !empty($jadwal['jam_mulai']) ? date('H:i', strtotime($jadwal['jam_mulai'])) . ' - ' . date('H:i', strtotime($jadwal['jam_selesai'])) : 'Waktu belum diatur' ?>
 											</div>
-											<div>
+											<div class="mb-1">
 												<i class="bi bi-geo-alt me-1"></i>
 												<?= !empty($jadwal['ruang']) ? esc($jadwal['ruang']) : 'Ruang belum diatur' ?>
 											</div>
+											<?php if (!empty($jadwal['kelas_jenis'])): ?>
+												<div class="mb-1">
+													<i class="bi bi-diagram-3 me-1"></i>
+													<?= esc($jadwal['kelas_jenis']) ?>
+													<?php if (!empty($jadwal['kelas'])): ?>
+														<span class="badge bg-secondary ms-1" style="font-size: 0.7rem;"><?= esc($jadwal['kelas']) ?></span>
+													<?php endif; ?>
+												</div>
+											<?php endif; ?>
+											<?php if (!empty($jadwal['total_mahasiswa'])): ?>
+												<div>
+													<i class="bi bi-people me-1"></i>
+													<?= (int) $jadwal['total_mahasiswa'] ?> mahasiswa
+												</div>
+											<?php endif; ?>
 										</div>
 										<?php if (!empty($jadwal['dosen_list'])): ?>
 											<div class="d-flex flex-wrap gap-1">
@@ -412,6 +432,22 @@
 													<span class="badge bg-secondary" style="font-size: 0.8125rem;">${jadwal.kelas}</span>
 												</span>
 											</div>
+											${jadwal.kelas_jenis ? `<div class="modern-detail-item">
+												<span class="modern-detail-label">Jenis Kelas</span>
+												<span class="modern-detail-value">${jadwal.kelas_jenis}</span>
+											</div>` : ''}
+											${jadwal.kelas_status ? `<div class="modern-detail-item">
+												<span class="modern-detail-label">Status Kelas</span>
+												<span class="modern-detail-value">
+													<span class="badge ${jadwal.kelas_status === 'Aktif' ? 'bg-success' : 'bg-secondary'}" style="font-size: 0.8125rem;">${jadwal.kelas_status}</span>
+												</span>
+											</div>` : ''}
+											${jadwal.total_mahasiswa ? `<div class="modern-detail-item">
+												<span class="modern-detail-label">Total Mahasiswa</span>
+												<span class="modern-detail-value">
+													<span class="badge bg-info" style="font-size: 0.8125rem;">${jadwal.total_mahasiswa} mahasiswa</span>
+												</span>
+											</div>` : ''}
 											<div class="modern-detail-item">
 												<span class="modern-detail-label">Hari & Waktu</span>
 												<span class="modern-detail-value">

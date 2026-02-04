@@ -813,7 +813,7 @@
 
 		// Prepare data
 		const formData = new FormData();
-		formData.append('program_studi', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('program_studi_kode', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
 		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
 		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
 		formData.append('mode', mode);

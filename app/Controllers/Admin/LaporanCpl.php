@@ -9,6 +9,8 @@ class LaporanCpl extends BaseController
 	protected $db;
 	protected $cplModel;
 	protected $profilProdiModel;
+	protected $programStudiModel;
+	protected $fakultasModel;
 	protected $analysisCplModel;
 	protected $cqiModel;
 	protected $standarMinimalCapaianModel;
@@ -19,6 +21,8 @@ class LaporanCpl extends BaseController
 		$this->db = \Config\Database::connect();
 		$this->cplModel = new \App\Models\CplModel();
 		$this->profilProdiModel = new \App\Models\ProfilProdiModel();
+		$this->programStudiModel = new \App\Models\ProgramStudiModel();
+		$this->fakultasModel = new \App\Models\FakultasModel();
 		$this->analysisCplModel = new \App\Models\AnalysisCplModel();
 		$this->cqiModel = new \App\Models\CqiModel();
 		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCplModel();
@@ -79,15 +83,15 @@ class LaporanCpl extends BaseController
 		}
 
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
-		$programStudi = $this->request->getGet('program_studi');
+		$programStudiKode = $this->request->getGet('program_studi');
 		$angkatan = $this->request->getGet('angkatan');
 
-		if (!$tahunAkademik || !$programStudi || !$angkatan) {
+		if (!$tahunAkademik || !$programStudiKode || !$angkatan) {
 			return redirect()->to('admin/laporan-cpl')->with('error', 'Tahun akademik, program studi, dan angkatan harus dipilih.');
 		}
 
 		// Get CPL report data
-		$reportData = $this->getReportData($tahunAkademik, $programStudi, $angkatan);
+		$reportData = $this->getReportData($tahunAkademik, $programStudiKode, $angkatan);
 
 		if (!$reportData) {
 			return redirect()->to('admin/laporan-cpl')->with('error', 'Data tidak ditemukan untuk filter yang dipilih.');
@@ -101,15 +105,15 @@ class LaporanCpl extends BaseController
 		return view('admin/laporan_cpl/portfolio_pdf', $data);
 	}
 
-	private function getReportData($tahunAkademik, $programStudi, $angkatan)
+	private function getReportData($tahunAkademik, $programStudiKode, $angkatan)
 	{
 		// 1. Get Program Studi Identity from database
-		$profilProdi = $this->profilProdiModel->where('nama_prodi', $programStudi)->first();
+		$programStudi = $this->programStudiModel->where('kode', $programStudiKode)->first();
 
 		// If profil prodi not found in database, use default values
-		if (!$profilProdi) {
+		if (!$programStudi) {
 			$identitas = [
-				'nama_program_studi' => $programStudi,
+				'nama_program_studi' => $programStudiKode,
 				'fakultas' => 'Fakultas Teknik',
 				'perguruan_tinggi' => 'Universitas Palangka Raya',
 				'tahun_akademik' => $tahunAkademik,
@@ -117,13 +121,14 @@ class LaporanCpl extends BaseController
 				'ketua_prodi' => '-'
 			];
 		} else {
+			$fakultas = $this->fakultasModel->where('kode', $programStudi['fakultas_kode'])->first();
 			$identitas = [
-				'nama_program_studi' => $profilProdi['nama_prodi'],
-				'fakultas' => $profilProdi['nama_fakultas'],
-				'perguruan_tinggi' => $profilProdi['nama_universitas'],
+				'nama_program_studi' => $programStudi['nama_resmi'],
+				'fakultas' => $fakultas['nama_resmi'],
+				'perguruan_tinggi' => 'Universitas Palangka Raya',
 				'tahun_akademik' => $tahunAkademik,
 				'angkatan' => $angkatan,
-				'ketua_prodi' => $profilProdi['nama_ketua_prodi']
+				'ketua_prodi' => $programStudi['nama_kaprodi']
 			];
 		}
 
@@ -135,22 +140,22 @@ class LaporanCpl extends BaseController
 		}
 
 		// 3. Get CPMK-CPL Matrix
-		$cpmkCplMatrix = $this->getCpmkCplMatrix($programStudi);
+		$cpmkCplMatrix = $this->getCpmkCplMatrix($programStudiKode);
 
 		// 4. Get CPL Achievement Data for the cohort
-		$cplAchievementData = $this->getCplAchievementData($programStudi, $angkatan, $tahunAkademik);
+		$cplAchievementData = $this->getCplAchievementData($programStudiKode, $angkatan, $tahunAkademik);
 
 		// 5. Get Analysis
-		$analysis = $this->getAnalysisData($cplAchievementData, $programStudi, $tahunAkademik, $angkatan);
+		$analysis = $this->getAnalysisData($cplAchievementData, $programStudiKode, $tahunAkademik, $angkatan);
 
 		// 6. Get Jadwal and RPS data for Lampiran section
-		$lampiranData = $this->getLampiranData($programStudi, $tahunAkademik, $cpmkCplMatrix);
+		$lampiranData = $this->getLampiranData($programStudiKode, $tahunAkademik, $cpmkCplMatrix);
 
 		// 7. Get CQI data
-		$cqiData = $this->getCqiData($programStudi, $tahunAkademik, $angkatan);
+		$cqiData = $this->getCqiData($programStudiKode, $tahunAkademik, $angkatan);
 
 		// 8. Get document files from analysis record
-		$analysisRecord = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+		$analysisRecord = $this->analysisCplModel->getAnalysis($programStudiKode, $tahunAkademik, $angkatan);
 		$buktiDokumentasiFile = $analysisRecord['bukti_dokumentasi_file'] ?? null;
 		$notulensiRapatFile = $analysisRecord['notulensi_rapat_file'] ?? null;
 
@@ -189,7 +194,7 @@ class LaporanCpl extends BaseController
 
 	private function getCpmkCplMatrix($programStudi)
 	{
-		// Get all mata kuliah for the program through jadwal_mengajar
+		// Get all mata kuliah for the program through jadwal
 		// Calculate bobot_cpmk from rps_mingguan
 		$query = "
             SELECT DISTINCT
@@ -208,12 +213,12 @@ class LaporanCpl extends BaseController
                 cc.cpl_id,
                 cpl.kode_cpl
             FROM mata_kuliah mk
-            INNER JOIN jadwal_mengajar jm ON mk.id = jm.mata_kuliah_id
+            INNER JOIN jadwal jm ON mk.id = jm.mata_kuliah_id
             INNER JOIN cpmk_mk cm ON mk.id = cm.mata_kuliah_id
             INNER JOIN cpmk c ON cm.cpmk_id = c.id
             LEFT JOIN cpl_cpmk cc ON c.id = cc.cpmk_id
             LEFT JOIN cpl ON cc.cpl_id = cpl.id
-            WHERE jm.program_studi = ?
+            WHERE jm.program_studi_kode = ?
             ORDER BY mk.nama_mk, c.kode_cpmk, cpl.kode_cpl
         ";
 
@@ -258,7 +263,7 @@ class LaporanCpl extends BaseController
 
 		// Get all students in the cohort
 		$students = $this->db->table('mahasiswa')
-			->where('program_studi', $programStudi)
+			->where('program_studi_kode', $programStudi)
 			->where('tahun_angkatan', $angkatan)
 			->where('status_mahasiswa', 'Aktif')
 			->get()
@@ -295,15 +300,15 @@ class LaporanCpl extends BaseController
 			$cpmkDetails = [];
 			$totalBobot = 0;
 			foreach ($cpmkIds as $cpmkId) {
-				// Get ALL mata kuliah that have this CPMK from jadwal_mengajar (specific to tahun_akademik and program_studi)
+				// Get ALL mata kuliah that have this CPMK from jadwal (specific to tahun_akademik and program_studi)
 				$cpmkMataKuliahList = $this->db->table('cpmk c')
 					->select('c.id, c.kode_cpmk, cm.mata_kuliah_id, mk.nama_mk')
 					->join('cpmk_mk cm', 'cm.cpmk_id = c.id')
 					->join('mata_kuliah mk', 'mk.id = cm.mata_kuliah_id')
-					->join('jadwal_mengajar jm', 'jm.mata_kuliah_id = mk.id')
+					->join('jadwal jm', 'jm.mata_kuliah_id = mk.id')
 					->where('c.id', $cpmkId)
 					->like('jm.tahun_akademik', $tahunAkademik, 'both')
-					->where('jm.program_studi', $programStudi)
+					->where('jm.program_studi_kode', $programStudi)
 					->groupBy('cm.mata_kuliah_id, c.id, c.kode_cpmk, mk.nama_mk')
 					->get()
 					->getResultArray(); // Get ALL mata kuliah for this CPMK in this tahun_akademik and program_studi
@@ -344,11 +349,11 @@ class LaporanCpl extends BaseController
 			// Get all nilai_cpmk for all students for these CPMK
 			$nilaiList = $this->db->table('nilai_cpmk_mahasiswa ncm')
 				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
-				->join('jadwal_mengajar jm', 'jm.id = ncm.jadwal_mengajar_id')
+				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->whereIn('ncm.mahasiswa_id', $studentIds)
 				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->like('jm.tahun_akademik', $tahunAkademik, 'both')
-				->where('jm.program_studi', $programStudi)
+				->where('jm.program_studi_kode', $programStudi)
 				->get()
 				->getResultArray();
 
@@ -561,7 +566,7 @@ class LaporanCpl extends BaseController
 
 	private function getTahunAkademik()
 	{
-		return $this->db->table('jadwal_mengajar')
+		return $this->db->table('jadwal')
 			->select('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", "")) as tahun_akademik')
 			->groupBy('TRIM(REPLACE(REPLACE(tahun_akademik, "Genap", ""), "Ganjil", ""))')
 			->orderBy('tahun_akademik', 'DESC')
@@ -571,17 +576,20 @@ class LaporanCpl extends BaseController
 
 	private function getProgramStudi()
 	{
-		return $this->db->table('jadwal_mengajar')
-			->select('program_studi')
-			->groupBy('program_studi')
-			->orderBy('program_studi', 'ASC')
+		$builder = $this->db->table('program_studi');
+		$result = $builder
+			->select('kode, nama_resmi')
+			->distinct()
+			->orderBy('nama_resmi', 'ASC')
 			->get()
 			->getResultArray();
+
+		return array_column($result, 'nama_resmi', 'kode');
 	}
 
 	public function getAngkatanByFilter()
 	{
-		$programStudi = $this->request->getGet('program_studi');
+		$programStudi = $this->request->getGet('program_studi_kode');
 
 		$builder = $this->db->table('mahasiswa')
 			->select('tahun_angkatan')
@@ -590,7 +598,7 @@ class LaporanCpl extends BaseController
 			->orderBy('tahun_angkatan', 'DESC');
 
 		if ($programStudi) {
-			$builder->where('program_studi', $programStudi);
+			$builder->where('program_studi_kode', $programStudi);
 		}
 
 		$angkatan = $builder->get()->getResultArray();
@@ -608,12 +616,12 @@ class LaporanCpl extends BaseController
 		foreach ($cpmkCplMatrix as $mk) {
 			$mataKuliahId = $mk['mata_kuliah_id'] ?? 0;
 
-			// Get jadwal_mengajar for this mata kuliah
-			$jadwalList = $this->db->table('jadwal_mengajar')
+			// Get jadwal for this mata kuliah
+			$jadwalList = $this->db->table('jadwal')
 				->select('id, kelas')
 				->where('mata_kuliah_id', $mataKuliahId)
 				->like('tahun_akademik', $tahunAkademik, 'both')
-				->where('program_studi', $programStudi)
+				->where('program_studi_kode', $programStudi)
 				->get()
 				->getResultArray();
 
@@ -1198,7 +1206,7 @@ class LaporanCpl extends BaseController
 			])->setStatusCode(403);
 		}
 
-		$programStudi = $this->request->getPost('program_studi');
+		$programStudiKode = $this->request->getPost('program_studi_kode');
 		$tahunAkademik = $this->request->getPost('tahun_akademik');
 		$angkatan = $this->request->getPost('angkatan');
 		$mode = $this->request->getPost('mode');
@@ -1206,7 +1214,7 @@ class LaporanCpl extends BaseController
 		$autoOptionsJson = $this->request->getPost('auto_options');
 		$templatesJson = $this->request->getPost('templates');
 
-		if (!$programStudi || !$tahunAkademik || !$angkatan || !$mode) {
+		if (!$programStudiKode || !$tahunAkademik || !$angkatan || !$mode) {
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Data tidak lengkap.'
@@ -1220,7 +1228,7 @@ class LaporanCpl extends BaseController
 		}
 
 		$data = [
-			'program_studi' => $programStudi,
+			'program_studi' => $programStudiKode, // Kode program studi
 			'tahun_akademik' => $tahunAkademik,
 			'angkatan' => $angkatan,
 			'mode' => $mode,

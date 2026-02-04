@@ -59,8 +59,8 @@
 									<label for="program_studi" class="form-label fw-bold">Program Studi</label>
 									<select class="form-select" id="program_studi" name="program_studi">
 										<option value="">-- Semua Program Studi --</option>
-										<?php foreach ($programStudi as $ps): ?>
-											<option value="<?= esc($ps['program_studi']) ?>" <?= $ps['program_studi'] === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($ps['program_studi']) ?></option>
+										<?php foreach ($programStudi as $kode => $nama_resmi): ?>
+											<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($nama_resmi)) === "Teknik Informatika" ? 'selected' : '' ?>><?= esc($nama_resmi) ?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
