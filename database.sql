@@ -878,7 +878,7 @@ CREATE TABLE `mbkm_kegiatan` (
 
 LOCK TABLES `mbkm_kegiatan` WRITE;
 /*!40000 ALTER TABLE `mbkm_kegiatan` DISABLE KEYS */;
-INSERT INTO `mbkm_kegiatan` VALUES (19,'Magang','Software Developer','Jakarta','','',25,'2026-02-04','2026-02-11',1,20,'',NULL,'selesai','2025/2026','cpmk',11,NULL,'2026-02-03 18:43:28','2026-02-03 19:01:44');
+INSERT INTO `mbkm_kegiatan` VALUES (19,'Magang','Software Developer','Jakarta','','',25,'2026-02-04','2026-02-11',1,20,'',NULL,'selesai','2025/2026','cpmk',11,NULL,'2026-02-03 18:43:28','2026-02-04 01:10:00');
 /*!40000 ALTER TABLE `mbkm_kegiatan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1014,7 +1014,7 @@ CREATE TABLE `mbkm_nilai_akhir` (
 
 LOCK TABLES `mbkm_nilai_akhir` WRITE;
 /*!40000 ALTER TABLE `mbkm_nilai_akhir` DISABLE KEYS */;
-INSERT INTO `mbkm_nilai_akhir` VALUES (14,19,81.00,'A','Lulus','cpmk',11,NULL,'','2026-02-04','2026-02-04 02:01:44','2026-02-04 02:01:44');
+INSERT INTO `mbkm_nilai_akhir` VALUES (14,19,81.00,'A','Lulus','cpmk',11,NULL,'Testing catatan','2026-02-04','2026-02-04 02:01:44','2026-02-04 08:10:00');
 /*!40000 ALTER TABLE `mbkm_nilai_akhir` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1665,4 +1665,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-04 11:13:16
+-- Dump completed on 2026-02-04 15:24:15
