@@ -64,10 +64,7 @@ class Mahasiswa extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		// Increase time limit for long-running sync operation
-		set_time_limit(600);
-
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/mahasiswa';
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/mahasiswa?prodiKode=58';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -78,7 +75,6 @@ class Mahasiswa extends BaseController
 			$inserted = 0;
 			$updated = 0;
 			$skipped = 0;
-			$page = 1;
 
 			// Pre-fetch all existing mahasiswa NIMs with their IDs in one query
 			$existingRows = $model->select('id, nim')->findAll();
@@ -90,85 +86,76 @@ class Mahasiswa extends BaseController
 			// Cache program studi lookup
 			$prodiExists = (bool) $programStudiModel->find(58);
 
-			while (true) {
-				$response = $client->request('GET', $apiUrl, [
-					'headers' => [
-						'x-api-key' => $apiKey,
-						'Accept'    => 'application/json',
-					],
-					'query' => [
-						'page' => $page,
-					],
-					'timeout' => 120,
-				]);
+			$response = $client->request('GET', $apiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 120,
+			]);
 
-				$body = json_decode($response->getBody(), true);
-				$items = $body['data'] ?? null;
+			$body = json_decode($response->getBody(), true);
+			$items = $body['data'] ?? null;
 
-				if (!is_array($items) || empty($items)) {
-					break;
+			if (!is_array($items) || empty($items)) {
+				return redirect()->back()->with('error', 'Tidak ada data mahasiswa yang diterima dari API.');
+			}
+
+			$insertBatch = [];
+			$updateBatch = [];
+
+			foreach ($items as $item) {
+				$prodiKode = $item['prodiKode'] ?? null;
+
+				if ($prodiKode && !$prodiExists) {
+					$skipped++;
+					continue;
 				}
 
-				$insertBatch = [];
-				$updateBatch = [];
+				$nim = $item['mhsNiu'] ?? null;
+				$nama = $item['mhsNama'] ?? null;
 
-				foreach ($items as $item) {
-					if ($item['mhsProdiKode'] == 58) {
-						$prodiKode = $item['mhsProdiKode'] ?? null;
-
-						if ($prodiKode && !$prodiExists) {
-							$skipped++;
-							continue;
-						}
-
-						$nim = $item['mhsNiu'] ?? null;
-						$nama = $item['mhsNama'] ?? null;
-
-						if (!$nim || !$nama) {
-							continue;
-						}
-
-						$jenisKelamin = $item['mhsJenisKelamin'] ?? null;
-						if ($jenisKelamin && !in_array($jenisKelamin, ['L', 'P'])) {
-							$jenisKelamin = null;
-						}
-
-						$data = [
-							'nim'                => $nim,
-							'nama_lengkap'       => $nama,
-							'jenis_kelamin'      => $jenisKelamin,
-							'email'              => $item['mhsEmail'] ?? null,
-							'no_hp'              => $item['mhsNoHp'] ?? null,
-							'program_studi_kode' => $prodiKode,
-							'tahun_angkatan'     => (string)($item['mhsAngkatan'] ?? ''),
-							'status_mahasiswa'   => 'Aktif',
-						];
-
-						if (isset($existingNims[$nim])) {
-							// Skip existing data to avoid timeout
-							// $data['id'] = $existingNims[$nim];
-							// $updateBatch[] = $data;
-							$skipped++;
-							continue;
-						} else {
-							$insertBatch[] = $data;
-							// Track newly inserted NIMs to avoid duplicates in subsequent pages
-							$existingNims[$nim] = true;
-						}
-					}
+				if (!$nim || !$nama) {
+					continue;
 				}
 
-				if (!empty($insertBatch)) {
-					$model->insertBatch($insertBatch);
-					$inserted += count($insertBatch);
+				$jenisKelamin = $item['mhsJenisKelamin'] ?? null;
+				if ($jenisKelamin && !in_array($jenisKelamin, ['L', 'P'])) {
+					$jenisKelamin = null;
 				}
 
-				if (!empty($updateBatch)) {
-					$model->updateBatch($updateBatch, 'id');
-					$updated += count($updateBatch);
-				}
+				$data = [
+					'nim'                => $nim,
+					'nama_lengkap'       => $nama,
+					'jenis_kelamin'      => $jenisKelamin,
+					'email'              => $item['mhsEmail'] ?? null,
+					'no_hp'              => $item['mhsNoHp'] ?? null,
+					'program_studi_kode' => $prodiKode,
+					'tahun_angkatan'     => (string)($item['mhsAngkatan'] ?? ''),
+					'status_mahasiswa'   => 'Aktif',
+				];
 
-				$page++;
+				if (isset($existingNims[$nim])) {
+					// Skip existing data to avoid timeout
+					$data['id'] = $existingNims[$nim];
+					$updateBatch[] = $data;
+					// $skipped++;
+					// continue;
+				} else {
+					$insertBatch[] = $data;
+					// Track newly inserted NIMs to avoid duplicates in subsequent pages
+					$existingNims[$nim] = true;
+				}
+			}
+
+			if (!empty($insertBatch)) {
+				$model->insertBatch($insertBatch);
+				$inserted += count($insertBatch);
+			}
+
+			if (!empty($updateBatch)) {
+				$model->updateBatch($updateBatch, 'id');
+				$updated += count($updateBatch);
 			}
 
 			$message = "Sinkronisasi berhasil! $inserted data baru ditambahkan, $updated data diperbarui.";
