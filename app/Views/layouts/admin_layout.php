@@ -94,8 +94,8 @@
 					</a>
 					<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isMasterDataOpen ? ' show' : '' ?>">
 						<div>
-							<li><a class="nav-link <?= uri_string() == 'admin/fakultas' ? 'active' : '' ?>" href="<?= base_url('admin/fakultas') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Fakultas">Fakultas</a></li>
-							<li><a class="nav-link <?= uri_string() == 'admin/program-studi' ? 'active' : '' ?>" href="<?= base_url('admin/program-studi') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Program Studi">Program Studi</a></li>
+							<!-- <li><a class="nav-link <?= uri_string() == 'admin/fakultas' ? 'active' : '' ?>" href="<?= base_url('admin/fakultas') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Fakultas">Fakultas</a></li>
+							<li><a class="nav-link <?= uri_string() == 'admin/program-studi' ? 'active' : '' ?>" href="<?= base_url('admin/program-studi') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Program Studi">Program Studi</a></li> -->
 							<li><a class="nav-link <?= uri_string() == 'admin/profil-lulusan' ? 'active' : '' ?>" href="<?= base_url('admin/profil-lulusan') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Profil Lulusan Program Studi">Profil Lulusan</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/cpl' ? 'active' : '' ?>" href="<?= base_url('admin/cpl') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Capaian Pembelajaran Lulusan (CPL)">CPL</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/bahan-kajian' ? 'active' : '' ?>" href="<?= base_url('admin/bahan-kajian') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Bahan Kajian Kurikulum">Bahan Kajian</a></li>
