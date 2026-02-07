@@ -638,19 +638,30 @@ class Mengajar extends BaseController
 			$skipped = 0;
 
 			foreach ($kelasList as $kelas) {
-				$mkKode = $kelas['jadwal_mk_kurikulum_kode'] ?? null;
-				$kelasId = $kelas['jadwal_kelas_id'] ?? null;
+				$mkKode = $kelas['mata_kuliah']['kode'] ?? null;
+				$kelasId = $kelas['kelas']['id'] ?? null;
 				// Validate kelas_id exists in kelas table to avoid FK constraint violation
 				if ($kelasId && !isset($validKelasIds[$kelasId])) {
 					$kelasId = null;
 				}
-				$kelasNama = $kelas['jadwal_kelas_nama'] ?? 'A';
-				$kelasJenis = $kelas['jadwal_kelas_jenis'] ?? null;
-				$kelasSemester = $kelas['jadwal_kelas_semester'] ?? null;
-				$kelasStatus = $kelas['jadwal_kelas_status'] ?? 'Aktif';
-				$mahasiswaData = $kelas['jadwal_kelas_mahasiswa'] ?? [];
+				$kelasNama = $kelas['kelas']['nama'] ?? 'A';
+				$kelasJenis = $kelas['kelas']['jenis'] ?? null;
+				$kelasSemester = $kelas['kelas']['semester'] ?? null;
+				$kelasStatus = $kelas['kelas']['status'] ?? 'Aktif';
+				$hari = $kelas['jadwal_perkuliahan'][0]['hari'] ?? null;
+
+				// Extract time from ISO format "2026-02-07T08:20:00.000000Z" -> "08:20:00"
+				$jamMulaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['mulai'] ?? null;
+				$jamSelesaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['selesai'] ?? null;
+
+				$jamMulai = $jamMulaiRaw ? substr($jamMulaiRaw, 11, 8) : null;
+				$jamSelesai = $jamSelesaiRaw ? substr($jamSelesaiRaw, 11, 8) : null;
+
+				$ruangKelas = $kelas['jadwal_perkuliahan'][0]['ruangan']['ruang'] ?? null;
+				$gedung = $kelas['jadwal_perkuliahan'][0]['ruangan']['gedung'] ?? null;
+				$mahasiswaData = $kelas['mahasiswa'] ?? [];
 				$totalMahasiswa = $mahasiswaData['total'] ?? 0;
-				$nimList = $mahasiswaData['NIM'] ?? [];
+				$nimList = $mahasiswaData['nim'] ?? [];
 
 				// Only process if this MK has RPS
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
@@ -687,6 +698,10 @@ class Mengajar extends BaseController
 						'kelas_status'      => $kelasStatus,
 						'mk_kurikulum_kode' => $mkKode,
 						'total_mahasiswa'   => $totalMahasiswa,
+						'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
+						'hari'              => $hari,
+						'jam_mulai'         => $jamMulai,
+						'jam_selesai'       => $jamSelesai,
 					]);
 					$jadwalId = $existing['id'];
 					$updated++;
@@ -707,6 +722,10 @@ class Mengajar extends BaseController
 							'kelas_status'      => $kelasStatus,
 							'mk_kurikulum_kode' => $mkKode,
 							'total_mahasiswa'   => $totalMahasiswa,
+							'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
+							'hari'              => $hari,
+							'jam_mulai'         => $jamMulai,
+							'jam_selesai'       => $jamSelesai,
 						]);
 						$jadwalId = $existingByMk['id'];
 						$updated++;
@@ -717,6 +736,10 @@ class Mengajar extends BaseController
 							'program_studi_kode' => $programStudiKode,
 							'tahun_akademik'    => $tahunAkademik,
 							'kelas'             => $kelasNama,
+							'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
+							'hari'              => $hari,
+							'jam_mulai'         => $jamMulai,
+							'jam_selesai'       => $jamSelesai,
 							'status'            => 'active',
 							'kelas_id'          => $kelasId,
 							'kelas_jenis'       => $kelasJenis,
@@ -823,7 +846,7 @@ class Mengajar extends BaseController
 			// Filter kelas matching the given kode_mk
 			$matchedKelas = [];
 			foreach ($kelasList as $kelas) {
-				if (($kelas['jadwal_mk_kurikulum_kode'] ?? '') === $mkKode && ($kelas['jadwal_kelas_status'] ?? '') === 'Aktif') {
+				if (($kelas['mata_kuliah']['kode'] ?? '') === $mkKode && ($kelas['kelas']['status'] ?? '') === 'Aktif') {
 					$matchedKelas[] = $kelas;
 				}
 			}
@@ -842,8 +865,8 @@ class Mengajar extends BaseController
 
 			$programStudiKode = null;
 			foreach ($kelasApiList as $kls) {
-				if (($kls['matakuliah_kode'] ?? '') === $mkKode) {
-					$programStudiKode = $kls['program_studi_kode'] ?? null;
+				if (($kls['matakuliahKode'] ?? '') === $mkKode) {
+					$programStudiKode = $kls['prodiKode'] ?? null;
 					break;
 				}
 			}

@@ -279,24 +279,64 @@
 						if (data.success && data.data.length > 0) {
 							var html = '<div class="list-group">';
 							$.each(data.data, function(index, kelas) {
-								var semester = kelas.jadwal_kelas_semester || '-';
-								var totalMhs = kelas.jadwal_kelas_mahasiswa ? kelas.jadwal_kelas_mahasiswa.total : 0;
+								console.log('Kelas data:', kelas);
+								var semester = kelas.kelas.semester || '-';
+								var totalMhs = kelas.mahasiswa.total ? kelas.mahasiswa.total : 0;
+
+								// Safely extract schedule data
+								var hari = '';
+								var jamMulai = '';
+								var jamSelesai = '';
+								var ruang = '';
+								var gedung = '';
+
+								// jadwal_perkuliahan is an array, access first element
+								if (kelas.jadwal_perkuliahan && kelas.jadwal_perkuliahan.length > 0) {
+									var jadwal = kelas.jadwal_perkuliahan[0];
+									hari = jadwal.hari || '';
+
+									// Extract time from ISO format "2026-02-07T08:20:00.000000Z" -> "08:20"
+									var jamMulaiRaw = jadwal.jam.mulai || '';
+									var jamSelesaiRaw = jadwal.jam.selesai || '';
+
+									if (jamMulaiRaw) {
+										jamMulai = jamMulaiRaw.substring(11, 16); // Extract HH:MM
+									}
+									if (jamSelesaiRaw) {
+										jamSelesai = jamSelesaiRaw.substring(11, 16); // Extract HH:MM
+									}
+
+									if (jadwal.ruangan) {
+										ruang = jadwal.ruangan.ruang || '';
+										gedung = jadwal.ruangan.gedung || '';
+									}
+								}
+
+								var ruangLengkap = gedung ? gedung + ' - ' + ruang : ruang;
+
 								html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3" style="cursor: pointer;">' +
 									'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
 									' data-kelas-id="' + (kelas.jadwal_kelas_id || '') + '"' +
-									' data-kelas-nama="' + (kelas.jadwal_kelas_nama || '') + '"' +
-									' data-kelas-jenis="' + (kelas.jadwal_kelas_jenis || '') + '"' +
-									' data-kelas-semester="' + semester + '"' +
-									' data-kelas-status="' + (kelas.jadwal_kelas_status || '') + '"' +
-									' data-mk-kode="' + (kelas.jadwal_mk_kurikulum_kode || '') + '"' +
-									' data-total-mhs="' + totalMhs + '">' +
+									' data-kelas-nama="' + (kelas.kelas.nama || '') + '"' +
+									' data-kelas-jenis="' + (kelas.kelas.jenis || '') + '"' +
+									' data-kelas-semester="' + kelas.kelas.semester + '"' +
+									' data-kelas-status="' + (kelas.kelas.status || '') + '"' +
+									' data-mk-kode="' + (kelas.mata_kuliah.kode || '') + '"' +
+									' data-total-mhs="' + totalMhs + '"' +
+									' data-hari="' + hari + '"' +
+									' data-jam-mulai="' + jamMulai + '"' +
+									' data-jam-selesai="' + jamSelesai + '"' +
+									' data-ruang="' + ruangLengkap + '">' +
 									'<div class="flex-grow-1">' +
-									'<div class="fw-semibold">Kelas ' + (kelas.jadwal_kelas_nama || '-') + '</div>' +
+									'<div class="fw-semibold">Kelas ' + (kelas.kelas.nama || '-') + '</div>' +
 									'<div class="small text-muted">' +
-									(kelas.jadwal_kelas_jenis || '-') + ' &bull; ' +
+									(kelas.kelas.jenis || '-') + ' &bull; ' +
 									'Semester: ' + semester + ' &bull; ' +
-									'Status: <span class="badge ' + (kelas.jadwal_kelas_status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.jadwal_kelas_status || '-') + '</span> &bull; ' +
+									'Status: <span class="badge ' + (kelas.kelas.status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.status || '-') + '</span> &bull; ' +
 									'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
+									(hari ? ' &bull; ' + hari : '') +
+									(jamMulai ? ' &bull; ' + jamMulai + '-' + jamSelesai : '') +
+									(ruangLengkap ? ' &bull; ' + ruangLengkap : '') +
 									'</div></div></label>';
 							});
 							html += '</div>';
@@ -312,6 +352,20 @@
 								$('#kelas_semester').val($radio.data('kelas-semester'));
 								$('#mk_kurikulum_kode').val($radio.data('mk-kode'));
 								$('#total_mahasiswa').val($radio.data('total-mhs'));
+
+								// Auto-fill schedule fields (always update, even if empty to clear previous values)
+								var hari = $radio.data('hari') || '';
+								var jamMulai = $radio.data('jam-mulai') || '';
+								var jamSelesai = $radio.data('jam-selesai') || '';
+								var ruang = $radio.data('ruang') || '';
+
+								console.log('Autofill data from radio:', {hari, jamMulai, jamSelesai, ruang});
+
+								// Always set values (empty string will clear the field)
+								$('#hari').val(hari).trigger('change');
+								$('#jam_mulai').val(jamMulai);
+								$('#jam_selesai').val(jamSelesai);
+								$('#ruang').val(ruang);
 
 								// Auto-fill tahun_akademik from semester code
 								var semCode = String($radio.data('kelas-semester'));
