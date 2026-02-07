@@ -52,147 +52,28 @@
 
 						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-bookmark"></i> Detail Kegiatan</h5>
 
-						<div class="mb-3">
-							<label for="jenis_kegiatan" class="form-label">Jenis Kegiatan <span class="text-danger">*</span></label>
-							<input type="text" class="form-control" id="jenis_kegiatan" name="jenis_kegiatan"
-								value="" required placeholder="Contoh: Magang, Pertukaran Mahasiswa, Studi Independen, dll.">
-						</div>
-
-						<div class="mb-3">
-							<label for="judul_kegiatan" class="form-label">Judul Kegiatan <span class="text-danger">*</span></label>
-							<input type="text" class="form-control" id="judul_kegiatan" name="judul_kegiatan"
-								value="" required placeholder="Contoh: Magang di PT. XYZ sebagai Software Developer">
-						</div>
-
-						<div class="mb-3">
-							<label for="tempat_kegiatan" class="form-label">Tempat Kegiatan <span class="text-danger">*</span></label>
-							<input type="text" class="form-control" id="tempat_kegiatan" name="tempat_kegiatan"
-								value="" required placeholder="Contoh: PT. XYZ, Jakarta">
-						</div>
-
 						<div class="row">
 							<div class="col-md-6 mb-3">
-								<label for="tanggal_mulai" class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
-								<input type="date" class="form-control" id="tanggal_mulai" name="tanggal_mulai"
-									value="" required>
+								<label for="program" class="form-label">Program</label>
+								<input type="text" class="form-control" id="program" name="program"
+									value="" placeholder="Contoh: MSIB, Riset, Kampus Mengajar">
+								<small class="text-muted">Program utama MBKM</small>
 							</div>
 							<div class="col-md-6 mb-3">
-								<label for="tanggal_selesai" class="form-label">Tanggal Selesai <span class="text-danger">*</span></label>
-								<input type="date" class="form-control" id="tanggal_selesai" name="tanggal_selesai"
-									value="" required>
+								<label for="sub_program" class="form-label">Sub Program</label>
+								<input type="text" class="form-control" id="sub_program" name="sub_program"
+									value="" placeholder="Contoh: Magang, Studi Independen, Penelitian di Desa">
+								<small class="text-muted">Sub program atau kategori spesifik</small>
 							</div>
 						</div>
 
 						<div class="row">
 							<div class="col-md-6 mb-3">
-								<label for="sks_dikonversi" class="form-label">SKS Dikonversi <span class="text-danger">*</span></label>
-								<input type="number" class="form-control" id="sks_dikonversi" name="sks_dikonversi"
-									value="20" required min="1" max="20">
+								<label for="tujuan" class="form-label">Tujuan (Perusahaan/Universitas)</label>
+								<input type="text" class="form-control" id="tujuan" name="tujuan"
+									value="" placeholder="Contoh: PT Telkom Indonesia, Universitas Gadjah Mada">
+								<small class="text-muted">Nama perusahaan atau institusi tujuan</small>
 							</div>
-							<div class="col-md-6 mb-3">
-								<label for="tahun_akademik" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
-								<input type="text" class="form-control" id="tahun_akademik" name="tahun_akademik"
-									value="2025/2026" required placeholder="2025/2026">
-							</div>
-						</div>
-					</div>
-
-					<!-- Right Column -->
-					<div class="col-md-6">
-						<h5 class="mb-3 text-primary"><i class="bi bi-award"></i> Capaian Pembelajaran</h5>
-
-						<div class="mb-3">
-							<label class="form-label">Jenis Capaian <span class="text-danger">*</span></label>
-							<div class="d-flex gap-4">
-								<div class="form-check">
-									<input class="form-check-input" type="radio" name="nilai_type" id="nilai_type_cpmk" value="cpmk"
-										required>
-									<label class="form-check-label" for="nilai_type_cpmk">
-										<strong>CPMK</strong> (Capaian Pembelajaran Mata Kuliah)
-									</label>
-								</div>
-								<div class="form-check">
-									<input class="form-check-input" type="radio" name="nilai_type" id="nilai_type_cpl" value="cpl">
-									<label class="form-check-label" for="nilai_type_cpl">
-										<strong>CPL</strong> (Capaian Pembelajaran Lulusan)
-									</label>
-								</div>
-							</div>
-						</div>
-
-						<!-- CPMK Selection -->
-						<div class="mb-3" id="cpmk_selection" style="display: none;">
-							<label for="cpmk_id" class="form-label">Pilih CPMK <span class="text-danger">*</span></label>
-							<select class="form-select" id="cpmk_id" name="cpmk_id">
-								<option value="">-- Pilih CPMK --</option>
-								<?php foreach ($cpmk_list as $cpmk): ?>
-									<option value="<?= $cpmk['id'] ?>"
-										data-deskripsi="<?= esc($cpmk['deskripsi']) ?>">
-										<?= esc($cpmk['kode_cpmk']) ?> - <?= esc(substr($cpmk['deskripsi'], 0, 60)) ?>...
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<div id="cpmk_deskripsi" class="form-text text-muted mt-2"></div>
-						</div>
-
-						<!-- CPL Selection -->
-						<div class="mb-3" id="cpl_selection" style="display: none;">
-							<label for="cpl_id" class="form-label">Pilih CPL <span class="text-danger">*</span></label>
-							<select class="form-select" id="cpl_id" name="cpl_id">
-								<option value="">-- Pilih CPL --</option>
-								<?php foreach ($cpl_list as $cpl): ?>
-									<option value="<?= $cpl['id'] ?>"
-										data-deskripsi="<?= esc($cpl['deskripsi']) ?>">
-										<?= esc($cpl['kode_cpl']) ?> - <?= esc(substr($cpl['deskripsi'], 0, 60)) ?>...
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<div id="cpl_deskripsi" class="form-text text-muted mt-2"></div>
-						</div>
-
-						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-people"></i> Pembimbing</h5>
-
-						<div class="mb-3">
-							<label for="dosen_pembimbing_id" class="form-label">Dosen Pembimbing</label>
-							<select class="form-select" id="dosen_pembimbing_id" name="dosen_pembimbing_id">
-								<option value="">Pilih Dosen Pembimbing</option>
-								<?php foreach ($dosen as $d): ?>
-									<option value="<?= $d['id'] ?>">
-										<?= esc($d['nama_lengkap']) ?> (<?= esc($d['nip']) ?>)
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<small class="text-muted">Pilih dosen pembimbing dari kampus</small>
-						</div>
-
-						<div class="mb-3">
-							<label for="pembimbing_lapangan" class="form-label">Pembimbing Lapangan</label>
-							<input type="text" class="form-control" id="pembimbing_lapangan" name="pembimbing_lapangan"
-								value="" placeholder="Nama pembimbing di tempat kegiatan">
-							<small class="text-muted">Nama pembimbing dari tempat kegiatan (perusahaan/instansi)</small>
-						</div>
-
-						<div class="mb-3">
-							<label for="kontak_pembimbing" class="form-label">Kontak Pembimbing Lapangan</label>
-							<input type="text" class="form-control" id="kontak_pembimbing" name="kontak_pembimbing"
-								value="" placeholder="Email atau nomor telepon">
-						</div>
-
-						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-text"></i> Informasi Tambahan</h5>
-
-						<div class="mb-3">
-							<label for="deskripsi_kegiatan" class="form-label">Deskripsi Kegiatan</label>
-							<textarea class="form-control" id="deskripsi_kegiatan" name="deskripsi_kegiatan"
-								rows="4" placeholder="Deskripsikan kegiatan yang akan dilakukan..."></textarea>
-						</div>
-
-						<div class="alert alert-info">
-							<i class="bi bi-info-circle"></i> <strong>Catatan:</strong>
-							<ul class="mb-0 mt-2">
-								<li>Pastikan data mahasiswa dan capaian pembelajaran sudah benar</li>
-								<li>Nilai akan diinput setelah kegiatan selesai</li>
-								<li>Status awal kegiatan adalah "Diajukan"</li>
-							</ul>
 						</div>
 					</div>
 				</div>
@@ -225,68 +106,11 @@
 			width: '100%'
 		});
 
-		$('#cpmk_id').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Pilih CPMK --',
-			allowClear: true,
-			width: '100%'
-		});
-
-		$('#cpl_id').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Pilih CPL --',
-			allowClear: true,
-			width: '100%'
-		});
-
 		$('#dosen_pembimbing_id').select2({
 			theme: 'bootstrap-5',
 			placeholder: 'Pilih Dosen Pembimbing',
 			allowClear: true,
 			width: '100%'
-		});
-
-		// CPL/CPMK toggle
-		const nilaiTypeRadios = document.querySelectorAll('input[name="nilai_type"]');
-		const cpmkSelection = document.getElementById('cpmk_selection');
-		const cplSelection = document.getElementById('cpl_selection');
-
-		function toggleSelections() {
-			const selectedType = document.querySelector('input[name="nilai_type"]:checked')?.value;
-
-			if (selectedType === 'cpmk') {
-				cpmkSelection.style.display = 'block';
-				cplSelection.style.display = 'none';
-				$('#cpmk_id').prop('required', true);
-				$('#cpl_id').prop('required', false).val('').trigger('change');
-			} else if (selectedType === 'cpl') {
-				cpmkSelection.style.display = 'none';
-				cplSelection.style.display = 'block';
-				$('#cpmk_id').prop('required', false).val('').trigger('change');
-				$('#cpl_id').prop('required', true);
-			} else {
-				cpmkSelection.style.display = 'none';
-				cplSelection.style.display = 'none';
-			}
-		}
-
-		nilaiTypeRadios.forEach(radio => {
-			radio.addEventListener('change', toggleSelections);
-		});
-
-		// Initialize on page load
-		toggleSelections();
-
-		// Show description when CPMK is selected
-		$('#cpmk_id').on('change', function() {
-			const deskripsi = $(this).find(':selected').data('deskripsi') || '';
-			$('#cpmk_deskripsi').text(deskripsi);
-		});
-
-		// Show description when CPL is selected
-		$('#cpl_id').on('change', function() {
-			const deskripsi = $(this).find(':selected').data('deskripsi') || '';
-			$('#cpl_deskripsi').text(deskripsi);
 		});
 	});
 </script>

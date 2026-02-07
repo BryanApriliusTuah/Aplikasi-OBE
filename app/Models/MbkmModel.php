@@ -6,172 +6,267 @@ use CodeIgniter\Model;
 
 class MbkmModel extends Model
 {
-	protected $table = 'mbkm_kegiatan';
+	protected $table = 'mbkm';
 	protected $primaryKey = 'id';
 	protected $useAutoIncrement = true;
 	protected $returnType = 'array';
 	protected $useSoftDeletes = false;
 	protected $allowedFields = [
-		'jenis_kegiatan',
-		'judul_kegiatan',
-		'tempat_kegiatan',
-		'pembimbing_lapangan',
-		'kontak_pembimbing',
-		'dosen_pembimbing_id',
-		'tanggal_mulai',
-		'tanggal_selesai',
-		'durasi_minggu',
-		'sks_dikonversi',
-		'deskripsi_kegiatan',
-		'dokumen_pendukung',
-		'status_kegiatan',
-		'tahun_akademik',
-		'nilai_type',
-		'cpmk_id',
-		'cpl_id'
+		'nim',
+		'program',
+		'sub_program',
+		'tujuan',
+		'status_kegiatan'
 	];
 	protected $useTimestamps = true;
 	protected $createdField = 'created_at';
 	protected $updatedField = 'updated_at';
 
-	// Get all MBKM activities with related data
+	/**
+	 * Get all MBKM activities with complete information
+	 */
 	public function getKegiatanLengkap($filters = [])
 	{
-		$builder = $this->db->table('view_mbkm_lengkap');
+		$builder = $this->db->table('mbkm k')
+			->select('k.*');
 
-		if (!empty($filters['program_studi'])) {
-			$builder->where('program_studi', $filters['program_studi']);
-		}
-
-		if (!empty($filters['tahun_akademik'])) {
-			$builder->like('tahun_akademik', $filters['tahun_akademik']);
-		}
-
+		// Apply filters
 		if (!empty($filters['status_kegiatan'])) {
-			$builder->where('status_kegiatan', $filters['status_kegiatan']);
+			$builder->where('k.status_kegiatan', $filters['status_kegiatan']);
 		}
 
-		if (!empty($filters['jenis_kegiatan'])) {
-			$builder->where('jenis_kegiatan', $filters['jenis_kegiatan']);
+		$result = $builder->orderBy('k.created_at', 'DESC')->get()->getResultArray();
+
+		// Enrich each record with mahasiswa data from NIM
+		foreach ($result as &$row) {
+			$nim_list = [];
+			$nama_list = [];
+			$fakultas = '';
+			$prodi = '';
+
+			if (!empty($row['nim'])) {
+				$nims = array_map('trim', explode(',', $row['nim']));
+				foreach ($nims as $nim) {
+					if (empty($nim)) continue;
+
+					$mahasiswa = $this->db->table('mahasiswa m')
+						->select('m.nim, m.nama_lengkap, ps.nama_resmi as program_studi, f.nama_resmi as fakultas')
+						->join('program_studi ps', 'ps.kode = m.program_studi_kode', 'left')
+						->join('fakultas f', 'f.kode = ps.fakultas_kode', 'left')
+						->where('m.nim', $nim)
+						->get()
+						->getRowArray();
+
+					if ($mahasiswa) {
+						$nim_list[] = $mahasiswa['nim'];
+						$nama_list[] = $mahasiswa['nama_lengkap'];
+						if (empty($fakultas) && !empty($mahasiswa['fakultas'])) {
+							$fakultas = $mahasiswa['fakultas'];
+						}
+						if (empty($prodi) && !empty($mahasiswa['program_studi'])) {
+							$prodi = $mahasiswa['program_studi'];
+						}
+					} else {
+						$nim_list[] = $nim;
+						$nama_list[] = '-';
+					}
+				}
+			}
+
+			$row['nim_list'] = implode(', ', $nim_list) ?: '-';
+			$row['nama_mahasiswa_list'] = implode(', ', $nama_list) ?: '-';
+			$row['fakultas'] = $fakultas ?: '-';
+			$row['program_studi'] = $prodi ?: '-';
 		}
 
-		return $builder->get()->getResultArray();
+		return $result;
 	}
 
-	// Get single activity with full details
-	public function getKegiatanById($id)
-	{
-		return $this->db->table('mbkm_kegiatan k')
-			->select('k.*, m.nim, m.nama_lengkap as nama_mahasiswa, m.program_studi_kode,
-                     jk.nama_kegiatan, jk.kode_kegiatan, jk.sks_konversi as sks_default,
-                     d.nama_lengkap as nama_dosen_pembimbing, d.nip,
-                     na.nilai_angka, na.nilai_huruf, na.status_kelulusan, na.catatan_akhir')
-			->join('mahasiswa m', 'm.id = k.mahasiswa_id')
-			->join('mbkm_jenis_kegiatan jk', 'jk.id = k.jenis_kegiatan_id')
-			->join('dosen d', 'd.id = k.dosen_pembimbing_id', 'left')
-			->join('mbkm_nilai_akhir na', 'na.kegiatan_id = k.id', 'left')
-			->where('k.id', $id)
-			->get()
-			->getRowArray();
-	}
 
-	// Get component scores for an activity
-	public function getNilaiKomponen($kegiatan_id)
+	/**
+	 * Get konversi MK by mahasiswa list
+	 */
+	public function getKonversiMkByMahasiswaList($nim)
 	{
-		return $this->db->table('mbkm_nilai n')
-			->select('n.*, k.nama_komponen, k.bobot')
-			->join('mbkm_komponen_nilai k', 'k.id = n.komponen_id')
-			->where('n.kegiatan_id', $kegiatan_id)
+		if (empty($nim)) {
+			return [];
+		}
+
+		$nims = array_map('trim', explode(',', $nim));
+
+		// First, get all mata kuliah for MBKM students
+		$mk_list = $this->db->table('mata_kuliah mk')
+			->select('mk.id as mata_kuliah_id, mk.kode_mk, mk.nama_mk, mk.sks as bobot_mk, j.id as jadwal_id')
+			->join('jadwal j', 'mk.id = j.mata_kuliah_id', 'inner')
+			->join('jadwal_mahasiswa jm', 'j.id = jm.jadwal_id', 'inner')
+			->where('j.kelas', 'KM')
+			->whereIn('jm.nim', $nims)
+			->groupBy('mk.id, mk.kode_mk, mk.nama_mk, mk.sks, j.id')
 			->get()
 			->getResultArray();
+
+		$grouped = [];
+
+		foreach ($mk_list as $mk) {
+			$mk_key = $mk['kode_mk'];
+
+			// Get RPS for this mata kuliah
+			$rps = $this->db->table('rps')
+				->select('id')
+				->where('mata_kuliah_id', $mk['mata_kuliah_id'])
+				->orderBy('created_at', 'DESC')
+				->get()
+				->getRowArray();
+
+			// Get CPMK with summed weights from rps_mingguan (same as CpmkModel)
+			if ($rps) {
+				$query = "
+					SELECT
+						c.id as cpmk_id,
+						c.kode_cpmk,
+						c.deskripsi as deskripsi_cpmk,
+						COALESCE(SUM(rm.bobot), 0) as bobot
+					FROM cpmk c
+					INNER JOIN cpmk_mk cm ON cm.cpmk_id = c.id
+					LEFT JOIN rps_mingguan rm ON rm.cpmk_id = c.id AND rm.rps_id = ?
+					WHERE cm.mata_kuliah_id = ?
+					GROUP BY c.id, c.kode_cpmk, c.deskripsi
+					ORDER BY c.kode_cpmk
+				";
+
+				$cpmk_list = $this->db->query($query, [$rps['id'], $mk['mata_kuliah_id']])
+					->getResultArray();
+			} else {
+				// Fallback: get CPMK without weights from cpmk_mk
+				$cpmk_list = $this->db->table('cpmk c')
+					->select('c.id as cpmk_id, c.kode_cpmk, c.deskripsi as deskripsi_cpmk, 0 as bobot')
+					->join('cpmk_mk cm', 'cm.cpmk_id = c.id')
+					->where('cm.mata_kuliah_id', $mk['mata_kuliah_id'])
+					->orderBy('c.kode_cpmk')
+					->get()
+					->getResultArray();
+			}
+
+			if (!isset($grouped[$mk_key])) {
+				$grouped[$mk_key] = [
+					'kode_mk' => $mk['kode_mk'],
+					'nama_mk' => $mk['nama_mk'],
+					'bobot_mk' => $mk['bobot_mk'],
+					'mata_kuliah_id' => $mk['mata_kuliah_id'],
+					'cpmk_list' => $cpmk_list
+				];
+			}
+		}
+
+		return array_values($grouped);
 	}
 
-	// Calculate final score
-	public function hitungNilaiAkhir($kegiatan_id)
+	/**
+	 * Get mahasiswa list by kegiatan ID
+	 */
+	public function getMahasiswaByKegiatan($kegiatan_id)
 	{
-		$komponen = $this->db->table('mbkm_nilai n')
-			->select('n.nilai, k.bobot')
-			->join('mbkm_komponen_nilai k', 'k.id = n.komponen_id')
-			->where('n.kegiatan_id', $kegiatan_id)
+		$kegiatan = $this->find($kegiatan_id);
+		if (!$kegiatan || empty($kegiatan['nim'])) {
+			return [];
+		}
+
+		$nims = array_map('trim', explode(',', $kegiatan['nim']));
+
+		$mahasiswa_list = $this->db->table('mahasiswa')
+			->select('id, nim, nama_lengkap, program_studi_kode')
+			->whereIn('nim', $nims)
 			->get()
 			->getResultArray();
 
-		if (empty($komponen)) {
-			return null;
-		}
-
-		$totalNilai = 0;
-		$totalBobot = 0;
-
-		foreach ($komponen as $k) {
-			$totalNilai += ($k['nilai'] * $k['bobot']) / 100;
-			$totalBobot += $k['bobot'];
-		}
-
-		if ($totalBobot < 100) {
-			return null; // Belum semua komponen dinilai
-		}
-
-		return round($totalNilai, 2);
+		return $mahasiswa_list;
 	}
 
-	// Convert numeric score to letter grade using dynamic grade configuration
-	public function konversiNilaiHuruf($nilai_angka)
+	/**
+	 * Save nilai CPMK for MBKM using nilai_cpmk_mahasiswa table
+	 */
+	public function saveNilaiCpmk($mahasiswa_id, $jadwal_id, $cpmk_id, $nilai)
 	{
-		$gradeConfigModel = new GradeConfigModel();
-		return $gradeConfigModel->getGradeLetter((float)$nilai_angka);
-	}
-
-	// Save or update final score (legacy method for backward compatibility)
-	public function simpanNilaiAkhir($kegiatan_id, $nilai_angka, $catatan = null)
-	{
-		return $this->simpanNilaiAkhirWithCapaian($kegiatan_id, $nilai_angka, null, null, null, $catatan);
-	}
-
-	// Save or update final score with CPL/CPMK reference
-	public function simpanNilaiAkhirWithCapaian($kegiatan_id, $nilai_angka, $nilai_type = null, $cpmk_id = null, $cpl_id = null, $catatan = null)
-	{
-		$gradeConfigModel = new GradeConfigModel();
-		$nilai_huruf = $gradeConfigModel->getGradeLetter((float)$nilai_angka);
-		$status_kelulusan = $gradeConfigModel->isPassing((float)$nilai_angka) ? 'Lulus' : 'Tidak Lulus';
-
 		$data = [
-			'kegiatan_id' => $kegiatan_id,
-			'nilai_angka' => $nilai_angka,
-			'nilai_huruf' => $nilai_huruf,
-			'status_kelulusan' => $status_kelulusan,
-			'nilai_type' => $nilai_type,
+			'mahasiswa_id' => $mahasiswa_id,
+			'jadwal_id' => $jadwal_id,
 			'cpmk_id' => $cpmk_id,
-			'cpl_id' => $cpl_id,
-			'catatan_akhir' => $catatan,
-			'tanggal_penilaian' => date('Y-m-d')
+			'nilai_cpmk' => $nilai
 		];
 
-		$existing = $this->db->table('mbkm_nilai_akhir')
-			->where('kegiatan_id', $kegiatan_id)
+		// Check if exists
+		$existing = $this->db->table('nilai_cpmk_mahasiswa')
+			->where([
+				'mahasiswa_id' => $mahasiswa_id,
+				'jadwal_id' => $jadwal_id,
+				'cpmk_id' => $cpmk_id
+			])
 			->get()
 			->getRowArray();
 
 		if ($existing) {
-			return $this->db->table('mbkm_nilai_akhir')
-				->where('kegiatan_id', $kegiatan_id)
-				->update($data);
+			$this->db->table('nilai_cpmk_mahasiswa')
+				->where('id', $existing['id'])
+				->update(['nilai_cpmk' => $nilai, 'updated_at' => date('Y-m-d H:i:s')]);
 		} else {
-			return $this->db->table('mbkm_nilai_akhir')->insert($data);
+			$this->db->table('nilai_cpmk_mahasiswa')->insert($data);
 		}
+
+		return true;
 	}
 
-	// Get statistics
-	public function getStatistik($tahun_akademik = null)
+	/**
+	 * Get existing CPMK scores for MBKM
+	 */
+	public function getNilaiCpmk($nim)
 	{
-		$builder = $this->db->table('mbkm_kegiatan k')
-			->select('k.status_kegiatan, COUNT(*) as jumlah')
-			->groupBy('k.status_kegiatan');
-
-		if ($tahun_akademik) {
-			$builder->where('k.tahun_akademik', $tahun_akademik);
+		if (empty($nim)) {
+			return [];
 		}
 
-		return $builder->get()->getResultArray();
+		// Get mahasiswa_id
+		$mahasiswa = $this->db->table('mahasiswa')
+			->select('id')
+			->where('nim', trim($nim))
+			->get()
+			->getRowArray();
+
+		if (!$mahasiswa) {
+			return [];
+		}
+
+		$mahasiswa_id = $mahasiswa['id'];
+
+		// Get all jadwal with kelas = 'KM' for this mahasiswa
+		$jadwal_list = $this->db->table('jadwal_mahasiswa jm')
+			->select('jm.jadwal_id, j.mata_kuliah_id')
+			->join('jadwal j', 'j.id = jm.jadwal_id')
+			->where('jm.nim', trim($nim))
+			->where('j.kelas', 'KM')
+			->get()
+			->getResultArray();
+
+		if (empty($jadwal_list)) {
+			return [];
+		}
+
+		$jadwal_ids = array_column($jadwal_list, 'jadwal_id');
+
+		// Get scores
+		$results = $this->db->table('nilai_cpmk_mahasiswa ncm')
+			->select('ncm.*, j.mata_kuliah_id')
+			->join('jadwal j', 'j.id = ncm.jadwal_id')
+			->where('ncm.mahasiswa_id', $mahasiswa_id)
+			->whereIn('ncm.jadwal_id', $jadwal_ids)
+			->get()
+			->getResultArray();
+
+		$scores = [];
+		foreach ($results as $row) {
+			$scores[$row['mata_kuliah_id']][$row['cpmk_id']] = $row['nilai_cpmk'];
+		}
+
+		return $scores;
 	}
+
 }
