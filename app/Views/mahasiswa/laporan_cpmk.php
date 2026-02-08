@@ -531,63 +531,63 @@
 		function renderDetailModal(data, summary) {
 			let html = '';
 
-			// Display each course with its assessment breakdown (similar to admin capaian_cpmk)
-			data.forEach((course, idx) => {
+			// Display per-course CPMK score breakdown
+			if (data && data.length > 0) {
 				html += `
-					<div class="mb-4">
-						<h6><strong>${escapeHtml(course.kode_mk)}</strong> - ${escapeHtml(course.nama_mk)}</h6>
-						<p class="mb-2"><small class="text-muted">${escapeHtml(course.tahun_akademik)} / ${escapeHtml(course.kelas)}</small></p>
+					<div class="modern-table-wrapper mb-4">
+						<table class="modern-table">
+							<thead>
+								<tr>
+									<th>Mata Kuliah</th>
+									<th class="text-center">Semester</th>
+									<th class="text-center">Kelas</th>
+									<th class="text-center">Nilai CPMK</th>
+									<th class="text-center">Bobot</th>
+									<th class="text-center">Capaian (%)</th>
+								</tr>
+							</thead>
+							<tbody>
 				`;
 
-				if (course.assessments && course.assessments.length > 0) {
-					html += `
-						<div class="modern-table-wrapper">
-							<table class="modern-table">
-								<thead>
-									<tr>
-										<th>Teknik Penilaian</th>
-										<th class="text-center">Nilai</th>
-										<th class="text-center">Bobot (%)</th>
-										<th class="text-center">CPMK</th>
-									</tr>
-								</thead>
-								<tbody>
-					`;
-
-					course.assessments.forEach(assessment => {
-						html += `
-							<tr>
-								<td>${escapeHtml(assessment.teknik)}</td>
-								<td class="text-center">${parseFloat(assessment.nilai).toFixed(2)}</td>
-								<td class="text-center">${parseFloat(assessment.bobot).toFixed(2)}%</td>
-								<td class="text-center"><strong>${parseFloat(assessment.weighted).toFixed(2)}</strong></td>
-							</tr>
-						`;
-					});
+				data.forEach(course => {
+					const kelasLabel = course.kelas === 'KM'
+						? '<span class="badge bg-info">MBKM</span>'
+						: escapeHtml(course.kelas);
 
 					html += `
-								</tbody>
-								<tfoot>
-									<tr>
-										<td colspan="3" class="text-end"><strong>Total</strong></td>
-										<td class="text-center"><strong>${parseFloat(course.total_weighted).toFixed(2)}</strong></td>
-									</tr>
-								</tfoot>
-							</table>
-						</div>
+						<tr>
+							<td><strong>${escapeHtml(course.kode_mk)}</strong> - ${escapeHtml(course.nama_mk)}</td>
+							<td class="text-center">${escapeHtml(course.tahun_akademik)}</td>
+							<td class="text-center">${kelasLabel}</td>
+							<td class="text-center">${parseFloat(course.nilai_cpmk).toFixed(2)}</td>
+							<td class="text-center">${parseFloat(course.bobot).toFixed(2)}</td>
+							<td class="text-center">${parseFloat(course.capaian).toFixed(2)}%</td>
+						</tr>
 					`;
-				} else {
-					html += `<p class="text-muted">Belum ada nilai</p>`;
-				}
+				});
 
-				html += `</div>`;
-			});
+				html += `
+							</tbody>
+							<tfoot>
+								<tr>
+									<td colspan="3" class="text-end"><strong>Total</strong></td>
+									<td class="text-center"><strong>${parseFloat(summary.grand_total_nilai_cpmk).toFixed(2)}</strong></td>
+									<td class="text-center"><strong>${parseFloat(summary.grand_total_bobot).toFixed(2)}</strong></td>
+									<td class="text-center"><strong>${parseFloat(summary.capaian).toFixed(2)}%</strong></td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+				`;
+			} else {
+				html += `<p class="text-muted">Belum ada nilai</p>`;
+			}
 
 			// Display formula and final capaian
 			html += `
 				<div class="alert alert-primary mb-0">
 					<h6 class="mb-2"><i class="bi bi-calculator"></i> Capaian ${escapeHtml(summary.kode_cpmk)}:</h6>
-					<p class="mb-1"><strong>Capaian CPMK</strong> = ${summary.grand_total_weighted} / ${summary.grand_total_bobot} × 100 = ${parseFloat(summary.capaian).toFixed(2)}%</p>
+					<p class="mb-1"><strong>Capaian CPMK</strong> = ${summary.grand_total_nilai_cpmk} / ${summary.grand_total_bobot} &times; 100 = ${parseFloat(summary.capaian).toFixed(2)}%</p>
 				</div>
 			`;
 

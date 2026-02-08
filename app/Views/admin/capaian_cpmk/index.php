@@ -1685,69 +1685,63 @@
 
 		let html = ``;
 
-		let totalCpmk = 0;
-		let totalBobot = 0;
-
-		// Display each course with its assessment breakdown
-		data.courses.forEach((course, idx) => {
+		// Display each course with its CPMK score breakdown
+		if (data.courses && data.courses.length > 0) {
 			html += `
-				<div class="mb-4">
-					<h6><strong>${course.kode_mk}</strong> - ${course.nama_mk}</h6>
-					<p class="mb-2"><small class="text-muted">${course.tahun_akademik} / ${course.kelas}</small></p>
+				<div class="modern-table-wrapper mb-4">
+					<table class="modern-table">
+						<thead>
+							<tr>
+								<th>Mata Kuliah</th>
+								<th class="text-center">Semester</th>
+								<th class="text-center">Kelas</th>
+								<th class="text-center">Nilai CPMK</th>
+								<th class="text-center">Bobot</th>
+								<th class="text-center">Capaian (%)</th>
+							</tr>
+						</thead>
+						<tbody>
 			`;
 
-			if (course.assessments && course.assessments.length > 0) {
-				html += `
-					<div class="modern-table-wrapper">
-						<table class="modern-table">
-							<thead>
-								<tr>
-									<th>Teknik Penilaian</th>
-									<th class="text-center">Nilai</th>
-									<th class="text-center">Bobot (%)</th>
-									<th class="text-center">CPMK</th>
-								</tr>
-							</thead>
-							<tbody>
-				`;
-
-				course.assessments.forEach(assessment => {
-					html += `
-						<tr>
-							<td>${assessment.teknik}</td>
-							<td class="text-center">${assessment.nilai}</td>
-							<td class="text-center">${assessment.bobot}%</td>
-							<td class="text-center">${assessment.weighted.toFixed(2)}</td>
-						</tr>
-					`;
-				});
-
-				const nilaiCpmk = course.total_weighted;
+			data.courses.forEach(course => {
+				const kelasLabel = course.kelas === 'KM'
+					? '<span class="badge bg-info">MBKM</span>'
+					: course.kelas;
 
 				html += `
-							</tbody>
-							<tfoot>
-								<tr>
-									<td colspan="3" class="text-end"><strong>Total</strong></td>
-									<td class="text-center"><strong>${nilaiCpmk.toFixed(2)}</strong></td>
-								</tr>
-							</tfoot>
-						</table>
-					</div>
+					<tr>
+						<td><strong>${course.kode_mk}</strong> - ${course.nama_mk}</td>
+						<td class="text-center">${course.tahun_akademik}</td>
+						<td class="text-center">${kelasLabel}</td>
+						<td class="text-center">${course.nilai_cpmk.toFixed(2)}</td>
+						<td class="text-center">${course.bobot}</td>
+						<td class="text-center">${course.capaian}%</td>
+					</tr>
 				`;
-			} else {
-				html += `<p class="text-muted">Belum ada nilai</p>`;
-			}
+			});
 
-			html += `</div>`;
-		});
+			html += `
+						</tbody>
+						<tfoot>
+							<tr>
+								<td colspan="3" class="text-end"><strong>Total</strong></td>
+								<td class="text-center"><strong>${data.summary.grand_total_nilai_cpmk}</strong></td>
+								<td class="text-center"><strong>${data.summary.grand_total_bobot}</strong></td>
+								<td class="text-center"><strong>${data.summary.capaian}%</strong></td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+			`;
+		} else {
+			html += `<p class="text-muted">Belum ada nilai</p>`;
+		}
 
 		// Display formula and final capaian
 		html += `
 			<div class="alert alert-primary mb-0">
 				<h6 class="mb-2"><i class="bi bi-calculator"></i> Capaian ${data.kode_cpmk}:</h6>
-				<p class="mb-1"><strong>Capaian CPMK</strong> = ${data.summary.grand_total_weighted} / ${data.summary.grand_total_bobot} × 100 = ${data.summary.capaian}%</p>
-
+				<p class="mb-1"><strong>Capaian CPMK</strong> = ${data.summary.grand_total_nilai_cpmk} / ${data.summary.grand_total_bobot} &times; 100 = ${data.summary.capaian}%</p>
 			</div>
 		`;
 

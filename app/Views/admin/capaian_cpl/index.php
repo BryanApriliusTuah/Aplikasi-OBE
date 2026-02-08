@@ -1748,12 +1748,13 @@
 					<thead>
 						<tr>
 							<th width="5%" class="text-center">No</th>
-							<th width="15%">Kode CPMK</th>
-							<th width="25%">Mata Kuliah</th>
+							<th width="12%">Kode CPMK</th>
+							<th width="22%">Mata Kuliah</th>
 							<th width="12%" class="text-center">Tahun Akademik</th>
 							<th width="10%" class="text-center">Kelas</th>
 							<th width="10%" class="text-center">Nilai CPMK</th>
-							<th width="10%" class="text-center">Bobot (%)</th>
+							<th width="10%" class="text-center">Bobot</th>
+							<th width="10%" class="text-center">Capaian (%)</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -1762,20 +1763,23 @@
 		if (data.length === 0) {
 			html += `
 				<tr>
-					<td colspan="7" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
+					<td colspan="8" class="text-center text-muted">Belum ada data nilai untuk CPL ini</td>
 				</tr>
 			`;
 		} else {
 			data.forEach((item, index) => {
+				const kelasDisplay = item.kelas === 'KM' ? '<span class="badge bg-info">MBKM</span>' : item.kelas;
+				const capaian = item.capaian !== undefined ? parseFloat(item.capaian).toFixed(2) : (parseFloat(item.bobot) > 0 ? (parseFloat(item.nilai_cpmk) / parseFloat(item.bobot) * 100).toFixed(2) : '0.00');
 				html += `
 					<tr>
 						<td class="text-center">${index + 1}</td>
 						<td><strong>${item.kode_cpmk}</strong></td>
 						<td><small>${item.kode_mk} - ${item.nama_mk}</small></td>
 						<td class="text-center">${item.tahun_akademik}</td>
-						<td class="text-center">${item.kelas}</td>
+						<td class="text-center">${kelasDisplay}</td>
 						<td class="text-center">${parseFloat(item.nilai_cpmk).toFixed(2)}</td>
-						<td class="text-center">${parseFloat(item.bobot).toFixed(0)}%</td>
+						<td class="text-center">${parseFloat(item.bobot).toFixed(2)}</td>
+						<td class="text-center">${capaian}%</td>
 					</tr>
 				`;
 			});
@@ -1787,11 +1791,12 @@
 					<tfoot>
 						<tr>
 							<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
-							<td class="text-center"><strong>${summary.nilai_cpl.toFixed(2)}</strong></td>
-							<td class="text-center"><strong>${summary.total_bobot.toFixed(0)}%</strong></td>
+							<td class="text-center"><strong>${summary.grand_total_nilai.toFixed(2)}</strong></td>
+							<td class="text-center"><strong>${summary.grand_total_bobot.toFixed(2)}</strong></td>
+							<td></td>
 						</tr>
 						<tr style="background-color: #d1e7dd;">
-							<td colspan="6" class="text-end"><strong>Capaian CPL (%) = (${summary.nilai_cpl.toFixed(2)} / ${summary.total_bobot.toFixed(0)}) × 100</strong></td>
+							<td colspan="7" class="text-end"><strong>Capaian CPL (%) = (${summary.grand_total_nilai.toFixed(2)} / ${summary.grand_total_bobot.toFixed(2)}) &times; 100</strong></td>
 							<td class="text-center"><h6 class="mb-0"><strong>${summary.capaian_cpl.toFixed(2)}%</strong></h6></td>
 						</tr>
 					</tfoot>
@@ -2419,7 +2424,9 @@
 					detailMk += '<li class="text-muted">Belum ada nilai</li>';
 				} else {
 					item.detail_mk.forEach(mk => {
-						detailMk += `<li>${mk.kode_mk} (${mk.tahun_akademik} - ${mk.kelas}): <strong>${parseFloat(mk.nilai_cpmk).toFixed(2)}</strong></li>`;
+						const kelasDisplay = mk.kelas === 'KM' ? '<span class="badge bg-info">MBKM</span>' : mk.kelas;
+						const capaianDisplay = mk.capaian !== undefined ? parseFloat(mk.capaian).toFixed(2) : parseFloat(mk.nilai_cpmk).toFixed(2);
+						detailMk += `<li>${mk.kode_mk} (${mk.tahun_akademik} - ${kelasDisplay}): <strong>${capaianDisplay}%</strong></li>`;
 					});
 				}
 				detailMk += '</ul>';
