@@ -348,7 +348,7 @@ class LaporanCpl extends BaseController
 
 			// Get all nilai_cpmk for all students for these CPMK
 			$nilaiList = $this->db->table('nilai_cpmk_mahasiswa ncm')
-				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, jm.mata_kuliah_id')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, ncm.jadwal_id, jm.mata_kuliah_id')
 				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
 				->whereIn('ncm.mahasiswa_id', $studentIds)
 				->whereIn('ncm.cpmk_id', $cpmkIds)
@@ -361,28 +361,32 @@ class LaporanCpl extends BaseController
 			// Nilai CPL = Σ(CPMK scores), Capaian CPL (%) = (Nilai CPL / Total Bobot) × 100
 			$studentScores = [];
 			$nilaiCpl = 0;
+			$bobotCache = [];
 
 			foreach ($nilaiList as $nilai) {
-				// Get bobot from rps_mingguan
-				$rps = $this->db->table('rps')
-					->select('id')
-					->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
-					->orderBy('created_at', 'DESC')
-					->get()
-					->getRowArray();
-
-				$bobot = 0;
-				if ($rps) {
-					// Sum bobot across all weeks for this CPMK
-					$bobotResult = $this->db->table('rps_mingguan')
-						->selectSum('bobot')
-						->where('rps_id', $rps['id'])
-						->where('cpmk_id', $nilai['cpmk_id'])
+				// Cache bobot lookup by cpmk_id + mata_kuliah_id
+				$bobotKey = $nilai['cpmk_id'] . '_' . $nilai['mata_kuliah_id'];
+				if (!isset($bobotCache[$bobotKey])) {
+					$rps = $this->db->table('rps')
+						->select('id')
+						->where('mata_kuliah_id', $nilai['mata_kuliah_id'])
+						->orderBy('created_at', 'DESC')
 						->get()
 						->getRowArray();
 
-					$bobot = $bobotResult['bobot'] ?? 0;
+					$bobot = 0;
+					if ($rps) {
+						$bobotResult = $this->db->table('rps_mingguan')
+							->selectSum('bobot')
+							->where('rps_id', $rps['id'])
+							->where('cpmk_id', $nilai['cpmk_id'])
+							->get()
+							->getRowArray();
+						$bobot = floatval($bobotResult['bobot'] ?? 0);
+					}
+					$bobotCache[$bobotKey] = $bobot;
 				}
+				$bobot = $bobotCache[$bobotKey];
 
 				$mhsId = $nilai['mahasiswa_id'];
 				if (!isset($studentScores[$mhsId])) {

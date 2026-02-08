@@ -138,9 +138,10 @@ class LaporanCpmk extends BaseController
 		// Get lecturers (dosen pengampu)
 		$jadwalIds = array_column($jadwalMengajar, 'id');
 		$dosenPengampu = $this->db->table('jadwal_dosen jd')
-			->select('d.nama_lengkap, d.nip, jd.role')
+			->select('d.nama_lengkap, d.nip, MIN(jd.role) as role')
 			->join('dosen d', 'd.id = jd.dosen_id')
 			->whereIn('jd.jadwal_id', $jadwalIds)
+			->groupBy('d.nip')
 			->get()
 			->getResultArray();
 
@@ -174,10 +175,17 @@ class LaporanCpmk extends BaseController
 		$contohSoalFile = $jadwalMengajar[0]['contoh_soal_file'] ?? null;
 		$notulenFile = $jadwalMengajar[0]['notulen_rapat_file'] ?? null;
 
+		$programStudiNamaResmi = $this->db->table('program_studi')
+			->select('nama_resmi')
+			->where('kode', $jadwalMengajar[0]['program_studi_kode'] ?? '')
+			->get()
+			->getRow('nama_resmi');
+
 		return [
 			'identitas' => [
 				'nama_mata_kuliah' => $mataKuliah['nama_mk'],
 				'kode_mata_kuliah' => $mataKuliah['kode_mk'],
+				'program_studi_nama_resmi' => $programStudiNamaResmi ?? '-',
 				'program_studi_kode' => $jadwalMengajar[0]['program_studi_kode'] ?? '-',
 				'semester' => $mataKuliah['semester'],
 				'jumlah_sks' => $mataKuliah['sks'],
@@ -330,114 +338,55 @@ class LaporanCpmk extends BaseController
 			->get()
 			->getResultArray();
 
+		// Get bobot from rps_mingguan (shared across all jadwals for same course)
+		$rps = $this->db->table('rps')
+			->select('id')
+			->where('mata_kuliah_id', $mataKuliahId)
+			->orderBy('created_at', 'DESC')
+			->get()
+			->getRowArray();
+
 		foreach ($cpmkList as $cpmk) {
-			// Get all rps_mingguan entries for this CPMK
-			$rpsMingguan = $this->db->table('rps_mingguan rm')
-				->select('rm.id, rm.bobot, rm.teknik_penilaian')
-				->join('rps r', 'r.id = rm.rps_id')
-				->where('r.mata_kuliah_id', $mataKuliahId)
-				->where('rm.cpmk_id', $cpmk['cpmk_id'])
+			// Get bobot for this CPMK from rps_mingguan
+			$bobot = 0;
+			if ($rps) {
+				$bobotResult = $this->db->table('rps_mingguan')
+					->selectSum('bobot')
+					->where('rps_id', $rps['id'])
+					->where('cpmk_id', $cpmk['cpmk_id'])
+					->get()
+					->getRowArray();
+				$bobot = floatval($bobotResult['bobot'] ?? 0);
+			}
+
+			// Get all nilai_cpmk for students in these jadwals for this CPMK
+			$nilaiList = $this->db->table('nilai_cpmk_mahasiswa ncm')
+				->select('ncm.nilai_cpmk, ncm.mahasiswa_id')
+				->whereIn('ncm.jadwal_id', $jadwalIds)
+				->where('ncm.cpmk_id', $cpmk['cpmk_id'])
 				->get()
 				->getResultArray();
 
-			$totalScore = 0;
-			$totalCount = 0;
-			$jumlahMahasiswa = 0;
-
-			// Get all rps_mingguan IDs for this CPMK
-			$rpsMingguan_ids = array_column($rpsMingguan, 'id');
-
-			if (!empty($rpsMingguan_ids)) {
-				// Get sum and count of all input scores from teknik penilaian for this CPMK
-				$query = "
-                    SELECT
-                        SUM(ntp.nilai) as total_nilai,
-                        COUNT(ntp.nilai) as jumlah_nilai,
-                        COUNT(DISTINCT ntp.mahasiswa_id) as jml_mhs
-                    FROM nilai_teknik_penilaian ntp
-                    WHERE ntp.rps_mingguan_id IN (" . implode(',', array_fill(0, count($rpsMingguan_ids), '?')) . ")
-                    AND ntp.jadwal_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
-                    AND ntp.nilai IS NOT NULL
-                ";
-
-				$params = array_merge($rpsMingguan_ids, $jadwalIds);
-				$result = $this->db->query($query, $params)->getRowArray();
-
-				if ($result && $result['total_nilai'] !== null) {
-					$totalScore = (float)$result['total_nilai'];
-					$totalCount = (int)$result['jumlah_nilai'];
-					$jumlahMahasiswa = (int)$result['jml_mhs'];
+			// Aggregate per student (in case of multiple jadwals)
+			$studentScores = [];
+			foreach ($nilaiList as $nilai) {
+				$mhsId = $nilai['mahasiswa_id'];
+				if (!isset($studentScores[$mhsId])) {
+					$studentScores[$mhsId] = 0;
 				}
+				$studentScores[$mhsId] += floatval($nilai['nilai_cpmk']);
 			}
 
-			// Formula: nilai_rata_rata = total of input score / total count of input score
-			$nilaiRataRata = $totalCount > 0 ? round($totalScore / $totalCount, 2) : 0;
+			$jumlahMahasiswa = count($studentScores);
+			$totalScore = array_sum($studentScores);
 
-			// Build bobot mapping for each rps_mingguan
-			$bobotMapping = [];
-			foreach ($rpsMingguan as $rps) {
-				$bobot = 0;
+			// nilai_rata_rata = average CPMK score across students
+			$nilaiRataRata = $jumlahMahasiswa > 0 ? round($totalScore / $jumlahMahasiswa, 2) : 0;
 
-				// First try to get bobot from the direct column
-				if (!empty($rps['bobot'])) {
-					$bobot = (int)$rps['bobot'];
-				}
-				// Otherwise try from teknik_penilaian JSON
-				elseif (!empty($rps['teknik_penilaian'])) {
-					$teknik = json_decode($rps['teknik_penilaian'], true);
-					if (is_array($teknik)) {
-						foreach ($teknik as $t) {
-							if (isset($t['bobot'])) {
-								$bobot += (int)$t['bobot'];
-							}
-						}
-					}
-				}
-
-				// Default to 1 if no bobot found
-				$bobotMapping[$rps['id']] = $bobot > 0 ? $bobot : 1;
-			}
-
-			// Get total bobot (total weight) for this CPMK
-			$totalBobot = array_sum($bobotMapping);
-
-			// Formula: persentase_capaian = ∑(input score * weight) / total weight * 100
-			$persentaseCapaian = 0;
-			if (!empty($rpsMingguan_ids)) {
-				// Get all scores with their rps_mingguan_id to apply weights
-				$queryScores = "
-                    SELECT
-                        ntp.nilai,
-                        ntp.rps_mingguan_id
-                    FROM nilai_teknik_penilaian ntp
-                    WHERE ntp.rps_mingguan_id IN (" . implode(',', array_fill(0, count($rpsMingguan_ids), '?')) . ")
-                    AND ntp.jadwal_id IN (" . implode(',', array_fill(0, count($jadwalIds), '?')) . ")
-                    AND ntp.nilai IS NOT NULL
-                ";
-
-				$params = array_merge($rpsMingguan_ids, $jadwalIds);
-				$scores = $this->db->query($queryScores, $params)->getResultArray();
-
-				// Calculate weighted sum and total weight
-				$weightedSum = 0;
-				$totalWeight = 0;
-
-				foreach ($scores as $score) {
-					$nilai = (float)$score['nilai'];
-					$weight = $bobotMapping[$score['rps_mingguan_id']] ?? 1;
-
-					$weightedSum += $nilai * $weight;
-					$totalWeight += $weight;
-				}
-
-				// Calculate persentase capaian
-				if ($totalWeight > 0) {
-					$persentaseCapaian = round(($weightedSum / $totalWeight), 2);
-				}
-			}
-
-			// Use the already calculated totalBobot
-			$bobot = $totalBobot;
+			// persentase_capaian = (avg score / bobot) × 100
+			$persentaseCapaian = ($bobot > 0 && $jumlahMahasiswa > 0)
+				? round(($nilaiRataRata / $bobot) * 100, 2)
+				: 0;
 
 			// Get teknik penilaian
 			$teknikPenilaian = $this->getTeknikPenilaianByCpmk($mataKuliahId, $cpmk['cpmk_id']);
@@ -504,7 +453,7 @@ class LaporanCpmk extends BaseController
 		$cpmkTidakTercapai = [];
 
 		foreach ($assessmentData as $assessment) {
-			$persentaseCapaian = $assessment['nilai_rata_rata'];
+			$persentaseCapaian = $assessment['persentase_capaian'];
 
 			if ($persentaseCapaian >= $passingThreshold) {
 				$cpmkTercapai[] = $assessment['kode_cpmk'];
