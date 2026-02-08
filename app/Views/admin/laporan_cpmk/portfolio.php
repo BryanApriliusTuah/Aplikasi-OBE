@@ -41,7 +41,7 @@
 							</tr>
 							<tr>
 								<td class="fw-bold">Program Studi</td>
-								<td><?= esc($portfolio['identitas']['program_studi_kode']) ?></td>
+								<td><?= esc($portfolio['identitas']['program_studi_nama_resmi']) ?></td>
 							</tr>
 							<tr>
 								<td class="fw-bold">Semester</td>

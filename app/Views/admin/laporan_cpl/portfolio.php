@@ -38,7 +38,7 @@
 						<tbody>
 							<tr>
 								<td class="fw-bold" style="width: 30%;">Nama Program Studi</td>
-								<td><?= esc($report['identitas']['nama_program_studi']) ?></td>
+								<td><?= esc(ucwords(strtolower($report['identitas']['nama_program_studi']))) ?></td>
 							</tr>
 							<tr>
 								<td class="fw-bold">Fakultas</td>
