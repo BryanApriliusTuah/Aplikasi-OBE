@@ -152,13 +152,17 @@ class MbkmController extends BaseController
 			return redirect()->to('/admin/mbkm')->with('error', 'Kegiatan tidak ditemukan');
 		}
 
-		// Get students associated with this activity
-		$kegiatan_mahasiswa = $this->db->table('mbkm_kegiatan_mahasiswa km')
-			->select('km.mahasiswa_id, m.nim, m.nama_lengkap, m.program_studi_kode')
-			->join('mahasiswa m', 'm.id = km.mahasiswa_id')
-			->where('km.kegiatan_id', $id)
-			->get()
-			->getResultArray();
+		// Get selected mahasiswa IDs from nim column
+		$selected_mahasiswa_ids = [];
+		if (!empty($kegiatan['nim'])) {
+			$nims = array_map('trim', explode(',', $kegiatan['nim']));
+			$selected_mhs = $this->db->table('mahasiswa')
+				->select('id')
+				->whereIn('nim', $nims)
+				->get()
+				->getResultArray();
+			$selected_mahasiswa_ids = array_column($selected_mhs, 'id');
+		}
 
 		$mahasiswa = $this->db->table('mahasiswa')
 			->where('status_mahasiswa', 'Aktif')
@@ -172,40 +176,11 @@ class MbkmController extends BaseController
 			->get()
 			->getResultArray();
 
-		// Get CPL and CPMK lists
-		$cpl_list = $this->db->table('cpl')
-			->orderBy('kode_cpl', 'ASC')
-			->get()
-			->getResultArray();
-
-		$cpmk_list = $this->db->table('cpmk')
-			->orderBy('kode_cpmk', 'ASC')
-			->get()
-			->getResultArray();
-
-		// Get nilai if exists
-		$nilai = $this->db->table('mbkm_nilai_akhir')
-			->where('kegiatan_id', $id)
-			->get()
-			->getRowArray();
-
-		if ($nilai) {
-			$kegiatan['nilai_angka'] = $nilai['nilai_angka'];
-			$kegiatan['nilai_huruf'] = $nilai['nilai_huruf'];
-			$kegiatan['status_kelulusan'] = $nilai['status_kelulusan'];
-		} else {
-			$kegiatan['nilai_angka'] = null;
-			$kegiatan['nilai_huruf'] = null;
-			$kegiatan['status_kelulusan'] = null;
-		}
-
 		$data = [
 			'kegiatan' => $kegiatan,
-			'kegiatan_mahasiswa' => $kegiatan_mahasiswa,
+			'selected_mahasiswa_ids' => $selected_mahasiswa_ids,
 			'mahasiswa' => $mahasiswa,
 			'dosen' => $dosen,
-			'cpl_list' => $cpl_list,
-			'cpmk_list' => $cpmk_list
 		];
 
 		return view('admin/mbkm/edit', $data);
@@ -235,39 +210,22 @@ class MbkmController extends BaseController
 			return redirect()->back()->withInput()->with('error', 'Pilih minimal satu mahasiswa');
 		}
 
-		$this->db->transStart(); // Start transaction
+		// Build nim string from mahasiswa_ids
+		$nim_string = implode(',', array_map(function ($id) {
+			$mahasiswa = $this->db->table('mahasiswa')->select('nim')->where('id', $id)->get()->getRowArray();
+			return $mahasiswa ? $mahasiswa['nim'] : '';
+		}, $mahasiswa_ids));
 
 		$data = [
+			'nim' => $nim_string,
 			'program' => $this->request->getPost('program'),
 			'sub_program' => $this->request->getPost('sub_program'),
 			'tujuan' => $this->request->getPost('tujuan'),
+			'status_kegiatan' => $this->request->getPost('status_kegiatan'),
 		];
 
 		// Update kegiatan
 		if (!$this->mbkmModel->update($id, $data)) {
-			$this->db->transRollback();
-			return redirect()->back()->withInput()->with('error', 'Gagal memperbarui kegiatan MBKM');
-		}
-
-		// Delete existing mahasiswa relationships
-		$this->db->table('mbkm_kegiatan_mahasiswa')
-			->where('kegiatan_id', $id)
-			->delete();
-
-		// Insert new mahasiswa relationships
-		foreach ($mahasiswa_ids as $mahasiswa_id) {
-			$relasi_data = [
-				'kegiatan_id' => $id,
-				'mahasiswa_id' => $mahasiswa_id,
-				'peran' => 'Peserta'
-			];
-
-			$this->db->table('mbkm_kegiatan_mahasiswa')->insert($relasi_data);
-		}
-
-		$this->db->transComplete(); // Complete transaction
-
-		if ($this->db->transStatus() === false) {
 			return redirect()->back()->withInput()->with('error', 'Gagal memperbarui kegiatan MBKM');
 		}
 

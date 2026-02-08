@@ -39,41 +39,16 @@
 						<h5 class="mb-3 text-primary"><i class="bi bi-person-circle"></i> Informasi Mahasiswa</h5>
 
 						<div class="mb-3">
-							<label class="form-label">Mahasiswa <span class="text-danger">*</span></label>
+							<label for="mahasiswa_ids" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
 							<small class="d-block text-muted mb-2">Pilih satu atau lebih mahasiswa yang terlibat dalam kegiatan ini</small>
-
-							<?php
-							$selected_ids = array_column($kegiatan_mahasiswa, 'mahasiswa_id');
-							?>
-
-							<div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+							<select class="form-select" id="mahasiswa_ids" name="mahasiswa_ids[]" multiple="multiple" required>
 								<?php foreach ($mahasiswa as $mhs): ?>
-									<div class="form-check mb-2">
-										<input class="form-check-input mahasiswa-checkbox"
-											type="checkbox"
-											name="mahasiswa_ids[]"
-											value="<?= $mhs['id'] ?>"
-											id="mhs_<?= $mhs['id'] ?>"
-											<?= in_array($mhs['id'], $selected_ids) ? 'checked' : '' ?>>
-										<label class="form-check-label" for="mhs_<?= $mhs['id'] ?>">
-											<strong><?= esc($mhs['nama_lengkap']) ?></strong><br>
-											<small class="text-muted"><?= esc($mhs['nim']) ?> - <?= esc($mhs['program_studi_kode'] ?? '-') ?></small>
-										</label>
-									</div>
+									<option value="<?= $mhs['id'] ?>"
+										<?= in_array($mhs['id'], $selected_mahasiswa_ids) ? 'selected' : '' ?>>
+										<?= esc($mhs['nama_lengkap']) ?> (<?= esc($mhs['nim']) ?>)
+									</option>
 								<?php endforeach; ?>
-							</div>
-							<small class="text-muted">
-								<span id="selected-count"><?= count($selected_ids) ?></span> mahasiswa dipilih
-							</small>
-						</div>
-
-						<div class="alert alert-info" id="mahasiswa-alert" style="display:<?= count($selected_ids) > 0 ? 'block' : 'none' ?>;">
-							<i class="bi bi-info-circle"></i> <strong>Mahasiswa yang dipilih:</strong>
-							<ul id="selected-mahasiswa-list" class="mb-0 mt-2">
-								<?php foreach ($kegiatan_mahasiswa as $km): ?>
-									<li><?= esc($km['nama_lengkap']) ?></li>
-								<?php endforeach; ?>
-							</ul>
+							</select>
 						</div>
 
 						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-bookmark"></i> Detail Kegiatan</h5>
@@ -147,56 +122,13 @@
 	}
 
 	document.addEventListener('DOMContentLoaded', function() {
-		// Track selected students
-		const checkboxes = document.querySelectorAll('.mahasiswa-checkbox');
-		const selectedCount = document.getElementById('selected-count');
-		const mahasiswaAlert = document.getElementById('mahasiswa-alert');
-		const selectedList = document.getElementById('selected-mahasiswa-list');
-
-		function updateSelectedStudents() {
-			const checked = document.querySelectorAll('.mahasiswa-checkbox:checked');
-			selectedCount.textContent = checked.length;
-
-			if (checked.length > 0) {
-				mahasiswaAlert.style.display = 'block';
-				selectedList.innerHTML = '';
-				checked.forEach(cb => {
-					const label = document.querySelector(`label[for="${cb.id}"]`);
-					const li = document.createElement('li');
-					li.textContent = label.querySelector('strong').textContent;
-					selectedList.appendChild(li);
-				});
-			} else {
-				mahasiswaAlert.style.display = 'none';
-			}
-		}
-
-		checkboxes.forEach(cb => {
-			cb.addEventListener('change', updateSelectedStudents);
+		// Initialize Select2
+		$('#mahasiswa_ids').select2({
+			theme: 'bootstrap-5',
+			placeholder: 'Cari dan pilih mahasiswa...',
+			allowClear: true,
+			width: '100%'
 		});
-
-		// Initialize count on page load
-		updateSelectedStudents();
-
-		// Calculate duration in weeks
-		const tanggalMulai = document.getElementById('tanggal_mulai');
-		const tanggalSelesai = document.getElementById('tanggal_selesai');
-
-		function hitungDurasi() {
-			if (tanggalMulai.value && tanggalSelesai.value) {
-				const mulai = new Date(tanggalMulai.value);
-				const selesai = new Date(tanggalSelesai.value);
-				const diffTime = Math.abs(selesai - mulai);
-				const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-
-				if (diffWeeks > 0) {
-					console.log(`Durasi: ${diffWeeks} minggu`);
-				}
-			}
-		}
-
-		tanggalMulai.addEventListener('change', hitungDurasi);
-		tanggalSelesai.addEventListener('change', hitungDurasi);
 	});
 </script>
 <?= $this->endSection() ?>
