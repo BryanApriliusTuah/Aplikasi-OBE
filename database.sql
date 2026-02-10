@@ -1245,7 +1245,7 @@ CREATE TABLE `standar_minimal_cpl` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1411,7 +1411,7 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET character_set_results     = utf8mb3 */;
 /*!50001 SET collation_connection      = utf8mb3_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50013 SQL SECURITY DEFINER */
 /*!50001 VIEW `view_jadwal_lengkap` AS select `jm`.`id` AS `id`,`mk`.`kode_mk` AS `kode_mk`,`mk`.`nama_mk` AS `nama_mk`,`mk`.`semester` AS `semester`,`mk`.`sks` AS `sks`,`jm`.`program_studi_kode` AS `program_studi_kode`,`jm`.`tahun_akademik` AS `tahun_akademik`,`jm`.`kelas` AS `kelas`,`jm`.`ruang` AS `ruang`,`jm`.`hari` AS `hari`,`jm`.`jam_mulai` AS `jam_mulai`,`jm`.`jam_selesai` AS `jam_selesai`,`jm`.`status` AS `status`,group_concat((case when (`jd`.`role` = 'leader') then concat(`d`.`nama_lengkap`,' (Ketua)') else `d`.`nama_lengkap` end) order by `jd`.`role` DESC,`d`.`nama_lengkap` ASC separator ', ') AS `dosen_pengampu`,(select `d2`.`nama_lengkap` from (`jadwal_dosen` `jd2` join `dosen` `d2` on((`jd2`.`dosen_id` = `d2`.`id`))) where ((`jd2`.`jadwal_id` = `jm`.`id`) and (`jd2`.`role` = 'leader')) limit 1) AS `dosen_ketua` from (((`jadwal` `jm` join `mata_kuliah` `mk` on((`jm`.`mata_kuliah_id` = `mk`.`id`))) left join `jadwal_dosen` `jd` on((`jm`.`id` = `jd`.`jadwal_id`))) left join `dosen` `d` on((`jd`.`dosen_id` = `d`.`id`))) group by `jm`.`id`,`mk`.`kode_mk`,`mk`.`nama_mk`,`mk`.`semester`,`mk`.`sks`,`jm`.`program_studi_kode`,`jm`.`tahun_akademik`,`jm`.`kelas`,`jm`.`ruang`,`jm`.`hari`,`jm`.`jam_mulai`,`jm`.`jam_selesai`,`jm`.`status` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
