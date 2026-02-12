@@ -57,7 +57,7 @@
 						'partisipasi'   => 'Partisipasi',
 						'observasi'     => 'Observasi',
 						'unjuk_kerja'   => 'Unjuk Kerja',
-						'case_method'   => 'Case Method/Project Based',
+						'proyek'        => 'Case Method/Project Based',
 						'tes_tulis_uts' => 'UTS',
 						'tes_tulis_uas' => 'UAS',
 						'tes_lisan'     => 'Tes Lisan'

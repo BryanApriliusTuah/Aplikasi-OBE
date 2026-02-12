@@ -9,7 +9,7 @@ class BobotPenilaianCpl extends BaseController
         'partisipasi'   => 'Partisipasi',
         'observasi'     => 'Observasi',
         'unjuk_kerja'   => 'Unjuk Kerja',
-        'case_method'   => 'Project Based',
+        'proyek'        => 'Project Based',
         'tes_tulis_uts' => 'UTS',
         'tes_tulis_uas' => 'UAS',
         'tes_lisan'     => 'Tes Lisan',
@@ -86,7 +86,7 @@ class BobotPenilaianCpl extends BaseController
             $sheet->setCellValue('E' . $rowNum, $row['partisipasi'] ?: 0);
             $sheet->setCellValue('F' . $rowNum, $row['observasi'] ?: 0);
             $sheet->setCellValue('G' . $rowNum, $row['unjuk_kerja'] ?: 0);
-            $sheet->setCellValue('H' . $rowNum, $row['case_method'] ?: 0);
+            $sheet->setCellValue('H' . $rowNum, $row['proyek'] ?: 0);
             $sheet->setCellValue('I' . $rowNum, $row['tes_tulis_uts'] ?: 0);
             $sheet->setCellValue('J' . $rowNum, $row['tes_tulis_uas'] ?: 0);
             $sheet->setCellValue('K' . $rowNum, $row['tes_lisan'] ?: 0);
@@ -149,7 +149,7 @@ class BobotPenilaianCpl extends BaseController
             $html .= '<td><b>' . $row['partisipasi'] . '</b></td>';
             $html .= '<td>' . $row['observasi'] . '</td>';
             $html .= '<td>' . $row['unjuk_kerja'] . '</td>';
-            $html .= '<td>' . $row['case_method'] . '</td>';
+            $html .= '<td>' . $row['proyek'] . '</td>';
             $html .= '<td>' . $row['tes_tulis_uts'] . '</td>';
             $html .= '<td>' . $row['tes_tulis_uas'] . '</td>';
             $html .= '<td>' . $row['tes_lisan'] . '</td>';
