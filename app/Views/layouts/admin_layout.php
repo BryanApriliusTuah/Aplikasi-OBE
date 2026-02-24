@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Dashboard OBE TI UPR</title>
+	<title>Beranda OBE TI UPR</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -67,8 +67,8 @@
 
 				<li class="nav-item">
 					<a class="nav-link<?= uri_string() == 'admin' ? ' active' : '' ?>" href="<?= base_url('admin') ?>"
-						data-bs-toggle="tooltip" data-bs-placement="right" title="Halaman Dashboard">
-						<i class="bi bi-house-door"></i> Dashboard
+						data-bs-toggle="tooltip" data-bs-placement="right" title="Halaman Beranda">
+						<i class="bi bi-house-door"></i> Beranda
 					</a>
 				</li>
 
@@ -281,7 +281,7 @@
 					<li class="nav-item">
 						<a class="nav-link<?= uri_string() == 'admin/settings' ? ' active' : '' ?>" href="<?= base_url('admin/settings') ?>"
 							data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola pengaturan sistem penilaian dan grade">
-							<i class="bi bi-gear"></i> Settings
+							<i class="bi bi-gear"></i> Pengaturan
 						</a>
 					</li>
 				<?php endif; ?>
