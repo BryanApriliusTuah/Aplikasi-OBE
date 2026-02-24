@@ -241,8 +241,12 @@
 				$.ajax({
 					url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
 					method: 'GET',
-					data: { kode_mk: kodeMk },
-					headers: { 'X-Requested-With': 'XMLHttpRequest' },
+					data: {
+						kode_mk: kodeMk
+					},
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					},
 					dataType: 'json',
 					success: function(data) {
 						$apiKelasLoading.hide();
@@ -256,7 +260,11 @@
 							$.each(data.data, function(index, kelas) {
 								var semester = kelas.kelas.klsSemester || '-';
 								var totalMhs = kelas.mahasiswa.mhsTotal ? kelas.mahasiswa.mhsTotal : 0;
-								var hari = '', jamMulai = '', jamSelesai = '', ruang = '', gedung = '';
+								var hari = '',
+									jamMulai = '',
+									jamSelesai = '',
+									ruang = '',
+									gedung = '';
 
 								if (kelas.perkuliahan && kelas.perkuliahan.length > 0) {
 									var jadwal = kelas.perkuliahan[0];
@@ -272,13 +280,21 @@
 								}
 
 								var ruangLengkap = gedung ? gedung + ' - ' + ruang : ruang;
+								var year = parseInt(String(kelas.kelas.klsSemester).substring(0, 4));
+								var semester = '';
+								var term = String(kelas.kelas.klsSemester).substring(4, 5);
+								if (term === '1') {
+									semester = year + ' Ganjil';
+								} else {
+									semester = year + ' Genap';
+								}
 
 								html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3" style="cursor: pointer;">' +
 									'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
 									' data-kelas-id="' + (kelas.kelas.klsId || '') + '"' +
 									' data-kelas-nama="' + (kelas.kelas.klsNama || '') + '"' +
 									' data-kelas-jenis="' + (kelas.kelas.klsJenis || '') + '"' +
-									' data-kelas-semester="' + kelas.kelas.klsSemester + '"' +
+									' data-kelas-semester="' + semester + '"' +
 									' data-kelas-status="' + (kelas.kelas.klsStatus || '') + '"' +
 									' data-mk-kode="' + (kelas.mata_kuliah.mkKode || '') + '"' +
 									' data-total-mhs="' + totalMhs + '"' +
@@ -319,9 +335,9 @@
 									var year = parseInt(semCode.substring(0, 4));
 									var term = semCode.substring(4, 5);
 									if (term === '1') {
-										$('#tahun_akademik').val((year - 1) + '/' + year + ' Ganjil');
+										$('#tahun_akademik').val(year + ' Ganjil');
 									} else {
-										$('#tahun_akademik').val(year + '/' + (year + 1) + ' Genap');
+										$('#tahun_akademik').val(year + ' Genap');
 									}
 								}
 							});

@@ -42,7 +42,9 @@
 											&bull; <?= esc($jadwal['kelas_jenis']) ?>
 										<?php endif; ?>
 										<?php if (!empty($jadwal['kelas_semester'])): ?>
-											&bull; Semester: <?= esc($jadwal['kelas_semester']) ?>
+											<?php $year = intval(substr($jadwal['kelas_semester'], 0, 4)); ?>
+											<?php $term = substr($jadwal['kelas_semester'], 4, 1); ?>
+											&bull; Semester: <?= $year . ($term === '1' ? ' Ganjil' : ' Genap') ?>
 										<?php endif; ?>
 										<?php if (!empty($jadwal['kelas_status'])): ?>
 											&bull; Status: <?= esc($jadwal['kelas_status']) ?>
@@ -90,8 +92,8 @@
 										</option>
 									<?php endforeach; ?>
 									<?php
-										// If current value isn't in the master list, show it as-is so data isn't lost
-										if ($currentTahunAkademik && !in_array($currentTahunAkademik, $tahun_akademik_list)):
+									// If current value isn't in the master list, show it as-is so data isn't lost
+									if ($currentTahunAkademik && !in_array($currentTahunAkademik, $tahun_akademik_list)):
 									?>
 										<option value="<?= esc($currentTahunAkademik) ?>" selected>
 											<?= esc($currentTahunAkademik) ?> (tidak ada di master)
@@ -285,8 +287,12 @@
 			$.ajax({
 				url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
 				method: 'GET',
-				data: { kode_mk: kodeMk },
-				headers: { 'X-Requested-With': 'XMLHttpRequest' },
+				data: {
+					kode_mk: kodeMk
+				},
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				},
 				dataType: 'json',
 				success: function(data) {
 					$apiKelasLoading.hide();
@@ -295,7 +301,14 @@
 						var currentKelasId = $('#kelas_id').val();
 						var html = '<div class="list-group">';
 						$.each(data.data, function(index, kelas) {
-							var semester = kelas.kelas.klsSemester || '-';
+							var year = parseInt(String(kelas.kelas.klsSemester).substring(0, 4));
+							var semester = '';
+							var term = String(kelas.kelas.klsSemester).substring(4, 5);
+							if (term === '1') {
+								semester = year + ' Ganjil';
+							} else {
+								semester = year + ' Genap';
+							}
 							var totalMhs = kelas.mahasiswa.mhsTotal || 0;
 							var isSelected = String(kelas.kelas.klsId) === String(currentKelasId);
 							html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isSelected ? 'active' : '') + '" style="cursor: pointer;">' +
@@ -336,9 +349,9 @@
 								var year = parseInt(semCode.substring(0, 4));
 								var term = semCode.substring(4, 5);
 								if (term === '1') {
-									$('#tahun_akademik').val((year - 1) + '/' + year + ' Ganjil');
+									$('#tahun_akademik').val(year + ' Ganjil');
 								} else {
-									$('#tahun_akademik').val(year + '/' + (year + 1) + ' Genap');
+									$('#tahun_akademik').val(year + ' Genap');
 								}
 							}
 						});
