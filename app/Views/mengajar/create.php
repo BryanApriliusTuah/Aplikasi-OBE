@@ -105,21 +105,23 @@
 							<hr class="my-3">
 
 							<div class="col-12">
-								<div class="alert d-none" id="rps-info">
-									<i class="bi bi-info-circle"></i> <span id="rps-message"></span>
-								</div>
-							</div>
-
-							<div class="col-12">
 								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
-								<input type="text" class="form-control" id="dosen_leader_display" readonly placeholder="Pilih mata kuliah terlebih dahulu">
-								<input type="hidden" id="dosen_leader" name="dosen_leader" required>
+								<select class="form-select" id="dosen_leader" name="dosen_leader" required>
+									<option value="">-- Pilih Dosen Koordinator --</option>
+									<?php foreach ($dosen_list as $dosen): ?>
+										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader') == $dosen['id'] ? 'selected' : '' ?>>
+											<?= esc($dosen['nama_lengkap']) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							</div>
 
 							<div class="col-12">
 								<label class="form-label">Dosen Pengampu</label>
-								<div id="dosen-members-display"></div>
-								<div id="dosen-members-container" style="display: none;"></div>
+								<div id="dosen-members-container"></div>
+								<button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-member">
+									<i class="bi bi-plus"></i> Tambah Dosen Pengampu
+								</button>
 							</div>
 						</div>
 					</div>
@@ -162,35 +164,64 @@
 			width: '100%'
 		});
 
-		var $dosenLeaderDisplay = $('#dosen_leader_display');
-		var $dosenLeaderInput = $('#dosen_leader');
-		var $dosenMembersDisplay = $('#dosen-members-display');
-		var $dosenMembersContainer = $('#dosen-members-container');
-		var $rpsInfo = $('#rps-info');
-		var $rpsMessage = $('#rps-message');
-		var $submitButton = $('button[type="submit"]');
+		$('#dosen_leader').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih Dosen Koordinator --',
+			allowClear: true,
+			width: '100%'
+		});
+
+		// All dosen for member dropdowns
+		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
+
+		function buildMemberOptions(selectedId) {
+			var html = '<option value="">-- Pilih Dosen Pengampu --</option>';
+			allDosen.forEach(function(d) {
+				var sel = (selectedId && String(d.id) === String(selectedId)) ? ' selected' : '';
+				html += '<option value="' + d.id + '"' + sel + '>' + d.nama_lengkap + '</option>';
+			});
+			return html;
+		}
+
+		function addMemberRow(selectedId) {
+			var $row = $('<div class="d-flex gap-2 mb-2 align-items-center"></div>');
+			var $select = $('<select class="form-select select2-dosen-member" name="dosen_members[]">' + buildMemberOptions(selectedId) + '</select>');
+			var $removeBtn = $('<button type="button" class="btn btn-outline-danger btn-sm flex-shrink-0"><i class="bi bi-trash"></i></button>');
+
+			$removeBtn.on('click', function() {
+				$select.select2('destroy');
+				$row.remove();
+			});
+
+			$row.append($select).append($removeBtn);
+			$('#dosen-members-container').append($row);
+
+			$select.select2({
+				theme: 'bootstrap-5',
+				placeholder: '-- Pilih Dosen Pengampu --',
+				width: '100%'
+			});
+		}
+
+		// Restore member rows if form was re-submitted with validation errors
+		<?php $oldMembers = old('dosen_members', []); ?>
+		<?php foreach ($oldMembers as $memberId): ?>
+			addMemberRow(<?= (int) $memberId ?>);
+		<?php endforeach; ?>
+
+		$('#btn-add-member').on('click', function() {
+			addMemberRow(null);
+		});
 
 		// API kelas elements
 		var $apiKelasSection = $('#api-kelas-section');
 		var $apiKelasLoading = $('#api-kelas-loading');
 		var $apiKelasContainer = $('#api-kelas-container');
 
-		// Initially disable submit button
-		$submitButton.prop('disabled', true);
-
 		// Listen for Select2 change on mata kuliah
 		$('#mata_kuliah_id').on('change', function() {
-			var mataKuliahId = $(this).val();
 			var $selectedOption = $(this).find(':selected');
 			var kodeMk = $selectedOption.data('kode') || '';
-
-			// Reset fields
-			$dosenLeaderDisplay.val('');
-			$dosenLeaderInput.val('');
-			$dosenMembersDisplay.html('');
-			$dosenMembersContainer.html('');
-			$rpsInfo.addClass('d-none').attr('class', 'alert d-none');
-			$submitButton.prop('disabled', true);
 
 			// Reset API kelas fields
 			$apiKelasSection.hide();
@@ -201,65 +232,6 @@
 			$('#mk_kurikulum_kode').val('');
 			$('#total_mahasiswa').val('');
 
-			if (!mataKuliahId) {
-				$dosenLeaderDisplay.attr('placeholder', 'Pilih mata kuliah terlebih dahulu');
-				return;
-			}
-
-			$dosenLeaderDisplay.attr('placeholder', 'Memuat data RPS...');
-
-			// Fetch RPS dosen data via AJAX
-			$.ajax({
-				url: '<?= base_url('admin/mengajar/getRpsDosen') ?>/' + mataKuliahId,
-				method: 'GET',
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest'
-				},
-				dataType: 'json',
-				success: function(data) {
-					if (data.success) {
-						$rpsInfo.removeClass('d-none').addClass('alert-success');
-						$rpsMessage.text('Data dosen berhasil dimuat dari RPS');
-
-						if (data.data.koordinator) {
-							$dosenLeaderDisplay.val(data.data.koordinator.nama_lengkap);
-							$dosenLeaderInput.val(data.data.koordinator.id);
-						} else {
-							$dosenLeaderDisplay.val('Tidak ada koordinator di RPS');
-							$rpsInfo.removeClass('alert-success').addClass('alert-danger');
-							$rpsMessage.text('RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.');
-							return;
-						}
-
-						if (data.data.members && data.data.members.length > 0) {
-							var membersHtml = '<div class="list-group">';
-							$.each(data.data.members, function(i, member) {
-								membersHtml += '<div class="list-group-item">' + member.nama_lengkap + '</div>';
-								$dosenMembersContainer.append('<input type="hidden" name="dosen_members[]" value="' + member.id + '">');
-							});
-							membersHtml += '</div>';
-							$dosenMembersDisplay.html(membersHtml);
-						} else {
-							$dosenMembersDisplay.html('<p class="text-muted mb-0">Tidak ada dosen anggota</p>');
-						}
-
-						$submitButton.prop('disabled', false);
-					} else {
-						$rpsInfo.removeClass('d-none').addClass('alert-danger');
-						$rpsMessage.text(data.message || 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.');
-						$dosenLeaderDisplay.val('').attr('placeholder', 'RPS tidak tersedia');
-						$submitButton.prop('disabled', true);
-					}
-				},
-				error: function(xhr, status, error) {
-					console.error('Error fetching RPS data:', error);
-					$rpsInfo.removeClass('d-none').addClass('alert-danger');
-					$rpsMessage.text('Terjadi kesalahan saat mengambil data RPS.');
-					$dosenLeaderDisplay.attr('placeholder', 'Error memuat data');
-					$submitButton.prop('disabled', true);
-				}
-			});
-
 			// Fetch API kelas data
 			if (kodeMk) {
 				$apiKelasSection.show();
@@ -269,17 +241,12 @@
 				$.ajax({
 					url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
 					method: 'GET',
-					data: {
-						kode_mk: kodeMk
-					},
-					headers: {
-						'X-Requested-With': 'XMLHttpRequest'
-					},
+					data: { kode_mk: kodeMk },
+					headers: { 'X-Requested-With': 'XMLHttpRequest' },
 					dataType: 'json',
 					success: function(data) {
 						$apiKelasLoading.hide();
 
-						// Auto-fill program studi from API response
 						if (data.program_studi_kode) {
 							$('#program_studi_kode').val(data.program_studi_kode).trigger('change');
 						}
@@ -287,33 +254,17 @@
 						if (data.success && data.data.length > 0) {
 							var html = '<div class="list-group">';
 							$.each(data.data, function(index, kelas) {
-								console.log('Kelas data:', kelas);
 								var semester = kelas.kelas.klsSemester || '-';
 								var totalMhs = kelas.mahasiswa.mhsTotal ? kelas.mahasiswa.mhsTotal : 0;
+								var hari = '', jamMulai = '', jamSelesai = '', ruang = '', gedung = '';
 
-								// Safely extract schedule data
-								var hari = '';
-								var jamMulai = '';
-								var jamSelesai = '';
-								var ruang = '';
-								var gedung = '';
-
-								// jadwal_perkuliahan is an array, access first element
 								if (kelas.perkuliahan && kelas.perkuliahan.length > 0) {
 									var jadwal = kelas.perkuliahan[0];
 									hari = jadwal.pHari || '';
-
-									// Extract time from ISO format "2026-02-07T08:20:00.000000Z" -> "08:20"
 									var jamMulaiRaw = jadwal.pJam.jMulai || '';
 									var jamSelesaiRaw = jadwal.pJam.jSelesai || '';
-
-									if (jamMulaiRaw) {
-										jamMulai = jamMulaiRaw.substring(0, 5); // Extract HH:MM
-									}
-									if (jamSelesaiRaw) {
-										jamSelesai = jamSelesaiRaw.substring(0, 5); // Extract HH:MM
-									}
-
+									if (jamMulaiRaw) jamMulai = jamMulaiRaw.substring(0, 5);
+									if (jamSelesaiRaw) jamSelesai = jamSelesaiRaw.substring(0, 5);
 									if (jadwal.pRuangan) {
 										ruang = jadwal.pRuangan.rRuang || '';
 										gedung = jadwal.pRuangan.rGedung || '';
@@ -338,8 +289,7 @@
 									'<div class="flex-grow-1">' +
 									'<div class="fw-semibold">Kelas ' + (kelas.kelas.klsNama || '-') + '</div>' +
 									'<div class="small text-muted">' +
-									(kelas.kelas.klsJenis || '-') + ' &bull; ' +
-									'Semester: ' + semester + ' &bull; ' +
+									(kelas.kelas.klsJenis || '-') + ' &bull; Semester: ' + semester + ' &bull; ' +
 									'Status: <span class="badge ' + (kelas.kelas.klsStatus === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.klsStatus || '-') + '</span> &bull; ' +
 									'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
 									(hari ? ' &bull; ' + hari : '') +
@@ -351,7 +301,6 @@
 							html += '<small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> Pilih kelas untuk mengisi otomatis data kelas dari API.</small>';
 							$apiKelasContainer.html(html);
 
-							// Event delegation for radio buttons
 							$apiKelasContainer.off('change', 'input[name="api_kelas_select"]').on('change', 'input[name="api_kelas_select"]', function() {
 								var $radio = $(this);
 								$('#kelas').val($radio.data('kelas-nama'));
@@ -360,22 +309,11 @@
 								$('#kelas_semester').val($radio.data('kelas-semester'));
 								$('#mk_kurikulum_kode').val($radio.data('mk-kode'));
 								$('#total_mahasiswa').val($radio.data('total-mhs'));
+								$('#hari').val($radio.data('hari') || '').trigger('change');
+								$('#jam_mulai').val($radio.data('jam-mulai') || '');
+								$('#jam_selesai').val($radio.data('jam-selesai') || '');
+								$('#ruang').val($radio.data('ruang') || '');
 
-								// Auto-fill schedule fields (always update, even if empty to clear previous values)
-								var hari = $radio.data('hari') || '';
-								var jamMulai = $radio.data('jam-mulai') || '';
-								var jamSelesai = $radio.data('jam-selesai') || '';
-								var ruang = $radio.data('ruang') || '';
-
-								console.log('Autofill data from radio:', {hari, jamMulai, jamSelesai, ruang});
-
-								// Always set values (empty string will clear the field)
-								$('#hari').val(hari).trigger('change');
-								$('#jam_mulai').val(jamMulai);
-								$('#jam_selesai').val(jamSelesai);
-								$('#ruang').val(ruang);
-
-								// Auto-fill tahun_akademik from semester code
 								var semCode = String($radio.data('kelas-semester'));
 								if (semCode && semCode.length >= 5) {
 									var year = parseInt(semCode.substring(0, 4));
@@ -391,10 +329,9 @@
 							$apiKelasContainer.html('<div class="alert alert-warning mb-0"><i class="bi bi-info-circle me-1"></i> Tidak ada data kelas dari API untuk mata kuliah ini.</div>');
 						}
 					},
-					error: function(xhr, status, error) {
+					error: function() {
 						$apiKelasLoading.hide();
 						$apiKelasContainer.html('<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Gagal memuat data kelas dari API.</div>');
-						console.error('Error fetching API kelas:', error);
 					}
 				});
 			}

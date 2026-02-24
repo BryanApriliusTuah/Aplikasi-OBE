@@ -192,37 +192,6 @@ class Mengajar extends BaseController
 			return redirect()->back()->withInput()->with('error', 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.');
 		}
 
-		// Validate that the submitted dosen data matches RPS data
-		$rps_koordinator = $this->db->table('rps_pengampu')
-			->where('rps_id', $rps['id'])
-			->where('peran', 'koordinator')
-			->get()
-			->getRowArray();
-
-		if (!$rps_koordinator) {
-			return redirect()->back()->withInput()->with('error', 'RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.');
-		}
-
-		if ($dosen_leader != $rps_koordinator['dosen_id']) {
-			return redirect()->back()->withInput()->with('error', 'Dosen koordinator tidak sesuai dengan data RPS.');
-		}
-
-		// Get RPS members
-		$rps_members = $this->db->table('rps_pengampu')
-			->where('rps_id', $rps['id'])
-			->where('peran', 'pengampu')
-			->get()
-			->getResultArray();
-
-		$rps_member_ids = array_column($rps_members, 'dosen_id');
-		sort($rps_member_ids);
-		$submitted_member_ids = $dosen_members;
-		sort($submitted_member_ids);
-
-		if ($rps_member_ids !== $submitted_member_ids) {
-			return redirect()->back()->withInput()->with('error', 'Dosen anggota tidak sesuai dengan data RPS.');
-		}
-
 		try {
 			$this->db->transStart();
 

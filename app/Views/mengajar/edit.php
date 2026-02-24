@@ -138,7 +138,7 @@
 
 							<div class="col-12">
 								<label for="dosen_leader" class="form-label">Dosen Koordinator</label>
-								<select class="form-select" id="dosen_leader" disabled>
+								<select class="form-select" id="dosen_leader" name="dosen_leader" required>
 									<option value="">-- Pilih Dosen Koordinator --</option>
 									<?php foreach ($dosen_list as $dosen): ?>
 										<option value="<?= $dosen['id'] ?>" <?= old('dosen_leader', $jadwal['dosen_leader']) == $dosen['id'] ? 'selected' : '' ?>>
@@ -146,7 +146,6 @@
 										</option>
 									<?php endforeach; ?>
 								</select>
-								<input type="hidden" name="dosen_leader" value="<?= old('dosen_leader', $jadwal['dosen_leader']) ?>">
 							</div>
 
 							<div class="col-12">
@@ -154,27 +153,23 @@
 								<div id="dosen-members-container">
 									<?php
 									$old_members = old('dosen_members', $jadwal['dosen_members'] ?? []);
-									if (!empty($old_members)):
-										foreach ($old_members as $member_id): ?>
-											<div class="mb-2">
-												<select class="form-select select2-dosen-member" disabled>
-													<option value="">-- Pilih Dosen Pengampu --</option>
-													<?php foreach ($dosen_list as $dosen): ?>
-														<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
-															<?= esc($dosen['nama_lengkap']) ?>
-														</option>
-													<?php endforeach; ?>
-												</select>
-												<input type="hidden" name="dosen_members[]" value="<?= $member_id ?>">
-											</div>
-										<?php endforeach;
-									else: ?>
-										<p class="text-muted mb-0">Tidak ada dosen pengampu</p>
-									<?php endif; ?>
+									foreach ($old_members as $member_id): ?>
+										<div class="d-flex gap-2 mb-2 align-items-center">
+											<select class="form-select select2-dosen-member" name="dosen_members[]">
+												<option value="">-- Pilih Dosen Pengampu --</option>
+												<?php foreach ($dosen_list as $dosen): ?>
+													<option value="<?= $dosen['id'] ?>" <?= $member_id == $dosen['id'] ? 'selected' : '' ?>>
+														<?= esc($dosen['nama_lengkap']) ?>
+													</option>
+												<?php endforeach; ?>
+											</select>
+											<button type="button" class="btn btn-outline-danger btn-sm flex-shrink-0 btn-remove-member"><i class="bi bi-trash"></i></button>
+										</div>
+									<?php endforeach; ?>
 								</div>
-								<small class="text-muted">
-									<i class="bi bi-info-circle"></i> Dosen dapat diubah melalui RPS (Rencana Pembelajaran Semester)
-								</small>
+								<button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-member">
+									<i class="bi bi-plus"></i> Tambah Dosen Pengampu
+								</button>
 							</div>
 						</div>
 					</div>
@@ -226,6 +221,7 @@
 			width: '100%'
 		});
 
+		// Initialize Select2 on existing member rows
 		$('.select2-dosen-member').each(function() {
 			$(this).select2({
 				theme: 'bootstrap-5',
@@ -234,6 +230,41 @@
 			});
 		});
 
+		// Remove member row
+		$(document).on('click', '.btn-remove-member', function() {
+			var $row = $(this).closest('.d-flex');
+			$row.find('select').select2('destroy');
+			$row.remove();
+		});
+
+		// All dosen for member dropdowns
+		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
+
+		function addMemberRow() {
+			var html = '<option value="">-- Pilih Dosen Pengampu --</option>';
+			allDosen.forEach(function(d) {
+				html += '<option value="' + d.id + '">' + d.nama_lengkap + '</option>';
+			});
+
+			var $row = $('<div class="d-flex gap-2 mb-2 align-items-center"></div>');
+			var $select = $('<select class="form-select select2-dosen-member" name="dosen_members[]">' + html + '</select>');
+			var $removeBtn = $('<button type="button" class="btn btn-outline-danger btn-sm flex-shrink-0 btn-remove-member"><i class="bi bi-trash"></i></button>');
+
+			$row.append($select).append($removeBtn);
+			$('#dosen-members-container').append($row);
+
+			$select.select2({
+				theme: 'bootstrap-5',
+				placeholder: '-- Pilih Dosen Pengampu --',
+				width: '100%'
+			});
+		}
+
+		$('#btn-add-member').on('click', function() {
+			addMemberRow();
+		});
+
+		// API kelas elements
 		var $apiKelasSection = $('#api-kelas-section');
 		var $apiKelasLoading = $('#api-kelas-loading');
 		var $apiKelasContainer = $('#api-kelas-container');
@@ -254,12 +285,8 @@
 			$.ajax({
 				url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
 				method: 'GET',
-				data: {
-					kode_mk: kodeMk
-				},
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest'
-				},
+				data: { kode_mk: kodeMk },
+				headers: { 'X-Requested-With': 'XMLHttpRequest' },
 				dataType: 'json',
 				success: function(data) {
 					$apiKelasLoading.hide();
@@ -284,8 +311,7 @@
 								'<div class="flex-grow-1">' +
 								'<div class="fw-semibold">Kelas ' + (kelas.kelas.klsNama || '-') + (isSelected ? ' (Saat ini)' : '') + '</div>' +
 								'<div class="small ' + (isSelected ? '' : 'text-muted') + '">' +
-								(kelas.kelas.klsJenis || '-') + ' &bull; ' +
-								'Semester: ' + semester + ' &bull; ' +
+								(kelas.kelas.klsJenis || '-') + ' &bull; Semester: ' + semester + ' &bull; ' +
 								'Status: <span class="badge ' + (kelas.kelas.klsStatus === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.klsStatus || '-') + '</span> &bull; ' +
 								'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
 								'</div></div></label>';
@@ -293,7 +319,6 @@
 						html += '</div>';
 						$apiKelasContainer.html(html);
 
-						// Event delegation for radio buttons
 						$apiKelasContainer.off('change', 'input[name="api_kelas_select"]').on('change', 'input[name="api_kelas_select"]', function() {
 							var $radio = $(this);
 							$('#kelas').val($radio.data('kelas-nama'));
@@ -303,11 +328,9 @@
 							$('#mk_kurikulum_kode').val($radio.data('mk-kode'));
 							$('#total_mahasiswa').val($radio.data('total-mhs'));
 
-							// Update active state styling
 							$apiKelasContainer.find('label').removeClass('active');
 							$radio.closest('label').addClass('active');
 
-							// Auto-fill tahun_akademik
 							var semCode = String($radio.data('kelas-semester'));
 							if (semCode && semCode.length >= 5) {
 								var year = parseInt(semCode.substring(0, 4));
@@ -323,10 +346,9 @@
 						$apiKelasContainer.html('<div class="alert alert-warning mb-0"><i class="bi bi-info-circle me-1"></i> Tidak ada data kelas dari API untuk mata kuliah ini.</div>');
 					}
 				},
-				error: function(xhr, status, error) {
+				error: function() {
 					$apiKelasLoading.hide();
 					$apiKelasContainer.html('<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Gagal memuat data kelas dari API.</div>');
-					console.error('Error fetching API kelas:', error);
 				}
 			});
 		}
