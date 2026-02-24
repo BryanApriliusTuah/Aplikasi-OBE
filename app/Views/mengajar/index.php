@@ -154,6 +154,13 @@
 															</a>
 														</li>
 														<li>
+															<a class="dropdown-item"
+																href="<?= base_url('admin/mengajar/' . (int)$jadwal['id'] . '/mahasiswa') ?>"
+																style="border-radius: 0.25rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; transition: all 0.2s ease;">
+																<i class="bi bi-people me-2 text-info"></i>Kelola Mahasiswa
+															</a>
+														</li>
+														<li>
 															<hr class="dropdown-divider" style="margin: 0.5rem 0;">
 														</li>
 														<li>

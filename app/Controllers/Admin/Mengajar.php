@@ -911,6 +911,129 @@ class Mengajar extends BaseController
 		}
 	}
 
+	// ─── Mahasiswa Management ───────────────────────────────────────────────────
+
+	public function mahasiswaPage($id)
+	{
+		$jadwal = $this->db->table('jadwal jm')
+			->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama')
+			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
+			->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left')
+			->where('jm.id', $id)
+			->get()->getRowArray();
+
+		if (!$jadwal) {
+			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		$mahasiswaList = $this->db->table('jadwal_mahasiswa jmhs')
+			->select('mhs.nim, mhs.nama_lengkap, mhs.tahun_angkatan, mhs.status_mahasiswa')
+			->join('mahasiswa mhs', 'mhs.nim = jmhs.nim')
+			->where('jmhs.jadwal_id', $id)
+			->orderBy('mhs.nim', 'ASC')
+			->get()->getResultArray();
+
+		$data = [
+			'title'          => 'Kelola Mahasiswa – ' . $jadwal['nama_mk'] . ' Kelas ' . $jadwal['kelas'],
+			'jadwal'         => $jadwal,
+			'mahasiswa_list' => $mahasiswaList,
+		];
+
+		return view('mengajar/mahasiswa', $data);
+	}
+
+	public function searchMahasiswa($id)
+	{
+		if (!$this->request->isAJAX()) {
+			return $this->response->setStatusCode(403)->setJSON(['error' => 'Invalid request']);
+		}
+
+		$q = trim($this->request->getGet('q') ?? '');
+
+		// NIMs already enrolled in this jadwal
+		$enrolledNims = $this->db->table('jadwal_mahasiswa')
+			->select('nim')
+			->where('jadwal_id', $id)
+			->get()->getResultArray();
+		$enrolled = array_column($enrolledNims, 'nim');
+
+		$builder = $this->db->table('mahasiswa')
+			->select('nim, nama_lengkap, tahun_angkatan')
+			->orderBy('nim', 'ASC')
+			->limit(30);
+
+		if (!empty($q)) {
+			$builder->groupStart()
+				->like('nim', $q)
+				->orLike('nama_lengkap', $q)
+				->groupEnd();
+		}
+
+		if (!empty($enrolled)) {
+			$builder->whereNotIn('nim', $enrolled);
+		}
+
+		$rows = $builder->get()->getResultArray();
+
+		$results = array_map(fn($r) => [
+			'id'   => $r['nim'],
+			'text' => $r['nim'] . ' – ' . $r['nama_lengkap'] . ' (' . $r['tahun_angkatan'] . ')',
+		], $rows);
+
+		return $this->response->setJSON(['results' => $results]);
+	}
+
+	public function addMahasiswa($id)
+	{
+		$jadwal = $this->db->table('jadwal')->where('id', $id)->get()->getRowArray();
+		if (!$jadwal) {
+			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		$nims = $this->request->getPost('nim') ?? [];
+		if (!is_array($nims)) {
+			$nims = [$nims];
+		}
+		$nims = array_filter($nims);
+
+		if (empty($nims)) {
+			return redirect()->back()->with('error', 'Pilih minimal satu mahasiswa.');
+		}
+
+		$added = 0;
+		foreach ($nims as $nim) {
+			$exists = $this->db->table('jadwal_mahasiswa')
+				->where('jadwal_id', $id)->where('nim', $nim)
+				->countAllResults();
+			if (!$exists) {
+				$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
+				if ($mhsExists) {
+					$this->db->table('jadwal_mahasiswa')->insert(['jadwal_id' => $id, 'nim' => $nim]);
+					$added++;
+				}
+			}
+		}
+
+		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
+			->with('success', "$added mahasiswa berhasil ditambahkan.");
+	}
+
+	public function removeMahasiswa($id)
+	{
+		$nim = $this->request->getPost('nim');
+		if (!$nim) {
+			return redirect()->back()->with('error', 'NIM tidak valid.');
+		}
+
+		$this->db->table('jadwal_mahasiswa')
+			->where('jadwal_id', $id)->where('nim', $nim)->delete();
+
+		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
+			->with('success', 'Mahasiswa berhasil dihapus dari jadwal.');
+	}
+
+	// ────────────────────────────────────────────────────────────────────────────
+
 	// Add this private method inside your Mengajar controller class
 	private function _getFilteredJadwalData()
 	{

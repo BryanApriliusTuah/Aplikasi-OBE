@@ -182,6 +182,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
 	$routes->get('mengajar/syncFromApi', 'Mengajar::syncFromApi');
 	$routes->get('mengajar/getApiKelas', 'Mengajar::getApiKelas');
+	$routes->get('mengajar/(:num)/mahasiswa', 'Mengajar::mahasiswaPage/$1');
+	$routes->get('mengajar/(:num)/mahasiswa/search', 'Mengajar::searchMahasiswa/$1');
+	$routes->post('mengajar/(:num)/mahasiswa/add', 'Mengajar::addMahasiswa/$1');
+	$routes->post('mengajar/(:num)/mahasiswa/remove', 'Mengajar::removeMahasiswa/$1');
 
 	//nilai
 	$routes->get('nilai', 'Nilai::index');
