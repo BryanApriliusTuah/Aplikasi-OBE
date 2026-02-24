@@ -1656,7 +1656,6 @@
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
 		html += '<th width="35%">Deskripsi CPL</th>';
-		html += '<th width="12%" class="text-center">Jenis CPL</th>';
 		html += '<th width="10%" class="text-center">Jumlah CPMK</th>';
 		html += '<th width="10%" class="text-center">Jumlah MK</th>';
 		html += '<th width="10%" class="text-center">Capaian (%)</th>';
@@ -1671,7 +1670,6 @@
 					<td class="text-center">${index + 1}</td>
 					<td><strong>${cpl.kode_cpl}</strong></td>
 					<td>${cpl.deskripsi}</td>
-					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
 					<td class="text-center">${cpl.jumlah_cpmk}</td>
 					<td class="text-center">${cpl.jumlah_mk}</td>
 					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
@@ -1768,7 +1766,7 @@
 			`;
 		} else {
 			data.forEach((item, index) => {
-				const kelasDisplay = item.kelas === 'KM' ? '<span class="badge bg-info">MBKM</span>' : item.kelas;
+				const kelasDisplay = item.kelas === 'KM' ? '<span class="badge bg-primary">MBKM</span>' : item.kelas;
 				const capaian = item.capaian !== undefined ? parseFloat(item.capaian).toFixed(2) : (parseFloat(item.bobot) > 0 ? (parseFloat(item.nilai_cpmk) / parseFloat(item.bobot) * 100).toFixed(2) : '0.00');
 				html += `
 					<tr>
@@ -1863,7 +1861,6 @@
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
 		html += '<th width="43%">Deskripsi CPL</th>';
-		html += '<th width="12%" class="text-center">Jenis CPL</th>';
 		html += '<th width="10%" class="text-center">Jumlah Mahasiswa</th>';
 		html += '<th width="11%" class="text-center">Rata-rata (%)</th>';
 		html += '<th width="7%" class="text-center">Aksi</th>';
@@ -1877,7 +1874,6 @@
 					<td class="text-center">${index + 1}</td>
 					<td><strong>${cpl.kode_cpl}</strong></td>
 					<td>${cpl.deskripsi}</td>
-					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
 					<td class="text-center">${cpl.jumlah_mahasiswa}</td>
 					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
 					<td class="text-center">
@@ -2005,7 +2001,6 @@
 		html += '<th width="5%" class="text-center">No</th>';
 		html += '<th width="12%">Kode CPL</th>';
 		html += '<th width="38%">Deskripsi CPL</th>';
-		html += '<th width="12%" class="text-center">Jenis CPL</th>';
 		html += '<th width="10%" class="text-center">Jumlah Mahasiswa</th>';
 		html += '<th width="13%" class="text-center">Rata-rata (%)</th>';
 		html += '<th width="10%" class="text-center">Aksi</th>';
@@ -2019,7 +2014,6 @@
 					<td class="text-center">${index + 1}</td>
 					<td><strong>${cpl.kode_cpl}</strong></td>
 					<td>${cpl.deskripsi}</td>
-					<td class="text-center"><span class="badge bg-primary">${cpl.jenis_cpl}</span></td>
 					<td class="text-center">${cpl.jumlah_mahasiswa}</td>
 					<td class="text-center"><strong>${cpl.rata_rata.toFixed(2)}%</strong></td>
 					<td class="text-center">
@@ -2486,7 +2480,6 @@
                                 <th width="5%">No</th>
                                 <th width="10%">Kode CPL</th>
                                 <th width="35%">Deskripsi CPL</th>
-                                <th width="15%">Jenis CPL</th>
                                 <th width="10%" class="text-center">${type === 'Individual' ? 'Jumlah CPMK' : 'Jumlah Mhs'}</th>
                                 ${type === 'Subject' ? '<th width="10%" class="text-center">Jumlah CPMK</th>' : ''}
                                 <th width="10%" class="text-center">Capaian (%)</th>
