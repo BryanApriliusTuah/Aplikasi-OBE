@@ -1039,6 +1039,16 @@ class Nilai extends BaseController
 		// Get students for this class
 		$students = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
 
+		// Program Studi
+		$db = \Config\Database::connect();
+		$prodi_data = $db->table('program_studi')
+			->select('nama_resmi')
+			->where('kode', $jadwal['program_studi_kode'])
+			->get()
+			->getFirstRow();
+
+		// dd($prodi_data);
+
 		// Get CPMK list for this jadwal
 		$cpmk_list = $cpmkModel->getCpmkByJadwal($jadwal_id);
 
@@ -1083,7 +1093,7 @@ class Nilai extends BaseController
 		$tahun = isset($jadwal['tahun_akademik']) ? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik'])) : '';
 
 		// Calculate total columns for proper header width
-		$totalColumns = 3 + (count($cpmk_list) * 2) + 1; // No, NIM, Nama + (CPMK Score + Capaian) * count + Nilai Akhir
+		$totalColumns = 3 + (count($cpmk_list) * 2) + 3; // No, NIM, Nama + (CPMK Score + Capaian) * count + Nilai Akhir Angka + Nilai Akhir Huruf + Keterangan
 		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
 
 		// Set header - Ministry text (in same row as logo)
@@ -1120,7 +1130,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
-		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($prodi_data->nama_resmi));
 		$row++;
 		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
@@ -1152,15 +1162,21 @@ class Nilai extends BaseController
 			$col += 2;
 		}
 
-		// Nilai Akhir MK column
-		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, 'Nilai Akhir MK');
+		// Nilai Akhir MK column (colspan 2: Angka + Huruf)
+		$nilaiAkhirStartCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+		$nilaiAkhirEndCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
+		$sheet->setCellValue($nilaiAkhirStartCol . $row, 'Nilai Akhir MK');
+		$sheet->mergeCells($nilaiAkhirStartCol . $row . ':' . $nilaiAkhirEndCol . $row);
 
-		// Merge cells vertically for columns that span both header rows
+		// Keterangan column (rowspan 2)
+		$keteranganCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 2);
+		$sheet->setCellValue($keteranganCol . $row, 'Keterangan');
+		$sheet->mergeCells($keteranganCol . $row . ':' . $keteranganCol . ($row + 1));
+
+		// Merge cells vertically for No, NIM, Nama columns
 		$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
 		$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
 		$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
-		$nilaiAkhirCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
-		$sheet->mergeCells($nilaiAkhirCol . $row . ':' . $nilaiAkhirCol . ($row + 1));
 
 		// Second header row - Sub-headers for CPMK
 		$row++;
@@ -1169,6 +1185,9 @@ class Nilai extends BaseController
 			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Skor');
 			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Capaian (%)');
 		}
+		// Angka and Huruf sub-headers for Nilai Akhir MK
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Angka');
+		$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Huruf');
 
 		// Style both header rows
 		$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $row);
@@ -1183,6 +1202,7 @@ class Nilai extends BaseController
 		// Data rows
 		$row++;
 		$no = 1;
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
 		foreach ($students as $student) {
 			$col = 1;
 			$mahasiswa_id = $student['id'];
@@ -1211,11 +1231,19 @@ class Nilai extends BaseController
 				}
 			}
 
-			// Nilai Akhir MK
+			// Nilai Akhir MK (Angka, Huruf, Keterangan)
 			if (count($student_scores) > 0) {
 				$total = array_sum($student_scores);
-				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, number_format($total, 2));
+				$grade_data = $gradeConfigModel->getGradeByScore($total);
+				$nilai_huruf = $grade_data ? $grade_data['grade_letter'] : 'E';
+				$is_passing = $grade_data ? (bool)$grade_data['is_passing'] : false;
+				$keterangan_val = $is_passing ? 'Lulus' : 'Tidak Lulus';
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($total, 2));
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $nilai_huruf);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, $keterangan_val);
 			} else {
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
 				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row, '-');
 			}
 
