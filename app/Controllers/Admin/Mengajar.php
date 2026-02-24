@@ -757,21 +757,7 @@ class Mengajar extends BaseController
 						$jadwalId = $this->db->insertID();
 						$inserted++;
 
-						// Auto-assign dosen from RPS
-						$rpsId = $matchedMk['rps_id'];
-						$rpsDosen = $this->db->table('rps_pengampu')
-							->where('rps_id', $rpsId)
-							->get()
-							->getResultArray();
-
-						foreach ($rpsDosen as $rd) {
-							$role = ($rd['peran'] === 'koordinator') ? 'leader' : 'member';
-							$this->db->table('jadwal_dosen')->insert([
-								'jadwal_id' => $jadwalId,
-								'dosen_id'  => $rd['dosen_id'],
-								'role'      => $role,
-							]);
-						}
+						// Dosen assignment left empty intentionally — admin assigns manually per kelas
 					}
 				}
 
