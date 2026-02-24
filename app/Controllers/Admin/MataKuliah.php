@@ -289,7 +289,7 @@ class MataKuliah extends BaseController
 			$updated = 0;
 
 			foreach ($body as $item) {
-				if ($item['program_studi_kode'] == 58) {
+				if ($item['prodiKode'] == 58) {
 					log_message('debug', 'API item keys: ' . json_encode(array_keys($item)));
 					log_message('debug', 'API item: ' . json_encode($item));
 					$kode = $item['matakuliah_kode'] ?? null;
