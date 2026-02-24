@@ -268,25 +268,25 @@
 						var currentKelasId = $('#kelas_id').val();
 						var html = '<div class="list-group">';
 						$.each(data.data, function(index, kelas) {
-							var semester = kelas.jadwal_kelas_semester || '-';
-							var totalMhs = kelas.jadwal_kelas_mahasiswa ? kelas.jadwal_kelas_mahasiswa.total : 0;
-							var isSelected = String(kelas.jadwal_kelas_id) === String(currentKelasId);
+							var semester = kelas.kelas.klsSemester || '-';
+							var totalMhs = kelas.mahasiswa.mhsTotal || 0;
+							var isSelected = String(kelas.kelas.klsId) === String(currentKelasId);
 							html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isSelected ? 'active' : '') + '" style="cursor: pointer;">' +
 								'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
 								(isSelected ? ' checked' : '') +
-								' data-kelas-id="' + (kelas.jadwal_kelas_id || '') + '"' +
-								' data-kelas-nama="' + (kelas.jadwal_kelas_nama || '') + '"' +
-								' data-kelas-jenis="' + (kelas.jadwal_kelas_jenis || '') + '"' +
+								' data-kelas-id="' + (kelas.kelas.klsId || '') + '"' +
+								' data-kelas-nama="' + (kelas.kelas.klsNama || '') + '"' +
+								' data-kelas-jenis="' + (kelas.kelas.klsJenis || '') + '"' +
 								' data-kelas-semester="' + semester + '"' +
-								' data-kelas-status="' + (kelas.jadwal_kelas_status || '') + '"' +
-								' data-mk-kode="' + (kelas.jadwal_mk_kurikulum_kode || '') + '"' +
+								' data-kelas-status="' + (kelas.kelas.klsStatus || '') + '"' +
+								' data-mk-kode="' + (kelas.mata_kuliah.mkKode || '') + '"' +
 								' data-total-mhs="' + totalMhs + '">' +
 								'<div class="flex-grow-1">' +
-								'<div class="fw-semibold">Kelas ' + (kelas.jadwal_kelas_nama || '-') + (isSelected ? ' (Saat ini)' : '') + '</div>' +
+								'<div class="fw-semibold">Kelas ' + (kelas.kelas.klsNama || '-') + (isSelected ? ' (Saat ini)' : '') + '</div>' +
 								'<div class="small ' + (isSelected ? '' : 'text-muted') + '">' +
-								(kelas.jadwal_kelas_jenis || '-') + ' &bull; ' +
+								(kelas.kelas.klsJenis || '-') + ' &bull; ' +
 								'Semester: ' + semester + ' &bull; ' +
-								'Status: <span class="badge ' + (kelas.jadwal_kelas_status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.jadwal_kelas_status || '-') + '</span> &bull; ' +
+								'Status: <span class="badge ' + (kelas.kelas.klsStatus === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.klsStatus || '-') + '</span> &bull; ' +
 								'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
 								'</div></div></label>';
 						});

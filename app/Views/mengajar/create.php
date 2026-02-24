@@ -288,8 +288,8 @@
 							var html = '<div class="list-group">';
 							$.each(data.data, function(index, kelas) {
 								console.log('Kelas data:', kelas);
-								var semester = kelas.kelas.semester || '-';
-								var totalMhs = kelas.mahasiswa.total ? kelas.mahasiswa.total : 0;
+								var semester = kelas.kelas.klsSemester || '-';
+								var totalMhs = kelas.mahasiswa.mhsTotal ? kelas.mahasiswa.mhsTotal : 0;
 
 								// Safely extract schedule data
 								var hari = '';
@@ -299,24 +299,24 @@
 								var gedung = '';
 
 								// jadwal_perkuliahan is an array, access first element
-								if (kelas.jadwal_perkuliahan && kelas.jadwal_perkuliahan.length > 0) {
-									var jadwal = kelas.jadwal_perkuliahan[0];
-									hari = jadwal.hari || '';
+								if (kelas.perkuliahan && kelas.perkuliahan.length > 0) {
+									var jadwal = kelas.perkuliahan[0];
+									hari = jadwal.pHari || '';
 
 									// Extract time from ISO format "2026-02-07T08:20:00.000000Z" -> "08:20"
-									var jamMulaiRaw = jadwal.jam.mulai || '';
-									var jamSelesaiRaw = jadwal.jam.selesai || '';
+									var jamMulaiRaw = jadwal.pJam.jMulai || '';
+									var jamSelesaiRaw = jadwal.pJam.jSelesai || '';
 
 									if (jamMulaiRaw) {
-										jamMulai = jamMulaiRaw.substring(11, 16); // Extract HH:MM
+										jamMulai = jamMulaiRaw.substring(0, 5); // Extract HH:MM
 									}
 									if (jamSelesaiRaw) {
-										jamSelesai = jamSelesaiRaw.substring(11, 16); // Extract HH:MM
+										jamSelesai = jamSelesaiRaw.substring(0, 5); // Extract HH:MM
 									}
 
-									if (jadwal.ruangan) {
-										ruang = jadwal.ruangan.ruang || '';
-										gedung = jadwal.ruangan.gedung || '';
+									if (jadwal.pRuangan) {
+										ruang = jadwal.pRuangan.rRuang || '';
+										gedung = jadwal.pRuangan.rGedung || '';
 									}
 								}
 
@@ -324,23 +324,23 @@
 
 								html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3" style="cursor: pointer;">' +
 									'<input type="radio" name="api_kelas_select" class="form-check-input mt-0" value="' + index + '"' +
-									' data-kelas-id="' + (kelas.jadwal_kelas_id || '') + '"' +
-									' data-kelas-nama="' + (kelas.kelas.nama || '') + '"' +
-									' data-kelas-jenis="' + (kelas.kelas.jenis || '') + '"' +
-									' data-kelas-semester="' + kelas.kelas.semester + '"' +
-									' data-kelas-status="' + (kelas.kelas.status || '') + '"' +
-									' data-mk-kode="' + (kelas.mata_kuliah.kode || '') + '"' +
+									' data-kelas-id="' + (kelas.kelas.klsId || '') + '"' +
+									' data-kelas-nama="' + (kelas.kelas.klsNama || '') + '"' +
+									' data-kelas-jenis="' + (kelas.kelas.klsJenis || '') + '"' +
+									' data-kelas-semester="' + kelas.kelas.klsSemester + '"' +
+									' data-kelas-status="' + (kelas.kelas.klsStatus || '') + '"' +
+									' data-mk-kode="' + (kelas.mata_kuliah.mkKode || '') + '"' +
 									' data-total-mhs="' + totalMhs + '"' +
 									' data-hari="' + hari + '"' +
 									' data-jam-mulai="' + jamMulai + '"' +
 									' data-jam-selesai="' + jamSelesai + '"' +
 									' data-ruang="' + ruangLengkap + '">' +
 									'<div class="flex-grow-1">' +
-									'<div class="fw-semibold">Kelas ' + (kelas.kelas.nama || '-') + '</div>' +
+									'<div class="fw-semibold">Kelas ' + (kelas.kelas.klsNama || '-') + '</div>' +
 									'<div class="small text-muted">' +
-									(kelas.kelas.jenis || '-') + ' &bull; ' +
+									(kelas.kelas.klsJenis || '-') + ' &bull; ' +
 									'Semester: ' + semester + ' &bull; ' +
-									'Status: <span class="badge ' + (kelas.kelas.status === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.status || '-') + '</span> &bull; ' +
+									'Status: <span class="badge ' + (kelas.kelas.klsStatus === 'Aktif' ? 'bg-success' : 'bg-secondary') + '">' + (kelas.kelas.klsStatus || '-') + '</span> &bull; ' +
 									'<i class="bi bi-people"></i> ' + totalMhs + ' mahasiswa' +
 									(hari ? ' &bull; ' + hari : '') +
 									(jamMulai ? ' &bull; ' + jamMulai + '-' + jamSelesai : '') +

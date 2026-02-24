@@ -547,7 +547,7 @@ class Mengajar extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal';
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -647,30 +647,27 @@ class Mengajar extends BaseController
 			$skipped = 0;
 
 			foreach ($kelasList as $kelas) {
-				$mkKode = $kelas['mata_kuliah']['kode'] ?? null;
-				$kelasId = $kelas['kelas']['id'] ?? null;
+				$mkKode = $kelas['mata_kuliah']['mkKode'] ?? null;
+				$kelasId = $kelas['kelas']['klsId'] ?? null;
 				// Validate kelas_id exists in kelas table to avoid FK constraint violation
 				if ($kelasId && !isset($validKelasIds[$kelasId])) {
 					$kelasId = null;
 				}
-				$kelasNama = $kelas['kelas']['nama'] ?? 'A';
-				$kelasJenis = $kelas['kelas']['jenis'] ?? null;
-				$kelasSemester = $kelas['kelas']['semester'] ?? null;
-				$kelasStatus = $kelas['kelas']['status'] ?? 'Aktif';
-				$hari = $kelas['jadwal_perkuliahan'][0]['hari'] ?? null;
+				$kelasNama = $kelas['kelas']['klsNama'] ?? 'A';
+				$kelasJenis = $kelas['kelas']['klsJenis'] ?? null;
+				$kelasSemester = $kelas['kelas']['klsSemester'] ?? null;
+				$kelasStatus = $kelas['kelas']['klsStatus'] ?? 'Aktif';
+				$hari = $kelas['perkuliahan'][0]['pHari'] ?? null;
 
-				// Extract time from ISO format "2026-02-07T08:20:00.000000Z" -> "08:20:00"
-				$jamMulaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['mulai'] ?? null;
-				$jamSelesaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['selesai'] ?? null;
+				// Time is already in "HH:MM:SS" format from API
+				$jamMulai = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
+				$jamSelesai = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
 
-				$jamMulai = $jamMulaiRaw ? substr($jamMulaiRaw, 11, 8) : null;
-				$jamSelesai = $jamSelesaiRaw ? substr($jamSelesaiRaw, 11, 8) : null;
-
-				$ruangKelas = $kelas['jadwal_perkuliahan'][0]['ruangan']['ruang'] ?? null;
-				$gedung = $kelas['jadwal_perkuliahan'][0]['ruangan']['gedung'] ?? null;
+				$ruangKelas = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
+				$gedung = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
 				$mahasiswaData = $kelas['mahasiswa'] ?? [];
-				$totalMahasiswa = $mahasiswaData['total'] ?? 0;
-				$nimList = $mahasiswaData['nim'] ?? [];
+				$totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
+				$nimList = $mahasiswaData['mhsNim'] ?? [];
 
 				// Only process if this MK has RPS
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
@@ -824,7 +821,7 @@ class Mengajar extends BaseController
 			return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal';
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -840,50 +837,24 @@ class Mengajar extends BaseController
 
 			$body = json_decode($response->getBody(), true);
 
-			$jadwalRaw = $body['jadwal'] ?? [];
+			$jadwalRaw = $body['jadwal'][0] ?? [];
 
-			// Flatten: each jadwal item contains a 'kelas' sub-array
+			// $jadwalRaw = { status, kelas: [...] } — iterate over the 'kelas' sub-array
 			$kelasList = [];
-			foreach ($jadwalRaw as $item) {
-				if (isset($item['kelas']) && is_array($item['kelas'])) {
-					foreach ($item['kelas'] as $k) {
-						$kelasList[] = $k;
-					}
-				}
-			}
-
-			// Filter kelas matching the given kode_mk
-			$matchedKelas = [];
-			foreach ($kelasList as $kelas) {
-				if (($kelas['mata_kuliah']['kode'] ?? '') === $mkKode && ($kelas['kelas']['status'] ?? '') === 'Aktif') {
-					$matchedKelas[] = $kelas;
-				}
-			}
-
-			// Get program_studi_kode from API
-			$apiUrl2 = 'https://tik.upr.ac.id/api/siuber/kelas';
-			$response2 = $client->request('GET', $apiUrl2, [
-				'headers' => [
-					'x-api-key' => $apiKey,
-					'Accept'    => 'application/json',
-				],
-				'timeout' => 30,
-			]);
-			$body2 = json_decode($response2->getBody(), true);
-			$kelasApiList = $body2['data'] ?? [];
-
-			$programStudiKode = null;
-			foreach ($kelasApiList as $kls) {
-				if (($kls['matakuliahKode'] ?? '') === $mkKode) {
-					$programStudiKode = $kls['prodiKode'] ?? null;
-					break;
+			foreach ($jadwalRaw['kelas'] ?? [] as $item) {
+				if (
+					isset($item['mata_kuliah']['mkKode']) &&
+					$item['mata_kuliah']['mkKode'] === $mkKode &&
+					($item['kelas']['klsStatus'] ?? '') === 'Aktif'
+				) {
+					$kelasList[] = $item;
 				}
 			}
 
 			return $this->response->setJSON([
 				'success' => true,
-				'data'    => $matchedKelas,
-				'program_studi_kode' => $programStudiKode,
+				'data'    => $kelasList,
+				'program_studi_kode' => 58,
 			]);
 		} catch (\Exception $e) {
 			return $this->response->setStatusCode(500)->setJSON([
