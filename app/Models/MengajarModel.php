@@ -103,6 +103,9 @@ class MengajarModel extends Model
 		if (!empty($filters['tahun_akademik'])) {
 			$builder->like('vjl.tahun_akademik', $filters['tahun_akademik'], 'both');
 		}
+		if (!empty($filters['dosen_id'])) {
+			$builder->where("vjl.id IN (SELECT jadwal_id FROM jadwal_dosen WHERE dosen_id = " . (int)$filters['dosen_id'] . ")", null, false);
+		}
 
 		if ($singleResult) {
 			$result = $builder->get()->getRowArray();

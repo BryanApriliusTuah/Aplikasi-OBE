@@ -21,6 +21,18 @@ class Nilai extends BaseController
 			'tahun_akademik' => $this->request->getGet('tahun_akademik'),
 		];
 
+		// Get current user's dosen_id if they are a lecturer
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+			// Only show schedules assigned to this dosen
+			if ($currentDosenId) {
+				$filters['dosen_id'] = $currentDosenId;
+			}
+		}
+
 		// Fetch schedules with related data
 		$schedules = $jadwalModel->getJadwalWithDetails($filters);
 
@@ -33,14 +45,6 @@ class Nilai extends BaseController
 			'Jumat' => [],
 			'Sabtu' => []
 		];
-
-		// Get current user's dosen_id if they are a lecturer
-		$currentDosenId = null;
-		if (session()->get('role') === 'dosen') {
-			$dosenModel = new DosenModel();
-			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
-			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
-		}
 
 		// Get validation status and score completion for all schedules at once
 		$jadwal_ids = array_column($schedules, 'id');
