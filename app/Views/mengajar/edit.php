@@ -81,7 +81,29 @@
 							</div>
 							<div class="col-md-6">
 								<label for="tahun_akademik" class="form-label">Tahun Akademik</label>
-								<input type="text" class="form-control" id="tahun_akademik" name="tahun_akademik" value="<?= old('tahun_akademik', $jadwal['tahun_akademik']) ?>" placeholder="Contoh: 2024/2025 Ganjil" required>
+								<?php $currentTahunAkademik = old('tahun_akademik', $jadwal['tahun_akademik']); ?>
+								<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
+									<option value="">-- Pilih Tahun Akademik --</option>
+									<?php foreach ($tahun_akademik_list as $tahun): ?>
+										<option value="<?= esc($tahun) ?>" <?= $currentTahunAkademik === $tahun ? 'selected' : '' ?>>
+											<?= esc($tahun) ?>
+										</option>
+									<?php endforeach; ?>
+									<?php
+										// If current value isn't in the master list, show it as-is so data isn't lost
+										if ($currentTahunAkademik && !in_array($currentTahunAkademik, $tahun_akademik_list)):
+									?>
+										<option value="<?= esc($currentTahunAkademik) ?>" selected>
+											<?= esc($currentTahunAkademik) ?> (tidak ada di master)
+										</option>
+									<?php endif; ?>
+								</select>
+								<?php if (empty($tahun_akademik_list)): ?>
+									<div class="form-text text-warning">
+										<i class="bi bi-exclamation-triangle"></i>
+										Belum ada tahun akademik. <a href="<?= base_url('admin/settings/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
+									</div>
+								<?php endif; ?>
 							</div>
 
 							<div class="col-md-6">

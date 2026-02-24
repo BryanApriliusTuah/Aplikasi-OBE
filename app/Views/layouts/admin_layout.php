@@ -277,12 +277,20 @@
 					</ul>
 				</li>
 
-				<?php if (session('role') === 'admin'): ?>
-					<li class="nav-item">
-						<a class="nav-link<?= uri_string() == 'admin/settings' ? ' active' : '' ?>" href="<?= base_url('admin/settings') ?>"
-							data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola pengaturan sistem penilaian dan grade">
+				<?php if (session('role') === 'admin'):
+					$isPengaturanOpen = str_starts_with(uri_string(), 'admin/settings');
+				?>
+					<li class="nav-item sidebar-dropdown <?= $isPengaturanOpen ? 'open' : '' ?>">
+						<a class="nav-link sidebar-dropdown-toggle <?= $isPengaturanOpen ? 'active' : '' ?>" href="#">
 							<i class="bi bi-gear"></i> Pengaturan
+							<span class="caret"></span>
 						</a>
+						<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isPengaturanOpen ? ' show' : '' ?>">
+							<div>
+								<li><a class="nav-link <?= uri_string() == 'admin/settings' ? 'active' : '' ?>" href="<?= base_url('admin/settings') ?>">Konfigurasi Nilai</a></li>
+								<li><a class="nav-link <?= str_starts_with(uri_string(), 'admin/settings/tahun-akademik') ? 'active' : '' ?>" href="<?= base_url('admin/settings/tahun-akademik') ?>">Tahun Akademik</a></li>
+							</div>
+						</ul>
 					</li>
 				<?php endif; ?>
 			</ul>

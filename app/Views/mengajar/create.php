@@ -58,12 +58,20 @@
 							</div>
 							<div class="col-md-6">
 								<label for="tahun_akademik" class="form-label">Tahun Akademik</label>
-								<input type="text" class="form-control" id="tahun_akademik" name="tahun_akademik" value="<?= old('tahun_akademik') ?>" list="tahun_akademik_options" placeholder="Contoh: 2025/2026 Ganjil" required>
-								<datalist id="tahun_akademik_options">
+								<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
+									<option value="">-- Pilih Tahun Akademik --</option>
 									<?php foreach ($tahun_akademik_list as $tahun): ?>
-										<option value="<?= esc($tahun) ?>">
-										<?php endforeach; ?>
-								</datalist>
+										<option value="<?= esc($tahun) ?>" <?= old('tahun_akademik') === $tahun ? 'selected' : '' ?>>
+											<?= esc($tahun) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<?php if (empty($tahun_akademik_list)): ?>
+									<div class="form-text text-warning">
+										<i class="bi bi-exclamation-triangle"></i>
+										Belum ada tahun akademik. <a href="<?= base_url('admin/settings/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
+									</div>
+								<?php endif; ?>
 							</div>
 
 							<div class="col-md-6">

@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\TahunAkademikModel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
@@ -75,13 +76,13 @@ class Mengajar extends BaseController
 			$jadwal_by_day[$day][] = $jadwal;
 		}
 
-		// Get distinct tahun akademik for filter dropdown
-		$tahun_akademik_list = $this->db->table('jadwal')
-			->distinct()
-			->select('tahun_akademik')
-			->orderBy('tahun_akademik', 'DESC')
-			->get()
-			->getResultArray();
+		// Get tahun akademik for filter dropdown from master table
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
+		$tahun_akademik_list = array_map(
+			fn($r) => $r['tahun'] . ' ' . $r['semester'],
+			$tahun_akademik_rows
+		);
 
 		// Get program studi list for filter dropdown
 		$program_studi_list = $this->db->table('program_studi')
@@ -94,7 +95,7 @@ class Mengajar extends BaseController
 			'jadwal_by_day' => $jadwal_by_day,
 			'filters' => $filters,
 			'total_jadwal' => count($jadwal_list),
-			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
+			'tahun_akademik_list' => $tahun_akademik_list,
 			'program_studi_list' => $program_studi_list
 		];
 
@@ -118,14 +119,13 @@ class Mengajar extends BaseController
 			->get()
 			->getResultArray();
 
-		// Get distinct tahun akademik for suggestions
-		// CORRECTED QUERY:
-		$tahun_akademik_list = $this->db->table('jadwal')
-			->distinct() // Use the distinct() method
-			->select('tahun_akademik') // Select only the column name
-			->orderBy('tahun_akademik', 'DESC')
-			->get()
-			->getResultArray();
+		// Get tahun akademik from master table (active only)
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getActive();
+		$tahun_akademik_list = array_map(
+			fn($r) => $r['tahun'] . ' ' . $r['semester'],
+			$tahun_akademik_rows
+		);
 
 		// Get program studi list
 		$program_studi_list = $this->db->table('program_studi')
@@ -137,7 +137,7 @@ class Mengajar extends BaseController
 			'title' => 'Tambah Jadwal Mengajar',
 			'dosen_list' => $dosen_list,
 			'mata_kuliah_list' => $mata_kuliah_list,
-			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
+			'tahun_akademik_list' => $tahun_akademik_list,
 			'program_studi_list' => $program_studi_list
 		];
 
@@ -390,12 +390,21 @@ class Mengajar extends BaseController
 			->get()
 			->getResultArray();
 
+		// Get tahun akademik from master table (active only)
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getActive();
+		$tahun_akademik_list = array_map(
+			fn($r) => $r['tahun'] . ' ' . $r['semester'],
+			$tahun_akademik_rows
+		);
+
 		$data = [
 			'title' => 'Edit Jadwal Mengajar',
 			'jadwal' => $jadwal,
 			'dosen_list' => $dosen_list,
 			'mata_kuliah_list' => $mata_kuliah_list,
-			'program_studi_list' => $program_studi_list
+			'program_studi_list' => $program_studi_list,
+			'tahun_akademik_list' => $tahun_akademik_list,
 		];
 
 		return view('mengajar/edit', $data);
