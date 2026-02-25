@@ -240,102 +240,43 @@
 						<?php endif; ?>
 					</li>
 					<li class="mb-2">
+						<strong>Penyebab Utama Ketidakcapaian:</strong>
+						<?php if (!empty($report['analysis']['cpl_tidak_tercapai'])): ?>
+							<ul class="mt-2 mb-0">
+								Mahasiswa tidak mencapai target capaian pembelajaran pada CPL berikut:
+								<?php foreach ($report['analysis']['cpl_tidak_tercapai'] as $cpl): ?>
+									<li class="mb-2">
+										<strong><?= esc($cpl['kode_cpl']) ?></strong>
+										<div class="mt-1 text-secondary"><?= esc($cpl['deskripsi']) ?></div>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php else: ?>
+							<span class="text-muted">Semua CPL tercapai.</span>
+						<?php endif; ?>
+					</li>
+					<li class="mb-2">
 						<div class="d-flex justify-content-between align-items-center mb-2">
-							<strong>Analisis Singkat:</strong>
+							<strong>Keterangan Tambahan:</strong>
 							<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="toggleEditAnalysis()">
-								<i class="bi bi-pencil"></i> Edit Analisis
+								<i class="bi bi-pencil"></i> Edit
 							</button>
 						</div>
 
 						<!-- Display Mode -->
-						<div id="analysis-display" class="mt-2 p-3 bg-light rounded">
-							<?= esc($report['analysis']['analisis_summary']) ?>
+						<div id="analysis-display" class="mt-2">
+							<?php if (!empty($report['analysis']['keterangan_tambahan'])): ?>
+								<div class="p-3 bg-light rounded"><?= esc($report['analysis']['keterangan_tambahan']) ?></div>
+							<?php else: ?>
+								<span class="text-muted fst-italic">Belum ada keterangan tambahan.</span>
+							<?php endif; ?>
 						</div>
 
 						<!-- Edit Mode -->
 						<div id="analysis-edit" class="mt-2 p-3 border rounded bg-white" style="display: none;">
-							<div class="mb-3">
-								<label class="form-label fw-bold">Pilih Mode Analisis:</label>
-								<div class="form-check">
-									<input class="form-check-input" type="radio" name="analysis_mode" id="mode_auto" value="auto" <?= ($report['analysis']['mode'] ?? 'auto') === 'auto' ? 'checked' : '' ?>>
-									<label class="form-check-label" for="mode_auto">
-										Otomatis - Sistem akan menghasilkan analisis berdasarkan data CPL
-									</label>
-								</div>
-
-								<!-- Auto Analysis Sub-Options -->
-								<div id="auto-analysis-options" class="ms-4 mt-2" style="display: <?= ($report['analysis']['mode'] ?? 'auto') === 'auto' ? 'block' : 'none' ?>;">
-									<small class="text-muted d-block mb-3">Pilih salah satu template analisis yang akan digunakan (atau tidak pilih sama sekali):</small>
-									<?php
-									// Get saved auto_options - should be a single value now
-									$savedAutoOptions = $report['analysis']['auto_options'] ?? [];
-									$selectedOption = is_array($savedAutoOptions) && !empty($savedAutoOptions) ? $savedAutoOptions[0] : 'default';
-									$templates = $report['analysis']['templates'] ?? [];
-
-									// Sort templates to put 'default' first
-									$sortedTemplates = [];
-									if (isset($templates['default'])) {
-										$sortedTemplates['default'] = $templates['default'];
-									}
-									foreach ($templates as $key => $template) {
-										if ($key !== 'default') {
-											$sortedTemplates[$key] = $template;
-										}
-									}
-									$templates = $sortedTemplates;
-									?>
-
-									<?php foreach ($templates as $key => $template): ?>
-										<div class="mb-3 border rounded p-2 bg-light">
-											<div class="d-flex justify-content-between align-items-center">
-												<div class="form-check flex-grow-1">
-													<input class="form-check-input auto-option-radio" type="radio" name="auto_option_single" id="auto_<?= esc($key) ?>" value="<?= esc($key) ?>" <?= $selectedOption === $key ? 'checked' : '' ?>>
-													<label class="form-check-label" for="auto_<?= esc($key) ?>">
-														<?= esc($template['option_label']) ?>
-													</label>
-												</div>
-												<button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTemplateEdit('<?= esc($key) ?>')">
-													<i class="bi bi-pencil"></i> Edit Template
-												</button>
-											</div>
-
-											<!-- Template Edit Section -->
-											<div id="template-edit-<?= esc($key) ?>" class="mt-3" style="display: none;">
-												<div class="mb-2">
-													<label class="form-label fw-bold small">Template untuk CPL Tercapai Semua:</label>
-													<textarea
-														class="form-control form-control-sm font-monospace"
-														name="template_tercapai_<?= esc($key) ?>"
-														rows="3"
-														placeholder="Template ketika semua CPL tercapai..."><?= esc($template['template_tercapai'] ?? '') ?></textarea>
-												</div>
-
-												<div class="mb-2">
-													<label class="form-label fw-bold small">Template untuk CPL Tidak Tercapai:</label>
-													<textarea
-														class="form-control form-control-sm font-monospace"
-														name="template_tidak_tercapai_<?= esc($key) ?>"
-														rows="3"
-														placeholder="Template ketika ada CPL tidak tercapai..."><?= esc($template['template_tidak_tercapai'] ?? '') ?></textarea>
-												</div>
-											</div>
-										</div>
-									<?php endforeach; ?>
-								</div>
-
-								<div class="form-check">
-									<input class="form-check-input" type="radio" name="analysis_mode" id="mode_manual" value="manual" <?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? 'checked' : '' ?>>
-									<label class="form-check-label" for="mode_manual">
-										Manual - Saya akan menulis analisis sendiri
-									</label>
-								</div>
-							</div>
-
-							<div id="manual-analysis-container" style="display: <?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? 'block' : 'none' ?>;">
-								<label class="form-label fw-bold">Tulis Analisis:</label>
-								<textarea id="manual-analysis-text" class="form-control" rows="5" placeholder="Tulis analisis singkat mengenai pemenuhan CPL..."><?= ($report['analysis']['mode'] ?? 'auto') === 'manual' ? esc($report['analysis']['analisis_summary']) : '' ?></textarea>
-								<small class="text-muted">Jelaskan pencapaian CPL, faktor yang mempengaruhi, dan rekomendasi perbaikan jika diperlukan.</small>
-							</div>
+							<label class="form-label fw-bold">Keterangan Tambahan:</label>
+							<textarea id="keterangan-tambahan-text" class="form-control" rows="4" placeholder="Tulis keterangan tambahan mengenai pemenuhan CPL..."><?= esc($report['analysis']['keterangan_tambahan'] ?? '') ?></textarea>
+							<small class="text-muted">Tambahkan catatan, penjelasan, atau rekomendasi perbaikan jika diperlukan.</small>
 
 							<div class="mt-3">
 								<button type="button" class="btn btn-success" onclick="saveAnalysis()">
@@ -728,100 +669,22 @@
 		document.getElementById('analysis-edit').style.display = 'none';
 	}
 
-	// Toggle manual analysis textarea and auto options based on selected mode
-	document.querySelectorAll('input[name="analysis_mode"]').forEach(radio => {
-		radio.addEventListener('change', function() {
-			const manualContainer = document.getElementById('manual-analysis-container');
-			const autoOptionsContainer = document.getElementById('auto-analysis-options');
-
-			if (this.value === 'manual') {
-				manualContainer.style.display = 'block';
-				autoOptionsContainer.style.display = 'none';
-			} else {
-				manualContainer.style.display = 'none';
-				autoOptionsContainer.style.display = 'block';
-			}
-		});
-	});
-
-	function toggleTemplateEdit(optionKey) {
-		const editDiv = document.getElementById('template-edit-' + optionKey);
-		if (editDiv) {
-			editDiv.style.display = editDiv.style.display === 'none' ? 'block' : 'none';
-		}
-	}
-
-	// Allow deselecting radio buttons by clicking again
-	document.addEventListener('DOMContentLoaded', function() {
-		let lastCheckedRadio = null;
-		document.querySelectorAll('.auto-option-radio').forEach(radio => {
-			radio.addEventListener('click', function() {
-				if (this === lastCheckedRadio) {
-					this.checked = false;
-					lastCheckedRadio = null;
-				} else {
-					lastCheckedRadio = this;
-				}
-			});
-		});
-	});
-
 	function saveAnalysis() {
-		const mode = document.querySelector('input[name="analysis_mode"]:checked').value;
-		const analysisText = document.getElementById('manual-analysis-text').value;
+		const keteranganTambahan = document.getElementById('keterangan-tambahan-text').value;
 
-		// Validate manual mode
-		if (mode === 'manual' && !analysisText.trim()) {
-			alert('Silakan tulis analisis terlebih dahulu untuk mode manual.');
-			return;
-		}
-
-		// Show loading
 		const saveBtn = event.target;
 		const originalText = saveBtn.innerHTML;
 		saveBtn.disabled = true;
 		saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
-		// Collect auto analysis option (single selection) if auto mode is selected
-		let autoOptions = [];
-		if (mode === 'auto') {
-			const selectedRadio = document.querySelector('input[name="auto_option_single"]:checked');
-			if (selectedRadio) {
-				autoOptions.push(selectedRadio.value);
-			}
-		}
-
-		// Collect template data
-		const templatesData = {};
-		document.querySelectorAll('[name^="template_tercapai_"]').forEach(textarea => {
-			const optionKey = textarea.name.replace('template_tercapai_', '');
-			if (!templatesData[optionKey]) {
-				templatesData[optionKey] = {};
-			}
-			templatesData[optionKey].template_tercapai = textarea.value;
-		});
-		document.querySelectorAll('[name^="template_tidak_tercapai_"]').forEach(textarea => {
-			const optionKey = textarea.name.replace('template_tidak_tercapai_', '');
-			if (!templatesData[optionKey]) {
-				templatesData[optionKey] = {};
-			}
-			templatesData[optionKey].template_tidak_tercapai = textarea.value;
-		});
-
-		// Get current URL parameters
 		const urlParams = new URLSearchParams(window.location.search);
 
-		// Prepare data
 		const formData = new FormData();
 		formData.append('program_studi_kode', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
 		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
 		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
-		formData.append('mode', mode);
-		formData.append('analisis_summary', analysisText);
-		formData.append('auto_options', JSON.stringify(autoOptions));
-		formData.append('templates', JSON.stringify(templatesData));
+		formData.append('keterangan_tambahan', keteranganTambahan);
 
-		// Send AJAX request
 		fetch('<?= base_url('admin/laporan-cpl/save-analysis') ?>', {
 				method: 'POST',
 				body: formData,
@@ -832,7 +695,7 @@
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
-					alert('Analisis berhasil disimpan! Halaman akan dimuat ulang.');
+					alert('Keterangan tambahan berhasil disimpan! Halaman akan dimuat ulang.');
 					location.reload();
 				} else {
 					alert('Gagal menyimpan: ' + data.message);
@@ -842,7 +705,7 @@
 			})
 			.catch(error => {
 				console.error('Error:', error);
-				alert('Terjadi kesalahan saat menyimpan analisis.');
+				alert('Terjadi kesalahan saat menyimpan.');
 				saveBtn.disabled = false;
 				saveBtn.innerHTML = originalText;
 			});

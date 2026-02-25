@@ -325,10 +325,29 @@
                 <?php endif; ?>
             </li>
             <li style="margin-bottom: 10px;">
-                <strong>Analisis Singkat:</strong>
-                <div class="bg-light" style="margin-top: 10px;">
-                    <?= esc($report['analysis']['analisis_summary']) ?>
-                </div>
+                <strong>Penyebab Utama Ketidakcapaian:</strong>
+                <?php if (!empty($report['analysis']['cpl_tidak_tercapai'])): ?>
+                    <ul style="margin-top: 8px; margin-bottom: 0;">
+                        <?php foreach ($report['analysis']['cpl_tidak_tercapai'] as $cpl): ?>
+                            <li style="margin-bottom: 8px;">
+                                <strong><?= esc($cpl['kode_cpl']) ?></strong>
+                                <div style="margin-top: 4px; color: #444;"><?= esc($cpl['deskripsi']) ?></div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <span class="text-muted">Semua CPL tercapai.</span>
+                <?php endif; ?>
+            </li>
+            <li style="margin-bottom: 10px;">
+                <strong>Keterangan Tambahan:</strong>
+                <?php if (!empty($report['analysis']['keterangan_tambahan'])): ?>
+                    <div class="bg-light" style="margin-top: 8px; padding: 10px;">
+                        <?= esc($report['analysis']['keterangan_tambahan']) ?>
+                    </div>
+                <?php else: ?>
+                    <span class="text-muted">-</span>
+                <?php endif; ?>
             </li>
         </ul>
     </div>

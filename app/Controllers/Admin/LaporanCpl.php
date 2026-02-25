@@ -286,6 +286,7 @@ class LaporanCpl extends BaseController
 			if (empty($cpmkLinked)) {
 				$achievementData[] = [
 					'kode_cpl' => $cpl['kode_cpl'],
+					'deskripsi' => $cpl['deskripsi'],
 					'cpmk_kontributor' => [],
 					'capaian_rata_rata_cpmk' => 0,
 					'capaian_cpl' => 0,
@@ -451,6 +452,7 @@ class LaporanCpl extends BaseController
 
 			$achievementData[] = [
 				'kode_cpl' => $cpl['kode_cpl'],
+				'deskripsi' => $cpl['deskripsi'],
 				'cpmk_kontributor' => $cpmkContributors,
 				'capaian_cpl' => round($nilaiCpl, 2),
 				'total_bobot' => $totalBobot,
@@ -475,6 +477,7 @@ class LaporanCpl extends BaseController
 			} else {
 				$cplTidakTercapai[] = [
 					'kode_cpl' => $cpl['kode_cpl'],
+					'deskripsi' => $cpl['deskripsi'] ?? '',
 					'capaian' => $cpl['capaian_cpl_persen']
 				];
 			}
@@ -486,45 +489,16 @@ class LaporanCpl extends BaseController
 			$savedAnalysis = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
 		}
 
-		// Determine mode and analysis text
-		$mode = $savedAnalysis['mode'] ?? 'auto';
-		$analysisSummary = '';
-
-		// Get auto_options
-		$autoOptions = [];
-		if (!empty($savedAnalysis['auto_options'])) {
-			$autoOptions = json_decode($savedAnalysis['auto_options'], true);
-			if (!is_array($autoOptions)) {
-				$autoOptions = [];
-			}
-		}
-
-		// Get templates - initialize defaults if empty
-		$templates = $this->analysisTemplateCplModel->getTemplatesAsArray();
-		if (empty($templates)) {
-			$this->initializeDefaultTemplates();
-			$templates = $this->analysisTemplateCplModel->getTemplatesAsArray();
-		}
-
-		if ($mode === 'manual' && !empty($savedAnalysis['analisis_summary'])) {
-			// Use manual analysis
-			$analysisSummary = $savedAnalysis['analisis_summary'];
-		} else {
-			// Use auto-generated analysis
-			$analysisSummary = $this->generateAnalysisSummary($cplTercapai, $cplTidakTercapai, $passingThreshold, $autoOptions, $templates);
-		}
+		$keteranganTambahan = $savedAnalysis['analisis_summary'] ?? '';
 
 		return [
 			'cpl_tercapai' => $cplTercapai,
 			'cpl_tidak_tercapai' => $cplTidakTercapai,
 			'passing_threshold' => $passingThreshold,
-			'analisis_summary' => $analysisSummary,
+			'keterangan_tambahan' => $keteranganTambahan,
 			'total_cpl' => count($cplAchievementData),
 			'total_tercapai' => count($cplTercapai),
 			'total_tidak_tercapai' => count($cplTidakTercapai),
-			'mode' => $mode,
-			'auto_options' => $autoOptions,
-			'templates' => $templates
 		];
 	}
 
@@ -1213,58 +1187,35 @@ class LaporanCpl extends BaseController
 		$programStudiKode = $this->request->getPost('program_studi_kode');
 		$tahunAkademik = $this->request->getPost('tahun_akademik');
 		$angkatan = $this->request->getPost('angkatan');
-		$mode = $this->request->getPost('mode');
-		$analysisSummary = $this->request->getPost('analisis_summary');
-		$autoOptionsJson = $this->request->getPost('auto_options');
-		$templatesJson = $this->request->getPost('templates');
+		$keteranganTambahan = $this->request->getPost('keterangan_tambahan');
 
-		if (!$programStudiKode || !$tahunAkademik || !$angkatan || !$mode) {
+		if (!$programStudiKode || !$tahunAkademik || !$angkatan) {
 			return $this->response->setJSON([
 				'success' => false,
 				'message' => 'Data tidak lengkap.'
 			])->setStatusCode(400);
 		}
 
-		// Decode auto_options if it's in JSON format
-		$autoOptions = null;
-		if ($mode === 'auto' && $autoOptionsJson) {
-			$autoOptions = $autoOptionsJson; // Already JSON string from frontend
-		}
-
 		$data = [
-			'program_studi' => $programStudiKode, // Kode program studi
+			'program_studi' => $programStudiKode,
 			'tahun_akademik' => $tahunAkademik,
 			'angkatan' => $angkatan,
-			'mode' => $mode,
-			'analisis_summary' => $mode === 'manual' ? $analysisSummary : null,
-			'auto_options' => $autoOptions
+			'mode' => 'manual',
+			'analisis_summary' => $keteranganTambahan,
+			'auto_options' => null
 		];
 
 		try {
-			// Save analysis settings
 			$this->analysisCplModel->saveAnalysis($data);
-
-			// Save templates if provided
-			if ($templatesJson) {
-				$templates = json_decode($templatesJson, true);
-				if (is_array($templates)) {
-					foreach ($templates as $optionKey => $templateData) {
-						$this->analysisTemplateCplModel->updateByKey($optionKey, [
-							'template_tercapai' => $templateData['template_tercapai'] ?? '',
-							'template_tidak_tercapai' => $templateData['template_tidak_tercapai'] ?? ''
-						]);
-					}
-				}
-			}
 
 			return $this->response->setJSON([
 				'success' => true,
-				'message' => 'Analisis dan template berhasil disimpan.'
+				'message' => 'Keterangan tambahan berhasil disimpan.'
 			]);
 		} catch (\Exception $e) {
 			return $this->response->setJSON([
 				'success' => false,
-				'message' => 'Gagal menyimpan analisis: ' . $e->getMessage()
+				'message' => 'Gagal menyimpan: ' . $e->getMessage()
 			])->setStatusCode(500);
 		}
 	}
