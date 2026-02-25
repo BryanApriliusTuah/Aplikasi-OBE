@@ -307,6 +307,9 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 
 		// AJAX routes
 		$routes->get('detail-nilai/(:num)', 'MbkmController::detailNilai/$1');
+
+		// Sync from API
+		$routes->post('sync-from-api', 'MbkmController::syncFromApi');
 	});
 
 	// MBKM Jenis Kegiatan Management (Optional - for managing activity types)

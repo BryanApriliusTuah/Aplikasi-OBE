@@ -130,7 +130,13 @@
 											$cpmk_count = count($mk['cpmk_list']);
 									?>
 											<th class="text-center align-middle bg-secondary bg-opacity-10" colspan="<?= $cpmk_count ?>">
-												CPMK - <?= esc($mk['kode_mk']) ?>
+												CPMK - <?= esc($mk['nama_mk']) ?>
+											</th>
+										<?php
+										else:
+										?>
+											<th class="text-center align-middle bg-danger bg-opacity-10" style="min-width: 220px;">
+												<i class="bi bi-x-circle-fill text-danger me-1"></i><?= esc($mk['nama_mk']) ?>
 											</th>
 									<?php
 										endif;
@@ -156,12 +162,20 @@
 																	title="<?= esc($cpmk['deskripsi_cpmk']) ?>"></i>
 															<?php endif; ?>
 														</div>
-														<span class="badge bg-success" style="font-size: 0.65rem;">
-															<?= number_format($cpmk['bobot'], 1) ?>%
-														</span>
+														<?php
+														if ($cpmk['bobot'] > 0) { ?>
+															<span class="badge bg-success" style="font-size: 0.65rem;">
+																<?= number_format($cpmk['bobot'], 1) ?>%
+															</span>
+														<?php }
+														?>
 													</div>
 												</th>
 											<?php endforeach; ?>
+										<?php else: ?>
+											<th class="text-center align-middle bg-danger bg-opacity-10" style="min-width: 220px;">
+												<small class="text-danger"><i class="bi bi-x-circle me-1"></i>Belum ada CPMK</small>
+											</th>
 										<?php endif; ?>
 									<?php endforeach; ?>
 								</tr>
@@ -180,37 +194,67 @@
 											<?= esc($mk_row['nama_mk']) ?>
 										</td>
 										<td class="text-center align-middle sticky-col">
-											<span class="badge bg-info"><?= esc($mk_row['bobot_mk'] ?? 0) ?> SKS</span>
+											<span class="badge bg-primary"><?= esc($mk_row['bobot_mk'] ?? 0) ?> SKS</span>
 										</td>
 										<?php
 										// Loop through ALL courses' CPMKs to match header structure
 										foreach ($konversi_mk as $mk_header): ?>
-											<?php if (!empty($mk_header['cpmk_list'])): ?>
-												<?php foreach ($mk_header['cpmk_list'] as $cpmk): ?>
-													<?php if ($mk_row['mata_kuliah_id'] == $mk_header['mata_kuliah_id']): ?>
-														<?php
-														// This CPMK belongs to current row's course - show input
-														$existing_nilai = $existing_scores[$mk_row['mata_kuliah_id']][$cpmk['cpmk_id']] ?? '';
-														?>
-														<td class="align-middle p-1">
-															<input type="text"
-																inputmode="decimal"
-																class="form-control form-control-sm text-center nilai-input"
-																name="nilai_cpmk[<?= $mk_row['mata_kuliah_id'] ?>][<?= $cpmk['cpmk_id'] ?>]"
-																value="<?= esc($existing_nilai) ?>"
-																data-bobot="<?= $cpmk['bobot'] ?>"
-																placeholder="0-100"
-																style="width: max-content; background: transparent; padding: 0;">
+											<?php if ($mk_row['mata_kuliah_id'] == $mk_header['mata_kuliah_id']): ?>
+												<?php if (empty($mk_header['cpmk_list'])): ?>
+													<td class="align-middle p-2 bg-danger bg-opacity-10" style="min-width: 220px;">
+														<div class="d-flex align-items-center gap-2 text-danger-emphasis" style="font-size: 0.78rem;">
+															<i class="bi bi-x-circle-fill text-danger flex-shrink-0"></i>
+															<span>Belum ada pemetaan CPL-CPMK-MK. Tambahkan pemetaan terlebih dahulu.</span>
+														</div>
+													</td>
+												<?php else: ?>
+													<?php
+													// Check if this MK has any CPMK with bobot > 0 (i.e. RPS exists)
+													$mkHasRps = false;
+													foreach ($mk_header['cpmk_list'] as $c) {
+														if (($c['bobot'] ?? 0) > 0) {
+															$mkHasRps = true;
+															break;
+														}
+													}
+													?>
+													<?php if (!$mkHasRps): ?>
+														<td class="align-middle p-2 bg-warning bg-opacity-10" colspan="<?= count($mk_header['cpmk_list']) ?>">
+															<div class="d-flex align-items-center gap-2 text-warning-emphasis" style="font-size: 0.78rem;">
+																<i class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0"></i>
+																<span>RPS belum tersedia untuk mata kuliah ini. Tambahkan RPS terlebih dahulu agar nilai CPMK dapat diinput.</span>
+															</div>
 														</td>
 													<?php else: ?>
-														<?php
-														// This CPMK belongs to different course - show empty disabled cell
-														?>
+														<?php foreach ($mk_header['cpmk_list'] as $cpmk): ?>
+															<?php
+															$existing_nilai = $existing_scores[$mk_row['mata_kuliah_id']][$cpmk['cpmk_id']] ?? '';
+															?>
+															<td class="align-middle p-1">
+																<input type="text"
+																	inputmode="decimal"
+																	class="form-control form-control-sm text-center nilai-input"
+																	name="nilai_cpmk[<?= $mk_row['mata_kuliah_id'] ?>][<?= $cpmk['cpmk_id'] ?>]"
+																	value="<?= esc($existing_nilai) ?>"
+																	data-bobot="<?= $cpmk['bobot'] ?>"
+																	placeholder="0-100"
+																	style="width: max-content; background: transparent; padding: 0;">
+															</td>
+														<?php endforeach; ?>
+													<?php endif; ?>
+												<?php endif; ?>
+											<?php else: ?>
+												<?php if (!empty($mk_header['cpmk_list'])): ?>
+													<?php foreach ($mk_header['cpmk_list'] as $cpmk): ?>
 														<td class="align-middle p-1 bg-light bg-opacity-50">
 															<div class="text-center text-muted" style="font-size: 0.7rem; opacity: 0.3;">—</div>
 														</td>
-													<?php endif; ?>
-												<?php endforeach; ?>
+													<?php endforeach; ?>
+												<?php else: ?>
+													<td class="align-middle p-1 bg-light bg-opacity-50" style="min-width: 220px;">
+														<div class="text-center text-muted" style="font-size: 0.7rem; opacity: 0.3;">—</div>
+													</td>
+												<?php endif; ?>
 											<?php endif; ?>
 										<?php endforeach; ?>
 									</tr>

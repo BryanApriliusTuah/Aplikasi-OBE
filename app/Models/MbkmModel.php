@@ -149,11 +149,13 @@ class MbkmModel extends Model
 
 			if (!isset($grouped[$mk_key])) {
 				$grouped[$mk_key] = [
-					'kode_mk' => $mk['kode_mk'],
-					'nama_mk' => $mk['nama_mk'],
-					'bobot_mk' => $mk['bobot_mk'],
-					'mata_kuliah_id' => $mk['mata_kuliah_id'],
-					'cpmk_list' => $cpmk_list
+					'kode_mk'          => $mk['kode_mk'],
+					'nama_mk'          => $mk['nama_mk'],
+					'bobot_mk'         => $mk['bobot_mk'],
+					'mata_kuliah_id'   => $mk['mata_kuliah_id'],
+					'has_rps'          => !empty($rps),
+					'has_cpmk_mapping' => !empty($cpmk_list),
+					'cpmk_list'        => $cpmk_list
 				];
 			}
 		}

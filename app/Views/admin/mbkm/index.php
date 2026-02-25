@@ -25,9 +25,17 @@
 					<h5 class="mb-0">Filter Kegiatan</h5>
 				</div>
 				<?php if (session()->get('role') === 'admin'): ?>
-					<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
-						<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-					</a>
+					<div class="d-flex gap-2">
+						<form method="POST" action="<?= base_url('admin/mbkm/sync-from-api') ?>" onsubmit="return confirm('Sinkronisasi data MBKM dari API? Proses ini akan mengambil kelas Merdeka dan menyinkronkan mahasiswa.')">
+							<?= csrf_field() ?>
+							<button type="submit" class="btn btn-outline-info">
+								<i class="bi bi-arrow-repeat"></i> Sinkronisasi dari API
+							</button>
+						</form>
+						<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
+							<i class="bi bi-plus-circle"></i> Tambah Kegiatan
+						</a>
+					</div>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -56,7 +64,14 @@
 					</div>
 					<div class="col-md-2">
 						<label for="filter_tahun_akademik" class="form-label">Tahun Akademik</label>
-						<input type="text" class="form-control" name="tahun_akademik" value="<?= esc($filters['tahun_akademik'] ?? '') ?>" placeholder="2025/2026">
+						<select class="form-select" id="filter_tahun_akademik" name="tahun_akademik">
+							<option value="">Semua Tahun</option>
+							<?php foreach ($tahun_list as $tahun): ?>
+								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun_akademik'] ?? '') == $tahun ? 'selected' : '' ?>>
+									<?= esc($tahun) ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
 					</div>
 					<div class="col-md-2 d-flex gap-2">
 						<button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Terapkan</button>
@@ -108,7 +123,7 @@
 					<p class="mt-2 small">Tidak ada kegiatan</p>
 				</div>
 			<?php else: ?>
-				<table class="modern-table">
+				<table class="modern-table" id="mbkmTable">
 					<thead>
 						<tr>
 							<th style="min-width: 120px;" class="text-center">NIM</th>
@@ -205,6 +220,9 @@
 				</table>
 			<?php endif; ?>
 		</div>
+
+		<!-- Pagination Container -->
+		<div id="mbkmTable_pagination" class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3"></div>
 	</div>
 </div>
 
@@ -212,6 +230,125 @@
 
 <?= $this->section('js') ?>
 <script>
+	document.addEventListener('DOMContentLoaded', function() {
+		function initPagination(tableId, rowsPerPage = 10) {
+			const table = document.getElementById(tableId);
+			if (!table) return;
+
+			const tbody = table.querySelector('tbody');
+			const rows = Array.from(tbody.querySelectorAll('tr'));
+			const totalRows = rows.length;
+			const totalPages = Math.ceil(totalRows / rowsPerPage);
+			let currentPage = 1;
+
+			const paginationId = `${tableId}_pagination`;
+			let paginationContainer = document.getElementById(paginationId);
+
+			if (!paginationContainer) {
+				paginationContainer = document.createElement('div');
+				paginationContainer.id = paginationId;
+				paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3 px-3 pb-3';
+				table.parentElement.parentElement.appendChild(paginationContainer);
+			}
+
+			function showPage(page) {
+				currentPage = page;
+				const start = (page - 1) * rowsPerPage;
+				const end = start + rowsPerPage;
+
+				rows.forEach((row, index) => {
+					row.style.display = (index >= start && index < end) ? '' : 'none';
+				});
+
+				renderPagination();
+
+				const wrapper = table.closest('.modern-table-wrapper');
+				if (wrapper) wrapper.scrollTop = 0;
+			}
+
+			function renderPagination() {
+				if (totalRows <= rowsPerPage) {
+					paginationContainer.innerHTML = '';
+					return;
+				}
+
+				const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+				const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+
+				let html = `
+					<div class="text-muted small">
+						Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+					</div>
+					<nav>
+						<ul class="pagination pagination-sm mb-0">
+				`;
+
+				html += `
+					<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+					</li>
+				`;
+
+				const maxVisiblePages = 5;
+				let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+				let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+				if (endPage - startPage + 1 < maxVisiblePages) {
+					startPage = Math.max(1, endPage - maxVisiblePages + 1);
+				}
+
+				if (startPage > 1) {
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+					if (startPage > 2) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+				}
+
+				for (let i = startPage; i <= endPage; i++) {
+					html += `
+						<li class="page-item ${i === currentPage ? 'active' : ''}">
+							<a class="page-link" href="#" data-page="${i}">${i}</a>
+						</li>
+					`;
+				}
+
+				if (endPage < totalPages) {
+					if (endPage < totalPages - 1) {
+						html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+					}
+					html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+				}
+
+				html += `
+					<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+						<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+					</li>
+				`;
+
+				html += `
+						</ul>
+					</nav>
+				`;
+
+				paginationContainer.innerHTML = html;
+
+				paginationContainer.querySelectorAll('a.page-link').forEach(link => {
+					link.addEventListener('click', function(e) {
+						e.preventDefault();
+						const page = parseInt(this.getAttribute('data-page'));
+						if (page >= 1 && page <= totalPages) {
+							showPage(page);
+						}
+					});
+				});
+			}
+
+			showPage(1);
+		}
+
+		initPagination('mbkmTable', 10);
+	});
+
 	function confirmDelete(id) {
 		if (confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
 			window.location.href = `<?= base_url('admin/mbkm/delete/') ?>${id}`;

@@ -50,9 +50,17 @@ class MbkmController extends BaseController
 			$kegiatan_by_status[$status][] = $k;
 		}
 
+		$tahun_list = $this->db->table('tahun_akademik')
+			->select('tahun')
+			->distinct()
+			->orderBy('tahun', 'DESC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'kegiatan_by_status' => $kegiatan_by_status,
-			'filters' => $filters
+			'filters' => $filters,
+			'tahun_list' => array_column($tahun_list, 'tahun'),
 		];
 
 		return view('admin/mbkm/index', $data);
@@ -313,6 +321,8 @@ class MbkmController extends BaseController
 			'existing_scores' => $display_scores // Use raw scores for display
 		];
 
+		// dd($data);
+
 		return view('admin/mbkm/input_nilai', $data);
 	}
 
@@ -435,6 +445,193 @@ class MbkmController extends BaseController
 		}
 
 		return redirect()->to('/admin/mbkm')->with('success', 'Nilai CPMK berhasil disimpan untuk ' . $valid_count . ' CPMK');
+	}
+
+	// Sync MBKM data from API (Admin Only)
+	public function syncFromApi()
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
+		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+
+		$client = \Config\Services::curlrequest();
+
+		try {
+			$response = $client->request('GET', $apiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 60,
+			]);
+
+			$body = json_decode($response->getBody(), true);
+			$jadwalRaw = $body['jadwal'] ?? [];
+
+			// Flatten and filter for Merdeka only
+			$merdekaList = [];
+			foreach ($jadwalRaw as $item) {
+				if (isset($item['kelas']) && is_array($item['kelas'])) {
+					foreach ($item['kelas'] as $k) {
+						if (($k['kelas']['klsJenis'] ?? '') === 'Merdeka') {
+							$merdekaList[] = $k;
+						}
+					}
+				}
+			}
+
+			if (empty($merdekaList)) {
+				return redirect()->back()->with('error', 'Tidak ada data kelas Merdeka ditemukan dari API.');
+			}
+
+			$jadwalInserted = 0;
+			$jadwalUpdated  = 0;
+			$studentsInserted = 0;
+			$mbkmCreated = 0;
+			$allMerdekaNims = []; // unique NIMs found in any Merdeka class
+
+			foreach ($merdekaList as $kelas) {
+				$mkKode         = $kelas['mata_kuliah']['mkKode'] ?? null;
+				$kelasId        = $kelas['kelas']['klsId'] ?? null;
+				$kelasSemester  = $kelas['kelas']['klsSemester'] ?? null;
+				$kelasStatus    = $kelas['kelas']['klsStatus'] ?? 'Aktif';
+				$hari           = $kelas['perkuliahan'][0]['pHari'] ?? null;
+				$jamMulai       = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
+				$jamSelesai     = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
+				$ruangKelas     = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
+				$gedung         = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
+				$mahasiswaData  = $kelas['mahasiswa'] ?? [];
+				$totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
+				$nimList        = $mahasiswaData['mhsNim'] ?? [];
+
+				if (!$mkKode) {
+					continue;
+				}
+
+				// Find mata_kuliah by kode_mk
+				$mataKuliah = $this->db->table('mata_kuliah')
+					->where('kode_mk', $mkKode)
+					->get()
+					->getRowArray();
+
+				if (!$mataKuliah) {
+					continue; // Skip if MK not in our database
+				}
+
+				$mataKuliahId    = $mataKuliah['id'];
+				$programStudiKode = $mataKuliah['program_studi_kode'] ?? null;
+				$tahunAkademik   = $this->deriveTahunAkademik($kelasSemester);
+				$ruang           = $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null;
+
+				// Check if a KM jadwal already exists for this MK + prodi + semester
+				$existing = $this->db->table('jadwal')
+					->where('mata_kuliah_id', $mataKuliahId)
+					->where('kelas', 'KM')
+					->where('tahun_akademik', $tahunAkademik)
+					->get()
+					->getRowArray();
+
+				if ($existing) {
+					$this->db->table('jadwal')->where('id', $existing['id'])->update([
+						'kelas_id'       => $kelasId,
+						'kelas_jenis'    => 'Merdeka',
+						'kelas_semester' => $kelasSemester,
+						'kelas_status'   => $kelasStatus,
+						'mk_kurikulum_kode' => $mkKode,
+						'total_mahasiswa' => $totalMahasiswa,
+						'ruang'          => $ruang,
+						'hari'           => $hari,
+						'jam_mulai'      => $jamMulai,
+						'jam_selesai'    => $jamSelesai,
+					]);
+					$jadwalId = $existing['id'];
+					$jadwalUpdated++;
+				} else {
+					$this->db->table('jadwal')->insert([
+						'mata_kuliah_id'   => $mataKuliahId,
+						'program_studi_kode' => $programStudiKode,
+						'tahun_akademik'   => $tahunAkademik,
+						'kelas'            => 'KM',
+						'ruang'            => $ruang,
+						'hari'             => $hari,
+						'jam_mulai'        => $jamMulai,
+						'jam_selesai'      => $jamSelesai,
+						'status'           => 'active',
+						'kelas_id'         => $kelasId,
+						'kelas_jenis'      => 'Merdeka',
+						'kelas_semester'   => $kelasSemester,
+						'kelas_status'     => $kelasStatus,
+						'mk_kurikulum_kode' => $mkKode,
+						'total_mahasiswa'  => $totalMahasiswa,
+					]);
+					$jadwalId = $this->db->insertID();
+					$jadwalInserted++;
+				}
+
+				// Sync mahasiswa for this jadwal
+				if (!empty($nimList)) {
+					$this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
+
+					foreach ($nimList as $nim) {
+						$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
+						if ($mhsExists > 0) {
+							$this->db->table('jadwal_mahasiswa')->insert([
+								'jadwal_id' => $jadwalId,
+								'nim'       => $nim,
+							]);
+							$studentsInserted++;
+							$allMerdekaNims[$nim] = true;
+						}
+					}
+				}
+			}
+
+			// Create mbkm records for each unique Merdeka student (if not already exists)
+			foreach ($allMerdekaNims as $nim => $_) {
+				$existingMbkm = $this->db->table('mbkm')
+					->where('nim', $nim)
+					->get()
+					->getRowArray();
+
+				if (!$existingMbkm) {
+					$this->db->table('mbkm')->insert([
+						'nim'             => $nim,
+						'program'         => null,
+						'sub_program'     => null,
+						'tujuan'          => null,
+						'status_kegiatan' => 'berlangsung',
+						'created_at'      => date('Y-m-d H:i:s'),
+						'updated_at'      => date('Y-m-d H:i:s'),
+					]);
+					$mbkmCreated++;
+				}
+			}
+
+			$message = "Sinkronisasi MBKM berhasil! $jadwalInserted jadwal baru, $jadwalUpdated diperbarui, $studentsInserted mahasiswa disinkronkan, $mbkmCreated kegiatan MBKM baru dibuat.";
+			return redirect()->to('/admin/mbkm')->with('success', $message);
+		} catch (\Exception $e) {
+			log_message('error', 'MBKM sync error: ' . $e->getMessage());
+			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Derive tahun_akademik string from API semester code (e.g. 20252 -> "2025 Genap")
+	 */
+	private function deriveTahunAkademik($semesterCode)
+	{
+		if (!$semesterCode) {
+			return date('Y') . ' Ganjil';
+		}
+
+		$code = (string) $semesterCode;
+		$year = (int) substr($code, 0, 4);
+		$term = substr($code, 4, 1);
+
+		return $term === '1' ? $year . ' Ganjil' : $year . ' Genap';
 	}
 
 	// Detail nilai (AJAX) - Accessible to all authenticated users
