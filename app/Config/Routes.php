@@ -225,14 +225,14 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->post('settings/update-standar-cpmk', 'Settings::updateStandarCpmk');
 	$routes->post('settings/update-standar-cpl', 'Settings::updateStandarCpl');
 
-	//settings - Tahun Akademik
-	$routes->get('settings/tahun-akademik', 'TahunAkademik::index');
-	$routes->get('settings/tahun-akademik/create', 'TahunAkademik::create');
-	$routes->post('settings/tahun-akademik/store', 'TahunAkademik::store');
-	$routes->get('settings/tahun-akademik/edit/(:num)', 'TahunAkademik::edit/$1');
-	$routes->post('settings/tahun-akademik/update/(:num)', 'TahunAkademik::update/$1');
-	$routes->get('settings/tahun-akademik/delete/(:num)', 'TahunAkademik::delete/$1');
-	$routes->get('settings/tahun-akademik/toggle/(:num)', 'TahunAkademik::toggle/$1');
+	// Master Data - Tahun Akademik
+	$routes->get('tahun-akademik', 'TahunAkademik::index');
+	$routes->get('tahun-akademik/create', 'TahunAkademik::create');
+	$routes->post('tahun-akademik/store', 'TahunAkademik::store');
+	$routes->get('tahun-akademik/edit/(:num)', 'TahunAkademik::edit/$1');
+	$routes->post('tahun-akademik/update/(:num)', 'TahunAkademik::update/$1');
+	$routes->get('tahun-akademik/delete/(:num)', 'TahunAkademik::delete/$1');
+	$routes->get('tahun-akademik/toggle/(:num)', 'TahunAkademik::toggle/$1');
 
 	//capaian cpmk
 	$routes->get('capaian-cpmk', 'CapaianCpmk::index');

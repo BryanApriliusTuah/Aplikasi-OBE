@@ -10,7 +10,7 @@ class TahunAkademik extends BaseController
 	private function requireAdmin()
 	{
 		if (session()->get('role') !== 'admin') {
-			return redirect()->to('/admin/settings/tahun-akademik')->with('error', 'Anda tidak memiliki hak akses.');
+			return redirect()->to('/admin/tahun-akademik')->with('error', 'Anda tidak memiliki hak akses.');
 		}
 		return null;
 	}
@@ -28,7 +28,7 @@ class TahunAkademik extends BaseController
 			'tahun_akademik' => $model->getAllForDisplay(),
 		];
 
-		return view('admin/settings/tahun-akademik/index', $data);
+		return view('admin/tahun-akademik/index', $data);
 	}
 
 	public function create()
@@ -36,7 +36,7 @@ class TahunAkademik extends BaseController
 		if ($redirect = $this->requireAdmin()) return $redirect;
 
 		$data['title'] = 'Tambah Tahun Akademik';
-		return view('admin/settings/tahun-akademik/create', $data);
+		return view('admin/tahun-akademik/create', $data);
 	}
 
 	public function store()
@@ -70,7 +70,7 @@ class TahunAkademik extends BaseController
 			'is_active' => 1,
 		]);
 
-		return redirect()->to('/admin/settings/tahun-akademik')->with('success', "Tahun akademik {$tahun} {$semester} berhasil ditambahkan.");
+		return redirect()->to('/admin/tahun-akademik')->with('success', "Tahun akademik {$tahun} {$semester} berhasil ditambahkan.");
 	}
 
 	public function edit($id)
@@ -89,7 +89,7 @@ class TahunAkademik extends BaseController
 			'tahun_akademik' => $row,
 		];
 
-		return view('admin/settings/tahun-akademik/edit', $data);
+		return view('admin/tahun-akademik/edit', $data);
 	}
 
 	public function update($id)
@@ -126,7 +126,7 @@ class TahunAkademik extends BaseController
 			'is_active' => $this->request->getPost('is_active') ? 1 : 0,
 		]);
 
-		return redirect()->to('/admin/settings/tahun-akademik')->with('success', "Tahun akademik {$tahun} {$semester} berhasil diperbarui.");
+		return redirect()->to('/admin/tahun-akademik')->with('success', "Tahun akademik {$tahun} {$semester} berhasil diperbarui.");
 	}
 
 	public function delete($id)
@@ -136,10 +136,10 @@ class TahunAkademik extends BaseController
 		$model = new TahunAkademikModel();
 
 		if ($model->delete($id)) {
-			return redirect()->to('/admin/settings/tahun-akademik')->with('success', 'Tahun akademik berhasil dihapus.');
+			return redirect()->to('/admin/tahun-akademik')->with('success', 'Tahun akademik berhasil dihapus.');
 		}
 
-		return redirect()->to('/admin/settings/tahun-akademik')->with('error', 'Gagal menghapus tahun akademik.');
+		return redirect()->to('/admin/tahun-akademik')->with('error', 'Gagal menghapus tahun akademik.');
 	}
 
 	public function toggle($id)
@@ -153,9 +153,9 @@ class TahunAkademik extends BaseController
 			$newStatus  = $row['is_active'] ? 0 : 1;
 			$statusText = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
 			$model->update($id, ['is_active' => $newStatus]);
-			return redirect()->to('/admin/settings/tahun-akademik')->with('success', "Tahun akademik berhasil {$statusText}.");
+			return redirect()->to('/admin/tahun-akademik')->with('success', "Tahun akademik berhasil {$statusText}.");
 		}
 
-		return redirect()->to('/admin/settings/tahun-akademik')->with('error', 'Tahun akademik tidak ditemukan.');
+		return redirect()->to('/admin/tahun-akademik')->with('error', 'Tahun akademik tidak ditemukan.');
 	}
 }

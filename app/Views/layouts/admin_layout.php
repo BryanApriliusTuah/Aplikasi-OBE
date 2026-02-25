@@ -82,9 +82,10 @@
 					'admin/mata-kuliah',
 					'admin/cpmk',
 					'admin/dosen',
-					'admin/mahasiswa'
+					'admin/mahasiswa',
+					'admin/tahun-akademik'
 				];
-				$isMasterDataOpen = in_array(uri_string(), $masterDataUris);
+				$isMasterDataOpen = in_array(uri_string(), $masterDataUris) || str_starts_with(uri_string(), 'admin/tahun-akademik');
 				?>
 				<li class="nav-item sidebar-dropdown<?= $isMasterDataOpen ? ' open has-active-child' : '' ?>">
 					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
@@ -103,6 +104,7 @@
 							<li><a class="nav-link <?= uri_string() == 'admin/cpmk' ? 'active' : '' ?>" href="<?= base_url('admin/cpmk') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Capaian Pembelajaran Mata Kuliah (CPMK)">CPMK</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/dosen' ? 'active' : '' ?>" href="<?= base_url('admin/dosen') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Dosen">Data Dosen</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/mahasiswa' ? 'active' : '' ?>" href="<?= base_url('admin/mahasiswa') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Mahasiswa">Data mahasiswa</a></li>
+							<li><a class="nav-link <?= str_starts_with(uri_string(), 'admin/tahun-akademik') ? 'active' : '' ?>" href="<?= base_url('admin/tahun-akademik') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Tahun Akademik">Tahun Akademik</a></li>
 						</div>
 					</ul>
 				</li>
@@ -288,7 +290,6 @@
 						<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isPengaturanOpen ? ' show' : '' ?>">
 							<div>
 								<li><a class="nav-link <?= uri_string() == 'admin/settings' ? 'active' : '' ?>" href="<?= base_url('admin/settings') ?>">Konfigurasi Nilai</a></li>
-								<li><a class="nav-link <?= str_starts_with(uri_string(), 'admin/settings/tahun-akademik') ? 'active' : '' ?>" href="<?= base_url('admin/settings/tahun-akademik') ?>">Tahun Akademik</a></li>
 							</div>
 						</ul>
 					</li>
