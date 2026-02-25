@@ -20,9 +20,12 @@ class Mengajar extends BaseController
 
 	public function index()
 	{
+		$isDosen   = session()->get('role') === 'dosen';
+		$dosenId   = session()->get('dosen_id');
+
 		// Get filters from query parameters; default program_studi to Teknik Informatika (kode 58)
 		$filters = [
-			'program_studi_kode' => $this->request->getGet('program_studi_kode') ?: 58,
+			'program_studi_kode' => $this->request->getGet('program_studi_kode') ?: ($isDosen ? null : 58),
 			'tahun'              => $this->request->getGet('tahun'),
 			'semester'           => $this->request->getGet('semester'),
 		];
@@ -35,6 +38,11 @@ class Mengajar extends BaseController
 
 		// Exclude MBKM (Merdeka) classes
 		$builder->where('jm.kelas !=', 'KM');
+
+		// If logged-in user is a dosen, only show their own jadwal
+		if ($isDosen && $dosenId) {
+			$builder->where("jm.id IN (SELECT jadwal_id FROM jadwal_dosen WHERE dosen_id = " . (int)$dosenId . ")", null, false);
+		}
 
 		// Apply filters
 		if (!empty($filters['program_studi_kode'])) {
@@ -102,6 +110,7 @@ class Mengajar extends BaseController
 			'tahun_list'     => $tahun_list,
 			'semester_list'  => $semester_list,
 			'program_studi_list' => $program_studi_list,
+			'is_dosen'       => $isDosen,
 		];
 
 		// Note: We are not sending a $pager object anymore

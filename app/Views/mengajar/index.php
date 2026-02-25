@@ -55,6 +55,7 @@
 		<div class="modern-filter-body">
 			<form method="GET" action="<?= current_url() ?>">
 				<div class="row g-3 align-items-end">
+					<?php if (!$is_dosen): ?>
 					<div class="col-md-4">
 						<label class="modern-filter-label">
 							<i class="bi bi-mortarboard-fill me-1"></i>
@@ -76,6 +77,9 @@
 						</div>
 					</div>
 					<div class="col-md-3">
+					<?php else: ?>
+					<div class="col-md-5">
+					<?php endif; ?>
 						<label for="filter_tahun" class="modern-filter-label">
 							<i class="bi bi-calendar-event me-1"></i>
 							Tahun Akademik
@@ -89,7 +93,11 @@
 							<?php endforeach; ?>
 						</select>
 					</div>
+					<?php if (!$is_dosen): ?>
 					<div class="col-md-3">
+					<?php else: ?>
+					<div class="col-md-5">
+					<?php endif; ?>
 						<label for="filter_semester" class="modern-filter-label">
 							<i class="bi bi-layers me-1"></i>
 							Semester
