@@ -57,9 +57,9 @@
 								</select>
 							</div>
 							<div class="col-md-6">
-								<label for="tahun_akademik" class="form-label">Tahun Akademik</label>
+								<label for="tahun_akademik" class="form-label">Semester</label>
 								<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
-									<option value="">-- Pilih Tahun Akademik --</option>
+									<option value="">-- Pilih Semester --</option>
 									<?php foreach ($tahun_akademik_list as $tahun): ?>
 										<option value="<?= esc($tahun) ?>" <?= old('tahun_akademik') === $tahun ? 'selected' : '' ?>>
 											<?= esc($tahun) ?>
