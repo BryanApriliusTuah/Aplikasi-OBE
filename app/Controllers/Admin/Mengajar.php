@@ -32,6 +32,9 @@ class Mengajar extends BaseController
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
+		// Exclude MBKM (Merdeka) classes
+		$builder->where('jm.kelas !=', 'KM');
+
 		// Apply filters
 		if (!empty($filters['program_studi_kode'])) {
 			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
