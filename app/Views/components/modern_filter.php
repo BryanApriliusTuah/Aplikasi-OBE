@@ -122,6 +122,13 @@ $method = $method ?? 'GET';
 								<?= !empty($filter['required']) ? 'required' : '' ?>
 								<?= !empty($filter['disabled']) ? 'disabled' : '' ?>>
 
+						<?php elseif ($filter['type'] === 'readonly'): ?>
+							<input type="hidden" name="<?= esc($filter['name']) ?>" value="<?= esc($filter['value'] ?? '') ?>">
+							<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
+								<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
+								<?= esc($filter['display'] ?? $filter['value'] ?? '') ?>
+							</div>
+
 						<?php elseif ($filter['type'] === 'daterange'): ?>
 							<div class="input-group">
 								<input

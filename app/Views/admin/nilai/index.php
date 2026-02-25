@@ -86,39 +86,79 @@
 		</div>
 	<?php endif; ?>
 
-	<?php
-	$prodiOptions = ['' => 'Semua Program Studi'];
-	foreach ($program_studi_list as $ps) {
-		$prodiOptions[$ps['kode']] = $ps['nama_resmi'];
-	}
-	?>
-	<?= view('components/modern_filter', [
-		'title' => 'Filter Jadwal',
-		'action' => current_url(),
-		'filters' => [
-			[
-				'type' => 'select',
-				'name' => 'program_studi_kode',
-				'label' => 'Program Studi',
-				'icon' => 'bi-mortarboard-fill',
-				'col' => 'col-md-5',
-				'options' => $prodiOptions,
-				'selected' => $filters['program_studi_kode'] ?? ''
-			],
-			[
-				'type' => 'text',
-				'name' => 'tahun_akademik',
-				'label' => 'Tahun Akademik',
-				'icon' => 'bi-calendar-event',
-				'col' => 'col-md-5',
-				'placeholder' => 'e.g. 2025/2026 Ganjil',
-				'value' => $filters['tahun_akademik'] ?? ''
-			]
-		],
-		'buttonCol' => 'col-md-2',
-		'buttonText' => 'Terapkan',
-		'showReset' => true
-	]) ?>
+	<div class="modern-filter-wrapper mb-4">
+		<div class="modern-filter-header">
+			<div class="d-flex align-items-center gap-2">
+				<i class="bi bi-funnel-fill text-primary"></i>
+				<span class="modern-filter-title">Filter Jadwal</span>
+			</div>
+		</div>
+		<div class="modern-filter-body">
+			<form method="GET" action="<?= current_url() ?>">
+				<div class="row g-3 align-items-end">
+					<div class="col-md-4">
+						<label class="modern-filter-label">
+							<i class="bi bi-mortarboard-fill me-1"></i>
+							Program Studi
+						</label>
+						<input type="hidden" name="program_studi_kode" value="58">
+						<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
+							<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
+							<?php
+							$prodiNama = 'Teknik Informatika';
+							foreach ($program_studi_list as $prodi) {
+								if ($prodi['kode'] == 58) {
+									$prodiNama = $prodi['nama_resmi'];
+									break;
+								}
+							}
+							echo esc($prodiNama);
+							?>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<label for="filter_tahun" class="modern-filter-label">
+							<i class="bi bi-calendar-event me-1"></i>
+							Tahun Akademik
+						</label>
+						<select class="form-select modern-filter-input" id="filter_tahun" name="tahun">
+							<option value="">Semua Tahun</option>
+							<?php foreach ($tahun_list as $tahun): ?>
+								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun'] ?? '') == $tahun ? 'selected' : '' ?>>
+									<?= esc($tahun) ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="col-md-3">
+						<label for="filter_semester" class="modern-filter-label">
+							<i class="bi bi-layers me-1"></i>
+							Semester
+						</label>
+						<select class="form-select modern-filter-input" id="filter_semester" name="semester">
+							<option value="">Semua Semester</option>
+							<?php foreach ($semester_list as $sem): ?>
+								<option value="<?= esc($sem) ?>" <?= ($filters['semester'] ?? '') == $sem ? 'selected' : '' ?>>
+									<?= esc($sem) ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="col-md-2 d-flex gap-2">
+						<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
+							<i class="bi bi-search"></i> Terapkan
+						</button>
+						<a href="<?= current_url() ?>"
+							class="btn btn-outline-secondary modern-filter-btn-reset"
+							data-bs-toggle="tooltip"
+							title="Reset Filter">
+							<i class="bi bi-arrow-clockwise text-secondary"></i>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
 
 	<?php
 	// Flatten the jadwal array from day-based grouping

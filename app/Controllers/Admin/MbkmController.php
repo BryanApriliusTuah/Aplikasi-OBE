@@ -35,13 +35,16 @@ class MbkmController extends BaseController
 	// Index - List all MBKM activities
 	public function index()
 	{
+		// Program Studi is always locked to Teknik Informatika
 		$filters = [
-			'program_studi' => $this->request->getGet('program_studi'),
-			'tahun_akademik' => $this->request->getGet('tahun_akademik'),
-			'status_kegiatan' => $this->request->getGet('status_kegiatan')
+			'program_studi' => 'Teknik Informatika',
+			'tahun'         => $this->request->getGet('tahun'),
+			'semester'      => $this->request->getGet('semester'),
 		];
 
-		$kegiatan = $this->mbkmModel->getKegiatanLengkap($filters);
+		$modelFilters = [];
+
+		$kegiatan = $this->mbkmModel->getKegiatanLengkap($modelFilters);
 
 		// Group by status
 		$kegiatan_by_status = [];
@@ -57,10 +60,13 @@ class MbkmController extends BaseController
 			->get()
 			->getResultArray();
 
+		$semester_list = ['Ganjil', 'Genap', 'Antara'];
+
 		$data = [
 			'kegiatan_by_status' => $kegiatan_by_status,
-			'filters' => $filters,
-			'tahun_list' => array_column($tahun_list, 'tahun'),
+			'filters'            => $filters,
+			'tahun_list'         => array_column($tahun_list, 'tahun'),
+			'semester_list'      => $semester_list,
 		];
 
 		return view('admin/mbkm/index', $data);

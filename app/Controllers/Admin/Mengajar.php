@@ -20,10 +20,11 @@ class Mengajar extends BaseController
 
 	public function index()
 	{
-		// Get filters from query parameters
+		// Get filters from query parameters; default program_studi to Teknik Informatika (kode 58)
 		$filters = [
-			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
-			'tahun_akademik' => $this->request->getGet('tahun_akademik')
+			'program_studi_kode' => $this->request->getGet('program_studi_kode') ?: 58,
+			'tahun'              => $this->request->getGet('tahun'),
+			'semester'           => $this->request->getGet('semester'),
 		];
 
 		// Build query
@@ -39,9 +40,11 @@ class Mengajar extends BaseController
 		if (!empty($filters['program_studi_kode'])) {
 			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
-		if (!empty($filters['tahun_akademik'])) {
-			// MODIFIED: Use 'like' for partial "starts with" matching
-			$builder->like('jm.tahun_akademik', $filters['tahun_akademik'], 'after');
+		if (!empty($filters['tahun'])) {
+			$builder->like('jm.tahun_akademik', $filters['tahun'], 'after');
+		}
+		if (!empty($filters['semester'])) {
+			$builder->like('jm.tahun_akademik', $filters['semester'], 'before');
 		}
 
 		// Fetch ALL results, no pagination
@@ -79,13 +82,11 @@ class Mengajar extends BaseController
 			$jadwal_by_day[$day][] = $jadwal;
 		}
 
-		// Get tahun akademik for filter dropdown from master table
+		// Get tahun and semester lists separately for filter dropdowns
 		$tahunAkademikModel  = new TahunAkademikModel();
 		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
-		$tahun_akademik_list = array_map(
-			fn($r) => $r['tahun'] . ' ' . $r['semester'],
-			$tahun_akademik_rows
-		);
+		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
+		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
 
 		// Get program studi list for filter dropdown
 		$program_studi_list = $this->db->table('program_studi')
@@ -94,12 +95,13 @@ class Mengajar extends BaseController
 			->getResultArray();
 
 		$data = [
-			'title' => 'Jadwal Mengajar (Tampilan Papan)',
-			'jadwal_by_day' => $jadwal_by_day,
-			'filters' => $filters,
-			'total_jadwal' => count($jadwal_list),
-			'tahun_akademik_list' => $tahun_akademik_list,
-			'program_studi_list' => $program_studi_list
+			'title'          => 'Jadwal Mengajar (Tampilan Papan)',
+			'jadwal_by_day'  => $jadwal_by_day,
+			'filters'        => $filters,
+			'total_jadwal'   => count($jadwal_list),
+			'tahun_list'     => $tahun_list,
+			'semester_list'  => $semester_list,
+			'program_studi_list' => $program_studi_list,
 		];
 
 		// Note: We are not sending a $pager object anymore

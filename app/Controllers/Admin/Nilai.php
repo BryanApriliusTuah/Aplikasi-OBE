@@ -10,15 +10,19 @@ use App\Models\NilaiMahasiswaModel;
 use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\DosenModel;
 use App\Models\NilaiTeknikPenilaianModel;
+use App\Models\TahunAkademikModel;
 
 class Nilai extends BaseController
 {
 	public function index()
 	{
 		$jadwalModel = new MengajarModel();
+
+		// Program Studi is always locked to Teknik Informatika (kode 58)
 		$filters = [
-			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
-			'tahun_akademik' => $this->request->getGet('tahun_akademik'),
+			'program_studi_kode' => 58,
+			'tahun'              => $this->request->getGet('tahun'),
+			'semester'           => $this->request->getGet('semester'),
 		];
 
 		// Get current user's dosen_id if they are a lecturer
@@ -33,8 +37,26 @@ class Nilai extends BaseController
 			}
 		}
 
+		// Build combined tahun_akademik filter string for the model
+		$tahunAkademikFilter = '';
+		if (!empty($filters['tahun']) && !empty($filters['semester'])) {
+			$tahunAkademikFilter = $filters['tahun'] . ' ' . $filters['semester'];
+		} elseif (!empty($filters['tahun'])) {
+			$tahunAkademikFilter = $filters['tahun'];
+		} elseif (!empty($filters['semester'])) {
+			$tahunAkademikFilter = $filters['semester'];
+		}
+
+		$modelFilters = [
+			'program_studi_kode' => $filters['program_studi_kode'],
+			'tahun_akademik'     => $tahunAkademikFilter,
+		];
+		if (!empty($filters['dosen_id'])) {
+			$modelFilters['dosen_id'] = $filters['dosen_id'];
+		}
+
 		// Fetch schedules with related data
-		$schedules = $jadwalModel->getJadwalWithDetails($filters);
+		$schedules = $jadwalModel->getJadwalWithDetails($modelFilters);
 
 		// Group schedules by day
 		$jadwal_by_day = [
@@ -138,12 +160,19 @@ class Nilai extends BaseController
 			->get()
 			->getResultArray();
 
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
+		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
+		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
+
 		$data = [
-			'title' => 'Penilaian Jadwal Ajar',
-			'jadwal_by_day' => $jadwal_by_day,
-			'filters' => $filters,
-			'current_dosen_id' => $currentDosenId,
+			'title'              => 'Penilaian Jadwal Ajar',
+			'jadwal_by_day'      => $jadwal_by_day,
+			'filters'            => $filters,
+			'current_dosen_id'   => $currentDosenId,
 			'program_studi_list' => $program_studi_list,
+			'tahun_list'         => $tahun_list,
+			'semester_list'      => $semester_list,
 		];
 
 		// dd($data);

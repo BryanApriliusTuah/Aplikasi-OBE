@@ -25,7 +25,7 @@
 	<!-- Action Buttons -->
 	<div class="d-flex justify-content-end gap-2 mb-3">
 		<?php if (session()->get('role') === 'admin'): ?>
-			<a href="<?= base_url('admin/mengajar/syncFromApi') ?>" class="btn btn-info text-white"
+			<a href="<?= base_url('admin/mengajar/syncFromApi') ?>" class="btn btn-primary text-white"
 				onclick="return confirm('Sinkronisasi jadwal dari API? Hanya mata kuliah yang sudah memiliki RPS yang akan disinkronkan.');">
 				<i class="bi bi-cloud-arrow-down"></i> Sync dari API
 			</a>
@@ -55,30 +55,50 @@
 		<div class="modern-filter-body">
 			<form method="GET" action="<?= current_url() ?>">
 				<div class="row g-3 align-items-end">
-					<div class="col-md-5">
-						<label for="filter_program_studi" class="modern-filter-label">
+					<div class="col-md-4">
+						<label class="modern-filter-label">
 							<i class="bi bi-mortarboard-fill me-1"></i>
 							Program Studi
 						</label>
-						<select class="form-select modern-filter-input" id="filter_program_studi" name="program_studi_kode">
-							<option value="">Semua Program Studi</option>
-							<?php foreach ($program_studi_list as $prodi): ?>
-								<option value="<?= esc($prodi['kode']) ?>" <?= ($filters['program_studi_kode'] ?? '') == $prodi['kode'] ? 'selected' : '' ?>>
-									<?= esc($prodi['nama_resmi']) ?>
+						<input type="hidden" name="program_studi_kode" value="58">
+						<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
+							<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
+							<?php
+							$prodiNama = 'Teknik Informatika';
+							foreach ($program_studi_list as $prodi) {
+								if ($prodi['kode'] == 58) {
+									$prodiNama = $prodi['nama_resmi'];
+									break;
+								}
+							}
+							echo esc($prodiNama);
+							?>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<label for="filter_tahun" class="modern-filter-label">
+							<i class="bi bi-calendar-event me-1"></i>
+							Tahun Akademik
+						</label>
+						<select class="form-select modern-filter-input" id="filter_tahun" name="tahun">
+							<option value="">Semua Tahun</option>
+							<?php foreach ($tahun_list as $tahun): ?>
+								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun'] ?? '') == $tahun ? 'selected' : '' ?>>
+									<?= esc($tahun) ?>
 								</option>
 							<?php endforeach; ?>
 						</select>
 					</div>
-					<div class="col-md-5">
-						<label for="filter_tahun_akademik" class="modern-filter-label">
-							<i class="bi bi-calendar-event me-1"></i>
-							Tahun Akademik
+					<div class="col-md-3">
+						<label for="filter_semester" class="modern-filter-label">
+							<i class="bi bi-layers me-1"></i>
+							Semester
 						</label>
-						<select class="form-select modern-filter-input" id="filter_tahun_akademik" name="tahun_akademik">
-							<option value="">Semua Tahun Akademik</option>
-							<?php foreach ($tahun_akademik_list as $tahun): ?>
-								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun_akademik'] ?? '') == $tahun ? 'selected' : '' ?>>
-									<?= esc($tahun) ?>
+						<select class="form-select modern-filter-input" id="filter_semester" name="semester">
+							<option value="">Semua Semester</option>
+							<?php foreach ($semester_list as $sem): ?>
+								<option value="<?= esc($sem) ?>" <?= ($filters['semester'] ?? '') == $sem ? 'selected' : '' ?>>
+									<?= esc($sem) ?>
 								</option>
 							<?php endforeach; ?>
 						</select>

@@ -17,70 +17,66 @@
 		</div>
 	<?php endif; ?>
 
-	<div class="card shadow-sm mb-4">
-		<div class="card-header bg-light p-3">
-			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-				<div class="d-flex align-items-center gap-2">
-					<i class="bi bi-funnel-fill fs-5 text-primary"></i>
-					<h5 class="mb-0">Filter Kegiatan</h5>
-				</div>
-				<?php if (session()->get('role') === 'admin'): ?>
-					<div class="d-flex gap-2">
-						<form method="POST" action="<?= base_url('admin/mbkm/sync-from-api') ?>" onsubmit="return confirm('Sinkronisasi data MBKM dari API? Proses ini akan mengambil kelas Merdeka dan menyinkronkan mahasiswa.')">
-							<?= csrf_field() ?>
-							<button type="submit" class="btn btn-outline-info">
-								<i class="bi bi-arrow-repeat"></i> Sinkronisasi dari API
-							</button>
-						</form>
-						<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
-							<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-						</a>
-					</div>
-				<?php endif; ?>
-			</div>
-		</div>
-		<div class="card-body">
-			<form method="GET" action="<?= current_url() ?>">
-				<div class="row g-3 align-items-end">
-					<div class="col-md-3">
-						<label for="filter_program_studi" class="form-label">Program Studi</label>
-						<select class="form-select" id="filter_program_studi" name="program_studi">
-							<option value="">Semua Program Studi</option>
-							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? '') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? '') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? '') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
-						</select>
-					</div>
-					<div class="col-md-3">
-						<label for="filter_status" class="form-label">Status</label>
-						<select class="form-select" id="filter_status" name="status_kegiatan">
-							<option value="">Semua Status</option>
-							<option value="diajukan" <?= ($filters['status_kegiatan'] ?? '') == 'diajukan' ? 'selected' : '' ?>>Diajukan</option>
-							<option value="disetujui" <?= ($filters['status_kegiatan'] ?? '') == 'disetujui' ? 'selected' : '' ?>>Disetujui</option>
-							<option value="ditolak" <?= ($filters['status_kegiatan'] ?? '') == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
-							<option value="berlangsung" <?= ($filters['status_kegiatan'] ?? '') == 'berlangsung' ? 'selected' : '' ?>>Berlangsung</option>
-							<option value="selesai" <?= ($filters['status_kegiatan'] ?? '') == 'selesai' ? 'selected' : '' ?>>Selesai</option>
-						</select>
-					</div>
-					<div class="col-md-2">
-						<label for="filter_tahun_akademik" class="form-label">Tahun Akademik</label>
-						<select class="form-select" id="filter_tahun_akademik" name="tahun_akademik">
-							<option value="">Semua Tahun</option>
-							<?php foreach ($tahun_list as $tahun): ?>
-								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun_akademik'] ?? '') == $tahun ? 'selected' : '' ?>>
-									<?= esc($tahun) ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</div>
-					<div class="col-md-2 d-flex gap-2">
-						<button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Terapkan</button>
-						<a href="<?= current_url() ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
-					</div>
-				</div>
+	<?php if (session()->get('role') === 'admin'): ?>
+		<div class="d-flex justify-content-end gap-2 mb-3">
+			<form method="POST" action="<?= base_url('admin/mbkm/sync-from-api') ?>" onsubmit="return confirm('Sinkronisasi data MBKM dari API? Proses ini akan mengambil kelas Merdeka dan menyinkronkan mahasiswa.')">
+				<?= csrf_field() ?>
+				<button type="submit" class="btn btn-outline-info">
+					<i class="bi bi-arrow-repeat"></i> Sinkronisasi dari API
+				</button>
 			</form>
+			<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
+				<i class="bi bi-plus-circle"></i> Tambah Kegiatan
+			</a>
 		</div>
-	</div>
+	<?php endif; ?>
+
+	<?php
+	$tahunOptions = ['' => 'Semua Tahun'];
+	foreach ($tahun_list as $t) {
+		$tahunOptions[$t] = $t;
+	}
+	$semesterOptions = ['' => 'Semua Semester'];
+	foreach ($semester_list as $s) {
+		$semesterOptions[$s] = $s;
+	}
+	?>
+	<?= view('components/modern_filter', [
+		'title'   => 'Filter Kegiatan',
+		'action'  => current_url(),
+		'filters' => [
+			[
+				'type'    => 'readonly',
+				'name'    => 'program_studi',
+				'label'   => 'Program Studi',
+				'icon'    => 'bi-mortarboard-fill',
+				'col'     => 'col-md-4',
+				'value'   => 'Teknik Informatika',
+				'display' => 'Teknik Informatika',
+			],
+			[
+				'type'     => 'select',
+				'name'     => 'tahun',
+				'label'    => 'Tahun Akademik',
+				'icon'     => 'bi-calendar-event',
+				'col'      => 'col-md-3',
+				'options'  => $tahunOptions,
+				'selected' => $filters['tahun'] ?? '',
+			],
+			[
+				'type'     => 'select',
+				'name'     => 'semester',
+				'label'    => 'Semester',
+				'icon'     => 'bi-layers',
+				'col'      => 'col-md-3',
+				'options'  => $semesterOptions,
+				'selected' => $filters['semester'] ?? '',
+			],
+		],
+		'buttonCol'  => 'col-md-2',
+		'buttonText' => 'Terapkan',
+		'showReset'  => true,
+	]) ?>
 
 	<?php
 	$status_labels = [
