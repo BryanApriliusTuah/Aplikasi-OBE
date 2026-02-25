@@ -282,16 +282,10 @@
 				<?php if (session('role') === 'admin'):
 					$isPengaturanOpen = str_starts_with(uri_string(), 'admin/settings');
 				?>
-					<li class="nav-item sidebar-dropdown <?= $isPengaturanOpen ? 'open' : '' ?>">
-						<a class="nav-link sidebar-dropdown-toggle <?= $isPengaturanOpen ? 'active' : '' ?>" href="#">
+					<li class="nav-item">
+						<a class="nav-link <?= $isPengaturanOpen ? 'active' : '' ?>" href="<?= base_url('admin/settings') ?>">
 							<i class="bi bi-gear"></i> Pengaturan
-							<span class="caret"></span>
 						</a>
-						<ul class="sidebar-dropdown-menu list-unstyled ps-2<?= $isPengaturanOpen ? ' show' : '' ?>">
-							<div>
-								<li><a class="nav-link <?= uri_string() == 'admin/settings' ? 'active' : '' ?>" href="<?= base_url('admin/settings') ?>">Konfigurasi Nilai</a></li>
-							</div>
-						</ul>
 					</li>
 				<?php endif; ?>
 			</ul>
