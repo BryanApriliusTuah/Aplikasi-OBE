@@ -17,67 +17,16 @@
 		</div>
 	<?php endif; ?>
 
-	<div class="card shadow-sm mb-4">
-		<div class="card-header bg-light p-3">
-			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-				<div class="d-flex align-items-center gap-2">
-					<i class="bi bi-funnel-fill fs-5 text-primary"></i>
-					<h5 class="mb-0">Filter Kegiatan</h5>
-				</div>
-				<?php if (session()->get('role') === 'admin'): ?>
-					<div class="d-flex gap-2">
-						<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
-							<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-						</a>
-
-						<a href="<?= base_url('admin/mbkm/generate-api') ?>"
-						class="btn btn-success"
-						onclick="return confirm('Generate data MBKM dari API sekarang?')">
-							<i class="bi bi-cloud-download"></i> Generate API
-						</a>
-					</div>
-				<?php endif; ?>
-			</div>
-			
-		</div>
-		<div class="card-body">
-			<form method="GET" action="<?= current_url() ?>">
-				<div class="row g-3 align-items-end">
-					<div class="col-md-3">
-						<label for="filter_program_studi" class="form-label">Program Studi</label>
-						<select class="form-select" id="filter_program_studi" name="program_studi">
-							<option value="">Semua Program Studi</option>
-							<option value="Teknik Informatika" <?= ($filters['program_studi'] ?? '') == 'Teknik Informatika' ? 'selected' : '' ?>>Teknik Informatika</option>
-							<option value="Sistem Informasi" <?= ($filters['program_studi'] ?? '') == 'Sistem Informasi' ? 'selected' : '' ?>>Sistem Informasi</option>
-							<option value="Teknik Komputer" <?= ($filters['program_studi'] ?? '') == 'Teknik Komputer' ? 'selected' : '' ?>>Teknik Komputer</option>
-						</select>
-					</div>
-					<div class="col-md-3">
-						<label for="filter_status" class="form-label">Status</label>
-						<select class="form-select" id="filter_status" name="status_kegiatan">
-							<option value="">Semua Status</option>
-							<option value="diajukan" <?= ($filters['status_kegiatan'] ?? '') == 'diajukan' ? 'selected' : '' ?>>Diajukan</option>
-							<option value="disetujui" <?= ($filters['status_kegiatan'] ?? '') == 'disetujui' ? 'selected' : '' ?>>Disetujui</option>
-							<option value="ditolak" <?= ($filters['status_kegiatan'] ?? '') == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
-							<option value="berlangsung" <?= ($filters['status_kegiatan'] ?? '') == 'berlangsung' ? 'selected' : '' ?>>Berlangsung</option>
-							<option value="selesai" <?= ($filters['status_kegiatan'] ?? '') == 'selesai' ? 'selected' : '' ?>>Selesai</option>
-						</select>
-					</div>
-					<div class="col-md-2">
-						<label for="filter_tahun_akademik" class="form-label">Tahun Akademik</label>
-						<input type="text" class="form-control" name="tahun_akademik" value="<?= esc($filters['tahun_akademik'] ?? '') ?>" placeholder="2025/2026">
-					</div>
-					<div class="col-md-2 d-flex gap-2">
-						<button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Terapkan</button>
-						<a href="<?= current_url() ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
-					</div>
-				</div>
-			</form>
+	<?php if (session()->get('role') === 'admin'): ?>
+		<div class="d-flex justify-content-end gap-2 mb-3">
+			<button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#syncApiModal">
+				<i class="bi bi-cloud-arrow-down"></i> Sinkronisasi dari API
+			</button>
 			<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
 				<i class="bi bi-plus-circle"></i> Tambah Kegiatan
 			</a>
 		</div>
-	</div>
+	<?php endif; ?>
 
 	<?php
 	$tahunOptions = ['' => 'Semua Tahun'];
@@ -150,13 +99,22 @@
 
 	<div class="modern-filter-wrapper mb-4">
 		<div class="modern-filter-header">
-			<div class="d-flex justify-content-between align-items-center">
+			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
 				<div class="modern-filter-title">
 					<i class="bi bi-list-check"></i> Daftar Kegiatan MBKM
 				</div>
-				<span class="badge bg-primary rounded-pill">
-					Total: <?= count($all_kegiatan) ?> Kegiatan
-				</span>
+				<div class="d-flex align-items-center gap-2">
+					<span class="badge bg-primary rounded-pill">
+						Total: <span id="mbkmCount"><?= count($all_kegiatan) ?></span> Kegiatan
+					</span>
+					<div class="input-group input-group-sm" style="width: 260px;">
+						<span class="input-group-text"><i class="bi bi-search"></i></span>
+						<input type="text" id="mbkmSearch" class="form-control" placeholder="Cari NIM atau Nama...">
+						<button class="btn btn-outline-secondary" type="button" id="mbkmSearchClear" title="Hapus pencarian">
+							<i class="bi bi-x"></i>
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -273,55 +231,105 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
+<!-- Modal: Sync dari API -->
+<div class="modal fade" id="syncApiModal" tabindex="-1" aria-labelledby="syncApiModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="POST" action="<?= base_url('admin/mbkm/sync-from-api') ?>">
+				<?= csrf_field() ?>
+				<div class="modal-header">
+					<h5 class="modal-title" id="syncApiModalLabel">
+						<i class="bi bi-cloud-arrow-down me-2"></i>Sync MBKM dari API
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p class="text-muted small mb-3">Sinkronisasi akan mengambil kelas Merdeka dan data MBKM mahasiswa dari SIUBER.</p>
+					<div class="mb-3">
+						<label for="semester_id" class="form-label fw-semibold">Semester ID <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="semester_id" name="semester_id"
+							placeholder="Contoh: 20251" required maxlength="5" pattern="\d{5}">
+						<div class="form-text">Kode semester dari sistem SIUBER, misalnya <code>20251</code> untuk 2025 Ganjil atau <code>20252</code> untuk 2025 Genap.</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-info text-white">
+						<i class="bi bi-cloud-arrow-down me-1"></i>Mulai Sinkronisasi
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
 <script>
 	document.addEventListener('DOMContentLoaded', function() {
-		function initPagination(tableId, rowsPerPage = 10) {
+		function initTable(tableId, rowsPerPage = 10) {
 			const table = document.getElementById(tableId);
 			if (!table) return;
 
 			const tbody = table.querySelector('tbody');
-			const rows = Array.from(tbody.querySelectorAll('tr'));
-			const totalRows = rows.length;
-			const totalPages = Math.ceil(totalRows / rowsPerPage);
+			const allRows = Array.from(tbody.querySelectorAll('tr'));
+			let filteredRows = allRows.slice();
 			let currentPage = 1;
 
 			const paginationId = `${tableId}_pagination`;
-			let paginationContainer = document.getElementById(paginationId);
+			const paginationContainer = document.getElementById(paginationId);
+			const countEl = document.getElementById('mbkmCount');
 
-			if (!paginationContainer) {
-				paginationContainer = document.createElement('div');
-				paginationContainer.id = paginationId;
-				paginationContainer.className = 'd-flex justify-content-between align-items-center mt-3 px-3 pb-3';
-				table.parentElement.parentElement.appendChild(paginationContainer);
+			// NIM is col 0, Nama is col 1
+			const searchInput = document.getElementById('mbkmSearch');
+			const searchClear = document.getElementById('mbkmSearchClear');
+
+			function applySearch() {
+				const q = searchInput.value.trim().toLowerCase();
+				if (q === '') {
+					filteredRows = allRows.slice();
+				} else {
+					filteredRows = allRows.filter(row => {
+						const nim  = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
+						const nama = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+						return nim.includes(q) || nama.includes(q);
+					});
+				}
+				if (countEl) countEl.textContent = filteredRows.length;
+				showPage(1);
 			}
 
 			function showPage(page) {
 				currentPage = page;
+				const totalFiltered = filteredRows.length;
+				const totalPages = Math.ceil(totalFiltered / rowsPerPage);
 				const start = (page - 1) * rowsPerPage;
 				const end = start + rowsPerPage;
 
-				rows.forEach((row, index) => {
+				// Hide all rows first
+				allRows.forEach(row => row.style.display = 'none');
+
+				// Show only rows in current page of filtered set
+				filteredRows.forEach((row, index) => {
 					row.style.display = (index >= start && index < end) ? '' : 'none';
 				});
 
-				renderPagination();
+				renderPagination(totalFiltered, totalPages);
 
 				const wrapper = table.closest('.modern-table-wrapper');
 				if (wrapper) wrapper.scrollTop = 0;
 			}
 
-			function renderPagination() {
-				if (totalRows <= rowsPerPage) {
+			function renderPagination(totalFiltered, totalPages) {
+				if (!paginationContainer) return;
+				if (totalFiltered <= rowsPerPage) {
 					paginationContainer.innerHTML = '';
 					return;
 				}
 
-				const startEntry = totalRows === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
-				const endEntry = Math.min(currentPage * rowsPerPage, totalRows);
+				const startEntry = totalFiltered === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+				const endEntry = Math.min(currentPage * rowsPerPage, totalFiltered);
 
 				let html = `
 					<div class="text-muted small">
-						Menampilkan ${startEntry} sampai ${endEntry} dari ${totalRows} data
+						Menampilkan ${startEntry} sampai ${endEntry} dari ${totalFiltered} data
 					</div>
 					<nav>
 						<ul class="pagination pagination-sm mb-0">
@@ -369,10 +377,7 @@
 					</li>
 				`;
 
-				html += `
-						</ul>
-					</nav>
-				`;
+				html += `</ul></nav>`;
 
 				paginationContainer.innerHTML = html;
 
@@ -387,10 +392,21 @@
 				});
 			}
 
+			if (searchInput) {
+				searchInput.addEventListener('input', applySearch);
+			}
+			if (searchClear) {
+				searchClear.addEventListener('click', function() {
+					searchInput.value = '';
+					applySearch();
+					searchInput.focus();
+				});
+			}
+
 			showPage(1);
 		}
 
-		initPagination('mbkmTable', 10);
+		initTable('mbkmTable', 10);
 	});
 
 	function confirmDelete(id) {

@@ -457,7 +457,12 @@ class MbkmController extends BaseController
 			return $this->unauthorizedAccess();
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
+		$semesterId = $this->request->getPost('semester_id');
+		if (empty($semesterId) || !preg_match('/^\d{5}$/', $semesterId)) {
+			return redirect()->back()->with('error', 'Semester ID tidak valid. Gunakan format 5 digit, misalnya 20251.');
+		}
+
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&kelasJenis=Merdeka';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -490,25 +495,34 @@ class MbkmController extends BaseController
 				return redirect()->back()->with('error', 'Tidak ada data kelas Merdeka ditemukan dari API.');
 			}
 
-			$jadwalInserted = 0;
-			$jadwalUpdated  = 0;
+			$jadwalInserted   = 0;
+			$jadwalUpdated    = 0;
 			$studentsInserted = 0;
-			$mbkmCreated = 0;
-			$allMerdekaNims = []; // unique NIMs found in any Merdeka class
+
+			// Build set of valid kelas_ids to avoid FK constraint violation on jadwal.kelas_id
+			$validKelasIds = [];
+			$allKelas = $this->db->table('kelas')->select('kelas_id')->get()->getResultArray();
+			foreach ($allKelas as $k) {
+				$validKelasIds[$k['kelas_id']] = true;
+			}
 
 			foreach ($merdekaList as $kelas) {
-				$mkKode         = $kelas['mata_kuliah']['mkKode'] ?? null;
-				$kelasId        = $kelas['kelas']['klsId'] ?? null;
-				$kelasSemester  = $kelas['kelas']['klsSemester'] ?? null;
-				$kelasStatus    = $kelas['kelas']['klsStatus'] ?? 'Aktif';
-				$hari           = $kelas['perkuliahan'][0]['pHari'] ?? null;
-				$jamMulai       = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
-				$jamSelesai     = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
-				$ruangKelas     = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
-				$gedung         = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
-				$mahasiswaData  = $kelas['mahasiswa'] ?? [];
+				$mkKode        = $kelas['mata_kuliah']['mkKode'] ?? null;
+				$kelasId       = $kelas['kelas']['klsId'] ?? null;
+				if ($kelasId && !isset($validKelasIds[$kelasId])) {
+					$kelasId = null;
+				}
+				$kelasSemester = $kelas['kelas']['klsSemester'] ?? null;
+				$kelasStatus   = $kelas['kelas']['klsStatus'] ?? 'Aktif';
+				$kelasJenis    = $kelas['kelas']['klsJenis'] ?? 'Merdeka';
+				$hari          = $kelas['perkuliahan'][0]['pHari'] ?? null;
+				$jamMulai      = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
+				$jamSelesai    = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
+				$ruangKelas    = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
+				$gedung        = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
+				$mahasiswaData = $kelas['mahasiswa'] ?? [];
 				$totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
-				$nimList        = $mahasiswaData['mhsNim'] ?? [];
+				$nimList       = $mahasiswaData['mhsNim'] ?? [];
 
 				if (!$mkKode) {
 					continue;
@@ -524,51 +538,60 @@ class MbkmController extends BaseController
 					continue; // Skip if MK not in our database
 				}
 
-				$mataKuliahId    = $mataKuliah['id'];
+				$mataKuliahId     = $mataKuliah['id'];
 				$programStudiKode = $mataKuliah['program_studi_kode'] ?? null;
-				$tahunAkademik   = $this->deriveTahunAkademik($kelasSemester);
-				$ruang           = $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null;
+				$tahunAkademik    = $this->deriveTahunAkademik($kelasSemester);
+				$ruang            = $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null;
 
-				// Check if a KM jadwal already exists for this MK + prodi + semester
-				$existing = $this->db->table('jadwal')
-					->where('mata_kuliah_id', $mataKuliahId)
-					->where('kelas', 'KM')
-					->where('tahun_akademik', $tahunAkademik)
-					->get()
-					->getRowArray();
+				// Check by kelas_id first, then fall back to MK + 'KM' + tahun_akademik
+				$existing = null;
+				if ($kelasId) {
+					$existing = $this->db->table('jadwal')
+						->where('kelas_id', $kelasId)
+						->get()
+						->getRowArray();
+				}
+				if (!$existing) {
+					$existing = $this->db->table('jadwal')
+						->where('mata_kuliah_id', $mataKuliahId)
+						->where('kelas', 'KM')
+						->where('tahun_akademik', $tahunAkademik)
+						->get()
+						->getRowArray();
+				}
 
 				if ($existing) {
 					$this->db->table('jadwal')->where('id', $existing['id'])->update([
-						'kelas_id'       => $kelasId,
-						'kelas_jenis'    => 'Merdeka',
-						'kelas_semester' => $kelasSemester,
-						'kelas_status'   => $kelasStatus,
+						'kelas_id'          => $kelasId,
+						'kelas_jenis'       => $kelasJenis,
+						'kelas_semester'    => $kelasSemester,
+						'kelas_status'      => $kelasStatus,
 						'mk_kurikulum_kode' => $mkKode,
-						'total_mahasiswa' => $totalMahasiswa,
-						'ruang'          => $ruang,
-						'hari'           => $hari,
-						'jam_mulai'      => $jamMulai,
-						'jam_selesai'    => $jamSelesai,
+						'total_mahasiswa'   => $totalMahasiswa,
+						'ruang'             => $ruang,
+						'hari'              => $hari,
+						'jam_mulai'         => $jamMulai,
+						'jam_selesai'       => $jamSelesai,
 					]);
 					$jadwalId = $existing['id'];
 					$jadwalUpdated++;
 				} else {
 					$this->db->table('jadwal')->insert([
-						'mata_kuliah_id'   => $mataKuliahId,
+						'mata_kuliah_id'    => $mataKuliahId,
 						'program_studi_kode' => $programStudiKode,
-						'tahun_akademik'   => $tahunAkademik,
-						'kelas'            => 'KM',
-						'ruang'            => $ruang,
-						'hari'             => $hari,
-						'jam_mulai'        => $jamMulai,
-						'jam_selesai'      => $jamSelesai,
-						'status'           => 'active',
-						'kelas_id'         => $kelasId,
-						'kelas_jenis'      => 'Merdeka',
-						'kelas_semester'   => $kelasSemester,
-						'kelas_status'     => $kelasStatus,
+						'tahun_akademik'    => $tahunAkademik,
+						'kelas'             => 'KM',
+						'ruang'             => $ruang,
+						'hari'              => $hari,
+						'jam_mulai'         => $jamMulai,
+						'jam_selesai'       => $jamSelesai,
+						'status'            => 'active',
+						'kelas_id'          => $kelasId,
+						'kelas_jenis'       => $kelasJenis,
+						'kelas_semester'    => $kelasSemester,
+						'kelas_status'      => $kelasStatus,
 						'mk_kurikulum_kode' => $mkKode,
-						'total_mahasiswa'  => $totalMahasiswa,
+						'total_mahasiswa'   => $totalMahasiswa,
 					]);
 					$jadwalId = $this->db->insertID();
 					$jadwalInserted++;
@@ -586,34 +609,70 @@ class MbkmController extends BaseController
 								'nim'       => $nim,
 							]);
 							$studentsInserted++;
-							$allMerdekaNims[$nim] = true;
 						}
 					}
 				}
 			}
 
-			// Create mbkm records for each unique Merdeka student (if not already exists)
-			foreach ($allMerdekaNims as $nim => $_) {
-				$existingMbkm = $this->db->table('mbkm')
-					->where('nim', $nim)
-					->get()
-					->getRowArray();
+			// Generate mbkm records from mahasiswa API (same logic as generateFromApi)
+			$mbkmInserted = 0;
+			$mbkmUpdated  = 0;
 
-				if (!$existingMbkm) {
-					$this->db->table('mbkm')->insert([
-						'nim'             => $nim,
-						'program'         => null,
-						'sub_program'     => null,
-						'tujuan'          => null,
-						'status_kegiatan' => 'berlangsung',
-						'created_at'      => date('Y-m-d H:i:s'),
-						'updated_at'      => date('Y-m-d H:i:s'),
-					]);
-					$mbkmCreated++;
+			$mbkmApiUrl   = 'https://api.siuber.upr.ac.id/api/siuber/mahasiswa?fakKode=5&prodiKode=58';
+			$mbkmResponse = $client->request('GET', $mbkmApiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 60,
+			]);
+
+			$mbkmBody = json_decode($mbkmResponse->getBody(), true);
+
+			if (isset($mbkmBody['data']) && !empty($mbkmBody['data'])) {
+				foreach ($mbkmBody['data'] as $mhs) {
+					$nim      = $mhs['mhsNim'] ?? null;
+					$mbkmList = $mhs['mbkm'] ?? [];
+
+					if (!$nim || empty($mbkmList)) {
+						continue;
+					}
+
+					foreach ($mbkmList as $mbkm) {
+						$program    = $mbkm['program']['nama'] ?? null;
+						$subProgram = $mbkm['sub_program']['nama'] ?? null;
+						$tujuan     = $mbkm['tujuan'] ?? null;
+						$status     = strtolower($mbkm['status'] ?? 'berlangsung');
+
+						$existingMbkm = $this->db->table('mbkm')
+							->where('nim', $nim)
+							->where('program', $program)
+							->where('sub_program', $subProgram)
+							->get()
+							->getRowArray();
+
+						$mbkmData = [
+							'nim'             => $nim,
+							'program'         => $program,
+							'sub_program'     => $subProgram,
+							'tujuan'          => $tujuan,
+							'status_kegiatan' => $status,
+							'created_at'      => date('Y-m-d H:i:s'),
+							'updated_at'      => date('Y-m-d H:i:s'),
+						];
+
+						if ($existingMbkm) {
+							$this->db->table('mbkm')->where('id', $existingMbkm['id'])->update($mbkmData);
+							$mbkmUpdated++;
+						} else {
+							$this->db->table('mbkm')->insert($mbkmData);
+							$mbkmInserted++;
+						}
+					}
 				}
 			}
 
-			$message = "Sinkronisasi MBKM berhasil! $jadwalInserted jadwal baru, $jadwalUpdated diperbarui, $studentsInserted mahasiswa disinkronkan, $mbkmCreated kegiatan MBKM baru dibuat.";
+			$message = "Sinkronisasi MBKM berhasil! $jadwalInserted jadwal baru, $jadwalUpdated diperbarui, $studentsInserted mahasiswa disinkronkan, $mbkmInserted kegiatan MBKM baru dibuat, $mbkmUpdated diperbarui.";
 			return redirect()->to('/admin/mbkm')->with('success', $message);
 		} catch (\Exception $e) {
 			log_message('error', 'MBKM sync error: ' . $e->getMessage());
@@ -696,94 +755,5 @@ class MbkmController extends BaseController
 			'kegiatan' => $kegiatan,
 			'capaian' => $capaian,
 		]);
-	}
-
-	public function generateFromApi()
-	{
-		if (session()->get('role') !== 'admin') {
-			return redirect()->back()->with('error', 'Akses ditolak.');
-		}
-
-		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/mahasiswa?fakKode=5&prodiKode=58';
-		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
-
-		$client = \Config\Services::curlrequest();
-
-		try {
-
-			$response = $client->request('GET', $apiUrl, [
-				'headers' => [
-					'x-api-key' => $apiKey,
-					'Accept'    => 'application/json',
-				],
-				'timeout' => 60,
-			]);
-
-			$body = json_decode($response->getBody(), true);
-
-			if (!isset($body['data']) || empty($body['data'])) {
-				return redirect()->back()->with('error', 'Data mahasiswa kosong dari API.');
-			}
-
-			$inserted = 0;
-			$updated  = 0;
-
-			foreach ($body['data'] as $mhs) {   // ✅ LOOP YANG BENAR
-
-				$nim  = $mhs['mhsNim'] ?? null;
-				$nama = $mhs['mhsNama'] ?? null;
-
-				$mbkmList = $mhs['mbkm'] ?? [];
-
-				if (!$nim || empty($mbkmList)) {
-					continue;
-				}
-
-				foreach ($mbkmList as $mbkm) {
-
-					$program    = $mbkm['program']['nama'] ?? null;
-					$subProgram = $mbkm['sub_program']['nama'] ?? null;
-					$semester   = $mbkm['semester'] ?? null;
-					$status     = strtolower($mbkm['status'] ?? 'berlangsung');
-					$tujuan     = $mbkm['tujuan'] ?? null;
-
-					$existing = $this->db->table('mbkm')
-						->where('nim', $nim)
-						->where('program', $program)
-						->where('sub_program', $subProgram)
-						->get()
-						->getRowArray();
-
-					$data = [
-						'nim'             => $nim,
-						'program'         => $program,
-						'sub_program'     => $subProgram,
-						'tujuan'          => $tujuan,
-						'status_kegiatan' => $status,
-						'created_at'      => date('Y-m-d H:i:s'),
-						'updated_at'      => date('Y-m-d H:i:s'),
-					];
-
-					if ($existing) {
-						$this->db->table('mbkm')
-							->where('id', $existing['id'])
-							->update($data);
-						$updated++;
-					} else {
-						$this->db->table('mbkm')->insert($data);
-						$inserted++;
-					}
-				}
-			}
-
-			return redirect()->back()->with(
-				'success',
-				"Generate berhasil. $inserted ditambahkan, $updated diperbarui."
-			);
-
-		} catch (\Exception $e) {
-			log_message('error', 'MBKM sync error: ' . $e->getMessage());
-			return redirect()->back()->with('error', 'Gagal mengambil data: ' . $e->getMessage());
-		}
 	}
 }

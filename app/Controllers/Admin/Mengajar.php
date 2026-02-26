@@ -633,27 +633,23 @@ class Mengajar extends BaseController
             $inserted = $updated = $studentsInserted = $skipped = 0;
 
             foreach ($kelasList as $kelas) {
-                $mkKode = $kelas['mata_kuliah']['kode'] ?? null;
-                $kelasId = $kelas['kelas']['id'] ?? null;
+                $mkKode = $kelas['mata_kuliah']['mkKode'] ?? null;
+                $kelasId = $kelas['kelas']['klsId'] ?? null;
                 if ($kelasId && !isset($validKelasIds[$kelasId])) {
                     $kelasId = null;
                 }
-                $kelasNama = $kelas['kelas']['nama'] ?? 'A';
-                $kelasJenis = $kelas['kelas']['jenis'] ?? null;
-                $kelasSemester = $kelas['kelas']['semester'] ?? null;
-                $kelasStatus = $kelas['kelas']['status'] ?? 'Aktif';
-                $hari = $kelas['jadwal_perkuliahan'][0]['hari'] ?? null;
-
-                $jamMulaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['mulai'] ?? null;
-                $jamSelesaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['selesai'] ?? null;
-                $jamMulai = $jamMulaiRaw ? substr($jamMulaiRaw, 11, 8) : null;
-                $jamSelesai = $jamSelesaiRaw ? substr($jamSelesaiRaw, 11, 8) : null;
-
-                $ruangKelas = $kelas['jadwal_perkuliahan'][0]['ruangan']['ruang'] ?? null;
-                $gedung = $kelas['jadwal_perkuliahan'][0]['ruangan']['gedung'] ?? null;
+                $kelasNama = $kelas['kelas']['klsNama'] ?? 'A';
+                $kelasJenis = $kelas['kelas']['klsJenis'] ?? null;
+                $kelasSemester = $kelas['kelas']['klsSemester'] ?? null;
+                $kelasStatus = $kelas['kelas']['klsStatus'] ?? 'Aktif';
+                $hari = $kelas['perkuliahan'][0]['pHari'] ?? null;
+                $jamMulai = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
+                $jamSelesai = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
+                $ruangKelas = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
+                $gedung = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
                 $mahasiswaData = $kelas['mahasiswa'] ?? [];
-                $totalMahasiswa = $mahasiswaData['total'] ?? 0;
-                $nimList = $mahasiswaData['nim'] ?? [];
+                $totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
+                $nimList = $mahasiswaData['mhsNim'] ?? [];
 
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
 					log_message('warning', "Kelas {$kelasNama} dilewati, MK {$mkKode} belum punya RPS");
