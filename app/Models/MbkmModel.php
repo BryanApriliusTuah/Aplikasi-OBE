@@ -16,7 +16,8 @@ class MbkmModel extends Model
 		'program',
 		'sub_program',
 		'tujuan',
-		'status_kegiatan'
+		'status_kegiatan',
+		'semester'
 	];
 	protected $useTimestamps = true;
 	protected $createdField = 'created_at';

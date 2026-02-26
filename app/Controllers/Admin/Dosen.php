@@ -140,7 +140,7 @@ class Dosen extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/dosen';
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/dosen';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -154,10 +154,13 @@ class Dosen extends BaseController
 				'timeout' => 30,
 			]);
 
-			$body = json_decode($response->getBody(), true);
-			$body = $body['data'] ?? null;
+			if ($response->getStatusCode() !== 200) {
+				return redirect()->back()->with('error', 'API tidak merespon dengan status 200.');
+			}
 
-			if (!is_array($body)) {
+			$result = json_decode($response->getBody(), true);
+
+			if (!isset($result['data']) || !is_array($result['data'])) {
 				return redirect()->back()->with('error', 'Format response API tidak valid.');
 			}
 
@@ -165,42 +168,49 @@ class Dosen extends BaseController
 			$inserted = 0;
 			$updated = 0;
 
-			foreach ($body as $item) {
-				if ($item['dosen_program_studi_kode'] == 58) {
-					$nip = $item['dosen_nip'] ?? null;
-					$nama = $item['dosen_nama'] ?? null;
+			foreach ($result['data'] as $item) {
 
-					if (!$nip || !$nama) {
-						continue;
-					}
+				// Optional filter prodi
+				if (!empty($item['prodiKode']) && (int)$item['prodiKode'] !== 58) {
+					continue;
+				}
 
-					$existing = $model->where('nip', $nip)->first();
+				$nip  = $item['dosenNip'] ?? null;
+				$nama = $item['dosenNama'] ?? null;
 
-					$data = [
-						'nip'                => $nip,
-						'nama_lengkap'       => $nama,
-						'gelar_depan'        => $item['dosen_gelar_depan'] ?? null,
-						'gelar_belakang'     => $item['dosen_gelar_belakang'] ?? null,
-						'email'              => $item['dosen_email'] ?? null,
-						'no_hp'              => $item['dosen_no_hp'] ?? null,
-						'status_dosen'       => $item['dosen_status_dosen'] ?? null,
-						'status_keaktifan'   => ($item['dosen_status_aktif'] ?? 0) == 1 ? 'Aktif' : 'Tidak Aktif',
-						'fakultas_kode'      => $item['dosen_fakultas_kode'] ?? null,
-						'program_studi_kode' => $item['dosen_program_studi_kode'] ?? null,
-					];
+				if (!$nip || !$nama) {
+					continue;
+				}
 
-					if ($existing) {
-						// $model->update($existing['id'], $data);
-						// $updated++;
-						continue;
-					} else {
-						$model->insert($data);
-						$inserted++;
-					}
+				$existing = $model->where('nip', $nip)->first();
+
+				$data = [
+					'nip'                => $nip,
+					'nama_lengkap'       => $nama,
+					'gelar_depan'        => $item['dosenGelarDepan'] ?? null,
+					'gelar_belakang'     => $item['dosenGelarBelakang'] ?? null,
+					'email'              => $item['dosenEmail'] ?? null,
+					'no_hp'              => $item['dosenNoHp'] ?? null,
+					'status_dosen'       => $item['dosenStatusDosen'] ?? null,
+					'status_keaktifan'   => ($item['dosenStatusAktif'] ?? 0) == 1 ? 'Aktif' : 'Tidak Aktif',
+					'fakultas_kode'      => $item['fakKode'] ?? null,
+					'program_studi_kode' => $item['prodiKode'] ?? null,
+				];
+
+				if ($existing) {
+					$model->update($existing['id'], $data);
+					$updated++;
+				} else {
+					$model->insert($data);
+					$inserted++;
 				}
 			}
 
-			return redirect()->back()->with('success', "Sinkronisasi berhasil! $inserted data baru ditambahkan, $updated data diperbarui.");
+			return redirect()->back()->with(
+				'success',
+				"Sinkronisasi berhasil! $inserted data baru ditambahkan, $updated data diperbarui."
+			);
+
 		} catch (\Exception $e) {
 			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
 		}

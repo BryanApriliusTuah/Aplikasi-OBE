@@ -25,11 +25,20 @@
 					<h5 class="mb-0">Filter Kegiatan</h5>
 				</div>
 				<?php if (session()->get('role') === 'admin'): ?>
-					<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
-						<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-					</a>
+					<div class="d-flex gap-2">
+						<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
+							<i class="bi bi-plus-circle"></i> Tambah Kegiatan
+						</a>
+
+						<a href="<?= base_url('admin/mbkm/generate-api') ?>"
+						class="btn btn-success"
+						onclick="return confirm('Generate data MBKM dari API sekarang?')">
+							<i class="bi bi-cloud-download"></i> Generate API
+						</a>
+					</div>
 				<?php endif; ?>
 			</div>
+			
 		</div>
 		<div class="card-body">
 			<form method="GET" action="<?= current_url() ?>">
