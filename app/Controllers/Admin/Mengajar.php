@@ -530,7 +530,12 @@ class Mengajar extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
+		$semesterId = $this->request->getPost('semester_id');
+		if (!$semesterId) {
+			return redirect()->back()->with('error', 'Semester ID harus diisi untuk melakukan sinkronisasi.');
+		}
+
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?prodiKode=58&fakKode=5&klsJenis=Reguler&semesterId=' . urlencode($semesterId);
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();

@@ -25,10 +25,9 @@
 	<!-- Action Buttons -->
 	<div class="d-flex justify-content-end gap-2 mb-3">
 		<?php if (session()->get('role') === 'admin'): ?>
-			<a href="<?= base_url('admin/mengajar/syncFromApi') ?>" class="btn btn-primary text-white"
-				onclick="return confirm('Sinkronisasi jadwal dari API? Hanya mata kuliah yang sudah memiliki RPS yang akan disinkronkan.');">
+			<button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#syncApiModal">
 				<i class="bi bi-cloud-arrow-down"></i> Sync dari API
-			</a>
+			</button>
 			<a href="<?= base_url('admin/mengajar/create') ?>" class="btn btn-primary">
 				<i class="bi bi-plus-lg"></i> Tambah Jadwal
 			</a>
@@ -56,73 +55,73 @@
 			<form method="GET" action="<?= current_url() ?>">
 				<div class="row g-3 align-items-end">
 					<?php if (!$is_dosen): ?>
-					<div class="col-md-4">
-						<label class="modern-filter-label">
-							<i class="bi bi-mortarboard-fill me-1"></i>
-							Program Studi
-						</label>
-						<input type="hidden" name="program_studi_kode" value="58">
-						<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
-							<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
-							<?php
-							$prodiNama = 'Teknik Informatika';
-							foreach ($program_studi_list as $prodi) {
-								if ($prodi['kode'] == 58) {
-									$prodiNama = $prodi['nama_resmi'];
-									break;
+						<div class="col-md-4">
+							<label class="modern-filter-label">
+								<i class="bi bi-mortarboard-fill me-1"></i>
+								Program Studi
+							</label>
+							<input type="hidden" name="program_studi_kode" value="58">
+							<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
+								<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
+								<?php
+								$prodiNama = 'Teknik Informatika';
+								foreach ($program_studi_list as $prodi) {
+									if ($prodi['kode'] == 58) {
+										$prodiNama = $prodi['nama_resmi'];
+										break;
+									}
 								}
-							}
-							echo esc($prodiNama);
-							?>
+								echo esc($prodiNama);
+								?>
+							</div>
 						</div>
-					</div>
-					<div class="col-md-3">
-					<?php else: ?>
-					<div class="col-md-5">
-					<?php endif; ?>
-						<label for="filter_tahun" class="modern-filter-label">
-							<i class="bi bi-calendar-event me-1"></i>
-							Tahun Akademik
-						</label>
-						<select class="form-select modern-filter-input" id="filter_tahun" name="tahun">
-							<option value="">Semua Tahun</option>
-							<?php foreach ($tahun_list as $tahun): ?>
-								<option value="<?= esc($tahun) ?>" <?= ($filters['tahun'] ?? '') == $tahun ? 'selected' : '' ?>>
-									<?= esc($tahun) ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</div>
-					<?php if (!$is_dosen): ?>
-					<div class="col-md-3">
-					<?php else: ?>
-					<div class="col-md-5">
-					<?php endif; ?>
-						<label for="filter_semester" class="modern-filter-label">
-							<i class="bi bi-layers me-1"></i>
-							Semester
-						</label>
-						<select class="form-select modern-filter-input" id="filter_semester" name="semester">
-							<option value="">Semua Semester</option>
-							<?php foreach ($semester_list as $sem): ?>
-								<option value="<?= esc($sem) ?>" <?= ($filters['semester'] ?? '') == $sem ? 'selected' : '' ?>>
-									<?= esc($sem) ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</div>
-					<div class="col-md-2 d-flex gap-2">
-						<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
-							<i class="bi bi-search"></i> Terapkan
-						</button>
-						<a href="<?= current_url() ?>"
-							class="btn btn-outline-secondary modern-filter-btn-reset"
-							data-bs-toggle="tooltip"
-							title="Reset Filter">
-							<i class="bi bi-arrow-clockwise text-secondary"></i>
-						</a>
-					</div>
-				</div>
+						<div class="col-md-3">
+						<?php else: ?>
+							<div class="col-md-5">
+							<?php endif; ?>
+							<label for="filter_tahun" class="modern-filter-label">
+								<i class="bi bi-calendar-event me-1"></i>
+								Tahun Akademik
+							</label>
+							<select class="form-select modern-filter-input" id="filter_tahun" name="tahun">
+								<option value="">Semua Tahun</option>
+								<?php foreach ($tahun_list as $tahun): ?>
+									<option value="<?= esc($tahun) ?>" <?= ($filters['tahun'] ?? '') == $tahun ? 'selected' : '' ?>>
+										<?= esc($tahun) ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							</div>
+							<?php if (!$is_dosen): ?>
+								<div class="col-md-3">
+								<?php else: ?>
+									<div class="col-md-5">
+									<?php endif; ?>
+									<label for="filter_semester" class="modern-filter-label">
+										<i class="bi bi-layers me-1"></i>
+										Semester
+									</label>
+									<select class="form-select modern-filter-input" id="filter_semester" name="semester">
+										<option value="">Semua Semester</option>
+										<?php foreach ($semester_list as $sem): ?>
+											<option value="<?= esc($sem) ?>" <?= ($filters['semester'] ?? '') == $sem ? 'selected' : '' ?>>
+												<?= esc($sem) ?>
+											</option>
+										<?php endforeach; ?>
+									</select>
+									</div>
+									<div class="col-md-2 d-flex gap-2">
+										<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
+											<i class="bi bi-search"></i> Terapkan
+										</button>
+										<a href="<?= current_url() ?>"
+											class="btn btn-outline-secondary modern-filter-btn-reset"
+											data-bs-toggle="tooltip"
+											title="Reset Filter">
+											<i class="bi bi-arrow-clockwise text-secondary"></i>
+										</a>
+									</div>
+								</div>
 			</form>
 		</div>
 	</div>
@@ -590,6 +589,38 @@
 		}
 	});
 </script>
+
+<!-- Modal: Sync dari API -->
+<div class="modal fade" id="syncApiModal" tabindex="-1" aria-labelledby="syncApiModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="POST" action="<?= base_url('admin/mengajar/syncFromApi') ?>">
+				<?= csrf_field() ?>
+				<div class="modal-header">
+					<h5 class="modal-title" id="syncApiModalLabel">
+						<i class="bi bi-cloud-arrow-down me-2"></i>Sync Jadwal dari API
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p class="text-muted small mb-3">Hanya mata kuliah yang sudah memiliki RPS yang akan disinkronkan.</p>
+					<div class="mb-3">
+						<label for="semester_id" class="form-label fw-semibold">Semester ID <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="semester_id" name="semester_id"
+							placeholder="Contoh: 20252" required>
+						<div class="form-text">Kode semester dari sistem SIUBER, misalnya <code>20251</code> untuk 2025 Ganjil. Atau <code>20252</code> untuk 2025 Genap.</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-cloud-arrow-down me-1"></i>Mulai Sinkronisasi
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->endSection() ?>

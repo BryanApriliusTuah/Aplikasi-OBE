@@ -180,7 +180,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('mengajar/getRpsDosen/(:num)', 'Mengajar::getRpsDosen/$1');
 	$routes->get('mengajar/exportExcel', 'Mengajar::exportExcel');
 	$routes->get('mengajar/exportPdf', 'Mengajar::exportPdf');
-	$routes->get('mengajar/syncFromApi', 'Mengajar::syncFromApi');
+	$routes->post('mengajar/syncFromApi', 'Mengajar::syncFromApi');
 	$routes->get('mengajar/getApiKelas', 'Mengajar::getApiKelas');
 	$routes->get('mengajar/(:num)/mahasiswa', 'Mengajar::mahasiswaPage/$1');
 	$routes->get('mengajar/(:num)/mahasiswa/search', 'Mengajar::searchMahasiswa/$1');
