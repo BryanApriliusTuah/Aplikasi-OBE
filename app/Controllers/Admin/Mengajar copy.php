@@ -3,12 +3,11 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\TahunAkademikModel;
-use App\Models\KelasModel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Models\KelasModel;
 
 class Mengajar extends BaseController
 {
@@ -21,14 +20,10 @@ class Mengajar extends BaseController
 
 	public function index()
 	{
-		$isDosen   = session()->get('role') === 'dosen';
-		$dosenId   = session()->get('dosen_id');
-
-		// Get filters from query parameters; default program_studi to Teknik Informatika (kode 58)
+		// Get filters from query parameters
 		$filters = [
-			'program_studi_kode' => $this->request->getGet('program_studi_kode') ?: ($isDosen ? null : 58),
-			'tahun'              => $this->request->getGet('tahun'),
-			'semester'           => $this->request->getGet('semester'),
+			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
+			'tahun_akademik' => $this->request->getGet('tahun_akademik')
 		];
 
 		// Build query
@@ -37,23 +32,13 @@ class Mengajar extends BaseController
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
-		// Exclude MBKM (Merdeka) classes
-		$builder->where('jm.kelas !=', 'KM');
-
-		// If logged-in user is a dosen, only show their own jadwal
-		if ($isDosen && $dosenId) {
-			$builder->where("jm.id IN (SELECT jadwal_id FROM jadwal_dosen WHERE dosen_id = " . (int)$dosenId . ")", null, false);
-		}
-
 		// Apply filters
 		if (!empty($filters['program_studi_kode'])) {
 			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
-		if (!empty($filters['tahun'])) {
-			$builder->like('jm.tahun_akademik', $filters['tahun'], 'after');
-		}
-		if (!empty($filters['semester'])) {
-			$builder->like('jm.tahun_akademik', $filters['semester'], 'before');
+		if (!empty($filters['tahun_akademik'])) {
+			// MODIFIED: Use 'like' for partial "starts with" matching
+			$builder->like('jm.tahun_akademik', $filters['tahun_akademik'], 'after');
 		}
 
 		// Fetch ALL results, no pagination
@@ -91,11 +76,13 @@ class Mengajar extends BaseController
 			$jadwal_by_day[$day][] = $jadwal;
 		}
 
-		// Get tahun and semester lists separately for filter dropdowns
-		$tahunAkademikModel  = new TahunAkademikModel();
-		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
-		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
-		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
+		// Get distinct tahun akademik for filter dropdown
+		$tahun_akademik_list = $this->db->table('jadwal')
+			->distinct()
+			->select('tahun_akademik')
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
 
 		// Get program studi list for filter dropdown
 		$program_studi_list = $this->db->table('program_studi')
@@ -104,14 +91,12 @@ class Mengajar extends BaseController
 			->getResultArray();
 
 		$data = [
-			'title'          => 'Jadwal Mengajar (Tampilan Papan)',
-			'jadwal_by_day'  => $jadwal_by_day,
-			'filters'        => $filters,
-			'total_jadwal'   => count($jadwal_list),
-			'tahun_list'     => $tahun_list,
-			'semester_list'  => $semester_list,
-			'program_studi_list' => $program_studi_list,
-			'is_dosen'       => $isDosen,
+			'title' => 'Jadwal Mengajar (Tampilan Papan)',
+			'jadwal_by_day' => $jadwal_by_day,
+			'filters' => $filters,
+			'total_jadwal' => count($jadwal_list),
+			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
+			'program_studi_list' => $program_studi_list
 		];
 
 		// Note: We are not sending a $pager object anymore
@@ -134,13 +119,14 @@ class Mengajar extends BaseController
 			->get()
 			->getResultArray();
 
-		// Get tahun akademik from master table (active only)
-		$tahunAkademikModel  = new TahunAkademikModel();
-		$tahun_akademik_rows = $tahunAkademikModel->getActive();
-		$tahun_akademik_list = array_map(
-			fn($r) => $r['tahun'] . ' ' . $r['semester'],
-			$tahun_akademik_rows
-		);
+		// Get distinct tahun akademik for suggestions
+		// CORRECTED QUERY:
+		$tahun_akademik_list = $this->db->table('jadwal')
+			->distinct() // Use the distinct() method
+			->select('tahun_akademik') // Select only the column name
+			->orderBy('tahun_akademik', 'DESC')
+			->get()
+			->getResultArray();
 
 		// Get program studi list
 		$program_studi_list = $this->db->table('program_studi')
@@ -152,7 +138,7 @@ class Mengajar extends BaseController
 			'title' => 'Tambah Jadwal Mengajar',
 			'dosen_list' => $dosen_list,
 			'mata_kuliah_list' => $mata_kuliah_list,
-			'tahun_akademik_list' => $tahun_akademik_list,
+			'tahun_akademik_list' => array_column($tahun_akademik_list, 'tahun_akademik'),
 			'program_studi_list' => $program_studi_list
 		];
 
@@ -205,6 +191,37 @@ class Mengajar extends BaseController
 
 		if (!$rps) {
 			return redirect()->back()->withInput()->with('error', 'RPS tidak ditemukan untuk mata kuliah ini. Harap buat RPS terlebih dahulu.');
+		}
+
+		// Validate that the submitted dosen data matches RPS data
+		$rps_koordinator = $this->db->table('rps_pengampu')
+			->where('rps_id', $rps['id'])
+			->where('peran', 'koordinator')
+			->get()
+			->getRowArray();
+
+		if (!$rps_koordinator) {
+			return redirect()->back()->withInput()->with('error', 'RPS tidak memiliki dosen koordinator. Harap lengkapi data RPS terlebih dahulu.');
+		}
+
+		if ($dosen_leader != $rps_koordinator['dosen_id']) {
+			return redirect()->back()->withInput()->with('error', 'Dosen koordinator tidak sesuai dengan data RPS.');
+		}
+
+		// Get RPS members
+		$rps_members = $this->db->table('rps_pengampu')
+			->where('rps_id', $rps['id'])
+			->where('peran', 'pengampu')
+			->get()
+			->getResultArray();
+
+		$rps_member_ids = array_column($rps_members, 'dosen_id');
+		sort($rps_member_ids);
+		$submitted_member_ids = $dosen_members;
+		sort($submitted_member_ids);
+
+		if ($rps_member_ids !== $submitted_member_ids) {
+			return redirect()->back()->withInput()->with('error', 'Dosen anggota tidak sesuai dengan data RPS.');
 		}
 
 		try {
@@ -374,21 +391,12 @@ class Mengajar extends BaseController
 			->get()
 			->getResultArray();
 
-		// Get tahun akademik from master table (active only)
-		$tahunAkademikModel  = new TahunAkademikModel();
-		$tahun_akademik_rows = $tahunAkademikModel->getActive();
-		$tahun_akademik_list = array_map(
-			fn($r) => $r['tahun'] . ' ' . $r['semester'],
-			$tahun_akademik_rows
-		);
-
 		$data = [
 			'title' => 'Edit Jadwal Mengajar',
 			'jadwal' => $jadwal,
 			'dosen_list' => $dosen_list,
 			'mata_kuliah_list' => $mata_kuliah_list,
-			'program_studi_list' => $program_studi_list,
-			'tahun_akademik_list' => $tahun_akademik_list,
+			'program_studi_list' => $program_studi_list
 		];
 
 		return view('mengajar/edit', $data);
@@ -531,12 +539,7 @@ class Mengajar extends BaseController
             return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
         }
 
-        $semesterId = $this->request->getPost('semester_id');
-        if (empty($semesterId) || !preg_match('/^\d{5}$/', $semesterId)) {
-            return redirect()->back()->with('error', 'Semester ID tidak valid. Gunakan format 5 digit, misalnya 20251.');
-        }
-
-        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&klsJenis=Reguler';
+        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20251';
         $apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
         $client = \Config\Services::curlrequest();
 
@@ -569,7 +572,7 @@ class Mengajar extends BaseController
 
             // Pre-sync kelas dari API
             try {
-                $kelasApiUrl = 'https://api.siuber.upr.ac.id/api/siuber/kelas?kelasSemId=' . $semesterId . '&prodiKode=58&fakKode=5';
+                $kelasApiUrl = 'https://api.siuber.upr.ac.id/api/siuber/kelas?kelasSemId=20251';
                 $kelasResponse = $client->request('GET', $kelasApiUrl, [
                     'headers' => [
                         'x-api-key' => $apiKey,
@@ -766,7 +769,7 @@ class Mengajar extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
         }
 
-        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20252&prodiKode=58&fakKode=5&klsJenis=Reguler';
+        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20251';
         $apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
         $client = \Config\Services::curlrequest();
 
@@ -788,16 +791,15 @@ class Mengajar extends BaseController
 
             $matchedKelas = [];
             foreach ($kelasList as $kelas) {
-                if (($kelas['mata_kuliah']['mkKode'] ?? '') === $mkKode && ($kelas['kelas']['klsStatus'] ?? '') === 'Aktif') {
+                if (($kelas['mata_kuliah']['kode'] ?? '') === $mkKode && ($kelas['kelas']['status'] ?? '') === 'Aktif') {
                     $matchedKelas[] = $kelas;
                 }
             }
 
             $apiUrl2 = 'https://api.siuber.upr.ac.id/api/siuber/kelas';
             $response2 = $client->request('GET', $apiUrl2, [
-                'headers'     => ['x-api-key' => $apiKey, 'Accept' => 'application/json'],
-                'timeout'     => 30,
-                'http_errors' => false,
+                'headers' => ['x-api-key' => $apiKey, 'Accept' => 'application/json'],
+                'timeout' => 30,
             ]);
             $body2 = json_decode($response2->getBody(), true);
             $kelasApiList = $body2['data'] ?? [];
@@ -891,129 +893,6 @@ class Mengajar extends BaseController
 			]);
 		}
 	}
-
-	// ─── Mahasiswa Management ───────────────────────────────────────────────────
-
-	public function mahasiswaPage($id)
-	{
-		$jadwal = $this->db->table('jadwal jm')
-			->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama')
-			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
-			->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left')
-			->where('jm.id', $id)
-			->get()->getRowArray();
-
-		if (!$jadwal) {
-			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Jadwal tidak ditemukan.');
-		}
-
-		$mahasiswaList = $this->db->table('jadwal_mahasiswa jmhs')
-			->select('mhs.nim, mhs.nama_lengkap, mhs.tahun_angkatan, mhs.status_mahasiswa')
-			->join('mahasiswa mhs', 'mhs.nim = jmhs.nim')
-			->where('jmhs.jadwal_id', $id)
-			->orderBy('mhs.nim', 'ASC')
-			->get()->getResultArray();
-
-		$data = [
-			'title'          => 'Kelola Mahasiswa – ' . $jadwal['nama_mk'] . ' Kelas ' . $jadwal['kelas'],
-			'jadwal'         => $jadwal,
-			'mahasiswa_list' => $mahasiswaList,
-		];
-
-		return view('mengajar/mahasiswa', $data);
-	}
-
-	public function searchMahasiswa($id)
-	{
-		if (!$this->request->isAJAX()) {
-			return $this->response->setStatusCode(403)->setJSON(['error' => 'Invalid request']);
-		}
-
-		$q = trim($this->request->getGet('q') ?? '');
-
-		// NIMs already enrolled in this jadwal
-		$enrolledNims = $this->db->table('jadwal_mahasiswa')
-			->select('nim')
-			->where('jadwal_id', $id)
-			->get()->getResultArray();
-		$enrolled = array_column($enrolledNims, 'nim');
-
-		$builder = $this->db->table('mahasiswa')
-			->select('nim, nama_lengkap, tahun_angkatan')
-			->orderBy('nim', 'ASC')
-			->limit(30);
-
-		if (!empty($q)) {
-			$builder->groupStart()
-				->like('nim', $q)
-				->orLike('nama_lengkap', $q)
-				->groupEnd();
-		}
-
-		if (!empty($enrolled)) {
-			$builder->whereNotIn('nim', $enrolled);
-		}
-
-		$rows = $builder->get()->getResultArray();
-
-		$results = array_map(fn($r) => [
-			'id'   => $r['nim'],
-			'text' => $r['nim'] . ' – ' . $r['nama_lengkap'] . ' (' . $r['tahun_angkatan'] . ')',
-		], $rows);
-
-		return $this->response->setJSON(['results' => $results]);
-	}
-
-	public function addMahasiswa($id)
-	{
-		$jadwal = $this->db->table('jadwal')->where('id', $id)->get()->getRowArray();
-		if (!$jadwal) {
-			return redirect()->to(base_url('admin/mengajar'))->with('error', 'Jadwal tidak ditemukan.');
-		}
-
-		$nims = $this->request->getPost('nim') ?? [];
-		if (!is_array($nims)) {
-			$nims = [$nims];
-		}
-		$nims = array_filter($nims);
-
-		if (empty($nims)) {
-			return redirect()->back()->with('error', 'Pilih minimal satu mahasiswa.');
-		}
-
-		$added = 0;
-		foreach ($nims as $nim) {
-			$exists = $this->db->table('jadwal_mahasiswa')
-				->where('jadwal_id', $id)->where('nim', $nim)
-				->countAllResults();
-			if (!$exists) {
-				$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
-				if ($mhsExists) {
-					$this->db->table('jadwal_mahasiswa')->insert(['jadwal_id' => $id, 'nim' => $nim]);
-					$added++;
-				}
-			}
-		}
-
-		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
-			->with('success', "$added mahasiswa berhasil ditambahkan.");
-	}
-
-	public function removeMahasiswa($id)
-	{
-		$nim = $this->request->getPost('nim');
-		if (!$nim) {
-			return redirect()->back()->with('error', 'NIM tidak valid.');
-		}
-
-		$this->db->table('jadwal_mahasiswa')
-			->where('jadwal_id', $id)->where('nim', $nim)->delete();
-
-		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
-			->with('success', 'Mahasiswa berhasil dihapus dari jadwal.');
-	}
-
-	// ────────────────────────────────────────────────────────────────────────────
 
 	// Add this private method inside your Mengajar controller class
 	private function _getFilteredJadwalData()

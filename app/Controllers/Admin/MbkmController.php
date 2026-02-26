@@ -697,4 +697,93 @@ class MbkmController extends BaseController
 			'capaian' => $capaian,
 		]);
 	}
+
+	public function generateFromApi()
+	{
+		if (session()->get('role') !== 'admin') {
+			return redirect()->back()->with('error', 'Akses ditolak.');
+		}
+
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/mahasiswa?fakKode=5&prodiKode=58';
+		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+
+		$client = \Config\Services::curlrequest();
+
+		try {
+
+			$response = $client->request('GET', $apiUrl, [
+				'headers' => [
+					'x-api-key' => $apiKey,
+					'Accept'    => 'application/json',
+				],
+				'timeout' => 60,
+			]);
+
+			$body = json_decode($response->getBody(), true);
+
+			if (!isset($body['data']) || empty($body['data'])) {
+				return redirect()->back()->with('error', 'Data mahasiswa kosong dari API.');
+			}
+
+			$inserted = 0;
+			$updated  = 0;
+
+			foreach ($body['data'] as $mhs) {   // ✅ LOOP YANG BENAR
+
+				$nim  = $mhs['mhsNim'] ?? null;
+				$nama = $mhs['mhsNama'] ?? null;
+
+				$mbkmList = $mhs['mbkm'] ?? [];
+
+				if (!$nim || empty($mbkmList)) {
+					continue;
+				}
+
+				foreach ($mbkmList as $mbkm) {
+
+					$program    = $mbkm['program']['nama'] ?? null;
+					$subProgram = $mbkm['sub_program']['nama'] ?? null;
+					$semester   = $mbkm['semester'] ?? null;
+					$status     = strtolower($mbkm['status'] ?? 'berlangsung');
+					$tujuan     = $mbkm['tujuan'] ?? null;
+
+					$existing = $this->db->table('mbkm')
+						->where('nim', $nim)
+						->where('program', $program)
+						->where('sub_program', $subProgram)
+						->get()
+						->getRowArray();
+
+					$data = [
+						'nim'             => $nim,
+						'program'         => $program,
+						'sub_program'     => $subProgram,
+						'tujuan'          => $tujuan,
+						'status_kegiatan' => $status,
+						'created_at'      => date('Y-m-d H:i:s'),
+						'updated_at'      => date('Y-m-d H:i:s'),
+					];
+
+					if ($existing) {
+						$this->db->table('mbkm')
+							->where('id', $existing['id'])
+							->update($data);
+						$updated++;
+					} else {
+						$this->db->table('mbkm')->insert($data);
+						$inserted++;
+					}
+				}
+			}
+
+			return redirect()->back()->with(
+				'success',
+				"Generate berhasil. $inserted ditambahkan, $updated diperbarui."
+			);
+
+		} catch (\Exception $e) {
+			log_message('error', 'MBKM sync error: ' . $e->getMessage());
+			return redirect()->back()->with('error', 'Gagal mengambil data: ' . $e->getMessage());
+		}
+	}
 }

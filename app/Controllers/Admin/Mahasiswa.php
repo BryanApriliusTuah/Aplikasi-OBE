@@ -64,7 +64,7 @@ class Mahasiswa extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/mahasiswa?prodiKode=58';
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/mahasiswa?prodiKode=58';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
