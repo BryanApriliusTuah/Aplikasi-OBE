@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\TahunAkademikModel;
+use App\Models\KelasModel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
@@ -525,22 +526,22 @@ class Mengajar extends BaseController
 	 * Only creates jadwal for mata kuliah that already have RPS.
 	 */
 	public function syncFromApi()
-	{
-		if (session()->get('role') !== 'admin') {
-			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
-		}
+    {
+        if (session()->get('role') !== 'admin') {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
+        }
 
-		$semesterId = $this->request->getPost('semester_id');
-		if (!$semesterId) {
-			return redirect()->back()->with('error', 'Semester ID harus diisi untuk melakukan sinkronisasi.');
-		}
+        $semesterId = $this->request->getPost('semester_id');
+        if (empty($semesterId) || !preg_match('/^\d{5}$/', $semesterId)) {
+            return redirect()->back()->with('error', 'Semester ID tidak valid. Gunakan format 5 digit, misalnya 20251.');
+        }
 
-		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?prodiKode=58&fakKode=5&klsJenis=Reguler&semesterId=' . urlencode($semesterId);
-		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&klsJenis=Reguler';
+        $apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
+        $client = \Config\Services::curlrequest();
 
-		$client = \Config\Services::curlrequest();
-
-		try {
+        try {
+            // Ambil data jadwal dari API
 			$response = $client->request('GET', $apiUrl, [
 				'headers' => [
 					'x-api-key' => $apiKey,
@@ -549,236 +550,207 @@ class Mengajar extends BaseController
 				'timeout' => 60,
 			]);
 
-			$body = json_decode($response->getBody(), true);
-			$jadwalRaw = $body['jadwal'] ?? [];
+            $body = json_decode($response->getBody(), true);
+            $jadwalRaw = $body['jadwal'] ?? [];
 
-			// Flatten: each jadwal item contains a 'kelas' sub-array
-			$kelasList = [];
-			foreach ($jadwalRaw as $item) {
-				if (isset($item['kelas']) && is_array($item['kelas'])) {
-					foreach ($item['kelas'] as $k) {
-						$kelasList[] = $k;
-					}
-				}
-			}
+            // Flatten array kelas
+            $kelasList = [];
+            foreach ($jadwalRaw as $item) {
+                if (isset($item['kelas']) && is_array($item['kelas'])) {
+                    foreach ($item['kelas'] as $k) {
+                        $kelasList[] = $k;
+                    }
+                }
+            }
 
-			if (empty($kelasList)) {
-				return redirect()->back()->with('error', 'Format response API tidak valid.');
-			}
+            if (empty($kelasList)) {
+                return redirect()->back()->with('error', 'Format response API tidak valid.');
+            }
 
-			// Pre-sync: fetch kelas data from kelas API and populate kelas table
-			try {
-				$kelasApiUrl = 'https://tik.upr.ac.id/api/siuber/kelas';
-				$kelasResponse = $client->request('GET', $kelasApiUrl, [
-					'headers' => [
-						'x-api-key' => $apiKey,
-						'Accept'    => 'application/json',
-					],
-					'timeout' => 30,
-				]);
-				$kelasBody = json_decode($kelasResponse->getBody(), true);
-				$kelasApiList = $kelasBody['data'] ?? [];
+            // Pre-sync kelas dari API
+            try {
+                $kelasApiUrl = 'https://api.siuber.upr.ac.id/api/siuber/kelas?kelasSemId=' . $semesterId . '&prodiKode=58&fakKode=5';
+                $kelasResponse = $client->request('GET', $kelasApiUrl, [
+                    'headers' => [
+                        'x-api-key' => $apiKey,
+                        'Accept'    => 'application/json',
+                    ],
+                    'timeout' => 30,
+                ]);
+                $kelasBody = json_decode($kelasResponse->getBody(), true);
+                $kelasApiList = $kelasBody['data'] ?? [];
 
-				$kelasModel = new \App\Models\KelasModel();
-				foreach ($kelasApiList as $kls) {
-					$klsId = $kls['kelas_id'] ?? null;
-					if (!$klsId) continue;
+                $kelasModel = new KelasModel();
+                foreach ($kelasApiList as $kls) {
+                    $klsId = $kls['kelas_id'] ?? null;
+                    if (!$klsId) continue;
 
-					$existing = $kelasModel->find($klsId);
-					$kelasData = [
-						'kelas_id'              => $klsId,
-						'kelas_sem_id'          => $kls['kelas_sem_id'] ?? 0,
-						'kelas_nama'            => $kls['kelas_nama'] ?? '',
-						'matakuliah_kurikulum_id' => $kls['matakuliah_kurikulum_id'] ?? 0,
-						'matakuliah_kode'       => $kls['matakuliah_kode'] ?? '',
-						'matakuliah_nama'       => $kls['matakuliah_nama'] ?? '',
-						'kurikulum_id'          => $kls['kurikulum_id'] ?? 0,
-						'kurikulum_status'      => $kls['kurikulum_status'] ?? null,
-						'fakultas_kode'         => $kls['fakultas_kode'] ?? null,
-						'fakultas_nama'         => $kls['fakultas_nama'] ?? null,
-						'program_studi_kode'    => $kls['program_studi_kode'] ?? null,
-						'program_studi_nama'    => $kls['program_studi_nama'] ?? null,
+                    $existing = $kelasModel->find($klsId);
+                    $kelasData = [
+						'kelas_id'              => $kls['kelasId'] ?? null,
+						'kelas_sem_id'          => $kls['kelasSemId'] ?? 0,
+						'kelas_nama'            => $kls['kelasNama'] ?? '',
+						'matakuliah_kurikulum_id' => $kls['matakuliahKurikulumId'] ?? 0,
+						'matakuliah_kode'       => $kls['matakuliahKode'] ?? '',
+						'matakuliah_nama'       => $kls['matakuliahNama'] ?? '',
+						'kurikulum_id'          => $kls['kurikulumId'] ?? 0,
+						'kurikulum_status'      => $kls['kurikulumNama'] ?? null, // sesuaikan jika mau pakai kurikulum_nama
+						'fakultas_kode'         => $kls['fakKode'] ?? null,
+						'fakultas_nama'         => $kls['fakNamaResmi'] ?? null,
+						'program_studi_kode'    => $kls['prodiKode'] ?? null,
+						'program_studi_nama'    => $kls['prodiNamaResmi'] ?? null,
 					];
 
-					if ($existing) {
-						$kelasModel->update($klsId, $kelasData);
-					} else {
-						$kelasModel->insert($kelasData);
-					}
-				}
-			} catch (\Exception $e) {
-				log_message('warning', 'Kelas pre-sync failed: ' . $e->getMessage());
-			}
+                    if ($existing) {
+                        $kelasModel->update($klsId, $kelasData);
+                    } else {
+                        $kelasModel->insert($kelasData);
+                    }
+                }
+            } catch (\Exception $e) {
+                log_message('warning', 'Kelas pre-sync failed: ' . $e->getMessage());
+            }
 
-			// Build a set of valid kelas_ids for quick lookup
-			$validKelasIds = [];
-			$allKelas = $this->db->table('kelas')->select('kelas_id')->get()->getResultArray();
-			foreach ($allKelas as $k) {
-				$validKelasIds[$k['kelas_id']] = true;
-			}
+            // Build set kelas_id
+            $validKelasIds = [];
+            $allKelas = $this->db->table('kelas')->select('kelas_id')->get()->getResultArray();
+            foreach ($allKelas as $k) {
+                $validKelasIds[$k['kelas_id']] = true;
+            }
 
-			// Get all mata kuliah that have RPS, indexed by kode_mk
-			$rpsData = $this->db->table('rps r')
-				->select('r.id as rps_id, r.mata_kuliah_id, mk.kode_mk, mk.nama_mk')
-				->join('mata_kuliah mk', 'mk.id = r.mata_kuliah_id')
-				->get()
-				->getResultArray();
+            // Ambil mata kuliah yang sudah ada RPS
+            $rpsData = $this->db->table('rps r')
+                ->select('r.id as rps_id, r.mata_kuliah_id, mk.kode_mk, mk.nama_mk')
+                ->join('mata_kuliah mk', 'mk.id = r.mata_kuliah_id')
+                ->get()
+                ->getResultArray();
 
-			$mkWithRps = [];
-			foreach ($rpsData as $rps) {
-				$mkWithRps[$rps['kode_mk']] = $rps;
-			}
+            $mkWithRps = [];
+            foreach ($rpsData as $rps) {
+                $mkWithRps[$rps['kode_mk']] = $rps;
+            }
 
-			$inserted = 0;
-			$updated = 0;
-			$studentsInserted = 0;
-			$skipped = 0;
+            $inserted = $updated = $studentsInserted = $skipped = 0;
 
-			foreach ($kelasList as $kelas) {
-				$mkKode = $kelas['mata_kuliah']['mkKode'] ?? null;
-				$kelasId = $kelas['kelas']['klsId'] ?? null;
-				// Validate kelas_id exists in kelas table to avoid FK constraint violation
-				if ($kelasId && !isset($validKelasIds[$kelasId])) {
-					$kelasId = null;
-				}
-				$kelasNama = $kelas['kelas']['klsNama'] ?? 'A';
-				$kelasJenis = $kelas['kelas']['klsJenis'] ?? null;
-				$kelasSemester = $kelas['kelas']['klsSemester'] ?? null;
-				$kelasStatus = $kelas['kelas']['klsStatus'] ?? 'Aktif';
-				$hari = $kelas['perkuliahan'][0]['pHari'] ?? null;
+            foreach ($kelasList as $kelas) {
+                $mkKode = $kelas['mata_kuliah']['kode'] ?? null;
+                $kelasId = $kelas['kelas']['id'] ?? null;
+                if ($kelasId && !isset($validKelasIds[$kelasId])) {
+                    $kelasId = null;
+                }
+                $kelasNama = $kelas['kelas']['nama'] ?? 'A';
+                $kelasJenis = $kelas['kelas']['jenis'] ?? null;
+                $kelasSemester = $kelas['kelas']['semester'] ?? null;
+                $kelasStatus = $kelas['kelas']['status'] ?? 'Aktif';
+                $hari = $kelas['jadwal_perkuliahan'][0]['hari'] ?? null;
 
-				// Time is already in "HH:MM:SS" format from API
-				$jamMulai = $kelas['perkuliahan'][0]['pJam']['jMulai'] ?? null;
-				$jamSelesai = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
+                $jamMulaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['mulai'] ?? null;
+                $jamSelesaiRaw = $kelas['jadwal_perkuliahan'][0]['jam']['selesai'] ?? null;
+                $jamMulai = $jamMulaiRaw ? substr($jamMulaiRaw, 11, 8) : null;
+                $jamSelesai = $jamSelesaiRaw ? substr($jamSelesaiRaw, 11, 8) : null;
 
-				$ruangKelas = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
-				$gedung = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
-				$mahasiswaData = $kelas['mahasiswa'] ?? [];
-				$totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
-				$nimList = $mahasiswaData['mhsNim'] ?? [];
+                $ruangKelas = $kelas['jadwal_perkuliahan'][0]['ruangan']['ruang'] ?? null;
+                $gedung = $kelas['jadwal_perkuliahan'][0]['ruangan']['gedung'] ?? null;
+                $mahasiswaData = $kelas['mahasiswa'] ?? [];
+                $totalMahasiswa = $mahasiswaData['total'] ?? 0;
+                $nimList = $mahasiswaData['nim'] ?? [];
 
-				// Only process if this MK has RPS
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
+					log_message('warning', "Kelas {$kelasNama} dilewati, MK {$mkKode} belum punya RPS");
 					$skipped++;
 					continue;
 				}
 
-				$matchedMk = $mkWithRps[$mkKode];
-				$mataKuliahId = $matchedMk['mata_kuliah_id'];
+                $matchedMk = $mkWithRps[$mkKode];
+                $mataKuliahId = $matchedMk['mata_kuliah_id'];
+                $tahunAkademik = $this->deriveTahunAkademik($kelasSemester);
 
-				// Derive tahun_akademik from kelas_semester (e.g. 20252 -> "2025/2026 Genap")
-				$tahunAkademik = $this->deriveTahunAkademik($kelasSemester);
+                $mk = $this->db->table('mata_kuliah')
+                    ->where('id', $mataKuliahId)
+                    ->get()
+                    ->getRowArray();
 
-				// Get program_studi_kode from mata_kuliah or kelas data
-				$mk = $this->db->table('mata_kuliah')
-					->where('id', $mataKuliahId)
-					->get()
-					->getRowArray();
+                $programStudiKode = $mk['program_studi_kode'] ?? null;
 
-				$programStudiKode = $mk['program_studi_kode'] ?? null;
+                $existing = $this->db->table('jadwal')
+                    ->where('kelas_id', $kelasId)
+                    ->get()
+                    ->getRowArray();
 
-				// Check if jadwal already exists by kelas_id
-				$existing = $this->db->table('jadwal')
-					->where('kelas_id', $kelasId)
-					->get()
-					->getRowArray();
+                if ($existing) {
+                    $this->db->table('jadwal')->where('id', $existing['id'])->update([
+                        'kelas'             => $kelasNama,
+                        'kelas_jenis'       => $kelasJenis,
+                        'kelas_semester'    => $kelasSemester,
+                        'kelas_status'      => $kelasStatus,
+                        'mk_kurikulum_kode' => $mkKode,
+                        'total_mahasiswa'   => $totalMahasiswa,
+                        'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
+                        'hari'              => $hari,
+                        'jam_mulai'         => $jamMulai,
+                        'jam_selesai'       => $jamSelesai,
+                    ]);
+                    $jadwalId = $existing['id'];
+                    $updated++;
+                } else {
+                    $this->db->table('jadwal')->insert([
+                        'mata_kuliah_id'    => $mataKuliahId,
+                        'program_studi_kode' => $programStudiKode,
+                        'tahun_akademik'    => $tahunAkademik,
+                        'kelas'             => $kelasNama,
+                        'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
+                        'hari'              => $hari,
+                        'jam_mulai'         => $jamMulai,
+                        'jam_selesai'       => $jamSelesai,
+                        'status'            => 'active',
+                        'kelas_id'          => $kelasId,
+                        'kelas_jenis'       => $kelasJenis,
+                        'kelas_semester'    => $kelasSemester,
+                        'kelas_status'      => $kelasStatus,
+                        'mk_kurikulum_kode' => $mkKode,
+                        'total_mahasiswa'   => $totalMahasiswa,
+                    ]);
+                    $jadwalId = $this->db->insertID();
+                    $inserted++;
 
-				if ($existing) {
-					// Update existing jadwal
-					$this->db->table('jadwal')->where('id', $existing['id'])->update([
-						'kelas'             => $kelasNama,
-						'kelas_jenis'       => $kelasJenis,
-						'kelas_semester'    => $kelasSemester,
-						'kelas_status'      => $kelasStatus,
-						'mk_kurikulum_kode' => $mkKode,
-						'total_mahasiswa'   => $totalMahasiswa,
-						'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
-						'hari'              => $hari,
-						'jam_mulai'         => $jamMulai,
-						'jam_selesai'       => $jamSelesai,
-					]);
-					$jadwalId = $existing['id'];
-					$updated++;
-				} else {
-					// Also check by mata_kuliah_id + kelas + tahun_akademik
-					$existingByMk = $this->db->table('jadwal')
-						->where('mata_kuliah_id', $mataKuliahId)
-						->where('kelas', $kelasNama)
-						->where('tahun_akademik', $tahunAkademik)
-						->get()
-						->getRowArray();
+                    // Assign dosen
+                    $rpsId = $matchedMk['rps_id'];
+                    $rpsDosen = $this->db->table('rps_pengampu')->where('rps_id', $rpsId)->get()->getResultArray();
+                    foreach ($rpsDosen as $rd) {
+                        $role = ($rd['peran'] === 'koordinator') ? 'leader' : 'member';
+                        $this->db->table('jadwal_dosen')->insert([
+                            'jadwal_id' => $jadwalId,
+                            'dosen_id'  => $rd['dosen_id'],
+                            'role'      => $role,
+                        ]);
+                    }
+                }
 
-					if ($existingByMk) {
-						$this->db->table('jadwal')->where('id', $existingByMk['id'])->update([
-							'kelas_id'          => $kelasId,
-							'kelas_jenis'       => $kelasJenis,
-							'kelas_semester'    => $kelasSemester,
-							'kelas_status'      => $kelasStatus,
-							'mk_kurikulum_kode' => $mkKode,
-							'total_mahasiswa'   => $totalMahasiswa,
-							'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
-							'hari'              => $hari,
-							'jam_mulai'         => $jamMulai,
-							'jam_selesai'       => $jamSelesai,
-						]);
-						$jadwalId = $existingByMk['id'];
-						$updated++;
-					} else {
-						// Insert new jadwal
-						$this->db->table('jadwal')->insert([
-							'mata_kuliah_id'    => $mataKuliahId,
-							'program_studi_kode' => $programStudiKode,
-							'tahun_akademik'    => $tahunAkademik,
-							'kelas'             => $kelasNama,
-							'ruang'             => $ruangKelas ? ($gedung ? "$gedung - $ruangKelas" : $ruangKelas) : null,
-							'hari'              => $hari,
-							'jam_mulai'         => $jamMulai,
-							'jam_selesai'       => $jamSelesai,
-							'status'            => 'active',
-							'kelas_id'          => $kelasId,
-							'kelas_jenis'       => $kelasJenis,
-							'kelas_semester'    => $kelasSemester,
-							'kelas_status'      => $kelasStatus,
-							'mk_kurikulum_kode' => $mkKode,
-							'total_mahasiswa'   => $totalMahasiswa,
-						]);
-						$jadwalId = $this->db->insertID();
-						$inserted++;
+                // Sync mahasiswa
+                if (!empty($nimList)) {
+                    $this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
+                    foreach ($nimList as $nim) {
+                        $mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
+                        if ($mhsExists > 0) {
+                            $this->db->table('jadwal_mahasiswa')->insert([
+                                'jadwal_id' => $jadwalId,
+                                'nim'       => $nim,
+                            ]);
+                            $studentsInserted++;
+                        }
+                    }
+                }
+            }
 
-						// Dosen assignment left empty intentionally — admin assigns manually per kelas
-					}
-				}
+            $message = "Sinkronisasi berhasil! $inserted jadwal baru ditambahkan, $updated diperbarui, $studentsInserted mahasiswa disinkronkan.";
+            if ($skipped > 0) $message .= " $skipped kelas dilewati (MK belum memiliki RPS).";
 
-				// Sync mahasiswa for this jadwal
-				if (!empty($nimList)) {
-					// Remove existing mahasiswa for this jadwal
-					$this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
-
-					foreach ($nimList as $nim) {
-						// Only insert if the mahasiswa exists in our database
-						$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
-						if ($mhsExists > 0) {
-							$this->db->table('jadwal_mahasiswa')->insert([
-								'jadwal_id' => $jadwalId,
-								'nim'       => $nim,
-							]);
-							$studentsInserted++;
-						}
-					}
-				}
-			}
-
-			$message = "Sinkronisasi berhasil! $inserted jadwal baru ditambahkan, $updated diperbarui, $studentsInserted mahasiswa disinkronkan.";
-			if ($skipped > 0) {
-				$message .= " $skipped kelas dilewati (MK belum memiliki RPS).";
-			}
-
-			return redirect()->back()->with('success', $message);
-		} catch (\Exception $e) {
-			log_message('error', 'Jadwal sync error: ' . $e->getMessage());
-			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
-		}
-	}
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            log_message('error', 'Jadwal sync error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
+        }
+    }
 
 	/**
 	 * AJAX endpoint to get kelas data from API for a specific mata kuliah
@@ -795,7 +767,7 @@ class Mengajar extends BaseController
 			return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
 		}
 
-		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58';
+		$apiUrl = 'https://tik.upr.ac.id/api/siuber/jadwal?prodiKode=58&fakKode=5';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
