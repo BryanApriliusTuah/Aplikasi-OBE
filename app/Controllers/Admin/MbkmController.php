@@ -299,8 +299,8 @@ class MbkmController extends BaseController
 		// Get existing CPMK scores (weighted scores from database)
 		$existing_scores = $this->mbkmModel->getNilaiCpmk($kegiatan['nim']);
 
-		// Convert weighted scores back to raw scores for display
-		// This prevents double-weighting when user saves again
+		// Convert weighted scores back to raw scores for display (one score per MK)
+		// All CPMKs for a given MK share the same raw input score, so just reverse one
 		$display_scores = [];
 		foreach ($konversi_mk as $mk) {
 			$mk_id = $mk['mata_kuliah_id'];
@@ -311,9 +311,9 @@ class MbkmController extends BaseController
 				if (isset($existing_scores[$mk_id][$cpmk_id]) && $bobot > 0) {
 					$weighted_score = $existing_scores[$mk_id][$cpmk_id];
 					// Convert back to raw score: weighted_score * 100 / bobot
-					// Example: 20 * 100 / 20 = 100
 					$raw_score = ($weighted_score * 100) / $bobot;
-					$display_scores[$mk_id][$cpmk_id] = $raw_score;
+					$display_scores[$mk_id] = round($raw_score, 2);
+					break; // One score per MK is enough
 				}
 			}
 		}
@@ -324,7 +324,7 @@ class MbkmController extends BaseController
 			'program_studi' => $programStudi,
 			'grade_config' => $grade_config,
 			'konversi_mk' => $konversi_mk,
-			'existing_scores' => $display_scores // Use raw scores for display
+			'existing_scores' => $display_scores // One raw score per MK
 		];
 
 		// dd($data);
@@ -358,21 +358,31 @@ class MbkmController extends BaseController
 		}
 
 		$mahasiswa_id = $mahasiswa['id'];
-		$nilai_cpmk = $this->request->getPost('nilai_cpmk'); // Array of CPMK scores
+		$nilai_mk = $this->request->getPost('nilai_mk'); // One score per MK
 
-		// Validate and save CPMK scores
-		if (empty($nilai_cpmk) || !is_array($nilai_cpmk)) {
-			return redirect()->back()->withInput()->with('error', 'Data nilai CPMK tidak valid');
+		if (empty($nilai_mk) || !is_array($nilai_mk)) {
+			return redirect()->back()->withInput()->with('error', 'Data nilai tidak valid');
 		}
 
 		$this->db->transStart();
 
-		// Save each CPMK score
-		$total_weighted_score = 0;
-		$total_bobot = 0;
 		$valid_count = 0;
 
-		foreach ($nilai_cpmk as $mk_id => $cpmk_scores) {
+		foreach ($nilai_mk as $mk_id => $nilai) {
+			// Clean and validate nilai
+			$nilai = str_replace(',', '.', trim($nilai));
+
+			if ($nilai === '' || $nilai === null) {
+				continue; // Skip empty values
+			}
+
+			$nilai_float = (float)$nilai;
+
+			if ($nilai_float < 0 || $nilai_float > 100) {
+				$this->db->transRollback();
+				return redirect()->back()->withInput()->with('error', 'Nilai harus antara 0-100');
+			}
+
 			// Get jadwal_id for this mata_kuliah with kelas = 'KM' for this mahasiswa
 			$jadwal = $this->db->table('jadwal j')
 				->select('j.id')
@@ -384,12 +394,12 @@ class MbkmController extends BaseController
 				->getRowArray();
 
 			if (!$jadwal) {
-				continue; // Skip if no jadwal found
+				continue;
 			}
 
 			$jadwal_id = $jadwal['id'];
 
-			// Get RPS for this mata kuliah to calculate CPMK weights
+			// Get RPS for this mata kuliah
 			$rps = $this->db->table('rps')
 				->select('id')
 				->where('mata_kuliah_id', $mk_id)
@@ -397,46 +407,33 @@ class MbkmController extends BaseController
 				->get()
 				->getRowArray();
 
-			foreach ($cpmk_scores as $cpmk_id => $nilai) {
-				// Clean and validate nilai
-				$nilai = str_replace(',', '.', trim($nilai));
+			if (!$rps) {
+				continue;
+			}
 
-				if ($nilai === '' || $nilai === null) {
-					continue; // Skip empty values
+			// Get all CPMKs with their bobot for this MK
+			$cpmk_list = $this->db->query("
+				SELECT c.id as cpmk_id, COALESCE(SUM(rm.bobot), 0) as bobot
+				FROM cpmk c
+				INNER JOIN cpmk_mk cm ON cm.cpmk_id = c.id
+				LEFT JOIN rps_mingguan rm ON rm.cpmk_id = c.id AND rm.rps_id = ?
+				WHERE cm.mata_kuliah_id = ?
+				GROUP BY c.id
+			", [$rps['id'], $mk_id])->getResultArray();
+
+			// Apply the single input score to each CPMK weighted by its bobot
+			foreach ($cpmk_list as $cpmk) {
+				$bobot = (float)($cpmk['bobot'] ?? 0);
+
+				if ($bobot <= 0) {
+					continue;
 				}
 
-				$nilai_float = (float)$nilai;
-
-				if ($nilai_float < 0 || $nilai_float > 100) {
-					$this->db->transRollback();
-					return redirect()->back()->withInput()->with('error', 'Nilai CPMK harus antara 0-100');
-				}
-
-				// Get actual CPMK bobot from rps_mingguan (sum of all weeks)
-				$bobot = 0;
-				if ($rps) {
-					$bobot_result = $this->db->table('rps_mingguan')
-						->selectSum('bobot')
-						->where('rps_id', $rps['id'])
-						->where('cpmk_id', $cpmk_id)
-						->get()
-						->getRowArray();
-
-					$bobot = $bobot_result['bobot'] ?? 0;
-				}
-
-				// Calculate weighted score (input * bobot / 100)
-				// Example: input 100, bobot 20% -> weighted score = 100 * 20 / 100 = 20
+				// weighted_score = nilai * bobot / 100
 				$weighted_score = ($nilai_float * $bobot) / 100;
 
-				if ($bobot > 0) {
-					$total_weighted_score += $weighted_score * 100; // For final calculation
-					$total_bobot += $bobot;
-					$valid_count++;
-				}
-
-				// Save weighted CPMK score to nilai_cpmk_mahasiswa table
-				$this->mbkmModel->saveNilaiCpmk($mahasiswa_id, $jadwal_id, $cpmk_id, $weighted_score);
+				$this->mbkmModel->saveNilaiCpmk($mahasiswa_id, $jadwal_id, $cpmk['cpmk_id'], $weighted_score);
+				$valid_count++;
 			}
 		}
 
