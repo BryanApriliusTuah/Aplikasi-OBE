@@ -103,7 +103,7 @@
 								<?php if (empty($tahun_akademik_list)): ?>
 									<div class="form-text text-warning">
 										<i class="bi bi-exclamation-triangle"></i>
-										Belum ada tahun akademik. <a href="<?= base_url('admin/settings/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
+										Belum ada tahun akademik. <a href="<?= base_url('admin/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
 									</div>
 								<?php endif; ?>
 							</div>
