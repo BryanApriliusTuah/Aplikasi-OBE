@@ -23,6 +23,7 @@ class Nilai extends BaseController
 			'program_studi_kode' => 58,
 			'tahun'              => $this->request->getGet('tahun'),
 			'semester'           => $this->request->getGet('semester'),
+			'kode_mk'            => $this->request->getGet('kode_mk'),
 		];
 
 		// Get current user's dosen_id if they are a lecturer
@@ -53,6 +54,9 @@ class Nilai extends BaseController
 		];
 		if (!empty($filters['dosen_id'])) {
 			$modelFilters['dosen_id'] = $filters['dosen_id'];
+		}
+		if (!empty($filters['kode_mk'])) {
+			$modelFilters['kode_mk'] = $filters['kode_mk'];
 		}
 
 		// Fetch schedules with related data
@@ -165,6 +169,17 @@ class Nilai extends BaseController
 		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
 		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
 
+		// Get distinct mata kuliah from jadwal mengajar (Reguler only)
+		$mk_list = $db->table('jadwal j')
+			->select('mk.kode_mk, mk.nama_mk')
+			->join('mata_kuliah mk', 'mk.id = j.mata_kuliah_id')
+			->where('j.program_studi_kode', 58)
+			->where('j.kelas_jenis', 'Reguler')
+			->distinct()
+			->orderBy('mk.nama_mk', 'ASC')
+			->get()
+			->getResultArray();
+
 		$data = [
 			'title'              => 'Penilaian Jadwal Ajar',
 			'jadwal_by_day'      => $jadwal_by_day,
@@ -173,6 +188,7 @@ class Nilai extends BaseController
 			'program_studi_list' => $program_studi_list,
 			'tahun_list'         => $tahun_list,
 			'semester_list'      => $semester_list,
+			'mk_list'            => $mk_list,
 		];
 
 		// dd($data);

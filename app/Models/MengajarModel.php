@@ -106,6 +106,9 @@ class MengajarModel extends Model
 		if (!empty($filters['dosen_id'])) {
 			$builder->where("vjl.id IN (SELECT jadwal_id FROM jadwal_dosen WHERE dosen_id = " . (int)$filters['dosen_id'] . ")", null, false);
 		}
+		if (!empty($filters['kode_mk'])) {
+			$builder->where('vjl.kode_mk', $filters['kode_mk']);
+		}
 
 		if ($singleResult) {
 			$result = $builder->get()->getRowArray();
