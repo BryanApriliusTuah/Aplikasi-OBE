@@ -405,7 +405,7 @@
 						dengan persentase capaian minimal <?= $report['analysis']['passing_threshold'] ?>%.
 						<?php if ($report['analysis']['total_tidak_tercapai'] > 0): ?>
 							<strong><?= $report['analysis']['total_tidak_tercapai'] ?></strong> CPL belum tercapai dan akan
-							ditindaklanjuti menyesuaikan dengan rencana CQI di atas.
+							ditindaklanjuti pada tahun ajaran berikutnya melalui revisi pendekatan pembelajaran dan asesmen.
 						<?php else: ?>
 							Semua CPL tercapai dengan baik, menunjukkan efektivitas proses pembelajaran yang telah dilaksanakan.
 						<?php endif; ?>
