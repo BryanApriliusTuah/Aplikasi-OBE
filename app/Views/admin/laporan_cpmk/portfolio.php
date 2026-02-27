@@ -238,9 +238,9 @@
 
 											<!-- Template Edit Section -->
 											<div id="template-edit-<?= esc($key) ?>" class="mt-3" style="display: none;">
-												<!-- <div class="alert alert-info alert-sm mb-2">
+												<div class="alert alert-info alert-sm mb-2">
 													<small><strong>Placeholder tersedia:</strong> {total_cpmk}, {jumlah_tercapai}, {jumlah_tidak_tercapai}, {persentase_tercapai}, {cpmk_tercapai_list}, {cpmk_tidak_tercapai_list}, {standar_minimal}</small>
-												</div> -->
+												</div>
 
 												<div class="mb-2">
 													<label class="form-label fw-bold small">Template untuk CPMK Tercapai Semua:</label>

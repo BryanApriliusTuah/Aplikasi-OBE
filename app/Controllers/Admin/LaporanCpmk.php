@@ -1646,7 +1646,7 @@ class LaporanCpmk extends BaseController
 		$data = [
 			'mata_kuliah_id' => $mataKuliahId,
 			'tahun_akademik' => $tahunAkademik,
-			'program_studi_kode' => $programStudi,
+			'program_studi' => $programStudi,
 			'mode' => $mode,
 			'analisis_singkat' => $mode === 'manual' ? $analysisSingkat : null,
 			'auto_options' => $autoOptions
