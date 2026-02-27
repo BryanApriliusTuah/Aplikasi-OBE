@@ -33,7 +33,7 @@ class Mengajar extends BaseController
 
 		// Build query
 		$builder = $this->db->table('jadwal jm');
-		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama');
+		$builder->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester, mk.sks, ps.nama_resmi as program_studi_nama, (SELECT COUNT(*) FROM jadwal_mahasiswa WHERE jadwal_id = jm.id) as total_mahasiswa');
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
@@ -999,6 +999,9 @@ class Mengajar extends BaseController
 			}
 		}
 
+		$totalMahasiswa = $this->db->table('jadwal_mahasiswa')->where('jadwal_id', $id)->countAllResults();
+		$this->db->table('jadwal')->where('id', $id)->update(['total_mahasiswa' => $totalMahasiswa]);
+
 		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
 			->with('success', "$added mahasiswa berhasil ditambahkan.");
 	}
@@ -1012,6 +1015,9 @@ class Mengajar extends BaseController
 
 		$this->db->table('jadwal_mahasiswa')
 			->where('jadwal_id', $id)->where('nim', $nim)->delete();
+
+		$totalMahasiswa = $this->db->table('jadwal_mahasiswa')->where('jadwal_id', $id)->countAllResults();
+		$this->db->table('jadwal')->where('id', $id)->update(['total_mahasiswa' => $totalMahasiswa]);
 
 		return redirect()->to(base_url("admin/mengajar/$id/mahasiswa"))
 			->with('success', 'Mahasiswa berhasil dihapus dari jadwal.');
