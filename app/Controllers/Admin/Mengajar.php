@@ -166,7 +166,7 @@ class Mengajar extends BaseController
 			'program_studi_kode' => 'permit_empty|integer',
 			'tahun_akademik' => 'required',
 			'kelas' => 'required|max_length[5]',
-			'ruang' => 'permit_empty|max_length[20]',
+			'ruang' => 'permit_empty|max_length[100]',
 			'hari' => 'permit_empty|in_list[Senin,Selasa,Rabu,Kamis,Jumat,Sabtu]',
 			'jam_mulai' => 'permit_empty',
 			'jam_selesai' => 'permit_empty',
@@ -401,7 +401,7 @@ class Mengajar extends BaseController
 			'program_studi_kode' => 'permit_empty|integer',
 			'tahun_akademik' => 'required',
 			'kelas' => 'required|max_length[5]',
-			'ruang' => 'permit_empty|max_length[20]',
+			'ruang' => 'permit_empty|max_length[100]',
 			'hari' => 'permit_empty|in_list[Senin,Selasa,Rabu,Kamis,Jumat,Sabtu]',
 			'jam_mulai' => 'permit_empty',
 			'jam_selesai' => 'permit_empty',
@@ -582,7 +582,7 @@ class Mengajar extends BaseController
 
                 $kelasModel = new KelasModel();
                 foreach ($kelasApiList as $kls) {
-                    $klsId = $kls['kelas_id'] ?? null;
+                    $klsId = $kls['kelasId'] ?? null;
                     if (!$klsId) continue;
 
                     $existing = $kelasModel->find($klsId);
@@ -661,17 +661,25 @@ class Mengajar extends BaseController
                 $mataKuliahId = $matchedMk['mata_kuliah_id'];
                 $tahunAkademik = $this->deriveTahunAkademik($kelasSemester);
 
-                $mk = $this->db->table('mata_kuliah')
-                    ->where('id', $mataKuliahId)
-                    ->get()
-                    ->getRowArray();
+                // Read prodiKode directly from the API response; mata_kuliah table
+                // does not have a program_studi_kode column.
+                $programStudiKode = $kelas['akademik']['prodiKode'] ?? null;
 
-                $programStudiKode = $mk['program_studi_kode'] ?? null;
-
-                $existing = $this->db->table('jadwal')
-                    ->where('kelas_id', $kelasId)
-                    ->get()
-                    ->getRowArray();
+                // Look up by kelas_id only when it is not null; a null kelas_id would
+                // generate "WHERE kelas_id IS NULL" and accidentally match unrelated rows.
+                if ($kelasId !== null) {
+                    $existing = $this->db->table('jadwal')
+                        ->where('kelas_id', $kelasId)
+                        ->get()
+                        ->getRowArray();
+                } else {
+                    $existing = $this->db->table('jadwal')
+                        ->where('mata_kuliah_id', $mataKuliahId)
+                        ->where('tahun_akademik', $tahunAkademik)
+                        ->where('kelas', $kelasNama)
+                        ->get()
+                        ->getRowArray();
+                }
 
                 if ($existing) {
                     $this->db->table('jadwal')->where('id', $existing['id'])->update([

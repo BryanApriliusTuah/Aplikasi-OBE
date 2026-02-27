@@ -114,7 +114,7 @@
 							</div>
 							<div class="col-md-6">
 								<label for="ruang" class="form-label">Ruang</label>
-								<input type="text" class="form-control" id="ruang" name="ruang" value="<?= old('ruang', $jadwal['ruang']) ?>">
+								<input type="text" class="form-control" id="ruang" name="ruang" value="<?= old('ruang', $jadwal['ruang']) ?>" maxlength="100">
 							</div>
 
 							<div class="col-md-4">
