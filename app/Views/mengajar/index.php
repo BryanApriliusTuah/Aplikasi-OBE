@@ -457,7 +457,7 @@
 												<span class="modern-detail-value">${jadwal.program_studi}</span>
 											</div>
 											<div class="modern-detail-item">
-												<span class="modern-detail-label">Tahun Akademik</span>
+												<span class="modern-detail-label">Semester</span>
 												<span class="modern-detail-value">${jadwal.tahun_akademik}</span>
 											</div>
 											<div class="modern-detail-item">

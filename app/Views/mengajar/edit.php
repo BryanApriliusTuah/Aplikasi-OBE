@@ -72,14 +72,17 @@
 
 							<div class="col-md-6">
 								<label for="program_studi_kode" class="form-label">Program Studi</label>
-								<select class="form-select" id="program_studi_kode" name="program_studi_kode" required>
-									<option value="">-- Pilih Program Studi --</option>
-									<?php foreach ($program_studi_list as $prodi): ?>
-										<option value="<?= esc($prodi['kode']) ?>" <?= old('program_studi_kode', $jadwal['program_studi_kode'] ?? '') == $prodi['kode'] ? 'selected' : '' ?>>
-											<?= esc($prodi['nama_resmi']) ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
+								<?php
+									$defaultProdi = null;
+									foreach ($program_studi_list as $prodi) {
+										if (stripos($prodi['nama_resmi'], 'Teknik Informatika') !== false) {
+											$defaultProdi = $prodi;
+											break;
+										}
+									}
+								?>
+								<input type="hidden" name="program_studi_kode" value="<?= esc($defaultProdi['kode'] ?? '') ?>">
+								<input type="text" class="form-control" value="<?= esc($defaultProdi['nama_resmi'] ?? 'Teknik Informatika') ?>" disabled>
 							</div>
 							<div class="col-md-6">
 								<label for="tahun_akademik" class="form-label">Tahun Akademik</label>
@@ -203,14 +206,7 @@
 			width: '100%'
 		});
 
-		$('#program_studi_kode').select2({
-			theme: 'bootstrap-5',
-			placeholder: '-- Pilih Program Studi --',
-			allowClear: true,
-			width: '100%'
-		});
-
-		$('#hari').select2({
+$('#hari').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Hari --',
 			allowClear: true,
