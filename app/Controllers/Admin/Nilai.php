@@ -655,10 +655,10 @@ class Nilai extends BaseController
 		$db->transComplete();
 
 		if ($db->transStatus() === false) {
-			return redirect()->to('admin/nilai')->with('error', 'Gagal menyimpan nilai.');
+			return redirect()->to('admin/nilai/input-nilai-teknik/' . $jadwal_id)->with('error', 'Gagal menyimpan nilai.');
 		}
 
-		return redirect()->to('admin/nilai')->with('success', 'Nilai berhasil disimpan. CPMK scores dihitung otomatis berdasarkan teknik penilaian.');
+		return redirect()->to('admin/nilai/input-nilai-teknik/' . $jadwal_id)->with('success', 'Nilai berhasil disimpan. CPMK scores dihitung otomatis berdasarkan teknik penilaian.');
 	}
 
 	/**
