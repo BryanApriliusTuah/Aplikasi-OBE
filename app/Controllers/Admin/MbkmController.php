@@ -150,7 +150,7 @@ class MbkmController extends BaseController
 
 		$this->db->transCommit();
 
-		return redirect()->to('/admin/mbkm')->with('success', 'Kegiatan MBKM berhasil ditambahkan dengan ' . count($mahasiswa_ids) . ' mahasiswa');
+		return redirect()->back()->with('success', 'Kegiatan MBKM berhasil ditambahkan dengan ' . count($mahasiswa_ids) . ' mahasiswa');
 	}
 
 	// Edit - Show form (Admin Only)
