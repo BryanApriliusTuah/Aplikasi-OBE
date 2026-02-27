@@ -214,6 +214,12 @@
 												<i class="bi bi-geo-alt me-1"></i>
 												<?= !empty($jadwal['ruang']) ? esc($jadwal['ruang']) : 'Ruang belum diatur' ?>
 											</div>
+											<?php if (!empty($jadwal['tahun_akademik'])): ?>
+												<div class="mb-1">
+													<i class="bi bi-calendar3 me-1"></i>
+													<?= esc($jadwal['tahun_akademik']) ?>
+												</div>
+											<?php endif; ?>
 											<?php if (!empty($jadwal['kelas_jenis'])): ?>
 												<div class="mb-1">
 													<i class="bi bi-diagram-3 me-1"></i>
