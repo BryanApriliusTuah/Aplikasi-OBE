@@ -121,7 +121,7 @@
 												<i class="bi bi-pencil-square"></i>
 											</a> -->
 											<a href="<?= base_url('admin/dosen/delete/' . $d['id']) ?>"
-												class="btn btn-outline-danger btn-sm"
+												class="btn btn-outline-danger btn-sm bi bi-trash"
 												onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')"
 												data-bs-toggle="tooltip"
 												title="Hapus">
