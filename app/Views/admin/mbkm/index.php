@@ -37,6 +37,10 @@
 	foreach ($semester_list as $s) {
 		$semesterOptions[$s] = $s;
 	}
+	$statusOptions = ['' => 'Semua Status'];
+	foreach ($status_list as $s) {
+		$statusOptions[$s] = $s;
+	}
 	?>
 	<?= view('components/modern_filter', [
 		'title'   => 'Filter Kegiatan',
@@ -47,7 +51,7 @@
 				'name'    => 'program_studi',
 				'label'   => 'Program Studi',
 				'icon'    => 'bi-mortarboard-fill',
-				'col'     => 'col-md-4',
+				'col'     => 'col-md-3',
 				'value'   => 'Teknik Informatika',
 				'display' => 'Teknik Informatika',
 			],
@@ -56,7 +60,7 @@
 				'name'     => 'tahun',
 				'label'    => 'Tahun Akademik',
 				'icon'     => 'bi-calendar-event',
-				'col'      => 'col-md-3',
+				'col'      => 'col-md-2',
 				'options'  => $tahunOptions,
 				'selected' => $filters['tahun'] ?? '',
 			],
@@ -65,12 +69,30 @@
 				'name'     => 'semester',
 				'label'    => 'Semester',
 				'icon'     => 'bi-layers',
-				'col'      => 'col-md-3',
+				'col'      => 'col-md-2',
 				'options'  => $semesterOptions,
 				'selected' => $filters['semester'] ?? '',
 			],
+			[
+				'type'     => 'select',
+				'name'     => 'status',
+				'label'    => 'Status Kegiatan',
+				'icon'     => 'bi-flag',
+				'col'      => 'col-md-2',
+				'options'  => $statusOptions,
+				'selected' => $filters['status'] ?? '',
+			],
+			[
+				'type'        => 'text',
+				'name'        => 'cari',
+				'label'       => 'Cari NIM / Nama',
+				'icon'        => 'bi-search',
+				'col'         => 'col-md-2',
+				'placeholder' => 'NIM atau nama...',
+				'value'       => $filters['cari'] ?? '',
+			],
 		],
-		'buttonCol'  => 'col-md-2',
+		'buttonCol'  => 'col-md-1',
 		'buttonText' => 'Terapkan',
 		'showReset'  => true,
 	]) ?>
@@ -86,13 +108,16 @@
 
 	// Combine all kegiatan into one array with status info
 	$all_kegiatan = [];
-	foreach ($status_labels as $status_key => $status_info) {
-		if (!empty($kegiatan_by_status[$status_key])) {
-			foreach ($kegiatan_by_status[$status_key] as $kegiatan) {
-				$kegiatan['status_info'] = $status_info;
-				$kegiatan['status_key'] = $status_key;
-				$all_kegiatan[] = $kegiatan;
-			}
+	foreach ($kegiatan_by_status as $status_key => $kegiatan_list) {
+		$status_info = $status_labels[$status_key] ?? [
+			'label' => ucfirst($status_key),
+			'icon'  => 'bi-question-circle',
+			'color' => 'secondary',
+		];
+		foreach ($kegiatan_list as $kegiatan) {
+			$kegiatan['status_info'] = $status_info;
+			$kegiatan['status_key']  = $status_key;
+			$all_kegiatan[]          = $kegiatan;
 		}
 	}
 	?>
@@ -103,18 +128,9 @@
 				<div class="modern-filter-title">
 					<i class="bi bi-list-check"></i> Daftar Kegiatan MBKM
 				</div>
-				<div class="d-flex align-items-center gap-2">
-					<span class="badge bg-primary rounded-pill">
-						Total: <span id="mbkmCount"><?= count($all_kegiatan) ?></span> Kegiatan
-					</span>
-					<div class="input-group input-group-sm" style="width: 260px;">
-						<span class="input-group-text"><i class="bi bi-search"></i></span>
-						<input type="text" id="mbkmSearch" class="form-control" placeholder="Cari NIM atau Nama...">
-						<button class="btn btn-outline-secondary" type="button" id="mbkmSearchClear" title="Hapus pencarian">
-							<i class="bi bi-x"></i>
-						</button>
-					</div>
-				</div>
+				<span class="badge bg-primary rounded-pill">
+					Total: <?= count($all_kegiatan) ?> Kegiatan
+				</span>
 			</div>
 		</div>
 
@@ -200,7 +216,7 @@
 								<td>
 									<div class="d-flex gap-2 justify-content-center flex-wrap">
 										<?php if (session()->get('role') === 'admin'): ?>
-											<?php if ($kegiatan['status_key'] == 'disetujui' || $kegiatan['status_key'] == 'berlangsung' || $kegiatan['status_key'] == 'selesai'): ?>
+											<?php if ($kegiatan['status_key'] !== 'menunggu'): ?>
 												<a href="<?= base_url('admin/mbkm/input-nilai/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-success">
 													<i class="bi bi-pencil-square"></i> Input Nilai
 												</a>
@@ -275,26 +291,6 @@
 
 			const paginationId = `${tableId}_pagination`;
 			const paginationContainer = document.getElementById(paginationId);
-			const countEl = document.getElementById('mbkmCount');
-
-			// NIM is col 0, Nama is col 1
-			const searchInput = document.getElementById('mbkmSearch');
-			const searchClear = document.getElementById('mbkmSearchClear');
-
-			function applySearch() {
-				const q = searchInput.value.trim().toLowerCase();
-				if (q === '') {
-					filteredRows = allRows.slice();
-				} else {
-					filteredRows = allRows.filter(row => {
-						const nim  = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
-						const nama = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
-						return nim.includes(q) || nama.includes(q);
-					});
-				}
-				if (countEl) countEl.textContent = filteredRows.length;
-				showPage(1);
-			}
 
 			function showPage(page) {
 				currentPage = page;
@@ -389,17 +385,6 @@
 							showPage(page);
 						}
 					});
-				});
-			}
-
-			if (searchInput) {
-				searchInput.addEventListener('input', applySearch);
-			}
-			if (searchClear) {
-				searchClear.addEventListener('click', function() {
-					searchInput.value = '';
-					applySearch();
-					searchInput.focus();
 				});
 			}
 

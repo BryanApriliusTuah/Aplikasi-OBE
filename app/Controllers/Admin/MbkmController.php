@@ -40,9 +40,24 @@ class MbkmController extends BaseController
 			'program_studi' => 'Teknik Informatika',
 			'tahun'         => $this->request->getGet('tahun'),
 			'semester'      => $this->request->getGet('semester'),
+			'status'        => $this->request->getGet('status'),
+			'cari'          => $this->request->getGet('cari'),
 		];
 
 		$modelFilters = [];
+
+		if (!empty($filters['tahun'])) {
+			$modelFilters['tahun'] = $filters['tahun'];
+		}
+		if (!empty($filters['semester'])) {
+			$modelFilters['semester'] = $filters['semester'];
+		}
+		if (!empty($filters['status'])) {
+			$modelFilters['status_kegiatan'] = $filters['status'];
+		}
+		if (!empty($filters['cari'])) {
+			$modelFilters['cari'] = $filters['cari'];
+		}
 
 		$kegiatan = $this->mbkmModel->getKegiatanLengkap($modelFilters);
 
@@ -62,11 +77,22 @@ class MbkmController extends BaseController
 
 		$semester_list = ['Ganjil', 'Genap', 'Antara'];
 
+		$status_list = array_column(
+			$this->db->table('mbkm')
+				->select('status_kegiatan')
+				->distinct()
+				->orderBy('status_kegiatan', 'ASC')
+				->get()
+				->getResultArray(),
+			'status_kegiatan'
+		);
+
 		$data = [
 			'kegiatan_by_status' => $kegiatan_by_status,
 			'filters'            => $filters,
 			'tahun_list'         => array_column($tahun_list, 'tahun'),
 			'semester_list'      => $semester_list,
+			'status_list'        => $status_list,
 		];
 
 		return view('admin/mbkm/index', $data);

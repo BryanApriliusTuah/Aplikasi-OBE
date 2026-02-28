@@ -36,6 +36,60 @@ class MbkmModel extends Model
 			$builder->where('k.status_kegiatan', $filters['status_kegiatan']);
 		}
 
+		if (!empty($filters['cari'])) {
+			$search = $filters['cari'];
+
+			// Find NIMs of mahasiswa whose name matches the search term
+			$matchingNims = array_column(
+				$this->db->table('mahasiswa')
+					->select('nim')
+					->like('nama_lengkap', $search)
+					->get()
+					->getResultArray(),
+				'nim'
+			);
+
+			$builder->groupStart();
+			// Search by NIM directly on the nim field
+			$builder->like('k.nim', $search);
+			// Search by name: check if any matching NIM is in the comma-separated k.nim
+			foreach ($matchingNims as $nim) {
+				$builder->orWhere(
+					"FIND_IN_SET(" . $this->db->escape($nim) . ", REPLACE(k.nim, ' ', '')) > 0",
+					null,
+					false
+				);
+			}
+			$builder->groupEnd();
+		}
+
+		if (!empty($filters['tahun']) || !empty($filters['semester'])) {
+			$tahun      = $filters['tahun'] ?? '';
+			$semester   = $filters['semester'] ?? '';
+
+			// Join through jadwal_mahasiswa → jadwal to filter by tahun_akademik.
+			// FIND_IN_SET handles comma-separated NIMs in k.nim.
+			$builder->join(
+				'jadwal_mahasiswa jm',
+				"FIND_IN_SET(jm.nim, REPLACE(k.nim, ' ', '')) > 0",
+				'inner'
+			);
+			$builder->join(
+				'jadwal j2',
+				"j2.id = jm.jadwal_id AND j2.kelas = 'KM'",
+				'inner'
+			);
+			$builder->groupBy('k.id');
+
+			if ($tahun && $semester) {
+				$builder->where('j2.tahun_akademik', $tahun . ' ' . $semester);
+			} elseif ($tahun) {
+				$builder->like('j2.tahun_akademik', $tahun, 'after');
+			} else {
+				$builder->like('j2.tahun_akademik', $semester, 'before');
+			}
+		}
+
 		$result = $builder->orderBy('k.created_at', 'DESC')->get()->getResultArray();
 
 		// Enrich each record with mahasiswa data from NIM
