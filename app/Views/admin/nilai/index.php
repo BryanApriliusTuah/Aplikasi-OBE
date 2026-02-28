@@ -69,48 +69,6 @@
 		color: white !important;
 	}
 
-	/* Match Select2 to modern-filter-input style */
-	#filter_mk + .select2-container .select2-selection--single {
-		height: auto;
-		border: 1px solid var(--modern-table-border, #dee2e6);
-		border-radius: 0.375rem;
-		padding: 0.625rem 0.875rem;
-		font-size: 0.875rem;
-		transition: all 0.2s ease;
-	}
-	#filter_mk + .select2-container .select2-selection--single .select2-selection__rendered {
-		font-size: 0.875rem;
-		color: #212529;
-		padding: 0;
-		line-height: 1.5;
-	}
-	#filter_mk + .select2-container .select2-selection--single .select2-selection__placeholder {
-		font-size: 0.875rem;
-		color: #6c757d;
-	}
-	#filter_mk + .select2-container .select2-selection--single .select2-selection__arrow {
-		height: 100%;
-		top: 0;
-		right: 0.5rem;
-	}
-	#filter_mk + .select2-container .select2-selection--single .select2-selection__clear {
-		font-size: 1rem;
-		color: #6c757d;
-	}
-	#filter_mk + .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-	#filter_mk + .select2-container--bootstrap-5.select2-container--open .select2-selection {
-		border-color: #0d6efd;
-		box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-	}
-	.select2-dropdown {
-		font-size: 0.875rem;
-		border-color: var(--modern-table-border, #dee2e6);
-		border-radius: 0.375rem;
-	}
-	.select2-results__option {
-		font-size: 0.875rem;
-		padding: 0.4rem 0.875rem;
-	}
 </style>
 
 <div class="container-fluid px-4">

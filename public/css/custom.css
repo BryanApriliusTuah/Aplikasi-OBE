@@ -907,9 +907,9 @@ table.table td, table.table th {
 /* mk-cpl-cpmk */
 .table-pemetaan th.cpl-header,
     .table-pemetaan td.cpl-cell {
-        width: 110px; 
+        width: 110px;
         min-width: 110px;
-        vertical-align: top; 
+        vertical-align: top;
     }
     .table-pemetaan .mk-column {
         min-width: 250px;

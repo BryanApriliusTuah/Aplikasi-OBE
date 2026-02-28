@@ -7,10 +7,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-	<link rel="stylesheet" href="<?= base_url('css/custom.css') ?>">
-	<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
 	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 	<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+	<link rel="stylesheet" href="<?= base_url('css/custom.css') ?>">
+	<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
 	<style>
 		/* Remove arrows/spinners from number input */
 
@@ -31,6 +31,53 @@
 		input[type=number] {
 			-moz-appearance: textfield;
 			appearance: textfield;
+		}
+
+		/* Global Select2 overrides — matches modern-filter-input style */
+		.select2-container--bootstrap-5 .select2-selection--single {
+			height: auto !important;
+			min-height: unset !important;
+			border: 1px solid #dee2e6 !important;
+			border-radius: 0.375rem !important;
+			padding: 0.625rem 0.875rem !important;
+			font-size: 0.875rem !important;
+			background-image: none !important;
+			transition: all 0.2s ease;
+		}
+		.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+			font-size: 0.875rem !important;
+			color: #212529 !important;
+			padding: 0 !important;
+			line-height: 1.5 !important;
+		}
+		.select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+			font-size: 0.875rem !important;
+			color: #6c757d !important;
+		}
+		.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+			display: flex !important;
+			align-items: center !important;
+			height: 100% !important;
+			top: 0 !important;
+			right: 0.5rem !important;
+		}
+		.select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+			font-size: 1rem !important;
+			color: #6c757d !important;
+		}
+		.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+		.select2-container--bootstrap-5.select2-container--open .select2-selection {
+			border-color: #0d6efd !important;
+			box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important;
+		}
+		.select2-dropdown {
+			font-size: 0.875rem !important;
+			border-color: #dee2e6 !important;
+			border-radius: 0.375rem !important;
+		}
+		.select2-results__option {
+			font-size: 0.875rem !important;
+			padding: 0.4rem 0.875rem !important;
 		}
 	</style>
 	<?= $this->renderSection('css') ?>
