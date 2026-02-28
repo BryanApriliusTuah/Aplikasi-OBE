@@ -319,8 +319,8 @@ class MbkmController extends BaseController
 		$gradeConfigModel = new \App\Models\GradeConfigModel();
 		$grade_config = $gradeConfigModel->getActiveGrades();
 
-		// Get konversi MK data from jadwal with kelas = 'KM'
-		$konversi_mk = $this->mbkmModel->getKonversiMkByMahasiswaList($kegiatan['nim']);
+		// Get konversi MK data — filtered to jadwal linked to this specific kegiatan
+		$konversi_mk = $this->mbkmModel->getKonversiMkByMahasiswaList($kegiatan['nim'], $kegiatan_id);
 
 		// Get existing CPMK scores (weighted scores from database)
 		$existing_scores = $this->mbkmModel->getNilaiCpmk($kegiatan['nim']);
@@ -409,13 +409,15 @@ class MbkmController extends BaseController
 				return redirect()->back()->withInput()->with('error', 'Nilai harus antara 0-100');
 			}
 
-			// Get jadwal_id for this mata_kuliah with kelas = 'KM' for this mahasiswa
+			// Get jadwal_id for this mata_kuliah with kelas = 'KM', filtered to this kegiatan
 			$jadwal = $this->db->table('jadwal j')
 				->select('j.id')
 				->join('jadwal_mahasiswa jm', 'jm.jadwal_id = j.id')
+				->join('mbkm_jadwal mj', 'mj.jadwal_id = j.id')
 				->where('j.mata_kuliah_id', $mk_id)
 				->where('j.kelas', 'KM')
 				->where('jm.nim', $nim)
+				->where('mj.mbkm_id', (int) $kegiatan_id)
 				->get()
 				->getRowArray();
 
@@ -698,7 +700,49 @@ class MbkmController extends BaseController
 				}
 			}
 
-			$message = "Sinkronisasi MBKM berhasil! $jadwalInserted jadwal baru, $jadwalUpdated diperbarui, $studentsInserted mahasiswa disinkronkan, $mbkmInserted kegiatan MBKM baru dibuat, $mbkmUpdated diperbarui.";
+			// Link mbkm records to their jadwal based on student enrollment in this semester
+			$mbkmLinked = 0;
+
+			$semesterJadwals = $this->db->table('jadwal')
+				->select('id')
+				->where('kelas', 'KM')
+				->where('kelas_semester', $semesterId)
+				->get()
+				->getResultArray();
+
+			if (!empty($semesterJadwals)) {
+				$semesterJadwalIds = array_column($semesterJadwals, 'id');
+
+				// Remove stale links for this semester's jadwal so we rebuild fresh
+				$this->db->table('mbkm_jadwal')->whereIn('jadwal_id', $semesterJadwalIds)->delete();
+
+				foreach ($semesterJadwalIds as $jId) {
+					$nimsInJadwal = $this->db->table('jadwal_mahasiswa')
+						->select('nim')
+						->where('jadwal_id', $jId)
+						->get()
+						->getResultArray();
+
+					foreach ($nimsInJadwal as $nimRow) {
+						$activeMbkms = $this->db->table('mbkm')
+							->select('id')
+							->where('nim', $nimRow['nim'])
+							->whereIn('status_kegiatan', ['berlangsung', 'selesai', 'disetujui'])
+							->get()
+							->getResultArray();
+
+						foreach ($activeMbkms as $mbkmRow) {
+							$this->db->table('mbkm_jadwal')->insert([
+								'mbkm_id'   => $mbkmRow['id'],
+								'jadwal_id' => $jId,
+							]);
+							$mbkmLinked++;
+						}
+					}
+				}
+			}
+
+			$message = "Sinkronisasi MBKM berhasil! $jadwalInserted jadwal baru, $jadwalUpdated diperbarui, $studentsInserted mahasiswa disinkronkan, $mbkmInserted kegiatan MBKM baru dibuat, $mbkmUpdated diperbarui, $mbkmLinked tautan mbkm-jadwal dibuat.";
 			return redirect()->to('/admin/mbkm')->with('success', $message);
 		} catch (\Exception $e) {
 			log_message('error', 'MBKM sync error: ' . $e->getMessage());

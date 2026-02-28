@@ -90,7 +90,7 @@ class MbkmModel extends Model
 			}
 		}
 
-		$result = $builder->orderBy('k.created_at', 'DESC')->get()->getResultArray();
+		$result = $builder->orderBy('k.nim', 'ASC')->get()->getResultArray();
 
 		// Enrich each record with mahasiswa data from NIM
 		foreach ($result as &$row) {
@@ -132,6 +132,16 @@ class MbkmModel extends Model
 			$row['nama_mahasiswa_list'] = implode(', ', $nama_list) ?: '-';
 			$row['fakultas'] = $fakultas ?: '-';
 			$row['program_studi'] = $prodi ?: '-';
+
+			// Fetch semester from linked jadwal via mbkm_jadwal
+			$linkedJadwal = $this->db->table('mbkm_jadwal mj')
+				->select('j.tahun_akademik')
+				->join('jadwal j', 'j.id = mj.jadwal_id')
+				->where('mj.mbkm_id', $row['id'])
+				->orderBy('j.tahun_akademik', 'DESC')
+				->get()
+				->getRowArray();
+			$row['semester'] = $linkedJadwal['tahun_akademik'] ?? '-';
 		}
 
 		return $result;
@@ -141,7 +151,7 @@ class MbkmModel extends Model
 	/**
 	 * Get konversi MK by mahasiswa list
 	 */
-	public function getKonversiMkByMahasiswaList($nim)
+	public function getKonversiMkByMahasiswaList($nim, $mbkm_id = null)
 	{
 		if (empty($nim)) {
 			return [];
@@ -150,13 +160,20 @@ class MbkmModel extends Model
 		$nims = array_map('trim', explode(',', $nim));
 
 		// First, get all mata kuliah for MBKM students
-		$mk_list = $this->db->table('mata_kuliah mk')
+		$builder = $this->db->table('mata_kuliah mk')
 			->select('mk.id as mata_kuliah_id, mk.kode_mk, mk.nama_mk, mk.sks as bobot_mk, j.id as jadwal_id')
 			->join('jadwal j', 'mk.id = j.mata_kuliah_id', 'inner')
 			->join('jadwal_mahasiswa jm', 'j.id = jm.jadwal_id', 'inner')
 			->where('j.kelas', 'KM')
-			->whereIn('jm.nim', $nims)
-			->groupBy('mk.id, mk.kode_mk, mk.nama_mk, mk.sks, j.id')
+			->whereIn('jm.nim', $nims);
+
+		// If mbkm_id given, restrict to only jadwal linked to that specific kegiatan
+		if ($mbkm_id) {
+			$builder->join('mbkm_jadwal mj', 'mj.jadwal_id = j.id', 'inner')
+					->where('mj.mbkm_id', (int) $mbkm_id);
+		}
+
+		$mk_list = $builder->groupBy('mk.id, mk.kode_mk, mk.nama_mk, mk.sks, j.id')
 			->get()
 			->getResultArray();
 

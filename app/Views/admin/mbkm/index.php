@@ -146,7 +146,8 @@
 						<tr>
 							<th style="min-width: 120px;" class="text-center">NIM</th>
 							<th style="min-width: 150px;" class="text-center">Nama Mahasiswa</th>
-							<th style="min-width: 200px;" class="text-center">Fakultas/Prodi Asal</th>
+							<th style="min-width: 130px;" class="text-center">Semester</th>
+							<!-- <th style="min-width: 200px;" class="text-center">Fakultas/Prodi Asal</th> -->
 							<th style="min-width: 120px;" class="text-center">Program</th>
 							<th style="min-width: 150px;" class="text-center">Sub Program</th>
 							<th style="min-width: 180px;" class="text-center">Tujuan</th>
@@ -189,7 +190,8 @@
 									}
 									?>
 								</td>
-								<td>
+								<td class="text-center"><?= esc($kegiatan["semester"] ?? "-") ?></td>
+								<!-- <td>
 									<?php
 									$fakultas = $kegiatan['fakultas'] ?? '';
 									$prodi = $kegiatan['program_studi'] ?? '';
@@ -203,7 +205,7 @@
 										echo '-';
 									}
 									?>
-								</td>
+								</td> -->
 								<td><?= esc($kegiatan['program'] ?? '-') ?></td>
 								<td><?= esc($kegiatan['sub_program'] ?? '-') ?></td>
 								<td><?= esc($kegiatan['tujuan'] ?? '-') ?></td>
