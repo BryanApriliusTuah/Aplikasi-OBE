@@ -1,131 +1,153 @@
 <?= $this->extend('layouts/admin_layout') ?>
 
 <?= $this->section('content') ?>
-<div class="container-fluid">
-	<div class="row mb-4">
-		<div class="col-12">
-			<div class="d-flex justify-content-between align-items-center">
-				<div>
-					<h2 class="fw-bold">Laporan CPMK</h2>
-					<p class="text-muted mb-0">Pilih mata kuliah dan tahun akademik untuk generate portofolio mata kuliah</p>
+
+<!-- Include Modern Table Styles -->
+<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+	<div>
+		<h2 class="mb-0 fw-bold">Laporan CPMK</h2>
+		<p class="text-muted mb-0 small">Pilih mata kuliah dan tahun akademik untuk generate portofolio mata kuliah</p>
+	</div>
+	<a href="<?= base_url('admin/laporan-cpmk/templates') ?>" class="btn btn-outline-primary">
+		<i class="bi bi-file-earmark-text"></i> Kelola Template Analisis
+	</a>
+</div>
+
+<?php if (session()->getFlashdata('error')): ?>
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		<?= session()->getFlashdata('error') ?>
+		<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+	</div>
+<?php endif; ?>
+
+<div class="row g-3">
+	<div class="col-lg-8">
+
+		<div class="modern-filter-wrapper mb-3">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-funnel-fill text-primary"></i>
+					<span class="modern-filter-title">Filter Portofolio Mata Kuliah</span>
 				</div>
-				<a href="<?= base_url('admin/laporan-cpmk/templates') ?>" class="btn btn-outline-primary">
-					<i class="bi bi-file-earmark-text"></i> Kelola Template Analisis
-				</a>
+			</div>
+			<div class="modern-filter-body">
+				<form action="<?= base_url('admin/laporan-cpmk/generate') ?>" method="get">
+					<div class="mb-3">
+						<label for="mata_kuliah_id" class="modern-filter-label">
+							Mata Kuliah <span class="text-danger">*</span>
+						</label>
+						<select class="form-select modern-filter-input select2" id="mata_kuliah_id" name="mata_kuliah_id" required>
+							<option value="">-- Pilih Mata Kuliah --</option>
+							<?php foreach ($mataKuliah as $mk): ?>
+								<option value="<?= $mk['id'] ?>"><?= esc($mk['kode_mk']) ?> - <?= esc($mk['nama_mk']) ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label for="tahun_akademik" class="modern-filter-label">
+									Tahun Akademik <span class="text-danger">*</span>
+								</label>
+								<select class="form-select modern-filter-input" id="tahun_akademik" name="tahun_akademik" required>
+									<option value="">-- Pilih Tahun Akademik --</option>
+									<?php foreach ($tahunAkademik as $ta): ?>
+										<option value="<?= esc($ta['tahun_akademik']) ?>"><?= esc($ta['tahun_akademik']) ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+						</div>
+
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label for="program_studi" class="modern-filter-label">
+									Program Studi
+								</label>
+								<select class="form-select modern-filter-input" id="program_studi" name="program_studi">
+									<option value="">-- Semua Program Studi --</option>
+									<?php foreach ($programStudi as $kode => $nama_resmi): ?>
+										<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($nama_resmi)) === "Teknik Informatika" ? 'selected' : '' ?>><?= esc($nama_resmi) ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="d-flex gap-2">
+						<button type="submit" class="btn btn-primary modern-filter-btn">
+							<i class="bi bi-file-earmark-text"></i> Generate Portofolio
+						</button>
+						<button type="reset" class="btn btn-outline-secondary modern-filter-btn-reset" title="Reset">
+							<i class="bi bi-arrow-clockwise"></i>
+						</button>
+					</div>
+				</form>
 			</div>
 		</div>
+
+		<div class="modern-filter-wrapper">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-info-circle text-primary"></i>
+					<span class="modern-filter-title">Cakupan Portofolio Mata Kuliah</span>
+				</div>
+			</div>
+			<div class="modern-filter-body">
+				<ul class="small mb-0">
+					<li>Identitas mata kuliah (nama, kode, semester, SKS, dosen pengampu)</li>
+					<li>Capaian Pembelajaran Mata Kuliah (CPMK) beserta keterkaitan dengan CPL</li>
+					<li>Metode pembelajaran dan metode asesmen untuk setiap CPMK</li>
+					<li>Rencana dan realisasi penilaian CPMK (bobot, teknik penilaian, nilai rata-rata)</li>
+					<li>Analisis pencapaian CPMK (CPMK tercapai dan tidak tercapai)</li>
+					<li>Rekomendasi tindak lanjut dan Continuous Quality Improvement (CQI)</li>
+				</ul>
+			</div>
+		</div>
+
 	</div>
 
-	<?php if (session()->getFlashdata('error')): ?>
-		<div class="alert alert-danger alert-dismissible fade show" role="alert">
-			<?= session()->getFlashdata('error') ?>
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
-	<?php endif; ?>
+	<div class="col-lg-4">
 
-	<div class="row">
-		<div class="col-lg-8">
-			<div class="card shadow-sm">
-				<div class="card-header bg-primary text-white">
-					<h5 class="mb-0">Filter Portofolio Mata Kuliah</h5>
-				</div>
-				<div class="card-body">
-					<form action="<?= base_url('admin/laporan-cpmk/generate') ?>" method="get">
-						<div class="mb-3">
-							<label for="mata_kuliah_id" class="form-label fw-bold">Mata Kuliah <span class="text-danger">*</span></label>
-							<select class="form-select select2" id="mata_kuliah_id" name="mata_kuliah_id" required>
-								<option value="">-- Pilih Mata Kuliah --</option>
-								<?php foreach ($mataKuliah as $mk): ?>
-									<option value="<?= $mk['id'] ?>"><?= esc($mk['kode_mk']) ?> - <?= esc($mk['nama_mk']) ?></option>
-								<?php endforeach; ?>
-							</select>
-						</div>
-
-						<div class="row">
-							<div class="col-md-6">
-								<div class="mb-3">
-									<label for="tahun_akademik" class="form-label fw-bold">Tahun Akademik <span class="text-danger">*</span></label>
-									<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
-										<option value="">-- Pilih Tahun Akademik --</option>
-										<?php foreach ($tahunAkademik as $ta): ?>
-											<option value="<?= esc($ta['tahun_akademik']) ?>"><?= esc($ta['tahun_akademik']) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-							</div>
-
-							<div class="col-md-6">
-								<div class="mb-3">
-									<label for="program_studi" class="form-label fw-bold">Program Studi</label>
-									<select class="form-select" id="program_studi" name="program_studi">
-										<option value="">-- Semua Program Studi --</option>
-										<?php foreach ($programStudi as $kode => $nama_resmi): ?>
-											<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($nama_resmi)) === "Teknik Informatika" ? 'selected' : '' ?>><?= esc($nama_resmi) ?></option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-							</div>
-						</div>
-
-						<div class="d-flex gap-2">
-							<button type="submit" class="btn btn-primary">
-								<i class="bi bi-file-earmark-text"></i> Generate Portofolio
-							</button>
-							<button type="reset" class="btn btn-outline-secondary">
-								<i class="bi bi-arrow-clockwise"></i> Reset
-							</button>
-						</div>
-					</form>
+		<div class="modern-filter-wrapper mb-3">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-list-ol text-primary"></i>
+					<span class="modern-filter-title">Petunjuk Penggunaan</span>
 				</div>
 			</div>
-
-			<div class="card shadow-sm mt-4">
-				<div class="card-body">
-					<h6 class="fw-bold mb-3">Informasi Portofolio Mata Kuliah</h6>
-					<p class="mb-2">Portofolio mata kuliah mencakup:</p>
-					<ul class="small">
-						<li>Identitas mata kuliah (nama, kode, semester, SKS, dosen pengampu)</li>
-						<li>Capaian Pembelajaran Mata Kuliah (CPMK) beserta keterkaitan dengan CPL</li>
-						<li>Metode pembelajaran dan metode asesmen untuk setiap CPMK</li>
-						<li>Rencana dan realisasi penilaian CPMK (bobot, teknik penilaian, nilai rata-rata)</li>
-						<li>Analisis pencapaian CPMK (CPMK tercapai dan tidak tercapai)</li>
-						<li>Rekomendasi tindak lanjut dan Continuous Quality Improvement (CQI)</li>
-					</ul>
-				</div>
+			<div class="modern-filter-body">
+				<ol class="small mb-0">
+					<li class="mb-1">Pilih <strong>Mata Kuliah</strong> yang ingin dibuat portofolionya</li>
+					<li class="mb-1">Pilih <strong>Tahun Akademik</strong> sesuai periode pembelajaran</li>
+					<li class="mb-1">Pilih <strong>Program Studi</strong> (opsional) untuk filter berdasarkan prodi</li>
+					<li class="mb-1">Klik tombol <strong>Generate Portofolio</strong></li>
+					<li>Portofolio dapat dicetak atau diunduh</li>
+				</ol>
 			</div>
 		</div>
 
-		<div class="col-lg-4">
-			<div class="card shadow-sm bg-light">
-				<div class="card-body">
-					<h6 class="fw-bold mb-3">
-						<i class="bi bi-info-circle"></i> Petunjuk Penggunaan
-					</h6>
-					<ol class="small mb-0">
-						<li class="mb-2">Pilih <strong>Mata Kuliah</strong> yang ingin dibuat portofolionya</li>
-						<li class="mb-2">Pilih <strong>Tahun Akademik</strong> sesuai periode pembelajaran</li>
-						<li class="mb-2">Pilih <strong>Program Studi</strong> (opsional) jika ingin filter berdasarkan prodi tertentu</li>
-						<li class="mb-2">Klik tombol <strong>Generate Portofolio</strong></li>
-						<li class="mb-2">Portofolio akan ditampilkan dan dapat dicetak atau diunduh</li>
-					</ol>
+		<div class="modern-filter-wrapper">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-exclamation-triangle text-warning"></i>
+					<span class="modern-filter-title">Catatan Penting</span>
 				</div>
 			</div>
-
-			<div class="card shadow-sm mt-3">
-				<div class="card-body">
-					<h6 class="fw-bold mb-3">
-						<i class="bi bi-exclamation-triangle"></i> Catatan Penting
-					</h6>
-					<ul class="small mb-0">
-						<li class="mb-2">Pastikan data nilai mahasiswa sudah diinput untuk mendapatkan laporan yang akurat</li>
-						<li class="mb-2">Data yang ditampilkan berdasarkan nilai yang telah divalidasi</li>
-						<li class="mb-2">Standar minimal capaian mengikuti konfigurasi grade yang aktif</li>
-					</ul>
-				</div>
+			<div class="modern-filter-body">
+				<ul class="small mb-0">
+					<li class="mb-1">Pastikan data nilai mahasiswa sudah diinput untuk laporan yang akurat</li>
+					<li class="mb-1">Data yang ditampilkan berdasarkan nilai yang telah divalidasi</li>
+					<li>Standar minimal capaian mengikuti konfigurasi grade yang aktif</li>
+				</ul>
 			</div>
 		</div>
+
 	</div>
 </div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
@@ -135,7 +157,6 @@
 
 <script>
 	$(document).ready(function() {
-		// Initialize Select2
 		$('.select2').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Mata Kuliah --',
