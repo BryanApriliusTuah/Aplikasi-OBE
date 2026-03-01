@@ -2,8 +2,6 @@
 <?= $this->section('content') ?>
 
 <div class="container-fluid px-4">
-	<h2 class="fw-bold my-4 text-center">Manajemen Kegiatan MBKM (Merdeka Belajar Kampus Merdeka)</h2>
-
 	<?php if (session()->getFlashdata('success')): ?>
 		<div class="alert alert-success alert-dismissible fade show" role="alert">
 			<?= esc(session()->getFlashdata('success')) ?>

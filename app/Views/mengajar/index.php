@@ -5,9 +5,6 @@
 <link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
 
 <div class="container-fluid px-4">
-
-	<h2 class="fw-bold my-4 text-center">Jadwal Mengajar</h2>
-
 	<?php if (session()->getFlashdata('success')): ?>
 		<div class="alert alert-success alert-dismissible fade show" role="alert">
 			<?= esc(session()->getFlashdata('success')) ?>
