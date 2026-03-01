@@ -15,17 +15,37 @@ class Rps extends BaseController
 	public function index()
 	{
 		$rpsModel = new RpsModel();
-		$perPage = $this->request->getGet('perPage') ?? 10;
-		$currentPage = $this->request->getGet('page') ?? 1;
+		$db = \Config\Database::connect();
 
-		$rpsList = $rpsModel
+		$filters = [
+			'status' => $this->request->getGet('status') ?? '',
+			'search' => $this->request->getGet('search') ?? '',
+		];
+
+		$query = $rpsModel
 			->select('rps.*, mata_kuliah.nama_mk')
 			->join('mata_kuliah', 'mata_kuliah.id = rps.mata_kuliah_id', 'left')
-			->orderBy('rps.id', 'desc')
-			->paginate($perPage, 'default', $currentPage);
+			->orderBy('rps.id', 'desc');
 
-		$pager = $rpsModel->pager;
-		$db = \Config\Database::connect();
+		if (!empty($filters['status'])) {
+			$query->where('rps.status', $filters['status']);
+		}
+
+		if (!empty($filters['search'])) {
+			$search = $filters['search'];
+			$query->groupStart()
+				->like('mata_kuliah.nama_mk', $search)
+				->orLike('rps.tahun_ajaran', $search)
+				->orWhere("EXISTS (
+					SELECT 1 FROM rps_pengampu
+					JOIN dosen ON dosen.id = rps_pengampu.dosen_id
+					WHERE rps_pengampu.rps_id = rps.id
+					AND dosen.nama_lengkap LIKE '%" . $db->escapeLikeString($search) . "%'
+				)")
+				->groupEnd();
+		}
+
+		$rpsList = $query->findAll();
 
 		foreach ($rpsList as &$row) {
 			$pengampu = $db->table('rps_pengampu')
@@ -47,9 +67,7 @@ class Rps extends BaseController
 		unset($row);
 
 		$data['rps'] = $rpsList;
-		$data['pager'] = $pager;
-		$data['perPage'] = $perPage;
-		$data['currentPage'] = $currentPage;
+		$data['filters'] = $filters;
 
 		return view('rps/index', $data);
 	}
