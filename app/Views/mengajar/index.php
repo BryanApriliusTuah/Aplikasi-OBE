@@ -127,6 +127,30 @@
 	</div>
 
 	<!-- Schedule Cards Grid -->
+	<?php
+	// Collect unique kode_mk keys in encounter order, then assign hues using the
+	// golden-angle method (137.508°). Each new color is maximally far from all
+	// previous ones on the hue wheel, so no two courses look the same.
+	$_mkKeys = [];
+	foreach ($jadwal_by_day as $_day => $_schedules) {
+		foreach ($_schedules as $_jadwal) {
+			$_k = $_jadwal['kode_mk'] ?? $_jadwal['nama_mk'] ?? '';
+			if ($_k !== '' && !isset($_mkKeys[$_k])) {
+				$_mkKeys[$_k] = true;
+			}
+		}
+	}
+	$mkColorMap = [];
+	$_idx = 0;
+	foreach (array_keys($_mkKeys) as $_k) {
+		$_hue = (int) fmod($_idx * 137.508, 360);
+		$mkColorMap[$_k] = [
+			'bg'     => "hsl({$_hue}, 70%, 90%)",
+			'border' => "hsl({$_hue}, 55%, 75%)",
+		];
+		$_idx++;
+	}
+	?>
 	<div class="row g-3">
 		<?php foreach ($jadwal_by_day as $day => $schedules): ?>
 			<div class="col-12 col-md-6 col-lg-4">
@@ -144,7 +168,13 @@
 							</div>
 						<?php else: ?>
 							<?php foreach ($schedules as $jadwal): ?>
-								<div class="card mb-2 border-0" style="border: 1px solid var(--modern-table-border-light) !important; transition: all 0.2s ease; background: white;">
+								<?php
+								$_mkKey   = $jadwal['kode_mk'] ?? $jadwal['nama_mk'] ?? '';
+								$_mkColor = $mkColorMap[$_mkKey] ?? ['bg' => 'white', 'border' => 'var(--modern-table-border-light)'];
+								?>
+								<div class="card mb-2 border-0 jadwal-card"
+									 data-jadwal-id="<?= $jadwal['id'] ?>"
+									 style="border: 1px solid <?= $_mkColor['border'] ?> !important; border-left: 4px solid <?= $_mkColor['border'] ?> !important; transition: all 0.2s ease; background: <?= $_mkColor['bg'] ?>; cursor: pointer;">
 									<div class="card-body p-3" style="font-size: 0.875rem;">
 										<div class="d-flex justify-content-between align-items-start mb-2">
 											<h6 class="card-title mb-0 fw-semibold" style="color: var(--modern-table-text); font-size: 0.9375rem; line-height: 1.4;">
@@ -337,10 +367,22 @@
 	document.addEventListener('DOMContentLoaded', function() {
 		// --- Detail Modal Logic ---
 		const detailModal = document.getElementById('detailModal');
+		// --- Card click → open detail modal ---
+		document.querySelectorAll('.jadwal-card').forEach(function(card) {
+			card.addEventListener('click', function(e) {
+				if (e.target.closest('.dropdown')) return;
+				detailModal.dataset.pendingId = this.dataset.jadwalId;
+				bootstrap.Modal.getOrCreateInstance(detailModal).show();
+			});
+		});
+
 		if (detailModal) {
 			detailModal.addEventListener('show.bs.modal', function(event) {
 				const button = event.relatedTarget;
-				const jadwalId = button.getAttribute('data-id');
+				const jadwalId = button
+					? button.getAttribute('data-id')
+					: (detailModal.dataset.pendingId || '');
+				delete detailModal.dataset.pendingId;
 				const modalBody = detailModal.querySelector('#detailModalBody');
 
 				// Show a modern loading state

@@ -12,9 +12,27 @@
 	}
 
 	.course-info {
-		font-size: 0.8rem;
-		color: #6c757d;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		margin-top: 0.35rem;
 	}
+
+	.course-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.7rem;
+		font-weight: 500;
+		padding: 0.2rem 0.5rem;
+		border-radius: 0.375rem;
+		line-height: 1.4;
+	}
+
+	.course-badge-code  { background: #f0f4ff; color: #3b5bdb; border: 1px solid #c5d0fa; }
+	.course-badge-sks   { background: #f0fdf4; color: #2d7a52; border: 1px solid #bbf7d0; }
+	.course-badge-kelas { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+	.course-badge-sem   { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
 
 	.progress-cell {
 		min-width: 140px;
@@ -217,13 +235,29 @@
 										<div class="course-name fw-bold"><?= esc($jadwal['nama_mk']) ?></div>
 										<div class="course-info">
 											<?php if (isset($jadwal['kode_mk'])): ?>
-												<i class="bi bi-code-square"></i> <?= esc($jadwal['kode_mk']) ?>
+												<span class="course-badge course-badge-code">
+													<i class="bi bi-code-square"></i> <?= esc($jadwal['kode_mk']) ?>
+												</span>
 											<?php endif; ?>
 											<?php if (isset($jadwal['sks'])): ?>
-												<?= isset($jadwal['kode_mk']) ? ' • ' : '' ?><i class="bi bi-book"></i> <?= esc($jadwal['sks']) ?> SKS
+												<span class="course-badge course-badge-sks">
+													<i class="bi bi-book"></i> <?= esc($jadwal['sks']) ?> SKS
+												</span>
 											<?php endif; ?>
 											<?php if (isset($jadwal['kelas'])): ?>
-												<?= (isset($jadwal['kode_mk']) || isset($jadwal['sks'])) ? ' • ' : '' ?><i class="bi bi-people"></i> Kelas <?= esc($jadwal['kelas']) ?>
+												<span class="course-badge course-badge-kelas">
+													<i class="bi bi-people"></i> Kelas <?= esc($jadwal['kelas']) ?>
+												</span>
+											<?php endif; ?>
+											<?php if (isset($jadwal['kelas_semester'])): ?>
+												<?php
+													$ks = (string) $jadwal['kelas_semester'];
+													$ks_year = substr($ks, 0, 4);
+													$ks_term = substr($ks, 4, 1) === '1' ? 'Ganjil' : 'Genap';
+												?>
+												<span class="course-badge course-badge-sem">
+													<i class="bi bi-layers"></i> <?= esc($ks_year) ?> <?= $ks_term ?>
+												</span>
 											<?php endif; ?>
 										</div>
 									</td>
