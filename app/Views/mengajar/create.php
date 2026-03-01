@@ -297,7 +297,7 @@
 									' data-kelas-id="' + (kelas.kelas.klsId || '') + '"' +
 									' data-kelas-nama="' + (kelas.kelas.klsNama || '') + '"' +
 									' data-kelas-jenis="' + (kelas.kelas.klsJenis || '') + '"' +
-									' data-kelas-semester="' + semester + '"' +
+									' data-kelas-semester="' + (kelas.kelas.klsSemester || '') + '"' +
 									' data-kelas-status="' + (kelas.kelas.klsStatus || '') + '"' +
 									' data-mk-kode="' + (kelas.mata_kuliah.mkKode || '') + '"' +
 									' data-total-mhs="' + totalMhs + '"' +
