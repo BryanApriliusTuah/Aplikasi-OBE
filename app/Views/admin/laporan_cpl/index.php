@@ -174,6 +174,16 @@
 							options = '<option value="">-- Tidak ada data angkatan --</option>';
 						}
 						angkatanSelect.html(options);
+
+						// Restore saved angkatan selection if pending
+						if (window._pendingAngkatanRestore) {
+							angkatanSelect.val(window._pendingAngkatanRestore);
+							window._pendingAngkatanRestore = null;
+							const ps = programStudiSelect.val();
+							const ta = $('#tahun_akademik').val();
+							const ag = angkatanSelect.val();
+							btnGenerate.prop('disabled', !(ps && ta && ag));
+						}
 					},
 					error: function() {
 						angkatanSelect.html('<option value="">-- Error memuat data --</option>');
@@ -205,7 +215,40 @@
 			angkatanSelect.prop('disabled', true);
 			angkatanSelect.html('<option value="">-- Pilih Program Studi Terlebih Dahulu --</option>');
 			btnGenerate.prop('disabled', true);
+			try { localStorage.removeItem(_LAPORAN_CPL_KEY); } catch (e) {}
 		});
+	});
+
+	const _LAPORAN_CPL_KEY = 'laporan_cpl_state';
+
+	// Restore saved filter state (angkatan is dynamic, uses _pendingAngkatanRestore)
+	$(document).ready(function() {
+		try {
+			const raw = localStorage.getItem(_LAPORAN_CPL_KEY);
+			if (!raw) return;
+			const s = JSON.parse(raw);
+			if (s.tahun_akademik) $('#tahun_akademik').val(s.tahun_akademik);
+			if (s.program_studi) {
+				const programStudiSelect = $('#program_studi');
+				if (s.program_studi !== programStudiSelect.val()) {
+					programStudiSelect.val(s.program_studi).trigger('change');
+				}
+			}
+			if (s.angkatan) {
+				window._pendingAngkatanRestore = s.angkatan;
+			}
+		} catch (e) {}
+	});
+
+	// Save filter state before navigating away
+	window.addEventListener('beforeunload', function() {
+		try {
+			localStorage.setItem(_LAPORAN_CPL_KEY, JSON.stringify({
+				program_studi: $('#program_studi').val(),
+				tahun_akademik: $('#tahun_akademik').val(),
+				angkatan: $('#angkatan').val()
+			}));
+		} catch (e) {}
 	});
 </script>
 <?= $this->endSection() ?>

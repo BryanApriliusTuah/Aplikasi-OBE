@@ -33,6 +33,7 @@
 		<?= view('components/modern_filter', [
 			'title' => 'Filter Fakultas',
 			'action' => base_url('admin/fakultas'),
+			'resetAction' => base_url('admin/fakultas') . '?reset=1',
 			'filters' => [
 				[
 					'type' => 'text',

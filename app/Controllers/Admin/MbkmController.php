@@ -35,13 +35,35 @@ class MbkmController extends BaseController
 	// Index - List all MBKM activities
 	public function index()
 	{
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('mbkm_filters');
+			return redirect()->to('admin/mbkm');
+		}
+
+		$isFormSubmitted = $this->request->getGet('tahun') !== null
+			|| $this->request->getGet('semester') !== null
+			|| $this->request->getGet('status') !== null
+			|| $this->request->getGet('cari') !== null;
+
+		if ($isFormSubmitted) {
+			$saved = [
+				'tahun'    => $this->request->getGet('tahun'),
+				'semester' => $this->request->getGet('semester'),
+				'status'   => $this->request->getGet('status'),
+				'cari'     => $this->request->getGet('cari'),
+			];
+			session()->set('mbkm_filters', $saved);
+		} else {
+			$saved = session()->get('mbkm_filters') ?? [];
+		}
+
 		// Program Studi is always locked to Teknik Informatika
 		$filters = [
 			'program_studi' => 'Teknik Informatika',
-			'tahun'         => $this->request->getGet('tahun'),
-			'semester'      => $this->request->getGet('semester'),
-			'status'        => $this->request->getGet('status'),
-			'cari'          => $this->request->getGet('cari'),
+			'tahun'         => $saved['tahun'] ?? null,
+			'semester'      => $saved['semester'] ?? null,
+			'status'        => $saved['status'] ?? null,
+			'cari'          => $saved['cari'] ?? null,
 		];
 
 		$modelFilters = [];

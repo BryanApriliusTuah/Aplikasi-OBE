@@ -11,10 +11,26 @@ class Dosen extends BaseController
 	{
 		$model = new DosenModel();
 
-		$filters = [
-			'status_keaktifan' => $this->request->getGet('status_keaktifan'),
-			'search'           => $this->request->getGet('search'),
-		];
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('dosen_filters');
+			return redirect()->to('admin/dosen');
+		}
+
+		$isFormSubmitted = $this->request->getGet('search') !== null
+			|| $this->request->getGet('status_keaktifan') !== null;
+
+		if ($isFormSubmitted) {
+			$filters = [
+				'status_keaktifan' => $this->request->getGet('status_keaktifan'),
+				'search'           => $this->request->getGet('search'),
+			];
+			session()->set('dosen_filters', $filters);
+		} else {
+			$filters = session()->get('dosen_filters') ?? [
+				'status_keaktifan' => null,
+				'search'           => null,
+			];
+		}
 
 		$builder = $model->orderBy('nama_lengkap', 'ASC');
 

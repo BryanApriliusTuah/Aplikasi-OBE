@@ -156,12 +156,41 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
+	const _LAPORAN_CPMK_KEY = 'laporan_cpmk_state';
+
 	$(document).ready(function() {
 		$('.select2').select2({
 			theme: 'bootstrap-5',
 			placeholder: '-- Pilih Mata Kuliah --',
 			allowClear: true
 		});
+
+		// Restore saved filter state
+		try {
+			const raw = localStorage.getItem(_LAPORAN_CPMK_KEY);
+			if (raw) {
+				const s = JSON.parse(raw);
+				if (s.mata_kuliah_id) $('#mata_kuliah_id').val(s.mata_kuliah_id).trigger('change');
+				if (s.tahun_akademik) $('#tahun_akademik').val(s.tahun_akademik);
+				if (s.program_studi) $('#program_studi').val(s.program_studi);
+			}
+		} catch (e) {}
+
+		// Clear saved state when reset button is clicked
+		$('form').on('reset', function() {
+			try { localStorage.removeItem(_LAPORAN_CPMK_KEY); } catch (e) {}
+		});
+	});
+
+	// Save filter state before navigating away
+	window.addEventListener('beforeunload', function() {
+		try {
+			localStorage.setItem(_LAPORAN_CPMK_KEY, JSON.stringify({
+				mata_kuliah_id: $('#mata_kuliah_id').val(),
+				tahun_akademik: $('#tahun_akademik').val(),
+				program_studi: $('#program_studi').val()
+			}));
+		} catch (e) {}
 	});
 </script>
 <?= $this->endSection() ?>

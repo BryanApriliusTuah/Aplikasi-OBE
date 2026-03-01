@@ -47,7 +47,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter Pemetaan CPL-MK',
-	'action' => current_url(),
+	'action' => base_url('admin/cpl-mk'),
+	'resetAction' => base_url('admin/cpl-mk') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'text',

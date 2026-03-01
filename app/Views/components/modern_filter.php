@@ -46,6 +46,7 @@ $buttonCol = $buttonCol ?? 'col-md-2';
 $buttonText = $buttonText ?? 'Terapkan';
 $showReset = $showReset ?? true;
 $method = $method ?? 'GET';
+$resetAction = $resetAction ?? $action;
 ?>
 
 <div class="modern-filter-wrapper mb-4">
@@ -160,7 +161,7 @@ $method = $method ?? 'GET';
 						<i class="bi bi-search"></i> <?= esc($buttonText) ?>
 					</button>
 					<?php if ($showReset): ?>
-						<a href="<?= esc($action) ?>"
+						<a href="<?= esc($resetAction) ?>"
 							class="btn btn-outline-secondary modern-filter-btn-reset"
 							data-bs-toggle="tooltip"
 							title="Reset Filter">

@@ -33,9 +33,23 @@ class CplMk extends BaseController
 
     public function index()
     {
+        if ($this->request->getGet('reset') === '1') {
+            session()->remove('cpl_mk_filters');
+            return redirect()->to('admin/cpl-mk');
+        }
+
         $data = $this->getMatriksData();
 
-        $search = $this->request->getGet('search');
+        $isFormSubmitted = $this->request->getGet('search') !== null;
+
+        if ($isFormSubmitted) {
+            $search = $this->request->getGet('search');
+            session()->set('cpl_mk_filters', ['search' => $search]);
+        } else {
+            $saved  = session()->get('cpl_mk_filters') ?? [];
+            $search = $saved['search'] ?? null;
+        }
+
         $data['filters'] = ['search' => $search ?? ''];
 
         if (!empty($search)) {

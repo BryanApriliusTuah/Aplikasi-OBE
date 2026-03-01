@@ -33,6 +33,7 @@
 		<?= view('components/modern_filter', [
 			'title' => 'Filter Program Studi',
 			'action' => base_url('admin/program-studi'),
+			'resetAction' => base_url('admin/program-studi') . '?reset=1',
 			'filters' => [
 				[
 					'type' => 'select',

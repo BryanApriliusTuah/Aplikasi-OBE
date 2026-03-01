@@ -18,12 +18,34 @@ class Nilai extends BaseController
 	{
 		$jadwalModel = new MengajarModel();
 
+		// Handle filter reset
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('nilai_filters');
+			return redirect()->to('admin/nilai');
+		}
+
+		// Detect form submission vs plain page visit
+		$isFormSubmitted = $this->request->getGet('tahun') !== null
+			|| $this->request->getGet('semester') !== null
+			|| $this->request->getGet('kode_mk') !== null;
+
+		if ($isFormSubmitted) {
+			$saved = [
+				'tahun'    => $this->request->getGet('tahun'),
+				'semester' => $this->request->getGet('semester'),
+				'kode_mk'  => $this->request->getGet('kode_mk'),
+			];
+			session()->set('nilai_filters', $saved);
+		} else {
+			$saved = session()->get('nilai_filters') ?? [];
+		}
+
 		// Program Studi is always locked to Teknik Informatika (kode 58)
 		$filters = [
 			'program_studi_kode' => 58,
-			'tahun'              => $this->request->getGet('tahun'),
-			'semester'           => $this->request->getGet('semester'),
-			'kode_mk'            => $this->request->getGet('kode_mk'),
+			'tahun'              => $saved['tahun'] ?? null,
+			'semester'           => $saved['semester'] ?? null,
+			'kode_mk'            => $saved['kode_mk'] ?? null,
 		];
 
 		// Get current user's dosen_id if they are a lecturer

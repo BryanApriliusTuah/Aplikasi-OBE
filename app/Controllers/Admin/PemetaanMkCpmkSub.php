@@ -43,9 +43,23 @@ class PemetaanMkCpmkSub extends BaseController
 
     public function index()
     {
+        if ($this->request->getGet('reset') === '1') {
+            session()->remove('pemetaan_mk_cpmk_sub_filters');
+            return redirect()->to('admin/pemetaan-mk-cpmk-sub');
+        }
+
         $rows = $this->getQueryBuilder()->findAll();
 
-        $search = $this->request->getGet('search');
+        $isFormSubmitted = $this->request->getGet('search') !== null;
+
+        if ($isFormSubmitted) {
+            $search = $this->request->getGet('search');
+            session()->set('pemetaan_mk_cpmk_sub_filters', ['search' => $search]);
+        } else {
+            $saved  = session()->get('pemetaan_mk_cpmk_sub_filters') ?? [];
+            $search = $saved['search'] ?? null;
+        }
+
         $filters = ['search' => $search ?? ''];
 
         if (!empty($search)) {

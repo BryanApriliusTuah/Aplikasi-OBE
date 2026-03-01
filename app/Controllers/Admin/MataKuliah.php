@@ -16,9 +16,26 @@ class MataKuliah extends BaseController
 	{
 		$model = new MataKuliahModel();
 
-		$semester = $this->request->getGet('semester');
-		$tipe = $this->request->getGet('tipe');
-		$search = $this->request->getGet('search');
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('mata_kuliah_filters');
+			return redirect()->to('admin/mata-kuliah');
+		}
+
+		$isFormSubmitted = $this->request->getGet('semester') !== null
+			|| $this->request->getGet('tipe') !== null
+			|| $this->request->getGet('search') !== null;
+
+		if ($isFormSubmitted) {
+			$semester = $this->request->getGet('semester');
+			$tipe     = $this->request->getGet('tipe');
+			$search   = $this->request->getGet('search');
+			session()->set('mata_kuliah_filters', compact('semester', 'tipe', 'search'));
+		} else {
+			$saved    = session()->get('mata_kuliah_filters') ?? [];
+			$semester = $saved['semester'] ?? null;
+			$tipe     = $saved['tipe'] ?? null;
+			$search   = $saved['search'] ?? null;
+		}
 
 		$builder = $model->orderBy('semester', 'ASC')->orderBy('kode_mk', 'ASC');
 
@@ -39,8 +56,8 @@ class MataKuliah extends BaseController
 			'matakuliah' => $builder->findAll(),
 			'filters' => [
 				'semester' => $semester ?? '',
-				'tipe' => $tipe ?? '',
-				'search' => $search ?? '',
+				'tipe'     => $tipe ?? '',
+				'search'   => $search ?? '',
 			],
 		]);
 	}

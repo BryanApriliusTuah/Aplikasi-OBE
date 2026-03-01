@@ -41,8 +41,9 @@
 	}
 	?>
 	<?= view('components/modern_filter', [
-		'title'   => 'Filter Kegiatan',
-		'action'  => current_url(),
+		'title'      => 'Filter Kegiatan',
+		'action'     => base_url('admin/mbkm'),
+		'resetAction' => base_url('admin/mbkm') . '?reset=1',
 		'filters' => [
 			[
 				'type'    => 'readonly',

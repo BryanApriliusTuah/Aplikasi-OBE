@@ -45,7 +45,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter Pemetaan',
-	'action' => current_url(),
+	'action' => base_url('admin/pemetaan-mk-cpmk-sub'),
+	'resetAction' => base_url('admin/pemetaan-mk-cpmk-sub') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'text',

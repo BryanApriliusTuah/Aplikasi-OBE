@@ -111,7 +111,7 @@
 			</div>
 		</div>
 		<div class="modern-filter-body">
-			<form method="GET" action="<?= current_url() ?>">
+			<form method="GET" action="<?= base_url('admin/nilai') ?>">
 				<div class="row g-3 align-items-end">
 					<div class="col-md-3">
 						<label class="modern-filter-label">
@@ -179,7 +179,7 @@
 						<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
 							<i class="bi bi-search"></i> Terapkan
 						</button>
-						<a href="<?= current_url() ?>"
+						<a href="<?= base_url('admin/nilai') ?>?reset=1"
 							class="btn btn-outline-secondary modern-filter-btn-reset"
 							data-bs-toggle="tooltip"
 							title="Reset Filter">
@@ -454,5 +454,8 @@
 		allowClear: true,
 		width: '100%',
 	});
+
+	// Trigger Select2 refresh so the PHP-restored kode_mk value is shown correctly
+	$('#filter_mk').trigger('change.select2');
 </script>
 <?= $this->endSection() ?>

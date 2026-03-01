@@ -1353,6 +1353,18 @@
 
 				// Refresh Select2 after updating options
 				mahasiswaSelect.trigger('change.select2');
+
+				// Restore saved mahasiswa selection if pending for this filter
+				if (window._pendingMahasiswaRestore && window._pendingMahasiswaRestore.filterNum === filterNum) {
+					const savedId = window._pendingMahasiswaRestore.mahasiswaId;
+					if (savedId && mahasiswaSelect.find(`option[value="${savedId}"]`).length) {
+						mahasiswaSelect.val(savedId).trigger('change.select2');
+						if (window._pendingMahasiswaRestore.autoSubmit) {
+							$(`#filterIndividualForm${filterNum}`).trigger('submit');
+						}
+					}
+					window._pendingMahasiswaRestore = null;
+				}
 			},
 			error: function(xhr, status, error) {
 				console.error(`Error loading mahasiswa for filter ${filterNum}:`, {
@@ -2625,6 +2637,81 @@
 			alert('Error saat download: ' + error.message);
 		}
 	}
+
+	// --- Filter State Persistence via localStorage ---
+	const _CPL_STORAGE_KEY = 'capaian_cpl_state';
+
+	function _cplSaveState() {
+		try {
+			localStorage.setItem(_CPL_STORAGE_KEY, JSON.stringify({
+				mainTab: $('.modern-tab-item.active[data-bs-target]').attr('data-bs-target') || '#individual',
+				activeInd: currentActiveFilter || 1,
+				activeCmp: currentActiveComparativeFilter || 1,
+				ind1: { program_studi: $('#programStudiSelect1').val(), tahun_angkatan: $('#tahunAngkatanSelect1').val(), mahasiswa_id: $('#mahasiswaSelect1').val() },
+				ind2: { program_studi: $('#programStudiSelect2').val(), tahun_angkatan: $('#tahunAngkatanSelect2').val(), mahasiswa_id: $('#mahasiswaSelect2').val(), semester: $('#semesterSelect2').val() },
+				ind3: { program_studi: $('#programStudiSelect3').val(), tahun_angkatan: $('#tahunAngkatanSelect3').val(), mahasiswa_id: $('#mahasiswaSelect3').val(), tahun_akademik: $('#tahunAkademikSelect3').val() },
+				cmp1: { program_studi: $('#programStudiComparativeSelect1').val(), tahun_angkatan: $('#tahunAngkatanComparativeSelect1').val() },
+				cmp2: { program_studi: $('#programStudiComparativeSelect2').val(), tahun_angkatan: $('#tahunAngkatanComparativeSelect2').val(), semester: $('#semesterComparativeSelect2').val() },
+				cmp3: { program_studi: $('#programStudiComparativeSelect3').val(), tahun_angkatan: $('#tahunAngkatanComparativeSelect3').val(), tahun_akademik: $('#tahunAkademikComparativeSelect3').val() },
+				ksl: { program_studi: $('#programStudiKeseluruhanSelect').val() },
+			}));
+		} catch (e) {}
+	}
+
+	function _cplRestoreState() {
+		try {
+			const raw = localStorage.getItem(_CPL_STORAGE_KEY);
+			if (!raw) return;
+			const s = JSON.parse(raw);
+
+			// Restore main tab
+			if (s.mainTab && s.mainTab !== '#individual') {
+				$(`[data-bs-target="${s.mainTab}"]`).tab('show');
+			}
+
+			// Restore individual sub-filter tab
+			const activeInd = s.activeInd || 1;
+			if (activeInd > 1) $(`[data-bs-target="#filter${activeInd}"]`).tab('show');
+
+			// Restore comparative sub-filter tab
+			const activeCmp = s.activeCmp || 1;
+			if (activeCmp > 1) $(`[data-bs-target="#filterComparative${activeCmp}"]`).tab('show');
+
+			// Restore static selects for individual forms
+			[1, 2, 3].forEach(n => {
+				const d = s[`ind${n}`] || {};
+				if (d.program_studi) $(`#programStudiSelect${n}`).val(d.program_studi).trigger('change.select2');
+				if (d.tahun_angkatan) $(`#tahunAngkatanSelect${n}`).val(d.tahun_angkatan).trigger('change.select2');
+				if (d.semester) $(`#semesterSelect${n}`).val(d.semester);
+				if (d.tahun_akademik) $(`#tahunAkademikSelect${n}`).val(d.tahun_akademik);
+			});
+
+			// Restore comparative selects
+			[1, 2, 3].forEach(n => {
+				const d = s[`cmp${n}`] || {};
+				if (d.program_studi) $(`#programStudiComparativeSelect${n}`).val(d.program_studi).trigger('change.select2');
+				if (d.tahun_angkatan) $(`#tahunAngkatanComparativeSelect${n}`).val(d.tahun_angkatan).trigger('change.select2');
+				if (d.semester) $(`#semesterComparativeSelect${n}`).val(d.semester);
+				if (d.tahun_akademik) $(`#tahunAkademikComparativeSelect${n}`).val(d.tahun_akademik);
+			});
+
+			// Restore keseluruhan
+			if ((s.ksl || {}).program_studi) $('#programStudiKeseluruhanSelect').val(s.ksl.program_studi).trigger('change.select2');
+
+			// Queue mahasiswa restore for the active individual filter (picked up by loadMahasiswa AJAX callback)
+			const d = s[`ind${activeInd}`] || {};
+			if (d.mahasiswa_id) {
+				window._pendingMahasiswaRestore = { filterNum: activeInd, mahasiswaId: d.mahasiswa_id, autoSubmit: true };
+			}
+		} catch (e) {}
+	}
+
+	$(document).ready(function () {
+		_cplRestoreState();
+	});
+
+	// Save state whenever user navigates away
+	window.addEventListener('beforeunload', _cplSaveState);
 </script>
 
 <?= $this->endSection() ?>

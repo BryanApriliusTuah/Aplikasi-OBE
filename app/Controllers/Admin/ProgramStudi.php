@@ -13,8 +13,23 @@ class ProgramStudi extends BaseController
 		$model = new ProgramStudiModel();
 		$fakultasModel = new FakultasModel();
 
-		$search = $this->request->getGet('search') ?? '';
-		$fakultasKode = $this->request->getGet('fakultas_kode') ?? '';
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('program_studi_filters');
+			return redirect()->to('admin/program-studi');
+		}
+
+		$isFormSubmitted = $this->request->getGet('search') !== null
+			|| $this->request->getGet('fakultas_kode') !== null;
+
+		if ($isFormSubmitted) {
+			$search       = $this->request->getGet('search') ?? '';
+			$fakultasKode = $this->request->getGet('fakultas_kode') ?? '';
+			session()->set('program_studi_filters', compact('search', 'fakultasKode'));
+		} else {
+			$saved        = session()->get('program_studi_filters') ?? [];
+			$search       = $saved['search'] ?? '';
+			$fakultasKode = $saved['fakultasKode'] ?? '';
+		}
 
 		$builder = $model->select('program_studi.*, fakultas.nama_resmi as fakultas_nama')
 			->join('fakultas', 'fakultas.kode = program_studi.fakultas_kode', 'left');

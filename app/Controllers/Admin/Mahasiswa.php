@@ -21,11 +21,32 @@ class Mahasiswa extends BaseController
 	 */
 	public function index()
 	{
-		$filters = [
-			'status_mahasiswa' => $this->request->getGet('status_mahasiswa'),
-			'tahun_angkatan'   => $this->request->getGet('tahun_angkatan'),
-			'search'           => $this->request->getGet('search'),
-		];
+		// Clear session filters and redirect to plain index
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('mahasiswa_filters');
+			return redirect()->to('admin/mahasiswa');
+		}
+
+		// Detect if the filter form was submitted (GET params exist, even if empty)
+		$isFormSubmitted = $this->request->getGet('search') !== null
+			|| $this->request->getGet('tahun_angkatan') !== null
+			|| $this->request->getGet('status_mahasiswa') !== null;
+
+		if ($isFormSubmitted) {
+			$filters = [
+				'status_mahasiswa' => $this->request->getGet('status_mahasiswa'),
+				'tahun_angkatan'   => $this->request->getGet('tahun_angkatan'),
+				'search'           => $this->request->getGet('search'),
+			];
+			session()->set('mahasiswa_filters', $filters);
+		} else {
+			// Restore from session when returning from edit/delete
+			$filters = session()->get('mahasiswa_filters') ?? [
+				'status_mahasiswa' => null,
+				'tahun_angkatan'   => null,
+				'search'           => null,
+			];
+		}
 
 		$builder = $this->mahasiswaModel
 			->select('mahasiswa.*, program_studi.nama_resmi as program_studi')

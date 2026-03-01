@@ -24,11 +24,31 @@ class Mengajar extends BaseController
 		$isDosen   = session()->get('role') === 'dosen';
 		$dosenId   = session()->get('dosen_id');
 
-		// Get filters from query parameters; default program_studi to Teknik Informatika (kode 58)
+		// Handle filter reset
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('mengajar_filters');
+			return redirect()->to('admin/mengajar');
+		}
+
+		// Detect form submission vs plain page visit
+		$isFormSubmitted = $this->request->getGet('tahun') !== null
+			|| $this->request->getGet('semester') !== null;
+
+		if ($isFormSubmitted) {
+			$saved = [
+				'tahun'    => $this->request->getGet('tahun'),
+				'semester' => $this->request->getGet('semester'),
+			];
+			session()->set('mengajar_filters', $saved);
+		} else {
+			$saved = session()->get('mengajar_filters') ?? [];
+		}
+
+		// Get filters; default program_studi to Teknik Informatika (kode 58)
 		$filters = [
 			'program_studi_kode' => $this->request->getGet('program_studi_kode') ?: ($isDosen ? null : 58),
-			'tahun'              => $this->request->getGet('tahun'),
-			'semester'           => $this->request->getGet('semester'),
+			'tahun'              => $saved['tahun'] ?? null,
+			'semester'           => $saved['semester'] ?? null,
 		];
 
 		// Build query

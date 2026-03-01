@@ -35,7 +35,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter Dosen',
-	'action' => current_url(),
+	'action' => base_url('admin/dosen'),
+	'resetAction' => base_url('admin/dosen') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'select',

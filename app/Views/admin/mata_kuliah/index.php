@@ -52,7 +52,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter Mata Kuliah',
-	'action' => current_url(),
+	'action' => base_url('admin/mata-kuliah'),
+	'resetAction' => base_url('admin/mata-kuliah') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'select',

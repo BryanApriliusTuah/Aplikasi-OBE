@@ -34,7 +34,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter User',
-	'action' => current_url(),
+	'action' => base_url('admin/user'),
+	'resetAction' => base_url('admin/user') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'select',

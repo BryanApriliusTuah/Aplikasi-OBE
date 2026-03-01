@@ -11,7 +11,20 @@ class Fakultas extends BaseController
 	{
 		$model = new FakultasModel();
 
-		$search = $this->request->getGet('search') ?? '';
+		if ($this->request->getGet('reset') === '1') {
+			session()->remove('fakultas_filters');
+			return redirect()->to('admin/fakultas');
+		}
+
+		$isFormSubmitted = $this->request->getGet('search') !== null;
+
+		if ($isFormSubmitted) {
+			$search = $this->request->getGet('search') ?? '';
+			session()->set('fakultas_filters', ['search' => $search]);
+		} else {
+			$saved  = session()->get('fakultas_filters') ?? [];
+			$search = $saved['search'] ?? '';
+		}
 
 		$builder = $model;
 		if ($search) {

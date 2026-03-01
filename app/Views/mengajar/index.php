@@ -49,7 +49,7 @@
 			</div>
 		</div>
 		<div class="modern-filter-body">
-			<form method="GET" action="<?= current_url() ?>">
+			<form method="GET" action="<?= base_url('admin/mengajar') ?>">
 				<div class="row g-3 align-items-end">
 					<?php if (!$is_dosen): ?>
 						<div class="col-md-4">
@@ -111,7 +111,7 @@
 										<button type="submit" class="btn btn-primary modern-filter-btn flex-fill">
 											<i class="bi bi-search"></i> Terapkan
 										</button>
-										<a href="<?= current_url() ?>"
+										<a href="<?= base_url('admin/mengajar') ?>?reset=1"
 											class="btn btn-outline-secondary modern-filter-btn-reset"
 											data-bs-toggle="tooltip"
 											title="Reset Filter">

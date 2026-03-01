@@ -21,10 +21,26 @@ class User extends BaseController
 
     public function index()
     {
-        $filters = [
-            'role'   => $this->request->getGet('role'),
-            'search' => $this->request->getGet('search'),
-        ];
+        if ($this->request->getGet('reset') === '1') {
+            session()->remove('user_filters');
+            return redirect()->to('admin/user');
+        }
+
+        $isFormSubmitted = $this->request->getGet('role') !== null
+            || $this->request->getGet('search') !== null;
+
+        if ($isFormSubmitted) {
+            $filters = [
+                'role'   => $this->request->getGet('role'),
+                'search' => $this->request->getGet('search'),
+            ];
+            session()->set('user_filters', $filters);
+        } else {
+            $filters = session()->get('user_filters') ?? [
+                'role'   => null,
+                'search' => null,
+            ];
+        }
 
         $builder = $this->userModel
             ->select('users.id, users.username, users.role, COALESCE(dosen.nama_lengkap, mahasiswa.nama_lengkap) as nama_lengkap')

@@ -36,7 +36,8 @@
 
 <?= view('components/modern_filter', [
 	'title' => 'Filter Mahasiswa',
-	'action' => current_url(),
+	'action' => base_url('admin/mahasiswa'),
+	'resetAction' => base_url('admin/mahasiswa') . '?reset=1',
 	'filters' => [
 		[
 			'type' => 'text',
