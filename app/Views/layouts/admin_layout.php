@@ -135,7 +135,7 @@
 				$isMasterDataOpen = in_array(uri_string(), $masterDataUris) || str_starts_with(uri_string(), 'admin/tahun-akademik');
 				?>
 				<li class="nav-item sidebar-dropdown<?= $isMasterDataOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola data-data utama kurikulum">
 						<span><i class="bi bi-folder2-open"></i> Master Data</span>
 						<span class="caret"></span>
@@ -168,7 +168,7 @@
 				$isPemetaanOpen = in_array(uri_string(), $pemetaanUris);
 				?>
 				<li class="nav-item sidebar-dropdown<?= $isPemetaanOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Hubungkan antar komponen kurikulum">
 						<span><i class="bi bi-diagram-3"></i> Pemetaan</span>
 						<span class="caret"></span>
@@ -203,7 +203,7 @@
 				$isMatriksOpen = in_array(uri_string(), $matriksUris);
 				?>
 				<li class="nav-item sidebar-dropdown<?= $isMatriksOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat rekapitulasi pemetaan dalam bentuk matriks">
 						<span><i class="bi bi-table"></i> Matriks Pemetaan</span>
 						<span class="caret"></span>
@@ -231,7 +231,7 @@
 				$isAsesmenOpen = in_array(uri_string(), $asesmenUris);
 				?>
 				<li class="nav-item sidebar-dropdown<?= $isAsesmenOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat rekapitulasi penilaian dan asesmen">
 						<span><i class="bi bi-file-earmark-text"></i> Asesmen Pembelajaran </span>
 						<span class="caret"></span>
@@ -290,7 +290,7 @@
 				?>
 
 				<li class="nav-item sidebar-dropdown<?= $isProfilCplOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat rekapitulasi penilaian dan asesmen">
 						<span><i class="bi bi-file-earmark-text"></i> Profil Capaian </span>
 						<span class="caret"></span>
@@ -313,7 +313,7 @@
 				?>
 
 				<li class="nav-item sidebar-dropdown<?= $isLaporanCapaianOpen ? ' open has-active-child' : '' ?>">
-					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="#" tabindex="0"
+					<a class="nav-link sidebar-dropdown-toggle d-flex justify-content-between align-items-center" href="javascript:void(0)" tabindex="0"
 						data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat laporan capaian pembelajaran">
 						<span><i class="bi bi-file-earmark-bar-graph"></i> Portofolio </span>
 						<span class="caret"></span>
@@ -389,6 +389,16 @@
 				});
 			}
 		}, true);
+
+		// Simpan dan pulihkan posisi scroll sidebar antar halaman
+		var sidebar = document.querySelector('.sidebar');
+		var savedScrollTop = sessionStorage.getItem('sidebarScrollTop');
+		if (savedScrollTop) {
+			sidebar.scrollTop = parseInt(savedScrollTop, 10);
+		}
+		sidebar.addEventListener('scroll', function() {
+			sessionStorage.setItem('sidebarScrollTop', sidebar.scrollTop);
+		});
 	</script>
 
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

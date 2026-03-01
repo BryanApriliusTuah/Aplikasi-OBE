@@ -43,6 +43,7 @@
 						<option value="">-- Pilih Semester --</option>
 						<option value="Ganjil" <?= old('semester', $tahun_akademik['semester']) === 'Ganjil' ? 'selected' : '' ?>>Ganjil</option>
 						<option value="Genap" <?= old('semester', $tahun_akademik['semester']) === 'Genap' ? 'selected' : '' ?>>Genap</option>
+						<option value="Antara" <?= old('semester', $tahun_akademik['semester']) === 'Antara' ? 'selected' : '' ?>>Antara</option>
 					</select>
 				</div>
 
