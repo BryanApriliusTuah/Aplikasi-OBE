@@ -849,14 +849,14 @@ class Mengajar extends BaseController
 
 	/**
 	 * Derive tahun akademik string from semester code.
-	 * e.g. 20252 -> "2025/2026 Genap", 20251 -> "2024/2025 Ganjil"
+	 * e.g. 20252 -> "2025 Genap", 20251 -> "2025 Ganjil"
 	 */
 	private function deriveTahunAkademik($semesterId)
     {
         $thn = floor($semesterId / 10);
         $smt = $semesterId % 10;
         $periode = ($smt % 2 === 0) ? 'Genap' : 'Ganjil';
-        return sprintf("%d/%d %s", $thn, $thn + 1, $periode);
+        return sprintf("%d %s", $thn, $periode);
     }
 
 	/**
