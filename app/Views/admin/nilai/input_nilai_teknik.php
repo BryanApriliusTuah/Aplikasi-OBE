@@ -189,6 +189,11 @@
 											<?= esc($tahap) ?>
 										</th>
 									<?php endforeach; ?>
+									<th class="text-center align-middle bg-info bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
+										<div class="d-flex flex-column align-items-center">
+											<span class="fw-bold">Nilai Angka</span>
+										</div>
+									</th>
 									<th class="text-center align-middle bg-success bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
 										<div class="d-flex flex-column align-items-center">
 											<span class="fw-bold">Nilai Huruf</span>
@@ -295,6 +300,11 @@
 													<?= (!$canEdit) ? 'readonly' : '' ?>>
 											</td>
 										<?php endforeach; ?>
+										<td class="align-middle text-center">
+											<span class="nilai-angka-display"
+												data-mahasiswa="<?= $mahasiswa['id'] ?>"
+												style="font-size: 1rem; min-width: 50px;">-</span>
+										</td>
 										<td class="align-middle text-center">
 											<span class="nilai-huruf-display"
 												data-mahasiswa="<?= $mahasiswa['id'] ?>"
@@ -604,12 +614,20 @@
 		// Function to update nilai huruf and keterangan displays
 		function updateGradeDisplays(mahasiswaId) {
 			const finalScore = calculateFinalScore(mahasiswaId);
+			const nilaiAngkaEl = document.querySelector(`.nilai-angka-display[data-mahasiswa="${mahasiswaId}"]`);
 			const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
 			const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
 
 			if (finalScore !== null) {
 				const gradeInfo = getNilaiHuruf(finalScore);
 				const keteranganInfo = getKeterangan(gradeInfo);
+
+				// Update Nilai Angka
+				nilaiAngkaEl.textContent = finalScore.toFixed(2);
+				nilaiAngkaEl.className = `fw-bold text-${gradeInfo.color} nilai-angka-display`;
+				nilaiAngkaEl.setAttribute('data-mahasiswa', mahasiswaId);
+				nilaiAngkaEl.style.fontSize = '1rem';
+				nilaiAngkaEl.style.minWidth = '50px';
 
 				// Update Nilai Huruf
 				nilaiHurufEl.textContent = gradeInfo.grade;
@@ -627,6 +645,12 @@
 				keteranganEl.title = keteranganInfo.title;
 			} else {
 				// Reset to default if scores are incomplete
+				nilaiAngkaEl.textContent = '-';
+				nilaiAngkaEl.className = 'fw-bold nilai-angka-display';
+				nilaiAngkaEl.setAttribute('data-mahasiswa', mahasiswaId);
+				nilaiAngkaEl.style.fontSize = '1rem';
+				nilaiAngkaEl.style.minWidth = '50px';
+
 				nilaiHurufEl.textContent = '-';
 				nilaiHurufEl.className = 'fw-bold nilai-huruf-display';
 				nilaiHurufEl.setAttribute('data-mahasiswa', mahasiswaId);
@@ -719,8 +743,14 @@
 
 			// Reset grade displays for all students
 			updatedMahasiswa.forEach(mahasiswaId => {
+				const nilaiAngkaEl = document.querySelector(`.nilai-angka-display[data-mahasiswa="${mahasiswaId}"]`);
 				const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
 				const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
+
+				if (nilaiAngkaEl) {
+					nilaiAngkaEl.textContent = '-';
+					nilaiAngkaEl.className = 'fw-bold nilai-angka-display';
+				}
 
 				if (nilaiHurufEl) {
 					nilaiHurufEl.textContent = '-';
