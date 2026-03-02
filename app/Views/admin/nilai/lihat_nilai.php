@@ -168,6 +168,11 @@
 										<?= esc($tahap) ?>
 									</th>
 								<?php endforeach; ?>
+								<th class="text-center align-middle bg-info bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
+									<div class="d-flex flex-column align-items-center">
+										<span class="fw-bold">Nilai Angka</span>
+									</div>
+								</th>
 								<th class="text-center align-middle bg-success bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
 									<div class="d-flex flex-column align-items-center">
 										<span class="fw-bold">Nilai Huruf</span>
@@ -290,6 +295,11 @@
 											?>
 										</td>
 									<?php endforeach; ?>
+									<td class="align-middle text-center">
+										<span class="fw-bold" style="font-size: 1rem; min-width: 50px;">
+											<?= $nilai_akhir > 0 ? number_format($nilai_akhir, 2) : '-' ?>
+										</span>
+									</td>
 									<td class="align-middle text-center">
 										<span class="fw-bold" style="font-size: 1rem; min-width: 50px;">
 											<?= esc($nilai_huruf) ?>
