@@ -133,15 +133,7 @@ class MbkmModel extends Model
 			$row['fakultas'] = $fakultas ?: '-';
 			$row['program_studi'] = $prodi ?: '-';
 
-			// Fetch semester from linked jadwal via mbkm_jadwal
-			$linkedJadwal = $this->db->table('mbkm_jadwal mj')
-				->select('j.tahun_akademik')
-				->join('jadwal j', 'j.id = mj.jadwal_id')
-				->where('mj.mbkm_id', $row['id'])
-				->orderBy('j.tahun_akademik', 'DESC')
-				->get()
-				->getRowArray();
-			$row['semester'] = $linkedJadwal['tahun_akademik'] ?? '-';
+			$row['semester'] = $row['semester'] ?: '-';
 		}
 
 		return $result;

@@ -693,6 +693,8 @@ class MbkmController extends BaseController
 						$subProgram = $mbkm['sub_program']['nama'] ?? null;
 						$tujuan     = $mbkm['tujuan'] ?? null;
 						$status     = strtolower($mbkm['status'] ?? 'berlangsung');
+						$semesterRaw = $mbkm['semester'] ?? null;
+						$semester    = $semesterRaw ? $this->deriveTahunAkademik($semesterRaw) : null;
 
 						$existingMbkm = $this->db->table('mbkm')
 							->where('nim', $nim)
@@ -707,6 +709,7 @@ class MbkmController extends BaseController
 							'sub_program'     => $subProgram,
 							'tujuan'          => $tujuan,
 							'status_kegiatan' => $status,
+							'semester'        => $semester,
 							'created_at'      => date('Y-m-d H:i:s'),
 							'updated_at'      => date('Y-m-d H:i:s'),
 						];
@@ -738,6 +741,9 @@ class MbkmController extends BaseController
 				// Remove stale links for this semester's jadwal so we rebuild fresh
 				$this->db->table('mbkm_jadwal')->whereIn('jadwal_id', $semesterJadwalIds)->delete();
 
+				// Derive the tahun_akademik string for this semester to filter MBKM records
+				$semesterTahunAkademik = $this->deriveTahunAkademik($semesterId);
+
 				foreach ($semesterJadwalIds as $jId) {
 					$nimsInJadwal = $this->db->table('jadwal_mahasiswa')
 						->select('nim')
@@ -750,6 +756,7 @@ class MbkmController extends BaseController
 							->select('id')
 							->where('nim', $nimRow['nim'])
 							->whereIn('status_kegiatan', ['berlangsung', 'selesai', 'disetujui'])
+							->where('semester', $semesterTahunAkademik)
 							->get()
 							->getResultArray();
 
