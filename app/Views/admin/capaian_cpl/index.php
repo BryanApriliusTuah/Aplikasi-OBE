@@ -1342,7 +1342,8 @@
 
 				if (response && response.length > 0) {
 					response.forEach(function(mhs) {
-						mahasiswaSelect.append(`<option value="${mhs.id}">${mhs.nim} - ${mhs.nama_lengkap}</option>`);
+						const namaFormatted = mhs.nama_lengkap.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+						mahasiswaSelect.append(`<option value="${mhs.id}">${mhs.nim} - ${namaFormatted}</option>`);
 					});
 					mahasiswaSelect.prop('disabled', false);
 					console.log(`Loaded ${response.length} mahasiswa for filter ${filterNum}`);
