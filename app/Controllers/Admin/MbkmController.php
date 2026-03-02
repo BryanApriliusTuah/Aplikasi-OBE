@@ -109,12 +109,33 @@ class MbkmController extends BaseController
 			'status_kegiatan'
 		);
 
+		// Get MBKM mata kuliah for the export modal:
+		// Only jadwal with kelas='KM' that are linked to at least one MBKM kegiatan
+		$mkBuilder = $this->db->table('jadwal j')
+			->select('j.id as jadwal_id, mk.kode_mk, mk.nama_mk, j.tahun_akademik')
+			->join('mata_kuliah mk', 'mk.id = j.mata_kuliah_id')
+			->join('mbkm_jadwal mj', 'mj.jadwal_id = j.id')
+			->where('j.kelas', 'KM')
+			->groupBy('j.id')
+			->orderBy('j.tahun_akademik', 'DESC')
+			->orderBy('mk.nama_mk', 'ASC');
+
+		if (!empty($filters['tahun'])) {
+			$mkBuilder->like('j.tahun_akademik', $filters['tahun'], 'after');
+		}
+		if (!empty($filters['semester'])) {
+			$mkBuilder->like('j.tahun_akademik', $filters['semester'], 'before');
+		}
+
+		$mbkm_mk_list = $mkBuilder->get()->getResultArray();
+
 		$data = [
 			'kegiatan_by_status' => $kegiatan_by_status,
 			'filters'            => $filters,
 			'tahun_list'         => array_column($tahun_list, 'tahun'),
 			'semester_list'      => $semester_list,
 			'status_list'        => $status_list,
+			'mbkm_mk_list'       => $mbkm_mk_list,
 		];
 
 		return view('admin/mbkm/index', $data);
@@ -854,5 +875,278 @@ class MbkmController extends BaseController
 			'kegiatan' => $kegiatan,
 			'capaian' => $capaian,
 		]);
+	}
+
+	/**
+	 * Export CPMK scores (all students) per mata kuliah linked to a kegiatan
+	 * Each mata kuliah gets its own sheet in the Excel file
+	 */
+	public function exportCpmkExcel($kegiatan_id)
+	{
+		$kegiatan = $this->mbkmModel->find($kegiatan_id);
+		if (!$kegiatan) {
+			return redirect()->to('/admin/mbkm')->with('error', 'Kegiatan tidak ditemukan');
+		}
+
+		// Get all jadwal (mata kuliah KM) linked to this kegiatan
+		$jadwal_list = $this->db->table('mbkm_jadwal mj')
+			->select('j.id as jadwal_id, mk.kode_mk, mk.nama_mk, mk.sks, j.kelas, j.tahun_akademik, j.kelas_semester, ps.nama_resmi as program_studi')
+			->join('jadwal j', 'j.id = mj.jadwal_id')
+			->join('mata_kuliah mk', 'mk.id = j.mata_kuliah_id')
+			->join('program_studi ps', 'ps.kode = j.program_studi_kode', 'left')
+			->where('mj.mbkm_id', (int) $kegiatan_id)
+			->where('j.kelas', 'KM')
+			->get()
+			->getResultArray();
+
+		if (empty($jadwal_list)) {
+			return redirect()->back()->with('error', 'Tidak ada mata kuliah MBKM yang terhubung dengan kegiatan ini.');
+		}
+
+		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$spreadsheet->getProperties()
+			->setCreator('OBE System')
+			->setTitle('Nilai CPMK MBKM')
+			->setSubject('Nilai CPMK MBKM');
+
+		$sheetIndex    = 0;
+		$cpmkModel     = new \App\Models\CpmkModel();
+		$nilaiCpmkModel = new \App\Models\NilaiCpmkMahasiswaModel();
+		$gradeConfigModel = new \App\Models\GradeConfigModel();
+
+		foreach ($jadwal_list as $jadwal) {
+			$jadwal_id = $jadwal['jadwal_id'];
+
+			// All students enrolled in this MBKM jadwal
+			$students = $this->db->table('jadwal_mahasiswa jm')
+				->select('m.id, m.nim, m.nama_lengkap')
+				->join('mahasiswa m', 'm.nim = jm.nim')
+				->where('jm.jadwal_id', $jadwal_id)
+				->orderBy('m.nim', 'ASC')
+				->get()
+				->getResultArray();
+
+			$cpmk_list      = $cpmkModel->getCpmkByJadwal($jadwal_id);
+			$existing_scores = $nilaiCpmkModel->getScoresByJadwalForInput($jadwal_id);
+
+			// Create or reuse sheet
+			if ($sheetIndex === 0) {
+				$sheet = $spreadsheet->getActiveSheet();
+			} else {
+				$sheet = $spreadsheet->createSheet();
+			}
+			$sheetName = substr(preg_replace('/[^A-Za-z0-9 ]/', '', $jadwal['nama_mk']), 0, 30);
+			$sheet->setTitle($sheetName ?: 'Sheet' . ($sheetIndex + 1));
+			$sheetIndex++;
+
+			// Logo
+			$logoPath = FCPATH . 'img/Logo UPR.png';
+			if (file_exists($logoPath)) {
+				$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+				$drawing->setName('Logo');
+				$drawing->setPath($logoPath);
+				$drawing->setCoordinates('A1');
+				$drawing->setHeight(50);
+				$drawing->setOffsetX(10);
+				$drawing->setOffsetY(5);
+				$drawing->setWorksheet($sheet);
+			}
+
+			preg_match('/(Ganjil|Genap|Antara)/', $jadwal['tahun_akademik'] ?? '', $semMatch);
+			$semester_type = $semMatch[1] ?? '';
+			$tahun = trim(preg_replace('/(Ganjil|Genap|Antara)/', '', $jadwal['tahun_akademik'] ?? ''));
+
+			// Columns: No, NIM, Nama + (Skor + Capaian) per CPMK + Angka + Huruf + Keterangan
+			$totalColumns = 3 + (count($cpmk_list) * 2) + 3;
+			$lastCol      = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns);
+			$headerEndCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalColumns - 1);
+
+			// Row 1 – Ministry
+			$sheet->getRowDimension(1)->setRowHeight(50);
+			$sheet->setCellValue('B1', "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI");
+			$sheet->mergeCells('B1:' . $headerEndCol . '1');
+			$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(14);
+			$sheet->getStyle('B1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+			$sheet->setCellValue($lastCol . '1', "NILAI CPMK MBKM\nSemester {$semester_type} {$tahun}");
+			$sheet->getStyle($lastCol . '1')->getFont()->setBold(true)->setSize(13);
+			$sheet->getStyle($lastCol . '1')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// Row 2 – University
+			$sheet->getRowDimension(2)->setRowHeight(20);
+			$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+			$sheet->mergeCells('B2:' . $headerEndCol . '2');
+			$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(14);
+			$sheet->getStyle('B2')->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+			// Course info
+			$row = 4;
+			$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+			$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'KELAS / PROGRAM STUDI');
+			$sheet->setCellValue('C' . $row, 'KM / ' . strtoupper($jadwal['program_studi'] ?? ''));
+			$row++;
+			$sheet->setCellValue('B' . $row, 'TAHUN AKADEMIK');
+			$sheet->setCellValue('C' . $row, $jadwal['tahun_akademik']);
+			$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(11);
+
+			// Table header – row 1
+			$row += 2;
+			$headerRow = $row;
+			$col = 1;
+
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'No');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'NIM');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Nama');
+
+			foreach ($cpmk_list as $cpmk) {
+				$startL = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+				$endL   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
+				$sheet->setCellValue($startL . $row, $cpmk['kode_cpmk']);
+				$sheet->mergeCells($startL . $row . ':' . $endL . $row);
+				$col += 2;
+			}
+
+			$naStart = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+			$naEnd   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
+			$sheet->setCellValue($naStart . $row, 'Nilai Akhir');
+			$sheet->mergeCells($naStart . $row . ':' . $naEnd . $row);
+			$ketL = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 2);
+			$sheet->setCellValue($ketL . $row, 'Keterangan');
+			$sheet->mergeCells($ketL . $row . ':' . $ketL . ($row + 1));
+
+			$sheet->mergeCells('A' . $row . ':A' . ($row + 1));
+			$sheet->mergeCells('B' . $row . ':B' . ($row + 1));
+			$sheet->mergeCells('C' . $row . ':C' . ($row + 1));
+
+			// Table header – row 2 (sub-headers)
+			$row++;
+			$col = 4;
+			foreach ($cpmk_list as $ignored) {
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Skor');
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Capaian (%)');
+			}
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, 'Angka');
+			$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col)   . $row, 'Huruf');
+
+			// Style header rows
+			$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastCol . $row);
+			$headerStyle->getFont()->setBold(true);
+			$headerStyle->getFill()
+				->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+				->getStartColor()->setARGB('FF4472C4');
+			$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+			$headerStyle->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+				->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			// Data rows
+			$row++;
+			$no = 1;
+
+			foreach ($students as $student) {
+				$col = 1;
+				$mahasiswa_id = $student['id'];
+
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $no++);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nim']);
+				$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $student['nama_lengkap']);
+
+				$student_scores = [];
+				foreach ($cpmk_list as $cpmk) {
+					$score = $existing_scores[$mahasiswa_id][$cpmk['id']] ?? null;
+					if ($score !== null && $score !== '') {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $score);
+						$capaian = $cpmk['bobot_cpmk'] > 0 ? ($score / $cpmk['bobot_cpmk']) * 100 : 0;
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($capaian, 2));
+						$student_scores[] = (float) $score;
+					} else {
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+						$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					}
+				}
+
+				if (!empty($student_scores)) {
+					$total       = array_sum($student_scores);
+					$grade_data  = $gradeConfigModel->getGradeByScore($total);
+					$nilai_huruf = $grade_data ? $grade_data['grade_letter'] : 'E';
+					$is_passing  = $grade_data ? (bool) $grade_data['is_passing'] : false;
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, number_format($total, 2));
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, $nilai_huruf);
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col)   . $row, $is_passing ? 'Lulus' : 'Tidak Lulus');
+				} else {
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $row, '-');
+					$sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col)   . $row, '-');
+				}
+
+				$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+				$sheet->getStyle('D' . $row . ':' . $lastCol . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+				$row++;
+			}
+
+			// Borders on table
+			$lastRow = $row - 1;
+			if ($lastRow >= $headerRow) {
+				$sheet->getStyle('A' . $headerRow . ':' . $lastCol . $lastRow)->applyFromArray([
+					'borders' => [
+						'allBorders' => [
+							'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+							'color'       => ['argb' => 'FF000000'],
+						],
+					],
+				]);
+			}
+
+			// Auto-size columns
+			for ($c = 1; $c <= $totalColumns; $c++) {
+				$sheet->getColumnDimension(
+					\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c)
+				)->setAutoSize(true);
+			}
+
+			// Signature block
+			$row = $lastRow + 3;
+			$sheet->setCellValue($lastCol . $row, 'Palangka Raya, ' . date('d F Y'));
+			$row++;
+			$sheet->setCellValue($lastCol . $row, 'Mengetahui');
+			$row++;
+			$sheet->setCellValue($lastCol . $row, 'Dosen Koordinator Mata Kuliah');
+			$row += 4;
+
+			$dosenNip = $this->db->table('jadwal_dosen jd')
+				->select('d.nama_lengkap, d.nip')
+				->join('dosen d', 'd.id = jd.dosen_id')
+				->where('jd.jadwal_id', $jadwal_id)
+				->where('jd.role', 'leader')
+				->get()
+				->getRowArray();
+
+			$sheet->setCellValue($lastCol . $row, $dosenNip['nama_lengkap'] ?? '');
+			$sheet->getStyle($lastCol . $row)->getFont()->setBold(true);
+			$row++;
+			$sheet->setCellValue($lastCol . $row, 'NIP. ' . ($dosenNip['nip'] ?? ''));
+		}
+
+		$spreadsheet->setActiveSheetIndex(0);
+
+		$filename = 'Nilai_CPMK_MBKM_' . date('YmdHis') . '.xlsx';
+		$writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $filename . '"');
+		header('Cache-Control: max-age=0');
+
+		$writer->save('php://output');
+		exit;
 	}
 }

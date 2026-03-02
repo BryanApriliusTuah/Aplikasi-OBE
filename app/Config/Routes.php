@@ -308,6 +308,9 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 		// AJAX routes
 		$routes->get('detail-nilai/(:num)', 'MbkmController::detailNilai/$1');
 
+		// Export routes
+		$routes->get('export-cpmk-excel/(:num)', 'MbkmController::exportCpmkExcel/$1');
+
 		$routes->post('sync-from-api', 'MbkmController::syncFromApi');
 	});
 

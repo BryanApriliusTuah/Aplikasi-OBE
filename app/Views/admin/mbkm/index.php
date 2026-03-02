@@ -17,6 +17,9 @@
 
 	<?php if (session()->get('role') === 'admin'): ?>
 		<div class="d-flex justify-content-end gap-2 mb-3">
+			<button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportCpmkModal">
+				<i class="bi bi-file-earmark-excel"></i> Export CPMK Excel
+			</button>
 			<button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#syncApiModal">
 				<i class="bi bi-cloud-arrow-down"></i> Sinkronisasi dari API
 			</button>
@@ -248,6 +251,50 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('js') ?>
+<!-- Modal: Export CPMK Excel -->
+<div class="modal fade" id="exportCpmkModal" tabindex="-1" aria-labelledby="exportCpmkModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exportCpmkModalLabel">
+					<i class="bi bi-file-earmark-excel me-2 text-success"></i>Export Nilai CPMK ke Excel
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p class="text-muted small mb-3">Cari dan pilih mata kuliah MBKM yang ingin diekspor. Excel akan berisi nilai CPMK seluruh mahasiswa yang terdaftar pada mata kuliah tersebut.</p>
+				<?php if (empty($mbkm_mk_list)): ?>
+					<div class="text-center text-muted py-4">
+						<i class="bi bi-inbox fs-1 opacity-25"></i>
+						<p class="mt-2">Tidak ada mata kuliah MBKM ditemukan<?= (!empty($filters['tahun']) || !empty($filters['semester'])) ? ' untuk filter yang dipilih' : '' ?>.</p>
+					</div>
+				<?php else: ?>
+					<div class="mb-3">
+						<label for="exportMkSelect" class="form-label fw-semibold">Mata Kuliah</label>
+						<select id="exportMkSelect" class="form-select" style="width:100%">
+							<option value="">-- Pilih Mata Kuliah --</option>
+							<?php foreach ($mbkm_mk_list as $mk): ?>
+								<option value="<?= esc($mk['jadwal_id']) ?>"
+								        data-url="<?= base_url('admin/nilai/export-cpmk-excel/' . $mk['jadwal_id']) ?>">
+									<?= ucwords(strtolower(esc($mk['nama_mk']))) ?> (<?= esc($mk['kode_mk']) ?>) — <?= esc($mk['tahun_akademik']) ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+				<?php endif; ?>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+				<?php if (!empty($mbkm_mk_list)): ?>
+					<a id="exportCpmkBtn" href="#" class="btn btn-success disabled" target="_blank">
+						<i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+					</a>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+</div>
+
 <!-- Modal: Sync dari API -->
 <div class="modal fade" id="syncApiModal" tabindex="-1" aria-labelledby="syncApiModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
@@ -280,6 +327,31 @@
 	</div>
 </div>
 <script>
+	// Export CPMK modal – Select2 + button wiring
+	$('#exportCpmkModal').on('shown.bs.modal', function () {
+		$('#exportMkSelect').select2({
+			theme: 'bootstrap-5',
+			placeholder: '-- Pilih atau cari Mata Kuliah --',
+			allowClear: true,
+			dropdownParent: $('#exportCpmkModal'),
+			width: '100%',
+		});
+	}).on('hidden.bs.modal', function () {
+		$('#exportMkSelect').val(null).trigger('change');
+		$('#exportCpmkBtn').addClass('disabled').attr('href', '#');
+	});
+
+	$(document).on('change', '#exportMkSelect', function () {
+		const selected = $(this).find(':selected');
+		const url = selected.data('url') || '';
+		const btn = $('#exportCpmkBtn');
+		if (url) {
+			btn.attr('href', url).removeClass('disabled');
+		} else {
+			btn.attr('href', '#').addClass('disabled');
+		}
+	});
+
 	document.addEventListener('DOMContentLoaded', function() {
 		function initTable(tableId, rowsPerPage = 10) {
 			const table = document.getElementById(tableId);
