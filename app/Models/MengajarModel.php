@@ -151,7 +151,7 @@ class MengajarModel extends Model
 
 		foreach ($dosenList as $dosen) {
 			// Check if this is the coordinator (role could be 'koordinator', 'ketua', etc.)
-			if (in_array(strtolower($dosen['role']), ['koordinator', 'ketua', 'coordinator'])) {
+			if (in_array(strtolower($dosen['role']), ['koordinator', 'ketua', 'coordinator', 'leader'])) {
 				$koordinator = $dosen['nama_lengkap'];
 			} else {
 				$anggota[] = $dosen['nama_lengkap'];
