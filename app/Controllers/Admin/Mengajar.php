@@ -24,6 +24,10 @@ class Mengajar extends BaseController
 		$isDosen   = session()->get('role') === 'dosen';
 		$dosenId   = session()->get('dosen_id');
 
+		// Load tahun akademik early so we can derive the default filter
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
+
 		// Handle filter reset
 		if ($this->request->getGet('reset') === '1') {
 			session()->remove('mengajar_filters');
@@ -41,7 +45,16 @@ class Mengajar extends BaseController
 			];
 			session()->set('mengajar_filters', $saved);
 		} else {
-			$saved = session()->get('mengajar_filters') ?? [];
+			$saved = session()->get('mengajar_filters');
+			// Default to the newest tahun/semester when no filter has been chosen yet
+			if (empty($saved) && !empty($tahun_akademik_rows)) {
+				$newest = $tahun_akademik_rows[0];
+				$saved  = [
+					'tahun'    => $newest['tahun'],
+					'semester' => $newest['semester'],
+				];
+			}
+			$saved = $saved ?? [];
 		}
 
 		// Get filters; default program_studi to Teknik Informatika (kode 58)
@@ -112,9 +125,7 @@ class Mengajar extends BaseController
 		}
 
 		// Get tahun and semester lists separately for filter dropdowns
-		$tahunAkademikModel  = new TahunAkademikModel();
-		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
-		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
+		$tahun_list = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
 		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
 
 		// Get program studi list for filter dropdown
