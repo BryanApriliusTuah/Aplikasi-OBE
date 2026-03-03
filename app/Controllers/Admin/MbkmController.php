@@ -550,12 +550,15 @@ class MbkmController extends BaseController
 			$body = json_decode($response->getBody(), true);
 			$jadwalRaw = $body['jadwal'] ?? [];
 
-			// Flatten and filter for Merdeka only
+			// Flatten and filter for Merdeka only, propagating dosen_pengajar from jadwal-item level
 			$merdekaList = [];
 			foreach ($jadwalRaw as $item) {
 				if (isset($item['kelas']) && is_array($item['kelas'])) {
 					foreach ($item['kelas'] as $k) {
 						if (($k['kelas']['klsJenis'] ?? '') === 'Merdeka') {
+							if (!isset($k['dosen_pengajar']) && isset($item['dosen_pengajar'])) {
+								$k['dosen_pengajar'] = $item['dosen_pengajar'];
+							}
 							$merdekaList[] = $k;
 						}
 					}
@@ -591,9 +594,9 @@ class MbkmController extends BaseController
 				$jamSelesai    = $kelas['perkuliahan'][0]['pJam']['jSelesai'] ?? null;
 				$ruangKelas    = $kelas['perkuliahan'][0]['pRuangan']['rRuang'] ?? null;
 				$gedung        = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
-				$mahasiswaData = $kelas['mahasiswa'] ?? [];
+				$mahasiswaData  = $kelas['mahasiswa'] ?? [];
 				$totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
-				$nimList       = $mahasiswaData['mhsNim'] ?? [];
+				$mahasiswaList  = $mahasiswaData['data'] ?? [];
 
 				if (!$mkKode) {
 					continue;
@@ -668,18 +671,56 @@ class MbkmController extends BaseController
 					$jadwalInserted++;
 				}
 
-				// Sync mahasiswa for this jadwal
-				if (!empty($nimList)) {
+				// Sync dosen from API dosen_pengajar (runs on both insert and update)
+				$this->syncDosenFromApi($jadwalId, $kelas['dosen_pengajar'] ?? []);
+
+				// Sync mahasiswa and their nilai for this jadwal
+				if (!empty($mahasiswaList)) {
 					$this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
 
-					foreach ($nimList as $nim) {
-						$mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
-						if ($mhsExists > 0) {
-							$this->db->table('jadwal_mahasiswa')->insert([
-								'jadwal_id' => $jadwalId,
-								'nim'       => $nim,
-							]);
-							$studentsInserted++;
+					// Get RPS and CPMK list for scoring
+					$rps = $this->db->table('rps')
+						->select('id')
+						->where('mata_kuliah_id', $mataKuliahId)
+						->orderBy('created_at', 'DESC')
+						->get()->getRowArray();
+
+					$cpmkList = [];
+					if ($rps) {
+						$cpmkList = $this->db->query("
+							SELECT c.id as cpmk_id, COALESCE(SUM(rm.bobot), 0) as bobot
+							FROM cpmk c
+							INNER JOIN cpmk_mk cm ON cm.cpmk_id = c.id
+							LEFT JOIN rps_mingguan rm ON rm.cpmk_id = c.id AND rm.rps_id = ?
+							WHERE cm.mata_kuliah_id = ?
+							GROUP BY c.id
+						", [$rps['id'], $mataKuliahId])->getResultArray();
+					}
+
+					foreach ($mahasiswaList as $mhsData) {
+						$nim        = $mhsData['nim'] ?? null;
+						$nilaiTotal = $mhsData['nilai_total'];
+
+						if (!$nim) continue;
+
+						$mahasiswa = $this->db->table('mahasiswa')->where('nim', $nim)->get()->getRowArray();
+						if (!$mahasiswa) continue;
+
+						$this->db->table('jadwal_mahasiswa')->insert([
+							'jadwal_id' => $jadwalId,
+							'nim'       => $nim,
+						]);
+						$studentsInserted++;
+
+						// Save nilai_total to CPMK scores
+						if ($nilaiTotal !== null && !empty($cpmkList)) {
+							$nilaiFloat = (float) $nilaiTotal;
+							foreach ($cpmkList as $cpmk) {
+								$bobot = (float) ($cpmk['bobot'] ?? 0);
+								if ($bobot <= 0) continue;
+								$weightedScore = ($nilaiFloat * $bobot) / 100;
+								$this->mbkmModel->saveNilaiCpmk($mahasiswa['id'], $jadwalId, $cpmk['cpmk_id'], $weightedScore);
+							}
 						}
 					}
 				}
@@ -797,6 +838,28 @@ class MbkmController extends BaseController
 		} catch (\Exception $e) {
 			log_message('error', 'MBKM sync error: ' . $e->getMessage());
 			return redirect()->back()->with('error', 'Gagal mengambil data dari API: ' . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Sync jadwal_dosen from API dosen_pengajar array.
+	 * First entry → leader (dosen koordinator), rest → member (dosen pengampu).
+	 */
+	private function syncDosenFromApi(int $jadwalId, array $dosenPengajar): void
+	{
+		if (empty($dosenPengajar)) return;
+
+		$this->db->table('jadwal_dosen')->where('jadwal_id', $jadwalId)->delete();
+		foreach ($dosenPengajar as $index => $dosen) {
+			$nip = $dosen['nip'] ?? null;
+			if (!$nip) continue;
+			$local = $this->db->table('dosen')->where('nip', $nip)->get()->getRowArray();
+			if (!$local) continue;
+			$this->db->table('jadwal_dosen')->insert([
+				'jadwal_id' => $jadwalId,
+				'dosen_id'  => $local['id'],
+				'role'      => ($index === 0) ? 'leader' : 'member',
+			]);
 		}
 	}
 
