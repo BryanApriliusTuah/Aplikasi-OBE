@@ -175,7 +175,7 @@
 		});
 
 		// All dosen for member dropdowns
-		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
+		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nip' => $d['nip'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
 
 		function buildMemberOptions(selectedId) {
 			var html = '<option value="">-- Pilih Dosen Pengampu --</option>';
@@ -220,6 +220,7 @@
 		var $apiKelasSection = $('#api-kelas-section');
 		var $apiKelasLoading = $('#api-kelas-loading');
 		var $apiKelasContainer = $('#api-kelas-container');
+		var kelasDataList = [];
 
 		// Listen for Select2 change on mata kuliah
 		$('#mata_kuliah_id').on('change', function() {
@@ -259,6 +260,7 @@
 						}
 
 						if (data.success && data.data.length > 0) {
+							kelasDataList = data.data;
 							var html = '<div class="list-group">';
 							$.each(data.data, function(index, kelas) {
 								var semester = kelas.kelas.klsSemester || '-';
@@ -342,6 +344,29 @@
 									} else {
 										$('#tahun_akademik').val(year + ' Genap');
 									}
+								}
+
+								// Auto-fill dosen koordinator & pengampu from dosen_pengajar
+								var idx = parseInt($radio.val());
+								var selectedKelas = kelasDataList[idx] || null;
+								if (selectedKelas && selectedKelas.dosen_pengajar && selectedKelas.dosen_pengajar.length > 0) {
+									// Clear existing member rows
+									$('#dosen-members-container').find('select').each(function() {
+										$(this).select2('destroy');
+									});
+									$('#dosen-members-container').empty();
+
+									selectedKelas.dosen_pengajar.forEach(function(dosen) {
+										var apiNip   = String(dosen.nip || '');
+										var local    = allDosen.find(function(d) { return String(d.nip) === apiNip; });
+										var localId  = local ? local.id : null;
+
+										if (dosen.role === 'leader') {
+											$('#dosen_leader').val(localId || '').trigger('change');
+										} else {
+											addMemberRow(localId);
+										}
+									});
 								}
 							});
 						} else {
