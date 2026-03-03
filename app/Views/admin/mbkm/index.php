@@ -262,7 +262,7 @@
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				<p class="text-muted small mb-3">Cari dan pilih mata kuliah MBKM yang ingin diekspor. Excel akan berisi nilai CPMK seluruh mahasiswa yang terdaftar pada mata kuliah tersebut.</p>
+				<p class="text-muted small mb-3">Cari dan pilih mata kuliah MBKM yang ingin diekspor. Excel akan berisi nilai CPMK seluruh mahasiswa yang mengkonversikan mata kuliah tersebut.</p>
 				<?php if (empty($mbkm_mk_list)): ?>
 					<div class="text-center text-muted py-4">
 						<i class="bi bi-inbox fs-1 opacity-25"></i>
