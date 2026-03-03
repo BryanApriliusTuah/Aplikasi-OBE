@@ -18,6 +18,10 @@ class Nilai extends BaseController
 	{
 		$jadwalModel = new MengajarModel();
 
+		// Load tahun akademik early so we can derive the default filter
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
+
 		// Handle filter reset
 		if ($this->request->getGet('reset') === '1') {
 			session()->remove('nilai_filters');
@@ -37,7 +41,16 @@ class Nilai extends BaseController
 			];
 			session()->set('nilai_filters', $saved);
 		} else {
-			$saved = session()->get('nilai_filters') ?? [];
+			$saved = session()->get('nilai_filters');
+			// Default to the newest tahun/semester when no filter has been chosen yet
+			if (empty($saved) && !empty($tahun_akademik_rows)) {
+				$newest = $tahun_akademik_rows[0];
+				$saved  = [
+					'tahun'    => $newest['tahun'],
+					'semester' => $newest['semester'],
+				];
+			}
+			$saved = $saved ?? [];
 		}
 
 		// Program Studi is always locked to Teknik Informatika (kode 58)
@@ -186,9 +199,7 @@ class Nilai extends BaseController
 			->get()
 			->getResultArray();
 
-		$tahunAkademikModel  = new TahunAkademikModel();
-		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
-		$tahun_list          = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
+		$tahun_list = array_values(array_unique(array_column($tahun_akademik_rows, 'tahun')));
 		$semester_list       = ['Ganjil', 'Genap', 'Antara'];
 
 		// Get distinct mata kuliah from jadwal mengajar (Reguler only)
