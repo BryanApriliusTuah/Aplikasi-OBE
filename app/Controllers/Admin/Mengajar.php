@@ -584,11 +584,14 @@ class Mengajar extends BaseController
             $body = json_decode($response->getBody(), true);
             $jadwalRaw = $body['jadwal'] ?? [];
 
-            // Flatten array kelas
+            // Flatten array kelas, propagating dosen_pengajar from jadwal-item level
             $kelasList = [];
             foreach ($jadwalRaw as $item) {
                 if (isset($item['kelas']) && is_array($item['kelas'])) {
                     foreach ($item['kelas'] as $k) {
+                        if (!isset($k['dosen_pengajar']) && isset($item['dosen_pengajar'])) {
+                            $k['dosen_pengajar'] = $item['dosen_pengajar'];
+                        }
                         $kelasList[] = $k;
                     }
                 }
@@ -680,7 +683,7 @@ class Mengajar extends BaseController
                 $gedung = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
                 $mahasiswaData = $kelas['mahasiswa'] ?? [];
                 $totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
-                $nimList = $mahasiswaData['mhsNim'] ?? [];
+                $nimList = array_column($mahasiswaData['data'] ?? [], 'nim');
 
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
 					log_message('warning', "Kelas {$kelasNama} dilewati, MK {$mkKode} belum punya RPS");
@@ -747,19 +750,10 @@ class Mengajar extends BaseController
                     ]);
                     $jadwalId = $this->db->insertID();
                     $inserted++;
-
-                    // Assign dosen
-                    $rpsId = $matchedMk['rps_id'];
-                    $rpsDosen = $this->db->table('rps_pengampu')->where('rps_id', $rpsId)->get()->getResultArray();
-                    foreach ($rpsDosen as $rd) {
-                        $role = ($rd['peran'] === 'koordinator') ? 'leader' : 'member';
-                        $this->db->table('jadwal_dosen')->insert([
-                            'jadwal_id' => $jadwalId,
-                            'dosen_id'  => $rd['dosen_id'],
-                            'role'      => $role,
-                        ]);
-                    }
                 }
+
+                // Sync dosen from API dosen_pengajar (runs on both insert and update)
+                $this->syncDosenFromApi($jadwalId, $kelas['dosen_pengajar'] ?? []);
 
                 // Sync mahasiswa
                 if (!empty($nimList)) {
@@ -801,7 +795,7 @@ class Mengajar extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
         }
 
-        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20252&prodiKode=58&fakKode=5&klsJenis=Reguler';
+        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20252&prodiKode=58&fakKode=5&klsJenis=Reguler&mkKode=' . urlencode($mkKode);
         $apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
         $client = \Config\Services::curlrequest();
 
@@ -817,13 +811,28 @@ class Mengajar extends BaseController
             $kelasList = [];
             foreach ($jadwalRaw as $item) {
                 if (isset($item['kelas']) && is_array($item['kelas'])) {
-                    foreach ($item['kelas'] as $k) $kelasList[] = $k;
+                    foreach ($item['kelas'] as $k) {
+                        // dosen_pengajar lives at the jadwal-item level; propagate it into each kelas
+                        if (!isset($k['dosen_pengajar']) && isset($item['dosen_pengajar'])) {
+                            $k['dosen_pengajar'] = $item['dosen_pengajar'];
+                        }
+                        $kelasList[] = $k;
+                    }
                 }
             }
 
             $matchedKelas = [];
             foreach ($kelasList as $kelas) {
                 if (($kelas['mata_kuliah']['mkKode'] ?? '') === $mkKode && ($kelas['kelas']['klsStatus'] ?? '') === 'Aktif') {
+                    $dosenPengajar = $kelas['dosen_pengajar'] ?? [];
+
+                    $dosenList = [];
+                    foreach ($dosenPengajar as $index => $dosen) {
+                        $dosen['role'] = ($index === 0) ? 'leader' : 'member';
+                        $dosenList[]   = $dosen;
+                    }
+
+                    $kelas['dosen_pengajar'] = $dosenList;
                     $matchedKelas[] = $kelas;
                 }
             }
@@ -857,6 +866,28 @@ class Mengajar extends BaseController
             ]);
         }
     }
+
+	/**
+	 * Sync jadwal_dosen from API dosen_pengajar array.
+	 * First entry → leader (dosen koordinator), rest → member (dosen pengampu).
+	 */
+	private function syncDosenFromApi(int $jadwalId, array $dosenPengajar): void
+	{
+		if (empty($dosenPengajar)) return;
+
+		$this->db->table('jadwal_dosen')->where('jadwal_id', $jadwalId)->delete();
+		foreach ($dosenPengajar as $index => $dosen) {
+			$nip = $dosen['nip'] ?? null;
+			if (!$nip) continue;
+			$local = $this->db->table('dosen')->where('nip', $nip)->get()->getRowArray();
+			if (!$local) continue;
+			$this->db->table('jadwal_dosen')->insert([
+				'jadwal_id' => $jadwalId,
+				'dosen_id'  => $local['id'],
+				'role'      => ($index === 0) ? 'leader' : 'member',
+			]);
+		}
+	}
 
 	/**
 	 * Derive tahun akademik string from semester code.
