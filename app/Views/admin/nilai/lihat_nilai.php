@@ -66,7 +66,7 @@
 				<div class="col-md-3">
 					<div class="d-flex align-items-center">
 						<div>
-							<small class="text-muted">Dosen Pengampu</small>
+							<small class="text-muted">Dosen Koordinator</small>
 							<h6 class="mb-0 fw-semibold"><?= esc($jadwal['dosen_ketua'] ?? 'N/A') ?></h6>
 						</div>
 					</div>
@@ -76,7 +76,7 @@
 	</div>
 
 	<!-- Quick Info & RPS Link -->
-	<?php if (!empty($teknik_by_tahap)): ?>
+	<?php if (!empty($teknik_list)): ?>
 		<div class="card border-0 shadow-sm mb-4">
 			<div class="card-body">
 				<div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -152,83 +152,52 @@
 					<table class="modern-table" id="nilaiTable">
 						<thead>
 							<tr>
-								<th class="sticky-col text-center align-middle" rowspan="2">No</th>
-								<th class="sticky-col align-middle" rowspan="2">NIM</th>
-								<th class="sticky-col align-middle" rowspan="2">Nama Mahasiswa</th>
-								<?php
-								$tahap_count = count($teknik_by_tahap);
-								$tahap_index = 0;
-								?>
-								<?php foreach ($teknik_by_tahap as $tahap => $tahap_items): ?>
+								<th class="sticky-col text-center align-middle">No</th>
+								<th class="sticky-col align-middle">NIM</th>
+								<th class="sticky-col align-middle">Nama Mahasiswa</th>
+								<?php foreach ($teknik_list as $item): ?>
 									<?php
-									$tahap_index++;
-									$is_last_tahap = ($tahap_index === $tahap_count);
+									$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
+									$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " - CPMK: " . esc($cpmk_display) . " (" . number_format($item['bobot'], 1) . "%)";
 									?>
-									<th class="text-center align-middle bg-secondary bg-opacity-10 <?= $is_last_tahap ? '' : 'tahap-border-right' ?>" colspan="<?= count($tahap_items) ?>">
-										<?= esc($tahap) ?>
+									<th class="text-center align-middle" style="width: 110px; min-width: 110px;"
+										title="<?= $tooltip ?>"
+										data-bs-toggle="tooltip">
+										<div class="d-flex flex-column align-items-center">
+											<small class="fw-bold" style="font-size: 0.75rem; line-height: 1.2;">
+												<?php
+												$label = $item['teknik_label'];
+												if (strlen($label) > 20) {
+													$label = substr($label, 0, 17) . '...';
+												}
+												echo esc($label);
+												?>
+											</small>
+											<small class="opacity-75" style="font-size: 0.65rem;">
+												Minggu: <?= $item['minggu'] ?><br />
+												<?= esc($item['kode_cpmk'] ?? $item['cpmk_code'] ?? '') ?>
+											</small>
+											<span class="badge bg-success" style="font-size: 0.65rem;">
+												<?= number_format($item['bobot'], 1) ?>%
+											</span>
+										</div>
 									</th>
 								<?php endforeach; ?>
-								<th class="text-center align-middle bg-info bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
+								<th class="text-center align-middle bg-info bg-opacity-10" style="width: 120px; min-width: 120px;">
 									<div class="d-flex flex-column align-items-center">
 										<span class="fw-bold">Nilai Angka</span>
 									</div>
 								</th>
-								<th class="text-center align-middle bg-success bg-opacity-10" style="width: 120px; min-width: 120px;" rowspan="2">
+								<th class="text-center align-middle bg-success bg-opacity-10" style="width: 120px; min-width: 120px;">
 									<div class="d-flex flex-column align-items-center">
 										<span class="fw-bold">Nilai Huruf</span>
 									</div>
 								</th>
-								<th class="text-center align-middle bg-warning bg-opacity-10" style="width: 150px; min-width: 150px;" rowspan="2">
+								<th class="text-center align-middle bg-warning bg-opacity-10" style="width: 150px; min-width: 150px;">
 									<div class="d-flex flex-column align-items-center">
 										<span class="fw-bold">Keterangan</span>
 									</div>
 								</th>
-							</tr>
-							<tr>
-								<?php
-								$tahap_keys = array_keys($teknik_by_tahap);
-								$last_tahap_key = end($tahap_keys);
-								?>
-								<?php foreach ($teknik_by_tahap as $tahap => $tahap_items): ?>
-									<?php
-									$item_count = count($tahap_items);
-									$item_index = 0;
-									$is_last_tahap_group = ($tahap === $last_tahap_key);
-									?>
-									<?php foreach ($tahap_items as $item): ?>
-										<?php
-										$item_index++;
-										$is_last_in_group = ($item_index === $item_count);
-										$show_border = $is_last_in_group && !$is_last_tahap_group;
-										// Build tooltip with week and bobot
-										$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
-										$tooltip = esc($item['teknik_label']) . " - Minggu " . $item['minggu'] . " - CPMK: " . esc($cpmk_display) . " (" . number_format($item['bobot'], 1) . "%)";
-										?>
-										<th class="text-center align-middle <?= $show_border ? 'tahap-border-right' : '' ?>" style="width: 110px; min-width: 110px;"
-											title="<?= $tooltip ?>"
-											data-bs-toggle="tooltip">
-											<div class="d-flex flex-column align-items-center">
-												<small class="fw-bold" style="font-size: 0.75rem; line-height: 1.2;">
-													<?php
-													// Abbreviate long names
-													$label = $item['teknik_label'];
-													if (strlen($label) > 20) {
-														$label = substr($label, 0, 17) . '...';
-													}
-													echo esc($label);
-													?>
-												</small>
-												<small class="opacity-75" style="font-size: 0.65rem;">
-													Minggu: <?= $item['minggu'] ?><br />
-													<?= esc($item['kode_cpmk'] ?? $item['cpmk_code'] ?? '') ?>
-												</small>
-												<span class="badge bg-success" style="font-size: 0.65rem;">
-													<?= number_format($item['bobot'], 1) ?>%
-												</span>
-											</div>
-										</th>
-									<?php endforeach; ?>
-								<?php endforeach; ?>
 							</tr>
 						</thead>
 						<tbody>
@@ -270,25 +239,8 @@
 											<span><?= esc($mahasiswa['nama_lengkap']) ?></span>
 										</div>
 									</td>
-									<?php
-									// Build a map to know which columns are the last in their tahap group (but not the very last group)
-									$last_in_group = [];
-									$tahap_keys = array_keys($teknik_by_tahap);
-									$last_tahap_key = end($tahap_keys);
-									foreach ($teknik_by_tahap as $tahap => $tahap_items) {
-										if (!empty($tahap_items) && $tahap !== $last_tahap_key) {
-											$last_item = end($tahap_items);
-											// Use rps_mingguan_id + teknik_key as unique identifier
-											$last_in_group[$last_item['rps_mingguan_id'] . '_' . $last_item['teknik_key']] = true;
-										}
-									}
-									?>
 									<?php foreach ($teknik_list as $item) : ?>
-										<?php
-										$unique_key = $item['rps_mingguan_id'] . '_' . $item['teknik_key'];
-										$is_last = isset($last_in_group[$unique_key]);
-										?>
-										<td class="align-middle text-center <?= $is_last ? 'tahap-border-right' : '' ?>">
+										<td class="align-middle text-center">
 											<?php
 											$score = $existing_scores[$mahasiswa['id']][$item['rps_mingguan_id']][$item['teknik_key']] ?? '';
 											echo $score !== '' ? number_format($score, 2) : '-';
@@ -341,11 +293,6 @@
 
 <?= $this->section('css') ?>
 <style>
-	#nilaiTable th.tahap-border-right,
-	#nilaiTable td.tahap-border-right {
-		border-right: 4px solid #ffc107 !important;
-	}
-
 	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(1),
 	#nilaiTable tbody tr:nth-of-type(even) td:nth-last-child(2) {
 		background-color: rgba(0, 0, 0, 0.05);

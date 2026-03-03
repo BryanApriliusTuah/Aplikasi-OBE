@@ -30,7 +30,6 @@
 	}
 
 	.course-badge-code  { background: #f0f4ff; color: #3b5bdb; border: 1px solid #c5d0fa; }
-	.course-badge-sks   { background: #f0fdf4; color: #2d7a52; border: 1px solid #bbf7d0; }
 	.course-badge-kelas { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
 	.course-badge-sem   { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
 
@@ -235,11 +234,6 @@
 											<?php if (isset($jadwal['kode_mk'])): ?>
 												<span class="course-badge course-badge-code">
 													<i class="bi bi-code-square"></i> <?= esc($jadwal['kode_mk']) ?>
-												</span>
-											<?php endif; ?>
-											<?php if (isset($jadwal['sks'])): ?>
-												<span class="course-badge course-badge-sks">
-													<i class="bi bi-book"></i> <?= esc($jadwal['sks']) ?> SKS
 												</span>
 											<?php endif; ?>
 											<?php if (isset($jadwal['kelas'])): ?>

@@ -298,7 +298,7 @@
 				<td>: <?= strtoupper(esc($jadwal['kelas'])) ?> / <?= strtoupper(esc($jadwal['program_studi'])) ?></td>
 			</tr>
 			<tr>
-				<td>DOSEN PENGAMPU</td>
+				<td>DOSEN KOORDINATOR</td>
 				<td>: <?= strtoupper(esc($jadwal['dosen_ketua'] ?? 'N/A')) ?></td>
 			</tr>
 		</table>
@@ -319,18 +319,9 @@
 			</colgroup>
 			<thead>
 				<tr>
-					<th rowspan="2">No</th>
-					<th rowspan="2">NIM</th>
-					<th rowspan="2">Nama</th>
-					<?php foreach ($teknik_by_tahap as $tahap => $tahap_items): ?>
-						<th colspan="<?= count($tahap_items) ?>" style="background-color: #34495e;">
-							<?= esc($tahap) ?>
-						</th>
-					<?php endforeach; ?>
-					<th colspan="2">Nilai Akhir</th>
-					<th rowspan="2">Keterangan</th>
-				</tr>
-				<tr>
+					<th>No</th>
+					<th>NIM</th>
+					<th>Nama</th>
 					<?php foreach ($teknik_list as $item): ?>
 						<?php
 						$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
@@ -346,8 +337,9 @@
 							</div>
 						</th>
 					<?php endforeach; ?>
-					<th>Angka</th>
-					<th>Huruf</th>
+					<th>Nilai Angka</th>
+					<th>Nilai Huruf</th>
+					<th>Keterangan</th>
 				</tr>
 			</thead>
 			<tbody>
