@@ -117,7 +117,7 @@ class Auth extends BaseController
 			case 'admin':
 				return redirect()->to('/admin');
 			case 'dosen':
-				return redirect()->to('/rps');
+				return redirect()->to('/admin');
 			case 'mahasiswa':
 				return redirect()->to('/mahasiswa/dashboard');
 			default:
