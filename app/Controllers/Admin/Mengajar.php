@@ -7,6 +7,10 @@ use App\Models\TahunAkademikModel;
 use App\Models\KelasModel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -1149,28 +1153,46 @@ class Mengajar extends BaseController
 
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();
+		$sheet->setTitle('Jadwal Mengajar');
 
-		// Set Headers
-		$sheet->setCellValue('A1', 'No');
-		$sheet->setCellValue('B1', 'Program Studi');
-		$sheet->setCellValue('C1', 'Tahun Akademik');
-		$sheet->setCellValue('D1', 'Kode MK');
-		$sheet->setCellValue('E1', 'Nama Mata Kuliah');
-		$sheet->setCellValue('F1', 'SMT');
-		$sheet->setCellValue('G1', 'SKS');
-		$sheet->setCellValue('H1', 'Kelas');
-		$sheet->setCellValue('I1', 'Hari');
-		$sheet->setCellValue('J1', 'Waktu');
-		$sheet->setCellValue('K1', 'Ruang');
-		$sheet->setCellValue('L1', 'Dosen Pengampu');
+		// Sheet-level default font
+		$spreadsheet->getDefaultStyle()->getFont()->setName('Calibri')->setSize(11);
 
-		// Populate Data
-		$row = 2;
+		// ── Title row ──────────────────────────────────────────────────────────
+		$sheet->mergeCells('A1:L1');
+		$sheet->setCellValue('A1', 'JADWAL MENGAJAR');
+		$sheet->getStyle('A1')->applyFromArray([
+			'font'      => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FFFFFFFF']],
+			'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
+			'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+		]);
+		$sheet->getRowDimension(1)->setRowHeight(32);
+
+		// ── Column header row ───────────────────────────────────────────────────
+		$headers = ['No', 'Program Studi', 'Tahun Akademik', 'Kode MK', 'Nama Mata Kuliah', 'SMT', 'SKS', 'Kelas', 'Hari', 'Waktu', 'Ruang', 'Dosen Pengampu'];
+		$cols    = range('A', 'L');
+		foreach ($headers as $i => $header) {
+			$sheet->setCellValue($cols[$i] . '2', $header);
+		}
+
+		$sheet->getStyle('A2:L2')->applyFromArray([
+			'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+			'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF2E75B6']],
+			'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+			'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFBFBFBF']]],
+		]);
+		$sheet->getRowDimension(2)->setRowHeight(22);
+
+		// ── Data rows ───────────────────────────────────────────────────────────
+		$row = 3;
 		foreach ($jadwal_list as $key => $jadwal) {
 			$dosen_pengampu = [];
 			foreach ($jadwal['dosen_list'] as $dosen) {
 				$dosen_pengampu[] = $dosen['nama_lengkap'] . ($dosen['role'] == 'leader' ? ' (Ketua)' : '');
 			}
+
+			$isEven = ($key % 2 === 0);
+			$rowBg  = $isEven ? 'FFDCE6F1' : 'FFFFFFFF';
 
 			$sheet->setCellValue('A' . $row, $key + 1);
 			$sheet->setCellValue('B' . $row, $jadwal['program_studi_nama'] ?? $jadwal['program_studi_kode']);
@@ -1184,8 +1206,31 @@ class Mengajar extends BaseController
 			$sheet->setCellValue('J' . $row, (!empty($jadwal['jam_mulai']) ? date('H:i', strtotime($jadwal['jam_mulai'])) . '-' . date('H:i', strtotime($jadwal['jam_selesai'])) : ''));
 			$sheet->setCellValue('K' . $row, $jadwal['ruang']);
 			$sheet->setCellValue('L' . $row, implode(", ", $dosen_pengampu));
+
+			$sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+				'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => $rowBg]],
+				'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+				'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFBFBFBF']]],
+			]);
+
+			// Center-align specific columns
+			$sheet->getStyle('A' . $row . ':A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('C' . $row . ':D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle('F' . $row . ':J' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+			$sheet->getRowDimension($row)->setRowHeight(20);
 			$row++;
 		}
+
+		// ── Column widths ───────────────────────────────────────────────────────
+		$colWidths = ['A' => 5, 'B' => 22, 'C' => 16, 'D' => 12, 'E' => 28, 'F' => 6, 'G' => 6, 'H' => 8, 'I' => 10, 'J' => 13, 'K' => 10, 'L' => 35];
+		foreach ($colWidths as $col => $width) {
+			$sheet->getColumnDimension($col)->setWidth($width);
+		}
+
+		// ── Freeze panes & filter ───────────────────────────────────────────────
+		$sheet->freezePane('A3');
+		$sheet->setAutoFilter('A2:L2');
 
 		// Set Headers for download
 		$filename = 'jadwal_' . date('YmdHis') . '.xlsx';
