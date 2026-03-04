@@ -199,6 +199,8 @@
 			$all_schedules[] = $jadwal;
 		}
 	}
+	// Sort by mata kuliah name
+	usort($all_schedules, fn($a, $b) => strcmp($a['nama_mk'] ?? '', $b['nama_mk'] ?? ''));
 	?>
 
 	<div class="shadow-sm border-0">
