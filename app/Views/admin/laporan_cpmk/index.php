@@ -154,6 +154,7 @@
 
 <script>
 	const _LAPORAN_CPMK_KEY = 'laporan_cpmk_state';
+	let _resetTriggered = false;
 
 	$(document).ready(function() {
 		$('.select2').select2({
@@ -173,14 +174,20 @@
 			}
 		} catch (e) {}
 
-		// Clear saved state when reset button is clicked
+		// Clear saved state and reset Select2 when reset button is clicked
 		$('form').on('reset', function() {
+			_resetTriggered = true;
 			try { localStorage.removeItem(_LAPORAN_CPMK_KEY); } catch (e) {}
+			// Select2 doesn't respond to native reset — trigger change manually
+			setTimeout(function() {
+				$('#mata_kuliah_id').trigger('change');
+			}, 0);
 		});
 	});
 
-	// Save filter state before navigating away
+	// Save filter state before navigating away (skip if reset was clicked)
 	window.addEventListener('beforeunload', function() {
+		if (_resetTriggered) return;
 		try {
 			localStorage.setItem(_LAPORAN_CPMK_KEY, JSON.stringify({
 				mata_kuliah_id: $('#mata_kuliah_id').val(),
