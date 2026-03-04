@@ -308,7 +308,7 @@ class Nilai extends BaseController
 		}
 
 		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
-			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen pengampu yang dapat menginput nilai.');
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen koordinator/pengampu yang dapat menginput nilai.');
 		}
 
 		$jadwalModel = new MengajarModel();
@@ -509,7 +509,7 @@ class Nilai extends BaseController
 		}
 
 		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
-			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen pengampu yang dapat menginput nilai.');
+			return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menginput nilai pada jadwal ini. Hanya dosen koordinator/pengampu yang dapat menginput nilai.');
 		}
 
 		$jadwalModel = new MengajarModel();
@@ -1641,7 +1641,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 		$row++;
-		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+		$sheet->setCellValue('B' . $row, 'DOSEN KOORDINATOR');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
 
 		// Style course information (bold and bigger)
@@ -2198,7 +2198,7 @@ class Nilai extends BaseController
 		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . " / " . strtoupper($jadwal['program_studi_kode']));
 		$row++;
-		$sheet->setCellValue('B' . $row, 'DOSEN PENGAMPU');
+		$sheet->setCellValue('B' . $row, 'DOSEN KOORDINATOR');
 		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
 
 		// Style course information (bold and bigger)
