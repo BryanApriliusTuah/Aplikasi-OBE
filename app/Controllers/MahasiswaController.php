@@ -295,6 +295,8 @@ class MahasiswaController extends BaseController
 			if (empty($cpmkLinked)) {
 				$cpl['nilai_cpl'] = 0;
 				$cpl['capaian_cpl'] = 0;
+				$cpl['jumlah_cpmk'] = 0;
+				$cpl['jumlah_mk'] = 0;
 				$calculatedCplList[] = $cpl;
 				continue;
 			}
@@ -309,6 +311,9 @@ class MahasiswaController extends BaseController
 				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->get()
 				->getResultArray();
+
+			$cpl['jumlah_cpmk'] = count($cpmkLinked);
+			$cpl['jumlah_mk'] = count(array_unique(array_column($nilaiList, 'mata_kuliah_id')));
 
 			// Calculate CPL using formula:
 			// Nilai CPL = Σ(CPMK scores) - note: nilai_cpmk is already weighted (raw × bobot / 100)
@@ -374,7 +379,9 @@ class MahasiswaController extends BaseController
 				'id' => $cpl['id'],
 				'kode' => $cpl['kode_cpl'],
 				'deskripsi' => $cpl['deskripsi'],
-				'nilai' => $capaian
+				'nilai' => $capaian,
+				'jumlah_cpmk' => $cpl['jumlah_cpmk'],
+				'jumlah_mk' => $cpl['jumlah_mk']
 			];
 
 			if ($capaian > 0) {
@@ -390,10 +397,24 @@ class MahasiswaController extends BaseController
 		$totalCPLCount = count($calculatedCplList);
 		$percentComplete = $totalCPLCount > 0 ? round(($cplTercapai / $totalCPLCount) * 100) : 0;
 
+		// Flat list ordered by kode_cpl for table display
+		$cplItems = [];
+		foreach ($calculatedCplList as $cpl) {
+			$cplItems[] = [
+				'id'          => $cpl['id'],
+				'kode'        => $cpl['kode_cpl'],
+				'deskripsi'   => $cpl['deskripsi'],
+				'nilai'       => round($cpl['capaian_cpl'], 2),
+				'jumlah_cpmk' => $cpl['jumlah_cpmk'],
+				'jumlah_mk'   => $cpl['jumlah_mk'],
+			];
+		}
+
 		$data = [
 			'title' => 'Profil CPL',
 			'cplList' => $calculatedCplList,
 			'cplByType' => $cplByType,
+			'cplItems' => $cplItems,
 			'avgCPL' => $avgCPL,
 			'cplTercapai' => $cplTercapai,
 			'totalCPLCount' => $totalCPLCount,
@@ -454,7 +475,7 @@ class MahasiswaController extends BaseController
 		foreach ($cpmkLinked as $cpmk) {
 			// Get all nilai_cpmk for this CPMK and mahasiswa (grouped by jadwal)
 			$nilaiCpmkList = $db->table('nilai_cpmk_mahasiswa')
-				->select('nilai_cpmk_mahasiswa.nilai_cpmk, nilai_cpmk_mahasiswa.jadwal_id, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal.mata_kuliah_id')
+				->select('nilai_cpmk_mahasiswa.nilai_cpmk, nilai_cpmk_mahasiswa.jadwal_id, mata_kuliah.kode_mk, mata_kuliah.nama_mk, jadwal.mata_kuliah_id, jadwal.tahun_akademik, jadwal.kelas')
 				->join('jadwal', 'jadwal.id = nilai_cpmk_mahasiswa.jadwal_id')
 				->join('mata_kuliah', 'mata_kuliah.id = jadwal.mata_kuliah_id')
 				->where('nilai_cpmk_mahasiswa.mahasiswa_id', $mahasiswaId)
@@ -534,6 +555,8 @@ class MahasiswaController extends BaseController
 				$detailMk[] = [
 					'kode_mk' => $nilaiCpmk['kode_mk'],
 					'nama_mk' => $nilaiCpmk['nama_mk'],
+					'tahun_akademik' => $nilaiCpmk['tahun_akademik'],
+					'kelas' => $nilaiCpmk['kelas'],
 					'nilai_cpmk' => $nilaiCpmk['nilai_cpmk'],
 					'total_bobot' => $totalBobot,
 					'teknik_breakdown' => $teknikBreakdown

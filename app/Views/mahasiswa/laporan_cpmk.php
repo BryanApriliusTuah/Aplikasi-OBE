@@ -9,6 +9,7 @@
 	.filter-card {
 		border: 2px solid #e0e0e0;
 		background: #ffffff;
+		transition: all 0.3s ease;
 	}
 
 	.filter-card:hover {
@@ -47,52 +48,56 @@
 <!-- Sub-tabs for different filter types -->
 <div class="row g-3 mb-4">
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#semester-filter" id="semester-card-btn">
-			<div class="card filter-card h-100 border-primary shadow-sm" id="semester-card" style="cursor: pointer; transition: all 0.3s;">
-				<div class="card-body text-center p-3">
-					<div class="mb-2">
-						<i class="bi bi-calendar-week text-primary" style="font-size: 1.8rem;"></i>
-					</div>
-					<h6 class="card-title mb-2 text-primary fw-bold">CPMK Per Semester</h6>
-					<p class="card-text text-muted small mb-0">Pilih semester tertentu untuk melihat laporan CPMK mahasiswa pada semester tersebut.</p>
+		<div class="card filter-card h-100 border-primary shadow-sm" id="filter2-card" role="button" data-bs-toggle="tab" data-bs-target="#filter2" style="cursor: pointer; transition: all 0.3s;">
+			<div class="card-body text-center p-3">
+				<div class="mb-2">
+					<i class="bi bi-calendar-range text-primary" style="font-size: 1.8rem;"></i>
 				</div>
+				<h6 class="card-title mb-2 text-primary fw-bold">CPMK per Semester</h6>
+				<p class="card-text text-muted small mb-0">Perhitungan CPMK per semester dilakukan dengan menjumlahkan seluruh teknik penilaian dikali bobot penilaiannya dari berbagai mata kuliah dalam satu semester.</p>
 			</div>
-		</button>
+		</div>
 	</div>
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#tahun-filter" id="tahun-card-btn">
-			<div class="card filter-card h-100 shadow-sm" id="tahun-card" style="cursor: pointer; transition: all 0.3s;">
-				<div class="card-body text-center p-3">
-					<div class="mb-2">
-						<i class="bi bi-calendar-range text-secondary" style="font-size: 1.8rem;"></i>
-					</div>
-					<h6 class="card-title mb-2">CPMK Per Tahun Akademik</h6>
-					<p class="card-text text-muted small mb-0">Pilih tahun akademik untuk melihat laporan CPMK mahasiswa dalam 1 tahun akademik.</p>
+		<div class="card filter-card h-100 shadow-sm" id="filter3-card" role="button" data-bs-toggle="tab" data-bs-target="#filter3" style="cursor: pointer; transition: all 0.3s;">
+			<div class="card-body text-center p-3">
+				<div class="mb-2">
+					<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
 				</div>
+				<h6 class="card-title mb-2">CPMK per Tahun Akademik</h6>
+				<p class="card-text text-muted small mb-0">Perhitungan CPMK per tahun dilakukan dengan menjumlahkan seluruh teknik penilaian dikali bobot penilaiannya dari berbagai mata kuliah dalam 1 tahun akademik.</p>
 			</div>
-		</button>
+		</div>
 	</div>
 </div>
 
 <!-- Tab Content -->
 <div class="tab-content" id="filterTabsContent">
-	<!-- Semester Filter Tab -->
-	<div class="tab-pane fade show active" id="semester-filter" role="tabpanel">
-		<div class="card mb-4">
-			<div class="card-body">
-				<form id="filterFormSemester">
-					<div class="row g-3">
+	<!-- Filter 2: CPMK per Semester -->
+	<div class="tab-pane fade show active" id="filter2" role="tabpanel">
+		<div class="modern-filter-wrapper mb-4">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-funnel-fill text-primary"></i>
+					<span class="modern-filter-title">Filter CPMK Mahasiswa per Semester</span>
+				</div>
+			</div>
+			<div class="modern-filter-body">
+				<form id="filterForm2">
+					<div class="row g-3 align-items-end">
 						<div class="col-md-10">
-							<label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
-							<select class="form-select" id="semester" name="semester" required>
+							<label for="semester" class="modern-filter-label">
+								<i class="bi bi-bookmark-fill me-1"></i> Semester <span class="text-danger">*</span>
+							</label>
+							<select class="form-select modern-filter-input" id="semester" name="semester" required>
 								<option value="">-- Pilih Semester --</option>
 								<?php foreach ($semesterList as $sem): ?>
 									<option value="<?= esc($sem) ?>"><?= esc($sem) ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
-						<div class="col-md-2 d-flex align-items-end">
-							<button type="submit" class="btn btn-primary w-100">
+						<div class="col-md-2">
+							<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 								<i class="bi bi-search"></i> Tampilkan
 							</button>
 						</div>
@@ -102,23 +107,31 @@
 		</div>
 	</div>
 
-	<!-- Tahun Akademik Filter Tab -->
-	<div class="tab-pane fade" id="tahun-filter" role="tabpanel">
-		<div class="card mb-4">
-			<div class="card-body">
-				<form id="filterFormTahun">
-					<div class="row g-3">
+	<!-- Filter 3: CPMK per Tahun Akademik -->
+	<div class="tab-pane fade" id="filter3" role="tabpanel">
+		<div class="modern-filter-wrapper mb-4">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-funnel-fill text-primary"></i>
+					<span class="modern-filter-title">Filter CPMK Mahasiswa per Tahun Akademik</span>
+				</div>
+			</div>
+			<div class="modern-filter-body">
+				<form id="filterForm3">
+					<div class="row g-3 align-items-end">
 						<div class="col-md-10">
-							<label for="tahun_akademik" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
-							<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
+							<label for="tahun_akademik" class="modern-filter-label">
+								<i class="bi bi-calendar-event me-1"></i> Tahun Akademik <span class="text-danger">*</span>
+							</label>
+							<select class="form-select modern-filter-input" id="tahun_akademik" name="tahun_akademik" required>
 								<option value="">-- Pilih Tahun Akademik --</option>
 								<?php foreach ($tahunAkademikList as $tahun): ?>
 									<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
-						<div class="col-md-2 d-flex align-items-end">
-							<button type="submit" class="btn btn-primary w-100">
+						<div class="col-md-2">
+							<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 								<i class="bi bi-search"></i> Tampilkan
 							</button>
 						</div>
@@ -138,12 +151,9 @@
 </div>
 
 <!-- Empty State -->
-<div id="emptyState" class="card" style="display: none;">
-	<div class="card-body text-center py-5 text-muted">
-		<i class="bi bi-inbox" style="font-size: 3rem;"></i>
-		<p class="mb-1 mt-3">Belum ada data yang ditampilkan</p>
-		<small>Pilih filter berdasarkan semester atau tahun akademik untuk melihat laporan CPMK</small>
-	</div>
+<div id="emptyState" class="text-center py-5">
+	<i class="bi bi-bar-chart" style="font-size: 4rem; color: #ccc;"></i>
+	<p class="text-muted mt-3">Pilih filter dan klik tombol search untuk melihat laporan CPMK</p>
 </div>
 
 <!-- Data Table -->
@@ -199,71 +209,57 @@
 <?= $this->section('js') ?>
 <script>
 	$(document).ready(function() {
-		// Show empty state initially
-		$('#emptyState').show();
+		// Track active filter type: 'semester', 'tahun'
+		let activeFilter = 'semester';
 
-		// Handle filter card clicks - update styling and switch tabs
-		$('#semester-card-btn, #semester-card').on('click', function(e) {
-			e.preventDefault();
-
-			// Remove active styling from all cards
-			$('.filter-card').removeClass('border-primary');
-			$('.filter-card .card-title').removeClass('text-primary fw-bold');
-			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
-
-			// Add active styling to semester card
-			$('#semester-card').addClass('border-primary');
-			$('#semester-card').find('.card-title').addClass('text-primary fw-bold');
-			$('#semester-card').find('i').removeClass('text-secondary').addClass('text-primary');
-
-			// Switch to semester tab
-			$('.tab-pane').removeClass('show active');
-			$('#semester-filter').addClass('show active');
-		});
-
-		$('#tahun-card-btn, #tahun-card').on('click', function(e) {
-			e.preventDefault();
+		// Handle filter card clicks - update styling
+		$('[id$="-card"]').on('click', function() {
+			const targetId = $(this).data('bs-target');
 
 			// Remove active styling from all cards
 			$('.filter-card').removeClass('border-primary');
 			$('.filter-card .card-title').removeClass('text-primary fw-bold');
 			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
 
-			// Add active styling to tahun card
-			$('#tahun-card').addClass('border-primary');
-			$('#tahun-card').find('.card-title').addClass('text-primary fw-bold');
-			$('#tahun-card').find('i').removeClass('text-secondary').addClass('text-primary');
+			// Add active styling to clicked card
+			$(this).addClass('border-primary');
+			$(this).find('.card-title').addClass('text-primary fw-bold');
+			$(this).find('i').removeClass('text-secondary').addClass('text-primary');
 
-			// Switch to tahun akademik tab
+			// Switch tab pane
 			$('.tab-pane').removeClass('show active');
-			$('#tahun-filter').addClass('show active');
+			$(targetId).addClass('show active');
+
+			// Reset table on tab switch
+			$('#dataTable').hide();
+			$('#emptyState').show();
 		});
 
-		// Handle semester filter form submission
-		$('#filterFormSemester').on('submit', function(e) {
+		// Handle filter2 form (per Semester)
+		$('#filterForm2').on('submit', function(e) {
 			e.preventDefault();
 
 			const semester = $('#semester').val();
-
 			if (!semester) {
 				alert('Pilih semester terlebih dahulu');
 				return;
 			}
 
+			activeFilter = 'semester';
 			loadData(semester, '');
 		});
 
-		// Handle tahun akademik filter form submission
-		$('#filterFormTahun').on('submit', function(e) {
+		// Handle filter3 form (per Tahun Akademik)
+		$('#filterForm3').on('submit', function(e) {
 			e.preventDefault();
 
 			const tahunAkademik = $('#tahun_akademik').val();
-
 			if (!tahunAkademik) {
 				alert('Pilih tahun akademik terlebih dahulu');
 				return;
 			}
 
+			activeFilter = 'tahun';
 			loadData('', tahunAkademik);
 		});
 
@@ -354,7 +350,6 @@
 					}
 				}
 
-				// Check on load and resize
 				checkScroll();
 				window.addEventListener('resize', checkScroll);
 				tableWrapper.addEventListener('scroll', checkScroll);
@@ -476,15 +471,8 @@
 		}
 
 		window.showDetail = function(kodeCpmk) {
-			// Get filter values based on active tab
-			let semester = '';
-			let tahunAkademik = '';
-
-			if ($('#semester-filter').hasClass('show active')) {
-				semester = $('#semester').val();
-			} else if ($('#tahun-filter').hasClass('show active')) {
-				tahunAkademik = $('#tahun_akademik').val();
-			}
+			const semester = activeFilter === 'semester' ? $('#semester').val() : '';
+			const tahunAkademik = activeFilter === 'tahun' ? $('#tahun_akademik').val() : '';
 
 			$('#detailModalTitle').text(`Detail Perhitungan ${kodeCpmk}`);
 			$('#detailModal').modal('show');
@@ -531,7 +519,6 @@
 		function renderDetailModal(data, summary) {
 			let html = '';
 
-			// Display per-course CPMK score breakdown
 			if (data && data.length > 0) {
 				html += `
 					<div class="modern-table-wrapper mb-4">
@@ -583,7 +570,6 @@
 				html += `<p class="text-muted">Belum ada nilai</p>`;
 			}
 
-			// Display formula and final capaian
 			html += `
 				<div class="alert alert-primary mb-0">
 					<h6 class="mb-2"><i class="bi bi-calculator"></i> Capaian ${escapeHtml(summary.kode_cpmk)}:</h6>

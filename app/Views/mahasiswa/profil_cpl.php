@@ -2,85 +2,60 @@
 
 <?= $this->section('content') ?>
 
+<!-- Modern Table CSS -->
+<link href="<?= base_url('css/modern-table.css') ?>" rel="stylesheet" />
+
 <div class="mb-4">
 	<h2 class="mb-1">Profil CPL</h2>
 	<p class="text-muted">Capaian Pembelajaran Lulusan</p>
 </div>
 
 <?php if (empty($cplList)): ?>
-	<div class="card">
-		<div class="card-body text-center py-5 text-muted">
-			<p class="mb-1">Belum ada data CPL</p>
-			<small>Data CPL akan muncul setelah Anda memiliki nilai</small>
-		</div>
+	<div class="text-center py-5">
+		<i class="bi bi-bar-chart" style="font-size: 4rem; color: #ccc;"></i>
+		<p class="text-muted mt-3">Belum ada data CPL</p>
 	</div>
 <?php else: ?>
 	<!-- Chart Section -->
 	<div id="cplChartContainer" class="mb-4"></div>
 
 	<!-- Detailed Calculation Table -->
-	<div class="card shadow-sm border-0">
-		<div class="card-body p-0">
-			<div class="modern-table-wrapper" style="position: relative;">
-				<div class="scroll-indicator"></div>
-				<table id="cplDetailTable" class="modern-table">
+	<div class="modern-table-wrapper" style="position: relative;">
+		<div class="scroll-indicator"></div>
+		<table id="cplDetailTable" class="modern-table">
 					<thead>
 						<tr>
 							<th width="5%" class="text-center">No</th>
 							<th width="10%" class="text-center">Kode CPL</th>
-							<th width="50%" class="text-center">Deskripsi</th>
-							<th width="15%" class="text-center">Jenis CPL</th>
-							<th width="10%" class="text-center">Capaian (%)</th>
+							<th width="38%" class="text-center">Deskripsi CPL</th>
+							<th width="10%" class="text-center">Jumlah CPMK</th>
+							<th width="10%" class="text-center">Jumlah MK</th>
+							<th width="12%" class="text-center">Capaian (%)</th>
 							<th width="10%" class="text-center">Aksi</th>
 						</tr>
 					</thead>
 					<tbody>
-						<?php
-						$cplCategories = [
-							'P' => 'Pengetahuan',
-							'KK' => 'Keterampilan Khusus',
-							'KU' => 'Keterampilan Umum',
-							'S' => 'Sikap',
-						];
-
-						$no = 1;
-						foreach ($cplCategories as $key => $categoryName):
-							if (!empty($cplByType[$key])):
-								foreach ($cplByType[$key] as $cpl):
-						?>
-									<tr>
-										<td class="text-center"><?= $no++ ?></td>
-										<td class="text-center">
-											<span style="font-size: 0.85rem; font-weight: 600;">
-												<?= esc($cpl['kode']) ?>
-											</span>
-										</td>
-										<td><?= esc($cpl['deskripsi']) ?></td>
-										<td class="text-center">
-											<span style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
-												<?= $categoryName ?>
-											</span>
-										</td>
-										<td class="text-center">
-											<span class="fw-bold">
-												<?= $cpl['nilai'] ?>%
-											</span>
-										</td>
-										<td class="text-center">
-											<button class="btn btn-sm btn-outline-primary" onclick="showDetail(<?= $cpl['id'] ?>, '<?= esc($cpl['kode']) ?>')" data-bs-toggle="tooltip" title="Lihat detail nilai CPL">
-												<i class="bi bi-eye"></i>
-											</button>
-										</td>
-									</tr>
-						<?php
-								endforeach;
-							endif;
-						endforeach;
-						?>
+						<?php $no = 1; foreach ($cplItems as $cpl): ?>
+							<tr>
+								<td class="text-center"><?= $no++ ?></td>
+								<td class="text-center">
+									<strong class="text-primary"><?= esc($cpl['kode']) ?></strong>
+								</td>
+								<td><small><?= esc($cpl['deskripsi']) ?></small></td>
+								<td class="text-center"><?= $cpl['jumlah_cpmk'] ?></td>
+								<td class="text-center"><?= $cpl['jumlah_mk'] ?></td>
+								<td class="text-center">
+									<strong><?= $cpl['nilai'] ?>%</strong>
+								</td>
+								<td class="text-center">
+									<button class="btn btn-sm btn-outline-primary" onclick="showDetail(<?= $cpl['id'] ?>, '<?= esc($cpl['kode']) ?>')" data-bs-toggle="tooltip" title="Lihat detail nilai CPL">
+										<i class="bi bi-eye"></i>
+									</button>
+								</td>
+							</tr>
+						<?php endforeach; ?>
 					</tbody>
-				</table>
-			</div>
-		</div>
+		</table>
 	</div>
 <?php endif; ?>
 
@@ -88,10 +63,6 @@
 <div class="modal fade" id="detailModal" tabindex="-1">
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
-			<div class="modal-header bg-primary text-white">
-				<h5 class="modal-title" id="detailCplModalTitle">Detail Perhitungan CPL</h5>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-			</div>
 			<div class="modal-body">
 				<div id="detailCplModalContent">
 					<div class="text-center py-4">
@@ -115,9 +86,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="<?= base_url('js/modern-chart-component.js') ?>"></script>
-
-<!-- Modern Table CSS -->
-<link href="<?= base_url('css/modern-table.css') ?>" rel="stylesheet" />
 
 <style>
 	/* Sticky column positions */
@@ -185,26 +153,10 @@
 			data: []
 		};
 
-		<?php
-		// Iterate through CPL by type structure
-		$cplCategories = [
-			'P' => 'Pengetahuan',
-			'KK' => 'Keterampilan Khusus',
-			'KU' => 'Keterampilan Umum',
-			'S' => 'Sikap',
-		];
-
-		foreach ($cplCategories as $key => $categoryName):
-			if (!empty($cplByType[$key])):
-				foreach ($cplByType[$key] as $cpl):
-		?>
-					chartData.labels.push('<?= esc($cpl['kode']) ?>');
-					chartData.data.push(<?= $cpl['nilai'] ?>);
-		<?php
-				endforeach;
-			endif;
-		endforeach;
-		?>
+		<?php foreach ($cplItems as $cpl): ?>
+				chartData.labels.push('<?= esc($cpl['kode']) ?>');
+				chartData.data.push(<?= $cpl['nilai'] ?>);
+		<?php endforeach; ?>
 
 		if (chartData.labels.length === 0) {
 			return;
@@ -239,7 +191,6 @@
 	}
 
 	function showDetail(cplId, cplKode) {
-		document.getElementById('detailCplModalTitle').textContent = `Detail Perhitungan ${cplKode}`;
 		document.getElementById('detailCplModalContent').innerHTML = `
 		<div class="text-center py-4">
 			<div class="spinner-border text-primary" role="status">
@@ -272,12 +223,13 @@
 								<thead>
 									<tr>
 										<th width="5%" class="text-center">No</th>
-										<th width="15%">Kode CPMK</th>
-										<th width="30%">Deskripsi CPMK</th>
-										<th width="20%">Mata Kuliah</th>
+										<th width="12%">Kode CPMK</th>
+										<th width="22%">Mata Kuliah</th>
+										<th width="12%" class="text-center">Tahun Akademik</th>
+										<th width="10%" class="text-center">Kelas</th>
 										<th width="10%" class="text-center">Nilai CPMK</th>
-										<th width="10%" class="text-center">Bobot (%)</th>
-										<th width="10%" class="text-center">Kontribusi</th>
+										<th width="10%" class="text-center">Bobot</th>
+										<th width="10%" class="text-center">Capaian (%)</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -285,68 +237,70 @@
 
 					// Flatten the data structure to show all MK for each CPMK
 					let rowNum = 1;
-					let totalNilaiCpl = 0;
+					let totalNilai = 0;
 					let totalBobot = 0;
 
 					data.data.forEach(cpmk => {
+						const nilaiCpmk = parseFloat(cpmk.nilai_cpmk);
+						const bobot = parseFloat(cpmk.bobot);
+						const capaian = bobot > 0 ? (nilaiCpmk / bobot * 100).toFixed(2) : '0.00';
+
 						if (cpmk.detail_mk && cpmk.detail_mk.length > 0) {
 							cpmk.detail_mk.forEach((mk, mkIndex) => {
-								const kontribusi = (parseFloat(cpmk.nilai_cpmk) * parseFloat(cpmk.bobot) / 100).toFixed(2);
-
+								const kelasDisplay = mk.kelas === 'KM' ? '<span class="badge bg-primary">MBKM</span>' : mk.kelas;
 								html += `
 									<tr>
 										<td class="text-center">${rowNum++}</td>
 										<td><strong>${cpmk.kode_cpmk}</strong></td>
-										<td><small>${cpmk.deskripsi_cpmk}</small></td>
 										<td><small>${mk.kode_mk} - ${mk.nama_mk}</small></td>
-										<td class="text-center">${parseFloat(cpmk.nilai_cpmk).toFixed(2)}</td>
-										<td class="text-center">${parseFloat(cpmk.bobot).toFixed(0)}%</td>
-										<td class="text-center">${kontribusi}</td>
+										<td class="text-center">${mk.tahun_akademik}</td>
+										<td class="text-center">${kelasDisplay}</td>
+										<td class="text-center">${nilaiCpmk.toFixed(2)}</td>
+										<td class="text-center">${bobot.toFixed(2)}</td>
+										<td class="text-center">${capaian}%</td>
 									</tr>
 								`;
 
-								// Only count once per CPMK
+								// Only accumulate totals once per CPMK
 								if (mkIndex === 0) {
-									totalNilaiCpl += parseFloat(kontribusi);
-									totalBobot += parseFloat(cpmk.bobot);
+									totalNilai += nilaiCpmk;
+									totalBobot += bobot;
 								}
 							});
 						} else {
-							const kontribusi = (parseFloat(cpmk.nilai_cpmk) * parseFloat(cpmk.bobot) / 100).toFixed(2);
-
 							html += `
 								<tr>
 									<td class="text-center">${rowNum++}</td>
 									<td><strong>${cpmk.kode_cpmk}</strong></td>
-									<td><small>${cpmk.deskripsi_cpmk}</small></td>
 									<td class="text-center text-muted"><small>-</small></td>
-									<td class="text-center">${parseFloat(cpmk.nilai_cpmk).toFixed(2)}</td>
-									<td class="text-center">${parseFloat(cpmk.bobot).toFixed(0)}%</td>
-									<td class="text-center">${kontribusi}</td>
+									<td class="text-center">-</td>
+									<td class="text-center">-</td>
+									<td class="text-center">${nilaiCpmk.toFixed(2)}</td>
+									<td class="text-center">${bobot.toFixed(2)}</td>
+									<td class="text-center">${capaian}%</td>
 								</tr>
 							`;
 
-							totalNilaiCpl += parseFloat(kontribusi);
-							totalBobot += parseFloat(cpmk.bobot);
+							totalNilai += nilaiCpmk;
+							totalBobot += bobot;
 						}
 					});
 
 					// Calculate final CPL achievement
 					const capaianCpl = data.summary ? parseFloat(data.summary.capaian_cpl).toFixed(2) :
-						(totalBobot > 0 ? (totalNilaiCpl / totalBobot * 100).toFixed(2) : '0.00');
+						(totalBobot > 0 ? (totalNilai / totalBobot * 100).toFixed(2) : '0.00');
 
 					html += `
 								</tbody>
 								<tfoot>
 									<tr>
-										<td colspan="6" class="text-end"><strong>TOTAL KONTRIBUSI:</strong></td>
-										<td class="text-center"><strong>${totalNilaiCpl.toFixed(2)}</strong></td>
+										<td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+										<td class="text-center"><strong>${totalNilai.toFixed(2)}</strong></td>
+										<td class="text-center"><strong>${totalBobot.toFixed(2)}</strong></td>
+										<td></td>
 									</tr>
 									<tr style="background-color: #d1e7dd;">
-										<td colspan="6" class="text-end">
-											<strong>Capaian CPL (%) = (Total Kontribusi / Total Bobot) × 100</strong><br>
-											<small class="text-muted">= (${totalNilaiCpl.toFixed(2)} / ${totalBobot.toFixed(0)}) × 100</small>
-										</td>
+										<td colspan="7" class="text-end"><strong>Capaian CPL (%) = (${totalNilai.toFixed(2)} / ${totalBobot.toFixed(2)}) &times; 100</strong></td>
 										<td class="text-center"><h6 class="mb-0"><strong>${capaianCpl}%</strong></h6></td>
 									</tr>
 								</tfoot>

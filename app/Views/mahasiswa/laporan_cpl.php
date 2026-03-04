@@ -49,30 +49,26 @@
 <!-- Filter Type Cards -->
 <div class="row g-3 mb-4">
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#cpl-semester" id="semester-card-btn">
-			<div class="card filter-card h-100 border-primary shadow-sm" id="semester-card" style="cursor: pointer;">
-				<div class="card-body text-center p-3">
-					<div class="mb-2">
-						<i class="bi bi-calendar-range text-primary" style="font-size: 1.8rem;"></i>
-					</div>
-					<h6 class="card-title mb-2 text-primary fw-bold">CPL Per Semester</h6>
-					<p class="card-text text-muted small mb-0">Perhitungan CPL per semester dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam satu semester.</p>
+		<div class="card filter-card h-100 border-primary shadow-sm" id="semester-card" role="button" data-bs-toggle="tab" data-bs-target="#cpl-semester" style="cursor: pointer; transition: all 0.3s;">
+			<div class="card-body text-center p-3">
+				<div class="mb-2">
+					<i class="bi bi-calendar-range text-primary" style="font-size: 1.8rem;"></i>
 				</div>
+				<h6 class="card-title mb-2 text-primary fw-bold">CPL Per Semester</h6>
+				<p class="card-text text-muted small mb-0">Perhitungan CPL per semester dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam satu semester.</p>
 			</div>
-		</button>
+		</div>
 	</div>
 	<div class="col-md-6">
-		<button type="button" class="btn p-0 w-100 text-start border-0" data-bs-toggle="tab" data-bs-target="#cpl-tahun" id="tahun-card-btn">
-			<div class="card filter-card h-100 shadow-sm" id="tahun-card" style="cursor: pointer;">
-				<div class="card-body text-center p-3">
-					<div class="mb-2">
-						<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
-					</div>
-					<h6 class="card-title mb-2">CPL Per Tahun Akademik</h6>
-					<p class="card-text text-muted small mb-0">Perhitungan CPL per tahun akademik dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam 1 tahun akademik.</p>
+		<div class="card filter-card h-100 shadow-sm" id="tahun-card" role="button" data-bs-toggle="tab" data-bs-target="#cpl-tahun" style="cursor: pointer; transition: all 0.3s;">
+			<div class="card-body text-center p-3">
+				<div class="mb-2">
+					<i class="bi bi-calendar2-event text-secondary" style="font-size: 1.8rem;"></i>
 				</div>
+				<h6 class="card-title mb-2">CPL Per Tahun Akademik</h6>
+				<p class="card-text text-muted small mb-0">Perhitungan CPL per tahun akademik dilakukan dengan menjumlahkan CPMK dari berbagai mata kuliah dalam 1 tahun akademik.</p>
 			</div>
-		</button>
+		</div>
 	</div>
 </div>
 
@@ -80,25 +76,29 @@
 <div class="tab-content" id="filterTabsContent">
 	<!-- Semester Filter Tab -->
 	<div class="tab-pane fade show active" id="cpl-semester" role="tabpanel">
-		<div class="card mb-4">
-			<div class="card-body">
-				<div class="d-flex align-items-center gap-2 mb-3">
+		<div class="modern-filter-wrapper mb-4">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
 					<i class="bi bi-funnel-fill text-primary"></i>
-					<span class="fw-semibold">Filter CPL Per Semester</span>
+					<span class="modern-filter-title">Filter CPL Per Semester</span>
 				</div>
+			</div>
+			<div class="modern-filter-body">
 				<form id="filterFormSemester">
-					<div class="row g-3">
+					<div class="row g-3 align-items-end">
 						<div class="col-md-10">
-							<label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
-							<select class="form-select" id="semester" name="semester" required>
+							<label for="semester" class="modern-filter-label">
+								<i class="bi bi-bookmark-fill me-1"></i> Semester <span class="text-danger">*</span>
+							</label>
+							<select class="form-select modern-filter-input" id="semester" name="semester" required>
 								<option value="">-- Pilih Semester --</option>
 								<?php foreach ($semesterList as $sem): ?>
 									<option value="<?= esc($sem) ?>"><?= esc($sem) ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
-						<div class="col-md-2 d-flex align-items-end">
-							<button type="submit" class="btn btn-primary w-100">
+						<div class="col-md-2">
+							<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 								<i class="bi bi-search"></i> Tampilkan
 							</button>
 						</div>
@@ -110,25 +110,29 @@
 
 	<!-- Tahun Akademik Filter Tab -->
 	<div class="tab-pane fade" id="cpl-tahun" role="tabpanel">
-		<div class="card mb-4">
-			<div class="card-body">
-				<div class="d-flex align-items-center gap-2 mb-3">
+		<div class="modern-filter-wrapper mb-4">
+			<div class="modern-filter-header">
+				<div class="d-flex align-items-center gap-2">
 					<i class="bi bi-funnel-fill text-primary"></i>
-					<span class="fw-semibold">Filter CPL Per Tahun Akademik</span>
+					<span class="modern-filter-title">Filter CPL Per Tahun Akademik</span>
 				</div>
+			</div>
+			<div class="modern-filter-body">
 				<form id="filterFormTahun">
-					<div class="row g-3">
+					<div class="row g-3 align-items-end">
 						<div class="col-md-10">
-							<label for="tahun_akademik" class="form-label">Tahun Akademik <span class="text-danger">*</span></label>
-							<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
+							<label for="tahun_akademik" class="modern-filter-label">
+								<i class="bi bi-calendar-event me-1"></i> Tahun Akademik <span class="text-danger">*</span>
+							</label>
+							<select class="form-select modern-filter-input" id="tahun_akademik" name="tahun_akademik" required>
 								<option value="">-- Pilih Tahun Akademik --</option>
 								<?php foreach ($tahunAkademikList as $tahun): ?>
 									<option value="<?= esc($tahun) ?>"><?= esc($tahun) ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
-						<div class="col-md-2 d-flex align-items-end">
-							<button type="submit" class="btn btn-primary w-100">
+						<div class="col-md-2">
+							<button type="submit" class="btn btn-primary modern-filter-btn w-100">
 								<i class="bi bi-search"></i> Tampilkan
 							</button>
 						</div>
@@ -148,12 +152,9 @@
 </div>
 
 <!-- Empty State -->
-<div id="emptyState" class="card" style="display: none;">
-	<div class="card-body text-center py-5 text-muted">
-		<i class="bi bi-inbox" style="font-size: 3rem;"></i>
-		<p class="mb-1 mt-3">Belum ada data yang ditampilkan</p>
-		<small>Pilih filter untuk melihat laporan CPL Anda</small>
-	</div>
+<div id="emptyState" class="text-center py-5">
+	<i class="bi bi-bar-chart" style="font-size: 4rem; color: #ccc;"></i>
+	<p class="text-muted mt-3">Pilih filter dan klik tombol search untuk melihat laporan CPL</p>
 </div>
 
 <!-- Data Table -->
@@ -209,40 +210,28 @@
 <?= $this->section('js') ?>
 <script>
 	$(document).ready(function() {
-		// Show empty state initially
-		$('#emptyState').show();
-
 		// Handle filter card clicks - update styling and switch tabs
-		$('#semester-card-btn, #semester-card').on('click', function(e) {
-			e.preventDefault();
-			updateActiveCard('semester');
-		});
+		$('[id$="-card"]').on('click', function() {
+			const targetId = $(this).data('bs-target');
 
-		$('#tahun-card-btn, #tahun-card').on('click', function(e) {
-			e.preventDefault();
-			updateActiveCard('tahun');
-		});
-
-		function updateActiveCard(type) {
 			// Remove active styling from all cards
 			$('.filter-card').removeClass('border-primary');
 			$('.filter-card .card-title').removeClass('text-primary fw-bold');
 			$('.filter-card i').removeClass('text-primary').addClass('text-secondary');
 
-			// Add active styling to selected card
-			const cardId = type + '-card';
-			$('#' + cardId).addClass('border-primary');
-			$('#' + cardId).find('.card-title').addClass('text-primary fw-bold');
-			$('#' + cardId).find('i').removeClass('text-secondary').addClass('text-primary');
+			// Add active styling to clicked card
+			$(this).addClass('border-primary');
+			$(this).find('.card-title').addClass('text-primary fw-bold');
+			$(this).find('i').removeClass('text-secondary').addClass('text-primary');
 
-			// Switch to corresponding tab
+			// Switch tab pane
 			$('.tab-pane').removeClass('show active');
-			$('#cpl-' + type).addClass('show active');
+			$(targetId).addClass('show active');
 
-			// Hide data table and show empty state
+			// Reset table on tab switch
 			$('#dataTable').hide();
 			$('#emptyState').show();
-		}
+		});
 
 		// Handle semester filter form submission
 		$('#filterFormSemester').on('submit', function(e) {
