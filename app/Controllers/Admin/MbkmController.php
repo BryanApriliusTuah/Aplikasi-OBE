@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MbkmModel;
+use App\Models\TahunAkademikModel;
 
 class MbkmController extends BaseController
 {
@@ -35,6 +36,10 @@ class MbkmController extends BaseController
 	// Index - List all MBKM activities
 	public function index()
 	{
+		// Load tahun akademik early so we can derive the default filter
+		$tahunAkademikModel  = new TahunAkademikModel();
+		$tahun_akademik_rows = $tahunAkademikModel->getAllForDisplay();
+
 		if ($this->request->getGet('reset') === '1') {
 			session()->remove('mbkm_filters');
 			return redirect()->to('admin/mbkm');
@@ -54,7 +59,16 @@ class MbkmController extends BaseController
 			];
 			session()->set('mbkm_filters', $saved);
 		} else {
-			$saved = session()->get('mbkm_filters') ?? [];
+			$saved = session()->get('mbkm_filters');
+			// Default to the newest tahun/semester when no filter has been chosen yet
+			if (empty($saved) && !empty($tahun_akademik_rows)) {
+				$newest = $tahun_akademik_rows[0];
+				$saved  = [
+					'tahun'    => $newest['tahun'],
+					'semester' => $newest['semester'],
+				];
+			}
+			$saved = $saved ?? [];
 		}
 
 		// Program Studi is always locked to Teknik Informatika
