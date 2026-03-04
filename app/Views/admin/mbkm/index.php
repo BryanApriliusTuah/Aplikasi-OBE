@@ -17,15 +17,15 @@
 
 	<?php if (session()->get('role') === 'admin'): ?>
 		<div class="d-flex justify-content-end gap-2 mb-3">
-			<button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportCpmkModal">
+			<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportCpmkModal">
 				<i class="bi bi-file-earmark-excel"></i> Export CPMK Excel
 			</button>
-			<button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#syncApiModal">
-				<i class="bi bi-cloud-arrow-down"></i> Sinkronisasi dari API
+			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncApiModal">
+				<i class="bi bi-cloud-arrow-down"></i> Sinkronisasi SIUBER
 			</button>
-			<a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
+			<!-- <a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
 				<i class="bi bi-plus-circle"></i> Tambah Kegiatan
-			</a>
+			</a> -->
 		</div>
 	<?php endif; ?>
 
