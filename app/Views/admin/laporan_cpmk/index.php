@@ -10,9 +10,6 @@
 		<h2 class="mb-0 fw-bold">Laporan CPMK</h2>
 		<p class="text-muted mb-0 small">Pilih mata kuliah dan tahun akademik untuk generate portofolio mata kuliah</p>
 	</div>
-	<a href="<?= base_url('admin/laporan-cpmk/templates') ?>" class="btn btn-outline-primary">
-		<i class="bi bi-file-earmark-text"></i> Kelola Template Analisis
-	</a>
 </div>
 
 <?php if (session()->getFlashdata('error')): ?>
