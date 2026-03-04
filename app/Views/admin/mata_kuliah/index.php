@@ -121,6 +121,7 @@
 							<th class="text-center align-middle" rowspan="2">Kode MK</th>
 							<th class="text-center align-middle" style="min-width: 200px;" rowspan="2">Nama Mata Kuliah</th>
 							<th class="text-center align-middle" rowspan="2">Tipe</th>
+							<th class="text-center align-middle" rowspan="2">SKS</th>
 							<th class="text-center" colspan="9">Semester</th>
 							<th class="text-center align-middle" style="min-width: 200px;" rowspan="2">Deskripsi Singkat</th>
 							<th class="text-center align-middle" style="width: 100px;" rowspan="2">Aksi</th>
@@ -138,6 +139,7 @@
 								<td class="text-center text-nowrap"><?= esc($mk['kode_mk']) ?></td>
 								<td style="white-space: normal;"><?= esc($mk['nama_mk']) ?></td>
 								<td class="text-center text-nowrap"><?= esc($mk['tipe']) ?></td>
+								<td class="text-center text-nowrap"><?= esc($mk['sks']) ?></td>
 								<?php for ($i = 0; $i <= 8; $i++): ?>
 									<td class="text-center"><?= ((int)$mk['semester'] === $i) ? esc($mk['semester']) : '' ?></td>
 								<?php endfor ?>

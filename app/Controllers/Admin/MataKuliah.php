@@ -279,7 +279,7 @@ class MataKuliah extends BaseController
 			return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat melakukan sinkronisasi.');
 		}
 
-		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/matakuliah';
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/matakuliah?prodiKode=58';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -309,9 +309,11 @@ class MataKuliah extends BaseController
 				if ($item['prodiKode'] == 58) {
 					log_message('debug', 'API item keys: ' . json_encode(array_keys($item)));
 					log_message('debug', 'API item: ' . json_encode($item));
-					$kode = $item['matakuliah_kode'] ?? null;
-					$nama = $item['matakuliah_nama'] ?? null;
-					$semester = $item['matakuliah_semester'] ?? 0;
+					$kode = $item['matakuliahKode'] ?? null;
+					$nama = $item['matakuliahNama'] ?? null;
+					$semester = $item['matakuliahSemester'] ?? 0;
+					$tipe = $item['matakuliahSifat'] == 'Wajib Program Studi' ? 'wajib' : 'pilihan';
+					$sks = $item['matakuliahSks'] ?? 0;
 
 					if (!$kode || !$nama) {
 						continue;
@@ -322,6 +324,8 @@ class MataKuliah extends BaseController
 					$data = [
 						'kode_mk'  => $kode,
 						'nama_mk'  => $nama,
+						'tipe'     => $tipe,
+						'sks'      => $sks,
 						'semester'  => $semester,
 					];
 
