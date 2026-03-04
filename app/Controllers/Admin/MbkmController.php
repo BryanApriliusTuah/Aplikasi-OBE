@@ -533,7 +533,7 @@ class MbkmController extends BaseController
 			return redirect()->back()->with('error', 'Semester ID tidak valid. Gunakan format 5 digit, misalnya 20251.');
 		}
 
-		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&kelasJenis=Merdeka';
+		$apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&klsJenis=Merdeka';
 		$apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
 
 		$client = \Config\Services::curlrequest();
@@ -826,16 +826,18 @@ class MbkmController extends BaseController
 						$activeMbkms = $this->db->table('mbkm')
 							->select('id')
 							->where('nim', $nimRow['nim'])
-							->whereIn('status_kegiatan', ['berlangsung', 'selesai', 'disetujui'])
-							->where('semester', $semesterTahunAkademik)
+							->groupStart()
+								->where('semester', $semesterTahunAkademik)
+								->orWhere('semester IS NULL', null, false)
+							->groupEnd()
 							->get()
 							->getResultArray();
 
 						foreach ($activeMbkms as $mbkmRow) {
-							$this->db->table('mbkm_jadwal')->insert([
-								'mbkm_id'   => $mbkmRow['id'],
-								'jadwal_id' => $jId,
-							]);
+							$this->db->query(
+								'INSERT IGNORE INTO mbkm_jadwal (mbkm_id, jadwal_id) VALUES (?, ?)',
+								[$mbkmRow['id'], $jId]
+							);
 							$mbkmLinked++;
 						}
 					}

@@ -64,29 +64,16 @@ class MbkmModel extends Model
 		}
 
 		if (!empty($filters['tahun']) || !empty($filters['semester'])) {
-			$tahun      = $filters['tahun'] ?? '';
-			$semester   = $filters['semester'] ?? '';
+			$tahun    = $filters['tahun'] ?? '';
+			$semester = $filters['semester'] ?? '';
 
-			// Join through jadwal_mahasiswa → jadwal to filter by tahun_akademik.
-			// FIND_IN_SET handles comma-separated NIMs in k.nim.
-			$builder->join(
-				'jadwal_mahasiswa jm',
-				"FIND_IN_SET(jm.nim, REPLACE(k.nim, ' ', '')) > 0",
-				'inner'
-			);
-			$builder->join(
-				'jadwal j2',
-				"j2.id = jm.jadwal_id AND j2.kelas = 'KM'",
-				'inner'
-			);
-			$builder->groupBy('k.id');
-
+			// Filter directly on k.semester (e.g. "2025 Genap") — same field shown in the table.
 			if ($tahun && $semester) {
-				$builder->where('j2.tahun_akademik', $tahun . ' ' . $semester);
+				$builder->where('k.semester', $tahun . ' ' . $semester);
 			} elseif ($tahun) {
-				$builder->like('j2.tahun_akademik', $tahun, 'after');
+				$builder->like('k.semester', $tahun, 'after');
 			} else {
-				$builder->like('j2.tahun_akademik', $semester, 'before');
+				$builder->like('k.semester', $semester, 'before');
 			}
 		}
 
