@@ -151,7 +151,9 @@
 							<li><a class="nav-link <?= uri_string() == 'admin/cpmk' ? 'active' : '' ?>" href="<?= base_url('admin/cpmk') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Capaian Pembelajaran Mata Kuliah (CPMK)">CPMK</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/dosen' ? 'active' : '' ?>" href="<?= base_url('admin/dosen') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Dosen">Data Dosen</a></li>
 							<li><a class="nav-link <?= uri_string() == 'admin/mahasiswa' ? 'active' : '' ?>" href="<?= base_url('admin/mahasiswa') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Data Mahasiswa">Data mahasiswa</a></li>
+							<?php if (session()->get('role') === 'admin'): ?>
 							<li><a class="nav-link <?= str_starts_with(uri_string(), 'admin/tahun-akademik') ? 'active' : '' ?>" href="<?= base_url('admin/tahun-akademik') ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="Kelola Tahun Akademik">Tahun Akademik</a></li>
+							<?php endif; ?>
 						</div>
 					</ul>
 				</li>
