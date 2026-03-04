@@ -1090,10 +1090,11 @@ class Mengajar extends BaseController
 	// Add this private method inside your Mengajar controller class
 	private function _getFilteredJadwalData()
 	{
-		// Get filters from query parameters
+		// Get filters from query parameters (same names as the index page filter form)
 		$filters = [
 			'program_studi_kode' => $this->request->getGet('program_studi_kode'),
-			'tahun_akademik' => $this->request->getGet('tahun_akademik')
+			'tahun'              => $this->request->getGet('tahun'),
+			'semester'           => $this->request->getGet('semester'),
 		];
 
 		// Build query
@@ -1102,13 +1103,18 @@ class Mengajar extends BaseController
 		$builder->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id');
 		$builder->join('program_studi ps', 'ps.kode = jm.program_studi_kode', 'left');
 
+		// Only export Reguler classes
+		$builder->where('jm.kelas_jenis', 'Reguler');
+
 		// Apply filters
 		if (!empty($filters['program_studi_kode'])) {
 			$builder->where('jm.program_studi_kode', $filters['program_studi_kode']);
 		}
-		if (!empty($filters['tahun_akademik'])) {
-			// MODIFIED: Use 'like' for partial "starts with" matching
-			$builder->like('jm.tahun_akademik', $filters['tahun_akademik'], 'after');
+		if (!empty($filters['tahun'])) {
+			$builder->like('jm.tahun_akademik', $filters['tahun'], 'after');
+		}
+		if (!empty($filters['semester'])) {
+			$builder->like('jm.tahun_akademik', $filters['semester'], 'before');
 		}
 
 		$jadwal_list = $builder->orderBy('jm.tahun_akademik', 'DESC')

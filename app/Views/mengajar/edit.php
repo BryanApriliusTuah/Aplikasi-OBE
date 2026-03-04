@@ -236,16 +236,20 @@ $('#hari').select2({
 		});
 
 		// All dosen for member dropdowns
-		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
+		var allDosen = <?= json_encode(array_map(fn($d) => ['id' => $d['id'], 'nip' => $d['nip'], 'nama_lengkap' => $d['nama_lengkap']], $dosen_list)) ?>;
 
-		function addMemberRow() {
+		function buildMemberOptions(selectedId) {
 			var html = '<option value="">-- Pilih Dosen Pengampu --</option>';
 			allDosen.forEach(function(d) {
-				html += '<option value="' + d.id + '">' + d.nama_lengkap + '</option>';
+				var sel = (selectedId && String(d.id) === String(selectedId)) ? ' selected' : '';
+				html += '<option value="' + d.id + '"' + sel + '>' + d.nama_lengkap + '</option>';
 			});
+			return html;
+		}
 
+		function addMemberRow(selectedId) {
 			var $row = $('<div class="d-flex gap-2 mb-2 align-items-center"></div>');
-			var $select = $('<select class="form-select select2-dosen-member" name="dosen_members[]">' + html + '</select>');
+			var $select = $('<select class="form-select select2-dosen-member" name="dosen_members[]">' + buildMemberOptions(selectedId) + '</select>');
 			var $removeBtn = $('<button type="button" class="btn btn-outline-danger btn-sm flex-shrink-0 btn-remove-member"><i class="bi bi-trash"></i></button>');
 
 			$row.append($select).append($removeBtn);
@@ -266,6 +270,7 @@ $('#hari').select2({
 		var $apiKelasSection = $('#api-kelas-section');
 		var $apiKelasLoading = $('#api-kelas-loading');
 		var $apiKelasContainer = $('#api-kelas-container');
+		var kelasDataList = [];
 
 		function fetchApiKelas() {
 			var $selectedOption = $('#mata_kuliah_id').find(':selected');
@@ -294,6 +299,7 @@ $('#hari').select2({
 					$apiKelasLoading.hide();
 
 					if (data.success && data.data.length > 0) {
+						kelasDataList = data.data;
 						var currentKelasId = $('#kelas_id').val();
 						var html = '<div class="list-group">';
 						$.each(data.data, function(index, kelas) {
@@ -349,6 +355,28 @@ $('#hari').select2({
 								} else {
 									$('#tahun_akademik').val(year + ' Genap');
 								}
+							}
+
+							// Auto-fill dosen koordinator & pengampu from dosen_pengajar
+							var idx = parseInt($radio.val());
+							var selectedKelas = kelasDataList[idx] || null;
+							if (selectedKelas && selectedKelas.dosen_pengajar && selectedKelas.dosen_pengajar.length > 0) {
+								$('#dosen-members-container').find('select').each(function() {
+									$(this).select2('destroy');
+								});
+								$('#dosen-members-container').empty();
+
+								selectedKelas.dosen_pengajar.forEach(function(dosen) {
+									var apiNip  = String(dosen.nip || '');
+									var local   = allDosen.find(function(d) { return String(d.nip) === apiNip; });
+									var localId = local ? local.id : null;
+
+									if (dosen.role === 'leader') {
+										$('#dosen_leader').val(localId || '').trigger('change');
+									} else {
+										addMemberRow(localId);
+									}
+								});
 							}
 						});
 					} else {

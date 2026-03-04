@@ -34,16 +34,21 @@
 
 <body>
 	<h2>Daftar Jadwal Mengajar</h2>
+	<?php
+	$subtitle = [];
+	if (!empty($_GET['tahun'])) $subtitle[] = 'Tahun: ' . htmlspecialchars($_GET['tahun']);
+	if (!empty($_GET['semester'])) $subtitle[] = 'Semester: ' . htmlspecialchars($_GET['semester']);
+	if (!empty($subtitle)):
+	?>
+	<p style="text-align: center; font-size: 11px; color: #555;"><?= implode(' | ', $subtitle) ?></p>
+	<?php endif; ?>
 	<table class="table">
 		<thead>
 			<tr>
 				<th>No</th>
-				<th>Prodi</th>
-				<th>Tahun Akademik</th>
 				<th>Kode MK</th>
 				<th>Mata Kuliah</th>
 				<th>SMT</th>
-				<th>SKS</th>
 				<th>Kelas</th>
 				<th>Waktu & Ruang</th>
 				<th>Dosen Pengampu</th>
@@ -53,12 +58,9 @@
 			<?php foreach ($jadwal_list as $key => $jadwal): ?>
 				<tr>
 					<td><?= $key + 1 ?></td>
-					<td><?= esc($jadwal['program_studi']) ?></td>
-					<td><?= esc($jadwal['tahun_akademik']) ?></td>
 					<td><?= esc($jadwal['kode_mk']) ?></td>
 					<td><?= esc($jadwal['nama_mk']) ?></td>
 					<td><?= esc($jadwal['semester']) ?></td>
-					<td><?= esc($jadwal['sks']) ?></td>
 					<td><?= esc($jadwal['kelas']) ?></td>
 					<td>
 						<?php
@@ -73,7 +75,7 @@
 						<?php
 						$dosen_pengampu = [];
 						foreach ($jadwal['dosen_list'] as $dosen) {
-							$dosen_pengampu[] = esc($dosen['nama_lengkap']) . ($dosen['role'] == 'leader' ? ' (K)' : '');
+							$dosen_pengampu[] = esc($dosen['nama_lengkap']) . ($dosen['role'] == 'leader' ? ' (Koordinator)' : '');
 						}
 						echo implode(", ", $dosen_pengampu);
 						?>

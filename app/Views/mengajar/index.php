@@ -34,8 +34,15 @@
 				<i class="bi bi-download"></i> Export
 			</button>
 			<ul class="dropdown-menu dropdown-menu-end">
-				<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/exportExcel') ?>"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>
-				<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/exportPdf') ?>"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
+				<?php
+				$exportParams = http_build_query(array_filter([
+					'tahun'              => $filters['tahun'] ?? '',
+					'semester'           => $filters['semester'] ?? '',
+					'program_studi_kode' => $filters['program_studi_kode'] ?? '',
+				]));
+				?>
+				<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/exportExcel') ?>?<?= $exportParams ?>"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>
+				<li><a class="dropdown-item" href="<?= base_url('admin/mengajar/exportPdf') ?>?<?= $exportParams ?>"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
 			</ul>
 		</div>
 	</div>
