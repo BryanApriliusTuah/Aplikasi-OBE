@@ -147,14 +147,15 @@
                         <td class="fw-bold">Dosen Pengampu</td>
                         <td>
                             <?php if (!empty($portfolio['identitas']['dosen_pengampu'])): ?>
-                                <ul class="mb-0">
-                                    <?php foreach ($portfolio['identitas']['dosen_pengampu'] as $dosen): ?>
-                                        <?php
-                                            $title = $dosen['role'] === 'leader' ? 'Dosen Koordinator' : ($dosen['role'] === 'member' ? 'Dosen' : '');
-                                        ?>
-                                        <li><?= esc($dosen['nama_lengkap']) ?> (<?= esc($dosen['nip']) ?>) - <?= $title ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
+                                <?php foreach ($portfolio['identitas']['dosen_pengampu'] as $kelas => $dosens): ?>
+                                    <strong>Kelas <?= esc($kelas) ?>:</strong>
+                                    <ul class="mb-1">
+                                        <?php foreach ($dosens as $dosen): ?>
+                                            <?php $title = $dosen['role'] === 'leader' ? 'Dosen Koordinator' : ($dosen['role'] === 'member' ? 'Dosen' : ''); ?>
+                                            <li><?= esc($dosen['nama_lengkap']) ?> (<?= esc($dosen['nip']) ?>)<?= $title ? ' - ' . $title : '' ?></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 -
                             <?php endif; ?>

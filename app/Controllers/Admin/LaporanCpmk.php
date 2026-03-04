@@ -126,6 +126,7 @@ class LaporanCpmk extends BaseController
 		$builder = $this->db->table('jadwal');
 		$builder->where('mata_kuliah_id', $mataKuliahId);
 		$builder->like('tahun_akademik', $tahunAkademik, 'both');
+		$builder->where('kelas !=', 'KM');
 		if ($programStudi) {
 			$builder->where('program_studi_kode', $programStudi);
 		}
@@ -135,15 +136,39 @@ class LaporanCpmk extends BaseController
 			return null;
 		}
 
-		// Get lecturers (dosen pengampu)
+		// Get lecturers (dosen pengampu) per kelas from jadwal_mengajar only
 		$jadwalIds = array_column($jadwalMengajar, 'id');
-		$dosenPengampu = $this->db->table('jadwal_dosen jd')
-			->select('d.nama_lengkap, d.nip, MIN(jd.role) as role')
+		$dosenRows = $this->db->table('jadwal_dosen jd')
+			->select('d.nama_lengkap, d.nip, jd.role, j.kelas')
 			->join('dosen d', 'd.id = jd.dosen_id')
+			->join('jadwal j', 'j.id = jd.jadwal_id')
 			->whereIn('jd.jadwal_id', $jadwalIds)
-			->groupBy('d.nip')
+			->orderBy('j.kelas')
+			->orderBy('jd.role')
 			->get()
 			->getResultArray();
+
+		// Group dosen by kelas
+		$dosenPengampu = [];
+		foreach ($dosenRows as $row) {
+			$kelas = $row['kelas'];
+			if (!isset($dosenPengampu[$kelas])) {
+				$dosenPengampu[$kelas] = [];
+			}
+			// Avoid duplicate dosen in same kelas
+			$nip = $row['nip'];
+			if (!isset($dosenPengampu[$kelas][$nip])) {
+				$dosenPengampu[$kelas][$nip] = [
+					'nama_lengkap' => $row['nama_lengkap'],
+					'nip'          => $nip,
+					'role'         => $row['role'],
+				];
+			}
+		}
+		// Re-index inner arrays
+		foreach ($dosenPengampu as $kelas => $dosens) {
+			$dosenPengampu[$kelas] = array_values($dosens);
+		}
 
 		// 2. Get CPMK data with CPL relations
 		$cpmkData = $this->getCpmkData($mataKuliahId);
