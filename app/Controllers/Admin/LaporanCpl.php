@@ -15,6 +15,7 @@ class LaporanCpl extends BaseController
 	protected $cqiModel;
 	protected $standarMinimalCapaianModel;
 	protected $analysisTemplateCplModel;
+	protected $penyebabTemplateCplModel;
 
 	public function __construct()
 	{
@@ -27,6 +28,7 @@ class LaporanCpl extends BaseController
 		$this->cqiModel = new \App\Models\CqiModel();
 		$this->standarMinimalCapaianModel = new \App\Models\StandarMinimalCplModel();
 		$this->analysisTemplateCplModel = new \App\Models\AnalysisTemplateCplModel();
+		$this->penyebabTemplateCplModel = new \App\Models\PenyebabTemplateCplModel();
 	}
 
 	public function index()
@@ -159,6 +161,10 @@ class LaporanCpl extends BaseController
 		$buktiDokumentasiFile = $analysisRecord['bukti_dokumentasi_file'] ?? null;
 		$notulensiRapatFile = $analysisRecord['notulensi_rapat_file'] ?? null;
 
+		// 9. Get penyebab templates and ensure defaults exist
+		$this->initializeDefaultPenyebabTemplates();
+		$penyebabTemplates = $this->penyebabTemplateCplModel->getTemplatesAsArray();
+
 		return [
 			'identitas' => $identitas,
 			'cpl_list' => $cplList,
@@ -168,7 +174,8 @@ class LaporanCpl extends BaseController
 			'lampiran' => $lampiranData,
 			'cqi_data' => $cqiData,
 			'bukti_dokumentasi_file' => $buktiDokumentasiFile,
-			'notulensi_rapat_file' => $notulensiRapatFile
+			'notulensi_rapat_file' => $notulensiRapatFile,
+			'penyebab_templates' => $penyebabTemplates,
 		];
 	}
 
@@ -491,6 +498,15 @@ class LaporanCpl extends BaseController
 
 		$keteranganTambahan = $savedAnalysis['analisis_summary'] ?? '';
 
+		// Penyebab utama ketidakcapaian
+		$penyebabMode   = $savedAnalysis['penyebab_mode'] ?? 'auto';
+		$penyebabOption = $savedAnalysis['penyebab_auto_option'] ?? 'default';
+		if ($penyebabMode === 'manual') {
+			$penyebabText = $savedAnalysis['penyebab_text'] ?? '';
+		} else {
+			$penyebabText = $this->generatePenyebabText($cplTercapai, $cplTidakTercapai, $passingThreshold, $penyebabOption);
+		}
+
 		return [
 			'cpl_tercapai' => $cplTercapai,
 			'cpl_tidak_tercapai' => $cplTidakTercapai,
@@ -499,6 +515,9 @@ class LaporanCpl extends BaseController
 			'total_cpl' => count($cplAchievementData),
 			'total_tercapai' => count($cplTercapai),
 			'total_tidak_tercapai' => count($cplTidakTercapai),
+			'penyebab_mode'   => $penyebabMode,
+			'penyebab_option' => $penyebabOption,
+			'penyebab_text'   => $penyebabText,
 		];
 	}
 
@@ -540,6 +559,123 @@ class LaporanCpl extends BaseController
 		}
 
 		return "Terdapat $jumlahTidakTercapai CPL yang belum tercapai ($cplTidakTercapaiList). Diperlukan evaluasi lebih lanjut terhadap mata kuliah kontributor dan metode pembelajaran untuk meningkatkan capaian CPL tersebut.";
+	}
+
+	private function generatePenyebabText($cplTercapai, $cplTidakTercapai, $passingThreshold, $selectedKey = 'default')
+	{
+		$templates = $this->penyebabTemplateCplModel->getTemplatesAsArray();
+		$template  = $templates[$selectedKey] ?? ($templates['default'] ?? null);
+
+		$totalCpl              = count($cplTercapai) + count($cplTidakTercapai);
+		$jumlahTercapai        = count($cplTercapai);
+		$jumlahTidakTercapai   = count($cplTidakTercapai);
+		$cplTercapaiList       = implode(', ', $cplTercapai);
+		$cplTidakTercapaiList  = implode(', ', array_column($cplTidakTercapai, 'kode_cpl'));
+
+		if ($template) {
+			$text = empty($cplTidakTercapai)
+				? ($template['template_tercapai'] ?? '')
+				: ($template['template_tidak_tercapai'] ?? '');
+
+			return str_replace(
+				['{total_cpl}', '{jumlah_tercapai}', '{jumlah_tidak_tercapai}', '{cpl_tercapai_list}', '{cpl_tidak_tercapai_list}', '{standar_minimal}'],
+				[$totalCpl, $jumlahTercapai, $jumlahTidakTercapai, $cplTercapaiList, $cplTidakTercapaiList, $passingThreshold],
+				$text
+			);
+		}
+
+		// Fallback default text
+		if (empty($cplTidakTercapai)) {
+			return 'Tidak terdapat penyebab ketidakcapaian. Seluruh CPL telah berhasil dicapai.';
+		}
+		return "Ketidakcapaian {$jumlahTidakTercapai} CPL ({$cplTidakTercapaiList}) disebabkan oleh rendahnya penguasaan materi pada mata kuliah kontributor dan kurangnya ketercapaian CPMK yang berkontribusi terhadap CPL tersebut.";
+	}
+
+	private function initializeDefaultPenyebabTemplates()
+	{
+		if (!empty($this->penyebabTemplateCplModel->findAll())) {
+			return;
+		}
+
+		$defaults = [
+			[
+				'option_key'              => 'default',
+				'option_label'            => 'Template 1 (Standar)',
+				'template_tercapai'       => 'Tidak terdapat penyebab ketidakcapaian. Seluruh CPL telah berhasil dicapai.',
+				'template_tidak_tercapai' => 'Ketidakcapaian {jumlah_tidak_tercapai} CPL ({cpl_tidak_tercapai_list}) disebabkan oleh rendahnya penguasaan materi pada mata kuliah kontributor dan kurangnya ketercapaian CPMK yang berkontribusi terhadap CPL tersebut.',
+				'is_active'               => 1,
+			],
+			[
+				'option_key'              => 'formal',
+				'option_label'            => 'Template 2 (Formal)',
+				'template_tercapai'       => 'Tidak terdapat penyebab ketidakcapaian. Seluruh {total_cpl} CPL telah berhasil memenuhi standar minimal {standar_minimal}% yang telah ditetapkan.',
+				'template_tidak_tercapai' => 'Berdasarkan hasil analisis, penyebab utama ketidakcapaian CPL {cpl_tidak_tercapai_list} meliputi: (1) belum optimalnya pelaksanaan proses pembelajaran pada mata kuliah kontributor, (2) strategi asesmen yang belum sepenuhnya selaras dengan indikator capaian CPL, dan (3) keterbatasan kompetensi awal mahasiswa dalam memenuhi standar minimal {standar_minimal}% yang telah ditetapkan.',
+				'is_active'               => 1,
+			],
+			[
+				'option_key'              => 'singkat',
+				'option_label'            => 'Template 3 (Singkat)',
+				'template_tercapai'       => 'Tidak ada ketidakcapaian.',
+				'template_tidak_tercapai' => 'CPL tidak tercapai: {cpl_tidak_tercapai_list}. Penyebab utama: penguasaan kompetensi mahasiswa masih di bawah standar minimal {standar_minimal}%.',
+				'is_active'               => 1,
+			],
+		];
+
+		foreach ($defaults as $tmpl) {
+			$this->penyebabTemplateCplModel->insert($tmpl);
+		}
+	}
+
+	public function savePenyebab()
+	{
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return $this->response->setJSON(['success' => false, 'message' => 'Akses ditolak.'])->setStatusCode(403);
+		}
+
+		$programStudi = $this->request->getPost('program_studi_kode');
+		$tahunAkademik = $this->request->getPost('tahun_akademik');
+		$angkatan      = $this->request->getPost('angkatan');
+		$mode          = $this->request->getPost('penyebab_mode');
+		$autoOption    = $this->request->getPost('penyebab_auto_option');
+		$manualText    = $this->request->getPost('penyebab_text');
+		$templatesJson = $this->request->getPost('templates');
+
+		if (!$programStudi || !$tahunAkademik || !$angkatan || !$mode) {
+			return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap.'])->setStatusCode(400);
+		}
+
+		try {
+			// Save/update template content if provided
+			if ($templatesJson) {
+				$templates = json_decode($templatesJson, true);
+				if (is_array($templates)) {
+					foreach ($templates as $optionKey => $templateData) {
+						$this->penyebabTemplateCplModel->updateByKey($optionKey, [
+							'template_tercapai'       => $templateData['template_tercapai'] ?? '',
+							'template_tidak_tercapai' => $templateData['template_tidak_tercapai'] ?? '',
+						]);
+					}
+				}
+			}
+
+			// Preserve existing keterangan mode; only update penyebab fields
+			$existing = $this->analysisCplModel->getAnalysis($programStudi, $tahunAkademik, $angkatan);
+			$data = [
+				'program_studi'        => $programStudi,
+				'tahun_akademik'       => $tahunAkademik,
+				'angkatan'             => $angkatan,
+				'mode'                 => $existing['mode'] ?? 'auto',
+				'penyebab_mode'        => $mode,
+				'penyebab_auto_option' => $mode === 'auto' ? ($autoOption ?: 'default') : null,
+				'penyebab_text'        => $mode === 'manual' ? $manualText : null,
+			];
+
+			$this->analysisCplModel->saveAnalysis($data);
+
+			return $this->response->setJSON(['success' => true, 'message' => 'Penyebab utama berhasil disimpan.']);
+		} catch (\Exception $e) {
+			return $this->response->setJSON(['success' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()])->setStatusCode(500);
+		}
 	}
 
 	private function getTahunAkademik()

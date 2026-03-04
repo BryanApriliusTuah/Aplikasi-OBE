@@ -285,6 +285,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('laporan-cpl/export-zip', 'LaporanCpl::exportZip');
 	$routes->get('laporan-cpl/get-angkatan', 'LaporanCpl::getAngkatanByFilter');
 	$routes->post('laporan-cpl/save-analysis', 'LaporanCpl::saveAnalysis');
+	$routes->post('laporan-cpl/save-penyebab', 'LaporanCpl::savePenyebab');
 	$routes->post('laporan-cpl/save-cqi', 'LaporanCpl::saveCqi');
 	$routes->post('laporan-cpl/upload-bukti-dokumentasi', 'LaporanCpl::uploadBuktiDokumentasi');
 	$routes->post('laporan-cpl/delete-bukti-dokumentasi', 'LaporanCpl::deleteBuktiDokumentasi');

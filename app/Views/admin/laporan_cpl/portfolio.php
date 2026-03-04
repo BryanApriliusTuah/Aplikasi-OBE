@@ -240,20 +240,118 @@
 						<?php endif; ?>
 					</li>
 					<li class="mb-2">
-						<strong>Penyebab Utama Ketidakcapaian:</strong>
-						<?php if (!empty($report['analysis']['cpl_tidak_tercapai'])): ?>
-							<ul class="mt-2 mb-0">
-								Mahasiswa tidak mencapai target capaian pembelajaran pada CPL berikut:
-								<?php foreach ($report['analysis']['cpl_tidak_tercapai'] as $cpl): ?>
-									<li class="mb-2">
-										<strong><?= esc($cpl['kode_cpl']) ?></strong>
-										<div class="mt-1 text-secondary"><?= esc($cpl['deskripsi']) ?></div>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php else: ?>
-							<span class="text-muted">Semua CPL tercapai.</span>
-						<?php endif; ?>
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<strong>Penyebab Utama Ketidakcapaian:</strong>
+							<button type="button" class="btn btn-sm btn-outline-primary no-print" onclick="toggleEditPenyebab()">
+								<i class="bi bi-pencil"></i> Edit
+							</button>
+						</div>
+
+						<!-- Display Mode -->
+						<div id="penyebab-display" class="mt-2">
+							<?php if (!empty($report['analysis']['penyebab_text'])): ?>
+								<div class="p-3 bg-light rounded"><?= esc($report['analysis']['penyebab_text']) ?></div>
+							<?php elseif (empty($report['analysis']['cpl_tidak_tercapai'])): ?>
+								<span class="text-muted">Semua CPL tercapai.</span>
+							<?php else: ?>
+								<span class="text-muted fst-italic">Belum ada penyebab utama yang ditentukan.</span>
+							<?php endif; ?>
+						</div>
+
+						<!-- Edit Mode -->
+						<div id="penyebab-edit" class="mt-2 p-3 border rounded bg-white" style="display: none;">
+							<div class="mb-3">
+								<label class="form-label fw-bold">Pilih Mode:</label>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="penyebab_mode" id="penyebab_mode_auto" value="auto"
+										<?= ($report['analysis']['penyebab_mode'] ?? 'auto') === 'auto' ? 'checked' : '' ?>>
+									<label class="form-check-label" for="penyebab_mode_auto">
+										Otomatis — Gunakan template yang tersedia
+									</label>
+								</div>
+
+								<!-- Auto Template Options -->
+								<div id="penyebab-auto-options" class="ms-4 mt-2"
+									style="display: <?= ($report['analysis']['penyebab_mode'] ?? 'auto') === 'auto' ? 'block' : 'none' ?>;">
+									<small class="text-muted d-block mb-3">Pilih salah satu template berikut:</small>
+									<?php
+									$savedPenyebabOption = $report['analysis']['penyebab_option'] ?? 'default';
+									$penyebabTemplates   = $report['penyebab_templates'] ?? [];
+
+									// Ensure 'default' appears first
+									$sortedPenyebabTemplates = [];
+									if (isset($penyebabTemplates['default'])) {
+										$sortedPenyebabTemplates['default'] = $penyebabTemplates['default'];
+									}
+									foreach ($penyebabTemplates as $k => $v) {
+										if ($k !== 'default') $sortedPenyebabTemplates[$k] = $v;
+									}
+									?>
+									<?php foreach ($sortedPenyebabTemplates as $key => $tmpl): ?>
+										<div class="mb-3 border rounded p-2 bg-light">
+											<div class="d-flex justify-content-between align-items-center">
+												<div class="form-check flex-grow-1">
+													<input class="form-check-input penyebab-option-radio" type="radio"
+														name="penyebab_auto_option"
+														id="penyebab_<?= esc($key) ?>"
+														value="<?= esc($key) ?>"
+														<?= $savedPenyebabOption === $key ? 'checked' : '' ?>>
+													<label class="form-check-label" for="penyebab_<?= esc($key) ?>">
+														<?= esc($tmpl['option_label']) ?>
+													</label>
+												</div>
+												<button type="button" class="btn btn-sm btn-outline-secondary"
+													onclick="togglePenyebabTemplateEdit('<?= esc($key) ?>')">
+													<i class="bi bi-pencil"></i> Edit Template
+												</button>
+											</div>
+
+											<!-- Template inline editor -->
+											<div id="penyebab-template-edit-<?= esc($key) ?>" class="mt-3" style="display: none;">
+												<div class="mb-2">
+													<label class="form-label fw-bold small">Template (semua CPL tercapai):</label>
+													<textarea class="form-control form-control-sm font-monospace"
+														name="penyebab_template_tercapai_<?= esc($key) ?>"
+														rows="2"><?= esc($tmpl['template_tercapai'] ?? '') ?></textarea>
+												</div>
+												<div class="mb-2">
+													<label class="form-label fw-bold small">Template (ada CPL tidak tercapai):</label>
+													<textarea class="form-control form-control-sm font-monospace"
+														name="penyebab_template_tidak_tercapai_<?= esc($key) ?>"
+														rows="3"><?= esc($tmpl['template_tidak_tercapai'] ?? '') ?></textarea>
+													<small class="text-muted">Placeholder: <code>{total_cpl}</code>, <code>{jumlah_tercapai}</code>, <code>{jumlah_tidak_tercapai}</code>, <code>{cpl_tidak_tercapai_list}</code>, <code>{standar_minimal}</code></small>
+												</div>
+											</div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+
+								<div class="form-check mt-1">
+									<input class="form-check-input" type="radio" name="penyebab_mode" id="penyebab_mode_manual" value="manual"
+										<?= ($report['analysis']['penyebab_mode'] ?? 'auto') === 'manual' ? 'checked' : '' ?>>
+									<label class="form-check-label" for="penyebab_mode_manual">
+										Manual — Saya akan menulis sendiri
+									</label>
+								</div>
+							</div>
+
+							<!-- Manual textarea -->
+							<div id="penyebab-manual-container"
+								style="display: <?= ($report['analysis']['penyebab_mode'] ?? 'auto') === 'manual' ? 'block' : 'none' ?>;">
+								<label class="form-label fw-bold">Tulis Penyebab Utama:</label>
+								<textarea id="penyebab-manual-text" class="form-control" rows="4"
+									placeholder="Jelaskan penyebab utama ketidakcapaian CPL..."><?= ($report['analysis']['penyebab_mode'] ?? 'auto') === 'manual' ? esc($report['analysis']['penyebab_text'] ?? '') : '' ?></textarea>
+							</div>
+
+							<div class="mt-3">
+								<button type="button" class="btn btn-success" onclick="savePenyebab()">
+									<i class="bi bi-save"></i> Simpan
+								</button>
+								<button type="button" class="btn btn-secondary" onclick="cancelEditPenyebab()">
+									Batal
+								</button>
+							</div>
+						</div>
 					</li>
 					<li class="mb-2">
 						<div class="d-flex justify-content-between align-items-center mb-2">
@@ -571,12 +669,21 @@
 		font-size: 0.875rem;
 	}
 
-	#auto-analysis-options .border {
+	#auto-analysis-options .border,
+	#penyebab-auto-options .border {
 		transition: all 0.3s ease;
 	}
 
-	#auto-analysis-options .border:hover {
+	#auto-analysis-options .border:hover,
+	#penyebab-auto-options .border:hover {
 		border-color: #0d6efd !important;
+	}
+
+	[id^="penyebab-template-edit-"] {
+		background-color: #f8f9fa;
+		border-top: 1px solid #dee2e6;
+		padding-top: 1rem;
+		margin-top: 0.5rem;
 	}
 </style>
 <?= $this->endSection() ?>
@@ -950,6 +1057,100 @@
 				alert('Terjadi kesalahan saat mengunggah file.');
 			});
 	}
+
+	// ── Penyebab Utama Ketidakcapaian ──────────────────────────────────────────
+
+	function toggleEditPenyebab() {
+		document.getElementById('penyebab-display').style.display = 'none';
+		document.getElementById('penyebab-edit').style.display = 'block';
+	}
+
+	function cancelEditPenyebab() {
+		document.getElementById('penyebab-display').style.display = 'block';
+		document.getElementById('penyebab-edit').style.display = 'none';
+	}
+
+	function togglePenyebabTemplateEdit(key) {
+		const el = document.getElementById('penyebab-template-edit-' + key);
+		el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+	}
+
+	// Mode switch: show/hide auto options & manual textarea
+	document.querySelectorAll('input[name="penyebab_mode"]').forEach(radio => {
+		radio.addEventListener('change', function () {
+			const isAuto = this.value === 'auto';
+			document.getElementById('penyebab-auto-options').style.display = isAuto ? 'block' : 'none';
+			document.getElementById('penyebab-manual-container').style.display = isAuto ? 'none' : 'block';
+		});
+	});
+
+	function savePenyebab() {
+		const mode = document.querySelector('input[name="penyebab_mode"]:checked')?.value || 'auto';
+		const manualText = document.getElementById('penyebab-manual-text').value;
+
+		if (mode === 'manual' && !manualText.trim()) {
+			alert('Silakan tulis penyebab utama terlebih dahulu.');
+			return;
+		}
+
+		const saveBtn = event.target;
+		const originalText = saveBtn.innerHTML;
+		saveBtn.disabled = true;
+		saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+		const urlParams = new URLSearchParams(window.location.search);
+
+		// Collect selected auto option
+		const selectedRadio = document.querySelector('input[name="penyebab_auto_option"]:checked');
+		const autoOption = selectedRadio ? selectedRadio.value : 'default';
+
+		// Collect template edits
+		const templatesData = {};
+		document.querySelectorAll('[name^="penyebab_template_tercapai_"]').forEach(ta => {
+			const key = ta.name.replace('penyebab_template_tercapai_', '');
+			if (!templatesData[key]) templatesData[key] = {};
+			templatesData[key].template_tercapai = ta.value;
+		});
+		document.querySelectorAll('[name^="penyebab_template_tidak_tercapai_"]').forEach(ta => {
+			const key = ta.name.replace('penyebab_template_tidak_tercapai_', '');
+			if (!templatesData[key]) templatesData[key] = {};
+			templatesData[key].template_tidak_tercapai = ta.value;
+		});
+
+		const formData = new FormData();
+		formData.append('program_studi_kode', urlParams.get('program_studi') || '<?= $report['identitas']['nama_program_studi'] ?>');
+		formData.append('tahun_akademik', urlParams.get('tahun_akademik') || '<?= $report['identitas']['tahun_akademik'] ?>');
+		formData.append('angkatan', urlParams.get('angkatan') || '<?= $report['identitas']['angkatan'] ?>');
+		formData.append('penyebab_mode', mode);
+		formData.append('penyebab_auto_option', autoOption);
+		formData.append('penyebab_text', manualText);
+		formData.append('templates', JSON.stringify(templatesData));
+
+		fetch('<?= base_url('admin/laporan-cpl/save-penyebab') ?>', {
+				method: 'POST',
+				body: formData,
+				headers: { 'X-Requested-With': 'XMLHttpRequest' }
+			})
+			.then(r => r.json())
+			.then(data => {
+				if (data.success) {
+					alert('Penyebab utama berhasil disimpan! Halaman akan dimuat ulang.');
+					location.reload();
+				} else {
+					alert('Gagal menyimpan: ' + data.message);
+					saveBtn.disabled = false;
+					saveBtn.innerHTML = originalText;
+				}
+			})
+			.catch(err => {
+				console.error(err);
+				alert('Terjadi kesalahan saat menyimpan.');
+				saveBtn.disabled = false;
+				saveBtn.innerHTML = originalText;
+			});
+	}
+
+	// ── End Penyebab Utama ──────────────────────────────────────────────────────
 
 	// Delete Notulensi Rapat Evaluasi CPL
 	function deleteNotulensiRapat() {

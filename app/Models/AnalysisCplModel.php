@@ -20,7 +20,10 @@ class AnalysisCplModel extends Model
 		'analisis_summary',
 		'auto_options',
 		'bukti_dokumentasi_file',
-		'notulensi_rapat_file'
+		'notulensi_rapat_file',
+		'penyebab_mode',
+		'penyebab_auto_option',
+		'penyebab_text',
 	];
 
 	// Dates
