@@ -683,7 +683,7 @@ class Mengajar extends BaseController
                 $gedung = $kelas['perkuliahan'][0]['pRuangan']['rGedung'] ?? null;
                 $mahasiswaData = $kelas['mahasiswa'] ?? [];
                 $totalMahasiswa = $mahasiswaData['mhsTotal'] ?? 0;
-                $nimList = array_column($mahasiswaData['data'] ?? [], 'nim');
+                $nimList = array_unique(array_column($mahasiswaData['data'] ?? [], 'nim'));
 
 				if (!$mkKode || !isset($mkWithRps[$mkKode])) {
 					log_message('warning', "Kelas {$kelasNama} dilewati, MK {$mkKode} belum punya RPS");
@@ -713,6 +713,12 @@ class Mengajar extends BaseController
                         ->where('kelas', $kelasNama)
                         ->get()
                         ->getRowArray();
+                }
+
+                if ($existing && ($existing['kelas'] ?? '') === 'KM') {
+                    // Skip MBKM jadwal during Reguler sync to avoid overwriting MBKM data
+                    $skipped++;
+                    continue;
                 }
 
                 if ($existing) {
@@ -761,10 +767,10 @@ class Mengajar extends BaseController
                     foreach ($nimList as $nim) {
                         $mhsExists = $this->db->table('mahasiswa')->where('nim', $nim)->countAllResults();
                         if ($mhsExists > 0) {
-                            $this->db->table('jadwal_mahasiswa')->insert([
-                                'jadwal_id' => $jadwalId,
-                                'nim'       => $nim,
-                            ]);
+                            $this->db->query(
+                                'INSERT IGNORE INTO jadwal_mahasiswa (jadwal_id, nim) VALUES (?, ?)',
+                                [$jadwalId, $nim]
+                            );
                             $studentsInserted++;
                         }
                     }

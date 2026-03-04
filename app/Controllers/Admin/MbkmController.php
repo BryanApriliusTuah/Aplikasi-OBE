@@ -676,6 +676,15 @@ class MbkmController extends BaseController
 
 				// Sync mahasiswa and their nilai for this jadwal
 				if (!empty($mahasiswaList)) {
+					// Deduplicate by NIM to handle API returning the same student twice
+					$seenNims = [];
+					$mahasiswaList = array_filter($mahasiswaList, function ($mhsData) use (&$seenNims) {
+						$nim = $mhsData['nim'] ?? null;
+						if (!$nim || isset($seenNims[$nim])) return false;
+						$seenNims[$nim] = true;
+						return true;
+					});
+
 					$this->db->table('jadwal_mahasiswa')->where('jadwal_id', $jadwalId)->delete();
 
 					// Get RPS and CPMK list for scoring
@@ -706,10 +715,10 @@ class MbkmController extends BaseController
 						$mahasiswa = $this->db->table('mahasiswa')->where('nim', $nim)->get()->getRowArray();
 						if (!$mahasiswa) continue;
 
-						$this->db->table('jadwal_mahasiswa')->insert([
-							'jadwal_id' => $jadwalId,
-							'nim'       => $nim,
-						]);
+						$this->db->query(
+							'INSERT IGNORE INTO jadwal_mahasiswa (jadwal_id, nim) VALUES (?, ?)',
+							[$jadwalId, $nim]
+						);
 						$studentsInserted++;
 
 						// Save nilai_total to CPMK scores
