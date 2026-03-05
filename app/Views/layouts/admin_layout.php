@@ -437,7 +437,7 @@
 			"
 			onmouseover="this.style.background='#1d4ed8'"
 			onmouseout="this.style.background='#2563eb'">
-			<i class="bi bi-play-circle-fill"></i> Tour Halaman Ini
+			<i class="bi bi-play-circle-fill"></i> Panduan
 		</button>
 	</div>
 
