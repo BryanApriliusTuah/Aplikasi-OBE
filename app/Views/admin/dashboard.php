@@ -341,10 +341,18 @@
 	</div>
 	<div class="hero-title">Selamat Datang, <?= esc(session('nama_lengkap') ?? session('username')) ?></div>
 	<div class="hero-sub">Kelola kurikulum berbasis OBE Program Studi Teknik Informatika Universitas Palangka Raya.</div>
+	<div class="d-flex gap-2 flex-wrap mt-3">
+		<button id="btn-start-tour" onclick="startTour()" class="btn btn-light btn-sm" style="font-weight:600; border-radius:999px; padding:6px 18px; display:inline-flex; align-items:center; gap:6px;">
+			<i class="bi bi-play-circle-fill text-primary"></i> Tutorial Dashboard
+		</button>
+		<button onclick="startFullTour()" class="btn btn-sm" style="font-weight:600; border-radius:999px; padding:6px 18px; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.4);">
+			<i class="bi bi-map-fill"></i> Tour Per Halaman
+		</button>
+	</div>
 </div>
 
 <!-- Stat Cards -->
-<div class="row g-3 mb-4">
+<div id="tour-stat-cards" class="row g-3 mb-4">
 	<div class="col-sm-6 col-lg-4">
 		<div class="stat-card stat-blue shadow-sm h-100">
 			<div class="stat-icon"><i class="bi bi-people-fill"></i></div>
@@ -372,7 +380,7 @@
 </div>
 
 <!-- Quick Links -->
-<div class="section-heading"><i class="bi bi-lightning-charge-fill text-warning"></i> Akses Cepat</div>
+<div id="tour-quick-links" class="section-heading"><i class="bi bi-lightning-charge-fill text-warning"></i> Akses Cepat</div>
 <div class="row g-3">
 	<div class="col-sm-6 col-lg-4">
 		<a href="<?= base_url('admin/mata-kuliah') ?>" class="quick-link-card">
@@ -431,7 +439,7 @@
 </div>
 
 <!-- Guidelines -->
-<div class="section-heading mt-4"><i class="bi bi-map text-primary"></i> Panduan Penggunaan Sistem</div>
+<div id="tour-guide-heading" class="section-heading mt-4"><i class="bi bi-map text-primary"></i> Panduan Penggunaan Sistem</div>
 <p class="text-muted small mb-3">Ikuti tahapan berikut secara berurutan agar semua fitur sistem dapat berjalan dengan benar.</p>
 
 <ul class="guide-timeline">
@@ -840,5 +848,143 @@
 		var el = document.getElementById(id);
 		el.classList.toggle('open');
 	}
+
+	function startTour() {
+		// Open all guide stages so Driver.js can highlight them
+		['gs1','gs2','gs3','gs4','gs5','gs6'].forEach(function(id) {
+			var el = document.getElementById(id);
+			if (el && !el.classList.contains('open')) el.classList.add('open');
+		});
+
+		var driver = window.driver.js.driver({
+			showProgress: true,
+			animate: true,
+			overlayColor: '#000',
+			overlayOpacity: 0.6,
+			smoothScroll: true,
+			allowClose: true,
+			nextBtnText: 'Lanjut →',
+			prevBtnText: '← Kembali',
+			doneBtnText: 'Selesai',
+			progressText: 'Langkah {{current}} dari {{total}}',
+			popoverClass: 'driverjs-theme',
+			steps: [
+				{
+					element: '#btn-start-tour',
+					popover: {
+						title: '<i class="bi bi-mortarboard-fill text-primary"></i> Selamat Datang di Tutorial!',
+						description: 'Tutorial ini akan memandu Anda mengenal fitur-fitur utama sistem OBE TI UPR. Klik <b>Lanjut</b> untuk memulai.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#tour-stat-cards',
+					popover: {
+						title: '<i class="bi bi-bar-chart-fill text-info"></i> Statistik Sistem',
+						description: 'Panel ini menampilkan ringkasan data sistem secara real-time: jumlah dosen terdaftar, mata kuliah, dan RPS yang tersedia.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#tour-quick-links',
+					popover: {
+						title: '<i class="bi bi-lightning-charge-fill text-warning"></i> Akses Cepat',
+						description: 'Gunakan kartu pintasan ini untuk langsung menuju halaman yang paling sering digunakan: Mata Kuliah, CPL, RPS, CPMK, dan lainnya.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#tour-guide-heading',
+					popover: {
+						title: '<i class="bi bi-map text-primary"></i> Panduan Penggunaan Sistem',
+						description: 'Bagian ini berisi panduan langkah demi langkah penggunaan sistem. Ada <b>6 tahapan</b> yang harus diikuti secara berurutan.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs1',
+					popover: {
+						title: '<i class="bi bi-1-circle-fill text-primary"></i> Tahap 1: Setup Awal',
+						description: 'Mulai dari sini. Buat <b>Tahun Akademik</b>, konfigurasi pengaturan sistem, lalu sinkronisasi data dosen & mahasiswa dari API. Ini adalah fondasi sebelum mengisi data kurikulum.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs2',
+					popover: {
+						title: '<i class="bi bi-2-circle-fill text-primary"></i> Tahap 2: Struktur Kurikulum',
+						description: 'Isi data kurikulum: <b>Profil Lulusan (PL)</b>, <b>CPL</b>, <b>Bahan Kajian</b>, <b>Mata Kuliah</b>, dan <b>CPMK</b>. Ikuti urutan ini agar relasi antar data terbentuk dengan benar.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs3',
+					popover: {
+						title: '<i class="bi bi-3-circle-fill text-primary"></i> Tahap 3: Pemetaan Kurikulum',
+						description: 'Setelah struktur lengkap, petakan relasi antar komponen: <b>CPL → PL</b>, <b>CPL → BK</b>, <b>BK → MK</b>, hingga <b>CPL – MK – CPMK</b>. Pemetaan ini menjadi dasar analisis capaian.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs4',
+					popover: {
+						title: '<i class="bi bi-4-circle-fill text-primary"></i> Tahap 4: RPS & Asesmen',
+						description: 'Buat <b>RPS</b> untuk setiap mata kuliah, tentukan teknik penilaian CPMK, atur tahap & mekanisme penilaian, dan tetapkan bobot nilai CPL & MK.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs5',
+					popover: {
+						title: '<i class="bi bi-5-circle-fill text-primary"></i> Tahap 5: Operasional Akademik',
+						description: 'Kelola jadwal mengajar, input nilai mahasiswa, dan data MBKM. Tahap ini dilakukan setiap semester berjalan.',
+						side: 'bottom',
+						align: 'start'
+					}
+				},
+				{
+					element: '#gs6',
+					popover: {
+						title: '<i class="bi bi-6-circle-fill text-primary"></i> Tahap 6: Analisis & Pelaporan',
+						description: 'Lihat hasil akhir berupa <b>Matriks Pemetaan</b>, <b>Capaian CPMK</b>, <b>Capaian CPL</b>, dan <b>Portofolio</b>. Data hanya tersedia jika semua tahap sebelumnya sudah lengkap.',
+						side: 'top',
+						align: 'start'
+					}
+				},
+				{
+					popover: {
+						title: '<i class="bi bi-check-circle-fill text-success"></i> Tutorial Dashboard Selesai!',
+						description: 'Anda sudah mengenal struktur utama sistem. Gunakan tombol <b>Tour Per Halaman</b> di hero banner untuk memulai tutorial interaktif yang masuk ke setiap menu secara berurutan, mulai dari Tahun Akademik.',
+					}
+				}
+			]
+		});
+
+		driver.drive();
+		localStorage.setItem('obe_tour_seen', '1');
+	}
+
+	function startFullTour() {
+		<?php if (session('role') === 'admin'): ?>
+		window.location.href = OBE_TOURS.resolveUrl('admin/tahun-akademik') + '?tour=1&chain=1';
+		<?php else: ?>
+		window.location.href = OBE_TOURS.resolveUrl('/rps') + '?tour=1&chain=1';
+		<?php endif; ?>
+	}
+
+	// Auto-start tour for first-time visitors
+	document.addEventListener('DOMContentLoaded', function() {
+		if (!localStorage.getItem('obe_tour_seen')) {
+			setTimeout(startTour, 800);
+		}
+	});
 </script>
 <?= $this->endSection() ?>
