@@ -215,7 +215,7 @@
 
 			<!-- 5. Analisis Pemenuhan CPL -->
 			<div class="section mb-5">
-				<h5 class="fw-bold mb-3">5. Analisis Pemenuhan CPL</h5>
+				<h5 id="section-analisis-cpl" class="fw-bold mb-3">5. Analisis Pemenuhan CPL</h5>
 				<ul class="list-unstyled">
 					<li class="mb-2">
 						<strong>Standar Minimal Capaian CPL:</strong>
