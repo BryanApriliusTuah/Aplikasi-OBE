@@ -16,11 +16,11 @@
 	<?php endif; ?>
 
 	<?php if (session()->get('role') === 'admin'): ?>
-		<div class="d-flex justify-content-end gap-2 mb-3">
-			<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportCpmkModal">
+		<div id="mbkm-action-buttons" class="d-flex justify-content-end gap-2 mb-3">
+			<button id="btn-export-cpmk" type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportCpmkModal">
 				<i class="bi bi-file-earmark-excel"></i> Export CPMK Excel
 			</button>
-			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncApiModal">
+			<button id="btn-sync-siuber" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncApiModal">
 				<i class="bi bi-cloud-arrow-down"></i> Sinkronisasi SIUBER
 			</button>
 			<!-- <a href="<?= base_url('admin/mbkm/create') ?>" class="btn btn-primary">
@@ -43,6 +43,7 @@
 		$statusOptions[$s] = $s;
 	}
 	?>
+	<div id="mbkm-filter-section">
 	<?= view('components/modern_filter', [
 		'title'      => 'Filter Kegiatan',
 		'action'     => base_url('admin/mbkm'),
@@ -98,6 +99,7 @@
 		'buttonText' => 'Terapkan',
 		'showReset'  => true,
 	]) ?>
+	</div>
 
 	<?php
 	$status_labels = [
@@ -124,7 +126,7 @@
 	}
 	?>
 
-	<div class="modern-filter-wrapper mb-4">
+	<div id="mbkm-table-section" class="modern-filter-wrapper mb-4">
 		<div class="modern-filter-header">
 			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
 				<div class="modern-filter-title">

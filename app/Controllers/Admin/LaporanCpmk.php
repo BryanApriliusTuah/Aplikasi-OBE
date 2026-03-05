@@ -46,6 +46,27 @@ class LaporanCpmk extends BaseController
 		return view('admin/laporan_cpmk/index', $data);
 	}
 
+	public function generateFirst()
+	{
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return redirect()->to('/')->with('error', 'Akses ditolak.');
+		}
+
+		$first = $this->db->table('jadwal')
+			->select('mata_kuliah_id, tahun_akademik')
+			->where('kelas !=', 'KM')
+			->limit(1)
+			->get()
+			->getRowArray();
+
+		if ($first) {
+			$tahun = trim(str_replace(['Genap', 'Ganjil'], '', $first['tahun_akademik']));
+			return redirect()->to('admin/laporan-cpmk/generate?mata_kuliah_id=' . $first['mata_kuliah_id'] . '&tahun_akademik=' . urlencode($tahun) . '&tour=1&chain=1');
+		}
+
+		return redirect()->to('admin/laporan-cpmk')->with('info', 'Belum ada data jadwal untuk ditampilkan.');
+	}
+
 	public function generate()
 	{
 		// Check user role

@@ -343,6 +343,19 @@ class MbkmController extends BaseController
 		}
 	}
 
+	// Redirect to first MBKM kegiatan for tour/tutorial purposes.
+	public function inputNilaiFirst()
+	{
+		if (!$this->isAdmin()) {
+			return $this->unauthorizedAccess();
+		}
+		$first = $this->db->table('mbkm')->select('id')->limit(1)->get()->getRowArray();
+		if ($first) {
+			return redirect()->to('admin/mbkm/input-nilai/' . $first['id'] . '?tour=1&chain=1');
+		}
+		return redirect()->to('admin/mbkm')->with('info', 'Belum ada data MBKM untuk ditampilkan.');
+	}
+
 	// Input nilai - Show form (Admin Only)
 	public function inputNilai($kegiatan_id)
 	{

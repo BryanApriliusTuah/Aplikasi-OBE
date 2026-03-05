@@ -47,6 +47,35 @@ class LaporanCpl extends BaseController
 		return view('admin/laporan_cpl/index', $data);
 	}
 
+	public function generateFirst()
+	{
+		if (!in_array(session()->get('role'), ['admin', 'dosen'])) {
+			return redirect()->to('/')->with('error', 'Akses ditolak.');
+		}
+
+		$firstJadwal = $this->db->table('jadwal')
+			->select('tahun_akademik, program_studi_kode')
+			->orderBy('tahun_akademik', 'DESC')
+			->limit(1)
+			->get()
+			->getRowArray();
+
+		$firstAngkatan = $this->db->table('mahasiswa')
+			->select('tahun_angkatan')
+			->where('status_mahasiswa', 'Aktif')
+			->orderBy('tahun_angkatan', 'DESC')
+			->limit(1)
+			->get()
+			->getRowArray();
+
+		if ($firstJadwal && $firstAngkatan) {
+			$tahun = trim(str_replace(['Genap', 'Ganjil'], '', $firstJadwal['tahun_akademik']));
+			return redirect()->to('admin/laporan-cpl/generate?tahun_akademik=' . urlencode($tahun) . '&program_studi=' . urlencode($firstJadwal['program_studi_kode']) . '&angkatan=' . $firstAngkatan['tahun_angkatan'] . '&tour=1&chain=1');
+		}
+
+		return redirect()->to('admin/laporan-cpl')->with('info', 'Belum ada data untuk ditampilkan.');
+	}
+
 	public function generate()
 	{
 		// Check user role

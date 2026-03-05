@@ -43,6 +43,8 @@ window.OBE_TOURS = (function () {
 		'capaian-cpl',
 		'laporan-cpmk',
 		'laporan-cpl',
+		'mbkm',
+		'mbkm/input-nilai',
 	];
 
 	// Helper: find first existing element from a list of selectors
@@ -596,8 +598,8 @@ window.OBE_TOURS = (function () {
 		},
 
 		'nilai': {
-			nextKey: 'capaian-cpmk',
-			nextUrl: 'admin/capaian-cpmk',
+			nextKey: 'input-nilai-teknik',
+			nextUrl: 'admin/nilai/input-nilai-teknik',
 			steps: [
 				{
 					element: el('h2.fw-bold', 'h2'),
@@ -619,8 +621,8 @@ window.OBE_TOURS = (function () {
 		},
 
 		'input-nilai-teknik': {
-			nextKey: 'capaian-cpmk',
-			nextUrl: 'admin/capaian-cpmk',
+			nextKey: 'mbkm',
+			nextUrl: 'admin/mbkm',
 			steps: [
 				{
 					element: el('h2.fw-bold', 'h2'),
@@ -755,9 +757,73 @@ window.OBE_TOURS = (function () {
 
 		// ─── MBKM ────────────────────────────────────────────────────────────
 
+		'mbkm': {
+			nextKey: 'mbkm/input-nilai',
+			nextUrl: 'admin/mbkm/input-nilai',
+			steps: [
+				{
+					popover: {
+						title: '<i class="bi bi-mortarboard-fill text-primary"></i> Halaman Kegiatan MBKM',
+						description: 'Halaman ini mengelola seluruh kegiatan <b>Merdeka Belajar – Kampus Merdeka (MBKM)</b> mahasiswa. Anda dapat melihat daftar kegiatan, memfilter berdasarkan tahun/semester/status, melakukan sinkronisasi dari SIUBER, hingga mengelola nilai konversi CPMK.'
+					}
+				},
+				{
+					element: el('#mbkm-action-buttons', '.d-flex.justify-content-end.gap-2.mb-3'),
+					popover: {
+						title: '<i class="bi bi-tools text-secondary"></i> Tombol Aksi Utama',
+						description: 'Tersedia dua tombol utama untuk admin:<br><br><b>• Export CPMK Excel</b> — mengunduh rekap nilai CPMK seluruh mahasiswa pada mata kuliah MBKM tertentu.<br><b>• Sinkronisasi SIUBER</b> — mengambil data kelas Merdeka, kegiatan MBKM, dan nilai akhir mahasiswa dari sistem SIUBER secara otomatis.',
+						side: 'bottom',
+						align: 'end'
+					}
+				},
+				{
+					element: el('#btn-export-cpmk'),
+					popover: {
+						title: '<i class="bi bi-file-earmark-excel text-success"></i> Export CPMK Excel',
+						description: 'Klik tombol ini untuk membuka dialog ekspor. Pilih mata kuliah MBKM yang ingin diekspor, lalu klik <b>Export Excel</b>. File Excel akan berisi nilai CPMK seluruh mahasiswa yang mengonversi mata kuliah tersebut.',
+						side: 'bottom',
+						align: 'end'
+					}
+				},
+				{
+					element: el('#btn-sync-siuber'),
+					popover: {
+						title: '<i class="bi bi-cloud-arrow-down text-primary"></i> Sinkronisasi SIUBER',
+						description: 'Klik tombol ini untuk menyinkronkan data MBKM dari sistem SIUBER. Masukkan <b>Semester ID</b> (misal: <code>20251</code> untuk 2025 Ganjil atau <code>20252</code> untuk 2025 Genap), lalu klik <b>Mulai Sinkronisasi</b>. Data kelas Merdeka dan kegiatan MBKM mahasiswa akan diperbarui otomatis.',
+						side: 'bottom',
+						align: 'end'
+					}
+				},
+				{
+					element: el('#mbkm-filter-section', '.modern-filter-wrapper'),
+					popover: {
+						title: '<i class="bi bi-funnel-fill text-info"></i> Filter Kegiatan',
+						description: 'Gunakan filter ini untuk mempersempit tampilan daftar kegiatan MBKM:<br><br><b>• Tahun Akademik</b> — pilih tahun tertentu atau tampilkan semua.<br><b>• Semester</b> — filter per semester.<br><b>• Status</b> — saring berdasarkan status kegiatan (Diajukan, Disetujui, Berlangsung, Selesai, Ditolak).<br><b>• Cari NIM/Nama</b> — cari kegiatan mahasiswa tertentu.',
+						side: 'bottom'
+					}
+				},
+				{
+					element: el('#mbkm-table-section', '.modern-filter-wrapper.mb-4'),
+					popover: {
+						title: '<i class="bi bi-list-check text-dark"></i> Daftar Kegiatan MBKM',
+						description: 'Tabel ini menampilkan semua kegiatan MBKM yang cocok dengan filter aktif. Setiap baris menunjukkan NIM dan nama mahasiswa, semester, program MBKM, sub-program, tujuan, serta status kegiatan saat ini.',
+						side: 'top'
+					}
+				},
+				{
+					element: el('#mbkmTable thead tr th:last-child', '#mbkmTable th:last-child'),
+					popover: {
+						title: '<i class="bi bi-gear-fill text-secondary"></i> Kolom Aksi Per Kegiatan',
+						description: 'Setiap baris kegiatan memiliki tombol aksi:<br><br><b>• Input Nilai</b> — masukkan nilai konversi CPMK untuk kegiatan yang sudah disetujui/berlangsung.<br><b>• Edit</b> — ubah data kegiatan seperti program, sub-program, atau tujuan.<br><b>• Hapus</b> — hapus kegiatan dari sistem (membutuhkan konfirmasi).',
+						side: 'left'
+					}
+				}
+			]
+		},
+
 		'mbkm/input-nilai': {
-			nextKey: null,
-			nextUrl: null,
+			nextKey: 'capaian-cpmk',
+			nextUrl: 'admin/capaian-cpmk',
 			steps: [
 				{
 					element: el('h2.fw-bold', 'h2'),
@@ -905,8 +971,8 @@ window.OBE_TOURS = (function () {
 		},
 
 		'laporan-cpmk': {
-			nextKey: 'laporan-cpl',
-			nextUrl: 'admin/laporan-cpl',
+			nextKey: 'laporan-cpmk/generate',
+			nextUrl: 'admin/laporan-cpmk/generate-first',
 			steps: [
 				{
 					element: el('h2.fw-bold', 'h2', 'h1'),
@@ -928,8 +994,8 @@ window.OBE_TOURS = (function () {
 		},
 
 		'laporan-cpmk/generate': {
-			nextKey: null,
-			nextUrl: null,
+			nextKey: 'laporan-cpl',
+			nextUrl: 'admin/laporan-cpl',
 			steps: [
 				{
 					element: el('#portfolio-content', '.card.shadow-sm'),
@@ -1037,8 +1103,8 @@ window.OBE_TOURS = (function () {
 		},
 
 		'laporan-cpl': {
-			nextKey: null,
-			nextUrl: 'admin/dashboard',
+			nextKey: 'laporan-cpl/generate',
+			nextUrl: 'admin/laporan-cpl/generate-first',
 			steps: [
 				{
 					element: el('h2.fw-bold', 'h2', 'h1'),
@@ -1058,8 +1124,8 @@ window.OBE_TOURS = (function () {
 				},
 				{
 					popover: {
-						title: '<i class="bi bi-trophy-fill text-warning"></i> Tour Selesai!',
-						description: 'Anda telah menyelesaikan tour lengkap sistem OBE TI UPR. Ikuti urutan 6 tahapan dalam panduan dashboard untuk memulai pengisian data. Selamat menggunakan sistem! 🎉',
+						title: '<i class="bi bi-arrow-right-circle-fill text-primary"></i> Lanjut ke MBKM',
+						description: 'Laporan CPL sudah selesai! Selanjutnya kita akan melihat halaman <b>Kegiatan MBKM</b> — tempat mengelola program Merdeka Belajar Kampus Merdeka mahasiswa.',
 					}
 				}
 			]

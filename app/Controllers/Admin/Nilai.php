@@ -496,6 +496,18 @@ class Nilai extends BaseController
 	}
 
 	/**
+	 * Redirect to the first available jadwal for tour/tutorial purposes.
+	 */
+	public function inputNilaiTeknikFirst()
+	{
+		$first = (new MengajarModel())->select('id')->first();
+		if ($first) {
+			return redirect()->to('admin/nilai/input-nilai-teknik/' . $first['id'] . '?tour=1&chain=1');
+		}
+		return redirect()->to('admin/nilai')->with('info', 'Belum ada data jadwal untuk ditampilkan.');
+	}
+
+	/**
 	 * Display the form to input scores by teknik_penilaian (new method)
 	 */
 	public function inputNilaiByTeknikPenilaian($jadwal_id)

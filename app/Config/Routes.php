@@ -195,6 +195,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('nilai/dpna/(:num)', 'Nilai::getDpna/$1');
 
 	// Nilai by Teknik Penilaian (NEW)
+	$routes->get('nilai/input-nilai-teknik', 'Nilai::inputNilaiTeknikFirst');
 	$routes->get('nilai/input-nilai-teknik/(:num)', 'Nilai::inputNilaiByTeknikPenilaian/$1');
 	$routes->post('nilai/save-nilai-teknik/(:num)', 'Nilai::saveNilaiByTeknikPenilaian/$1');
 	$routes->get('nilai/detail-nilai-teknik/(:num)', 'Nilai::getDetailNilaiTeknikPenilaian/$1');
@@ -266,6 +267,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 
 	//laporan cpmk (portofolio mata kuliah)
 	$routes->get('laporan-cpmk', 'LaporanCpmk::index');
+	$routes->get('laporan-cpmk/generate-first', 'LaporanCpmk::generateFirst');
 	$routes->get('laporan-cpmk/generate', 'LaporanCpmk::generate');
 	$routes->get('laporan-cpmk/generate-pdf', 'LaporanCpmk::generatePdf');
 	$routes->get('laporan-cpmk/export-zip', 'LaporanCpmk::exportZip');
@@ -280,6 +282,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 
 	//laporan cpl (laporan pemenuhan capaian pembelajaran lulusan)
 	$routes->get('laporan-cpl', 'LaporanCpl::index');
+	$routes->get('laporan-cpl/generate-first', 'LaporanCpl::generateFirst');
 	$routes->get('laporan-cpl/generate', 'LaporanCpl::generate');
 	$routes->get('laporan-cpl/generate-pdf', 'LaporanCpl::generatePdf');
 	$routes->get('laporan-cpl/export-zip', 'LaporanCpl::exportZip');
@@ -303,6 +306,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 		$routes->get('delete/(:num)', 'MbkmController::delete/$1');
 
 		// Scoring/Grading routes
+		$routes->get('input-nilai', 'MbkmController::inputNilaiFirst');
 		$routes->get('input-nilai/(:num)', 'MbkmController::inputNilai/$1');
 		$routes->post('save-nilai/(:num)', 'MbkmController::saveNilai/$1');
 
