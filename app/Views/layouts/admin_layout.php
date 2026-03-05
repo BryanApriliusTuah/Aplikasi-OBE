@@ -11,6 +11,7 @@
 	<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 	<link rel="stylesheet" href="<?= base_url('css/custom.css') ?>">
 	<link rel="stylesheet" href="<?= base_url('css/modern-table.css') ?>">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
 	<style>
 		/* Remove arrows/spinners from number input */
 
@@ -403,9 +404,52 @@
 		});
 	</script>
 
+	<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+	<script src="<?= base_url('js/page-tours.js') ?>?v=<?= filemtime(FCPATH . 'js/page-tours.js') ?>"></script>
+
+	<!-- Floating tour button (shown on pages that have a tour) -->
+	<div id="floating-tour-btn" style="
+		position: fixed;
+		bottom: 28px;
+		right: 28px;
+		z-index: 9990;
+		display: none;
+	">
+		<button onclick="OBE_TOURS.start(OBE_TOURS.detect())"
+			title="Mulai tutorial halaman ini"
+			style="
+				background: #2563eb;
+				color: #fff;
+				border: none;
+				border-radius: 999px;
+				padding: 10px 18px;
+				font-size: 0.82rem;
+				font-weight: 600;
+				box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+				cursor: pointer;
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				transition: background 0.2s;
+			"
+			onmouseover="this.style.background='#1d4ed8'"
+			onmouseout="this.style.background='#2563eb'">
+			<i class="bi bi-play-circle-fill"></i> Tour Halaman Ini
+		</button>
+	</div>
+
+	<script>
+		// Show floating button only on pages that have a tour
+		document.addEventListener('DOMContentLoaded', function () {
+			if (typeof OBE_TOURS !== 'undefined' && OBE_TOURS.detect()) {
+				document.getElementById('floating-tour-btn').style.display = 'block';
+			}
+		});
+	</script>
+
 	<?= $this->renderSection('js') ?>
 </body>
 
