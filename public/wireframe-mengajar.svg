@@ -81,8 +81,8 @@
   <!-- Day header -->
   <rect x="200" y="300" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="340" y="323" text-anchor="middle" font-size="13" font-weight="bold">SENIN</text>
-  <rect x="454" y="308" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="465" y="321" text-anchor="middle" font-size="10" fill="#fff">3</text>
+  <rect x="454" y="308" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="465" y="321" text-anchor="middle" font-size="10" fill="#111">3</text>
 
   <!-- Course card 1 -->
   <rect x="210" y="346" width="260" height="94" fill="none" stroke="#111" stroke-width="1"/>
@@ -94,10 +94,10 @@
   <text x="222" y="394" font-size="10">Lab Komputer 1</text>
   <text x="222" y="408" font-size="10">2024/2025 Genap · Reguler · Kelas A</text>
   <text x="222" y="422" font-size="10">45 mahasiswa</text>
-  <rect x="222" y="427" width="90" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="267" y="439" text-anchor="middle" font-size="9" fill="#fff">★ Dr. Budi S.</text>
-  <rect x="318" y="427" width="60" height="14" rx="7" fill="#888" stroke="none"/>
-  <text x="348" y="439" text-anchor="middle" font-size="9" fill="#fff">+2 lainnya</text>
+  <rect x="222" y="427" width="90" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="267" y="439" text-anchor="middle" font-size="9" fill="#111">★ Dr. Budi S.</text>
+  <rect x="318" y="427" width="60" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="348" y="439" text-anchor="middle" font-size="9" fill="#111">+2 lainnya</text>
 
   <!-- Course card 2 -->
   <rect x="210" y="450" width="260" height="80" fill="none" stroke="#111" stroke-width="1"/>
@@ -106,8 +106,8 @@
   <text x="222" y="484" font-size="10">10:00 - 11:40</text>
   <text x="222" y="498" font-size="10">Gedung A Ruang 201</text>
   <text x="222" y="512" font-size="10">60 mahasiswa</text>
-  <rect x="222" y="517" width="95" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="269" y="529" text-anchor="middle" font-size="9" fill="#fff">★ Prof. Andi R.</text>
+  <rect x="222" y="517" width="95" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="269" y="529" text-anchor="middle" font-size="9" fill="#111">★ Prof. Andi R.</text>
 
   <!-- Course card 3 -->
   <rect x="210" y="540" width="260" height="70" fill="none" stroke="#111" stroke-width="1"/>
@@ -115,15 +115,15 @@
   <text x="222" y="558" font-size="11" font-weight="bold">Basis Data</text>
   <text x="222" y="574" font-size="10">13:00 - 14:40</text>
   <text x="222" y="588" font-size="10">Ruang belum diatur</text>
-  <rect x="222" y="595" width="95" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="269" y="607" text-anchor="middle" font-size="9" fill="#fff">★ Ibu Citra M.</text>
+  <rect x="222" y="595" width="95" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="269" y="607" text-anchor="middle" font-size="9" fill="#111">★ Ibu Citra M.</text>
 
   <!-- ===== DAY CARD: SELASA ===== -->
   <rect x="500" y="300" width="280" height="360" fill="none" stroke="#111" stroke-width="1.5"/>
   <rect x="500" y="300" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="640" y="323" text-anchor="middle" font-size="13" font-weight="bold">SELASA</text>
-  <rect x="754" y="308" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="765" y="321" text-anchor="middle" font-size="10" fill="#fff">2</text>
+  <rect x="754" y="308" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="765" y="321" text-anchor="middle" font-size="10" fill="#111">2</text>
 
   <!-- Course card 1 -->
   <rect x="510" y="346" width="260" height="90" fill="none" stroke="#111" stroke-width="1"/>
@@ -134,8 +134,8 @@
   <text x="522" y="380" font-size="10">07:30 - 09:10</text>
   <text x="522" y="394" font-size="10">Lab Jaringan · Kelas B</text>
   <text x="522" y="408" font-size="10">38 mahasiswa</text>
-  <rect x="522" y="415" width="100" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="572" y="427" text-anchor="middle" font-size="9" fill="#fff">★ Dr. Hendra K.</text>
+  <rect x="522" y="415" width="100" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="572" y="427" text-anchor="middle" font-size="9" fill="#111">★ Dr. Hendra K.</text>
 
   <!-- Course card 2 -->
   <rect x="510" y="446" width="260" height="80" fill="none" stroke="#111" stroke-width="1"/>
@@ -144,15 +144,15 @@
   <text x="522" y="480" font-size="10">10:00 - 11:40</text>
   <text x="522" y="494" font-size="10">Aula Teknik</text>
   <text x="522" y="508" font-size="10">60 mahasiswa</text>
-  <rect x="522" y="515" width="100" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="572" y="527" text-anchor="middle" font-size="9" fill="#fff">★ Prof. Dewi L.</text>
+  <rect x="522" y="515" width="100" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="572" y="527" text-anchor="middle" font-size="9" fill="#111">★ Prof. Dewi L.</text>
 
   <!-- ===== DAY CARD: RABU (empty) ===== -->
   <rect x="800" y="300" width="280" height="360" fill="none" stroke="#111" stroke-width="1.5"/>
   <rect x="800" y="300" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="940" y="323" text-anchor="middle" font-size="13" font-weight="bold">RABU</text>
-  <rect x="1054" y="308" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="1065" y="321" text-anchor="middle" font-size="10" fill="#fff">0</text>
+  <rect x="1054" y="308" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1065" y="321" text-anchor="middle" font-size="10" fill="#111">0</text>
   <!-- Empty state -->
   <text x="940" y="475" text-anchor="middle" font-size="28">☽</text>
   <text x="940" y="506" text-anchor="middle" font-size="12">Tidak ada jadwal</text>
@@ -162,8 +162,8 @@
   <rect x="200" y="680" width="280" height="200" fill="none" stroke="#111" stroke-width="1.5"/>
   <rect x="200" y="680" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="340" y="703" text-anchor="middle" font-size="13" font-weight="bold">KAMIS</text>
-  <rect x="454" y="688" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="465" y="701" text-anchor="middle" font-size="10" fill="#fff">1</text>
+  <rect x="454" y="688" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="465" y="701" text-anchor="middle" font-size="10" fill="#111">1</text>
 
   <rect x="210" y="726" width="260" height="144" fill="none" stroke="#111" stroke-width="1"/>
   <line x1="210" y1="726" x2="210" y2="870" stroke="#111" stroke-width="4"/>
@@ -172,15 +172,15 @@
   <text x="222" y="774" font-size="10">Lab OS</text>
   <text x="222" y="788" font-size="10">2024/2025 · Reguler</text>
   <text x="222" y="802" font-size="10">38 mahasiswa</text>
-  <rect x="222" y="808" width="90" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="267" y="820" text-anchor="middle" font-size="9" fill="#fff">★ Dr. Eko P.</text>
+  <rect x="222" y="808" width="90" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="267" y="820" text-anchor="middle" font-size="9" fill="#111">★ Dr. Eko P.</text>
 
   <!-- DAY CARD: JUMAT -->
   <rect x="500" y="680" width="280" height="200" fill="none" stroke="#111" stroke-width="1.5"/>
   <rect x="500" y="680" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="640" y="703" text-anchor="middle" font-size="13" font-weight="bold">JUMAT</text>
-  <rect x="754" y="688" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="765" y="701" text-anchor="middle" font-size="10" fill="#fff">1</text>
+  <rect x="754" y="688" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="765" y="701" text-anchor="middle" font-size="10" fill="#111">1</text>
 
   <rect x="510" y="726" width="260" height="144" fill="none" stroke="#111" stroke-width="1"/>
   <line x1="510" y1="726" x2="510" y2="870" stroke="#111" stroke-width="4"/>
@@ -188,15 +188,15 @@
   <text x="522" y="760" font-size="10">13:00 - 14:40</text>
   <text x="522" y="774" font-size="10">Ruang Server</text>
   <text x="522" y="788" font-size="10">2024/2025 · Reguler</text>
-  <rect x="522" y="808" width="100" height="14" rx="7" fill="#555" stroke="none"/>
-  <text x="572" y="820" text-anchor="middle" font-size="9" fill="#fff">★ Ibu Fitri N.</text>
+  <rect x="522" y="808" width="100" height="14" rx="7" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="572" y="820" text-anchor="middle" font-size="9" fill="#111">★ Ibu Fitri N.</text>
 
   <!-- DAY CARD: SABTU (empty) -->
   <rect x="800" y="680" width="280" height="200" fill="none" stroke="#111" stroke-width="1.5"/>
   <rect x="800" y="680" width="280" height="36" fill="#ddd" stroke="#111" stroke-width="1.5"/>
   <text x="940" y="703" text-anchor="middle" font-size="13" font-weight="bold">SABTU</text>
-  <rect x="1054" y="688" width="22" height="18" rx="9" fill="#555" stroke="none"/>
-  <text x="1065" y="701" text-anchor="middle" font-size="10" fill="#fff">0</text>
+  <rect x="1054" y="688" width="22" height="18" rx="9" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1065" y="701" text-anchor="middle" font-size="10" fill="#111">0</text>
   <text x="940" y="775" text-anchor="middle" font-size="28">☽</text>
   <text x="940" y="800" text-anchor="middle" font-size="12">Tidak ada jadwal</text>
 
@@ -226,8 +226,8 @@
   <rect x="210" y="1120" width="278" height="26" fill="#eee" stroke="#111" stroke-width="1"/>
   <text x="222" y="1138" font-size="11" font-weight="bold">DETAIL MATA KULIAH</text>
   <text x="222" y="1160" font-size="10">Kode MK</text>
-  <rect x="350" y="1148" width="50" height="16" rx="8" fill="#555" stroke="none"/>
-  <text x="375" y="1160" text-anchor="middle" font-size="9" fill="#fff">MK001</text>
+  <rect x="350" y="1148" width="50" height="16" rx="8" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="375" y="1160" text-anchor="middle" font-size="9" fill="#111">MK001</text>
   <line x1="210" y1="1166" x2="488" y2="1166" stroke="#ccc" stroke-width="0.8"/>
   <text x="222" y="1180" font-size="10">Nama MK</text>
   <text x="350" y="1180" font-size="10" font-weight="bold">Pemrograman Web</text>
@@ -236,8 +236,8 @@
   <text x="350" y="1200" font-size="10">5</text>
   <line x1="210" y1="1206" x2="488" y2="1206" stroke="#ccc" stroke-width="0.8"/>
   <text x="222" y="1220" font-size="10">Jumlah SKS</text>
-  <rect x="350" y="1208" width="45" height="16" rx="8" fill="#555" stroke="none"/>
-  <text x="372" y="1220" text-anchor="middle" font-size="9" fill="#fff">3 SKS</text>
+  <rect x="350" y="1208" width="45" height="16" rx="8" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="372" y="1220" text-anchor="middle" font-size="9" fill="#111">3 SKS</text>
   <line x1="210" y1="1226" x2="488" y2="1226" stroke="#ccc" stroke-width="0.8"/>
   <text x="222" y="1246" font-size="10">...</text>
 
@@ -251,8 +251,8 @@
   <text x="620" y="1180" font-size="10">2024/2025 Genap</text>
   <line x1="500" y1="1186" x2="778" y2="1186" stroke="#ccc" stroke-width="0.8"/>
   <text x="512" y="1200" font-size="10">Kelas</text>
-  <rect x="620" y="1188" width="24" height="16" rx="8" fill="#888" stroke="none"/>
-  <text x="632" y="1200" text-anchor="middle" font-size="9" fill="#fff">A</text>
+  <rect x="620" y="1188" width="24" height="16" rx="8" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="632" y="1200" text-anchor="middle" font-size="9" fill="#111">A</text>
   <line x1="500" y1="1206" x2="778" y2="1206" stroke="#ccc" stroke-width="0.8"/>
   <text x="512" y="1220" font-size="10">Hari &amp; Waktu</text>
   <text x="620" y="1220" font-size="10">Senin, 08:00-09:40</text>
@@ -269,8 +269,8 @@
   <text x="820" y="910" font-size="11" font-weight="bold">Modal: Konfirmasi Hapus</text>
   <rect x="820" y="918" width="260" height="192" fill="#fff" stroke="#111" stroke-width="2"/>
   <!-- Modal header -->
-  <rect x="820" y="918" width="260" height="38" fill="#333" stroke="#111" stroke-width="1"/>
-  <text x="838" y="942" font-size="11" font-weight="bold" fill="#fff">KONFIRMASI PENGHAPUSAN</text>
+  <rect x="820" y="918" width="260" height="38" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="838" y="942" font-size="11" font-weight="bold" fill="#111">KONFIRMASI PENGHAPUSAN</text>
   <!-- Modal body -->
   <text x="836" y="976" font-size="11">Apakah Anda yakin ingin</text>
   <text x="836" y="991" font-size="11">menghapus jadwal untuk:</text>
@@ -281,8 +281,8 @@
   <rect x="820" y="1080" width="260" height="30" fill="#eee" stroke="#111" stroke-width="1"/>
   <rect x="830" y="1084" width="70" height="20" fill="#fff" stroke="#111" stroke-width="1"/>
   <text x="865" y="1098" text-anchor="middle" font-size="11">Batal</text>
-  <rect x="910" y="1084" width="80" height="20" fill="#333" stroke="#111" stroke-width="1"/>
-  <text x="950" y="1098" text-anchor="middle" font-size="11" fill="#fff">Ya, Hapus</text>
+  <rect x="910" y="1084" width="80" height="20" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="950" y="1098" text-anchor="middle" font-size="11" fill="#111">Ya, Hapus</text>
 
   <!-- ===== MODAL: SYNC API ===== -->
   <text x="820" y="1074" font-size="11" font-weight="bold">Modal: Sync dari API</text>
