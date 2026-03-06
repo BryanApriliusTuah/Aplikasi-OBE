@@ -228,9 +228,9 @@
 												</a>
 											<?php endif; ?>
 
-											<a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
+											<!-- <a href="<?= base_url('admin/mbkm/edit/' . $kegiatan['id']) ?>" class="btn btn-sm btn-outline-warning">
 												<i class="bi bi-pencil"></i> Edit
-											</a>
+											</a> -->
 
 											<button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $kegiatan['id'] ?>)">
 												<i class="bi bi-trash"></i> Hapus
