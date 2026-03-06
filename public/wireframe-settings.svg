@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" font-family="Arial, sans-serif" font-size="12" fill="#111" stroke="#111">
+  <rect width="1100" height="720" fill="#fff" stroke="none"/>
+
+  <!-- SIDEBAR -->
+  <rect x="10" y="10" width="180" height="700" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="10" y="10" width="180" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="100" y="40" text-anchor="middle" font-size="13" font-weight="bold">OBE SYSTEM</text>
+  <rect x="18" y="72" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="91" font-size="12">Dashboard</text>
+  <rect x="18" y="106" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="125" font-size="12">Jadwal Mengajar</text>
+  <rect x="18" y="140" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="159" font-size="12">Nilai</text>
+  <rect x="18" y="174" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="193" font-size="12">Capaian CPMK</text>
+  <rect x="18" y="208" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="227" font-size="12">Capaian CPL</text>
+  <rect x="18" y="242" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="261" font-size="12">Laporan</text>
+  <rect x="18" y="276" width="164" height="28" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="30" y="295" font-size="12">Pengaturan</text>
+
+  <!-- TOP NAVBAR -->
+  <rect x="200" y="10" width="890" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="40" font-size="14" font-weight="bold">Pengaturan Sistem Penilaian</text>
+  <circle cx="1060" cy="35" r="16" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1060" y="40" text-anchor="middle" font-size="12">A</text>
+
+  <!-- MAIN CARD -->
+  <rect x="200" y="70" width="890" height="640" fill="none" stroke="#111" stroke-width="1.5"/>
+
+  <!-- PAGE HEADER -->
+  <text x="220" y="100" font-size="14" font-weight="bold">Pengaturan Sistem Penilaian</text>
+  <rect x="1020" y="82" width="60" height="28" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1050" y="100" text-anchor="middle" font-size="11" fill="#111">+ Tambah</text>
+
+  <!-- THRESHOLD SECTION: 2 columns -->
+  <!-- CPMK Threshold -->
+  <rect x="220" y="114" width="424" height="90" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="234" y="136" font-size="12" font-weight="bold">Standar Minimal Capaian CPMK</text>
+  <text x="234" y="158" font-size="10">Persentase Minimal (%)</text>
+  <rect x="234" y="164" width="100" height="28" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="284" y="182" text-anchor="middle" font-size="12">75.00</text>
+  <rect x="340" y="164" width="22" height="28" fill="#f5f5f5" stroke="#111" stroke-width="1"/>
+  <text x="351" y="182" text-anchor="middle" font-size="11">%</text>
+  <rect x="376" y="164" width="56" height="28" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="404" y="182" text-anchor="middle" font-size="11" fill="#111">Simpan</text>
+
+  <!-- CPL Threshold -->
+  <rect x="656" y="114" width="424" height="90" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="670" y="136" font-size="12" font-weight="bold">Standar Minimal Capaian CPL</text>
+  <text x="670" y="158" font-size="10">Persentase Minimal (%)</text>
+  <rect x="670" y="164" width="100" height="28" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="720" y="182" text-anchor="middle" font-size="12">75.00</text>
+  <rect x="776" y="164" width="22" height="28" fill="#f5f5f5" stroke="#111" stroke-width="1"/>
+  <text x="787" y="182" text-anchor="middle" font-size="11">%</text>
+  <rect x="812" y="164" width="56" height="28" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="840" y="182" text-anchor="middle" font-size="11" fill="#111">Simpan</text>
+
+  <!-- GRADE CONFIG TABLE -->
+  <rect x="220" y="216" width="860" height="474" fill="none" stroke="#111" stroke-width="1.5"/>
+  <!-- Table header -->
+  <rect x="220" y="216" width="860" height="30" fill="#eee" stroke="#111" stroke-width="1"/>
+  <!-- Column dividers (header) -->
+  <line x1="276" y1="216" x2="276" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="362" y1="216" x2="362" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="498" y1="216" x2="498" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="584" y1="216" x2="584" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="756" y1="216" x2="756" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="842" y1="216" x2="842" y2="690" stroke="#111" stroke-width="0.8"/>
+  <line x1="928" y1="216" x2="928" y2="690" stroke="#111" stroke-width="0.8"/>
+
+  <text x="248" y="236" text-anchor="middle" font-size="10" font-weight="bold">No</text>
+  <text x="319" y="236" text-anchor="middle" font-size="10" font-weight="bold">Huruf</text>
+  <text x="430" y="236" text-anchor="middle" font-size="10" font-weight="bold">Range</text>
+  <text x="541" y="236" text-anchor="middle" font-size="10" font-weight="bold">Point</text>
+  <text x="670" y="236" text-anchor="middle" font-size="10" font-weight="bold">Deskripsi</text>
+  <text x="799" y="236" text-anchor="middle" font-size="10" font-weight="bold">Lulus</text>
+  <text x="885" y="236" text-anchor="middle" font-size="10" font-weight="bold">Status</text>
+  <text x="1004" y="236" text-anchor="middle" font-size="10" font-weight="bold">Aksi</text>
+
+  <!-- Grade rows -->
+  <!-- Row 1: A -->
+  <line x1="220" y1="270" x2="1080" y2="270" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="258" text-anchor="middle" font-size="11">1</text>
+  <text x="319" y="262" text-anchor="middle" font-size="16" font-weight="bold">A</text>
+  <text x="430" y="258" text-anchor="middle" font-size="10">85.00 - 100.00</text>
+  <text x="541" y="258" text-anchor="middle" font-size="10">4.00</text>
+  <text x="670" y="258" text-anchor="middle" font-size="10">Sangat Baik</text>
+  <text x="799" y="262" text-anchor="middle" font-size="16">✓</text>
+  <text x="885" y="258" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <!-- Aksi buttons -->
+  <rect x="950" y="246" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="262" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="246" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="262" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="246" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="262" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 2: A- -->
+  <rect x="221" y="271" width="858" height="34" fill="#f8f8f8" stroke="none"/>
+  <line x1="220" y1="304" x2="1080" y2="304" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="292" text-anchor="middle" font-size="11">2</text>
+  <text x="319" y="296" text-anchor="middle" font-size="16" font-weight="bold">A-</text>
+  <text x="430" y="292" text-anchor="middle" font-size="10">80.00 - 84.99</text>
+  <text x="541" y="292" text-anchor="middle" font-size="10">3.75</text>
+  <text x="670" y="292" text-anchor="middle" font-size="10">Baik Sekali</text>
+  <text x="799" y="296" text-anchor="middle" font-size="16">✓</text>
+  <text x="885" y="292" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <rect x="950" y="280" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="296" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="280" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="296" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="280" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="296" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 3: B+ -->
+  <line x1="220" y1="338" x2="1080" y2="338" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="326" text-anchor="middle" font-size="11">3</text>
+  <text x="319" y="330" text-anchor="middle" font-size="16" font-weight="bold">B+</text>
+  <text x="430" y="326" text-anchor="middle" font-size="10">75.00 - 79.99</text>
+  <text x="541" y="326" text-anchor="middle" font-size="10">3.50</text>
+  <text x="670" y="326" text-anchor="middle" font-size="10">Baik</text>
+  <text x="799" y="330" text-anchor="middle" font-size="16">✓</text>
+  <text x="885" y="326" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <rect x="950" y="314" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="330" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="314" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="330" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="314" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="330" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 4: B (nonaktif) -->
+  <rect x="221" y="339" width="858" height="34" fill="#f8f8f8" stroke="none"/>
+  <line x1="220" y1="372" x2="1080" y2="372" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="360" text-anchor="middle" font-size="11">4</text>
+  <text x="319" y="364" text-anchor="middle" font-size="16" font-weight="bold">B</text>
+  <text x="430" y="360" text-anchor="middle" font-size="10">70.00 - 74.99</text>
+  <text x="541" y="360" text-anchor="middle" font-size="10">3.00</text>
+  <text x="670" y="360" text-anchor="middle" font-size="10">Cukup Baik</text>
+  <text x="799" y="364" text-anchor="middle" font-size="16">✓</text>
+  <text x="885" y="360" text-anchor="middle" font-size="11" fill="#888">Nonaktif</text>
+  <rect x="950" y="348" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="364" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="348" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="364" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="348" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="364" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 5: C -->
+  <line x1="220" y1="406" x2="1080" y2="406" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="394" text-anchor="middle" font-size="11">5</text>
+  <text x="319" y="398" text-anchor="middle" font-size="16" font-weight="bold">C</text>
+  <text x="430" y="394" text-anchor="middle" font-size="10">60.00 - 69.99</text>
+  <text x="541" y="394" text-anchor="middle" font-size="10">2.00</text>
+  <text x="670" y="394" text-anchor="middle" font-size="10">Cukup</text>
+  <text x="799" y="398" text-anchor="middle" font-size="16">✓</text>
+  <text x="885" y="394" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <rect x="950" y="382" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="398" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="382" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="398" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="382" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="398" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 6: D -->
+  <rect x="221" y="407" width="858" height="34" fill="#f8f8f8" stroke="none"/>
+  <line x1="220" y1="440" x2="1080" y2="440" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="428" text-anchor="middle" font-size="11">6</text>
+  <text x="319" y="432" text-anchor="middle" font-size="16" font-weight="bold">D</text>
+  <text x="430" y="428" text-anchor="middle" font-size="10">50.00 - 59.99</text>
+  <text x="541" y="428" text-anchor="middle" font-size="10">1.00</text>
+  <text x="670" y="428" text-anchor="middle" font-size="10">Kurang</text>
+  <text x="799" y="432" text-anchor="middle" font-size="16">✗</text>
+  <text x="885" y="428" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <rect x="950" y="416" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="432" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="416" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="432" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="416" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="432" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Row 7: E -->
+  <line x1="220" y1="474" x2="1080" y2="474" stroke="#ccc" stroke-width="0.8"/>
+  <text x="248" y="462" text-anchor="middle" font-size="11">7</text>
+  <text x="319" y="466" text-anchor="middle" font-size="16" font-weight="bold">E</text>
+  <text x="430" y="462" text-anchor="middle" font-size="10">0.00 - 49.99</text>
+  <text x="541" y="462" text-anchor="middle" font-size="10">0.00</text>
+  <text x="670" y="462" text-anchor="middle" font-size="10">Tidak Lulus</text>
+  <text x="799" y="466" text-anchor="middle" font-size="16">✗</text>
+  <text x="885" y="462" text-anchor="middle" font-size="11" font-weight="bold">Aktif</text>
+  <rect x="950" y="450" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="964" y="466" text-anchor="middle" font-size="11">✏</text>
+  <rect x="984" y="450" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="998" y="466" text-anchor="middle" font-size="11">⏻</text>
+  <rect x="1018" y="450" width="28" height="24" rx="3" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="1032" y="466" text-anchor="middle" font-size="11">🗑</text>
+
+  <!-- Legend -->
+  <text x="220" y="566" font-size="10" fill="#555">Aksi:  ✏ = Edit grade  |  ⏻ = Toggle aktif/nonaktif  |  🗑 = Hapus (dengan konfirmasi)</text>
+  <text x="220" y="582" font-size="10" fill="#555">Lulus: ✓ = lulus · ✗ = tidak lulus   |   Status: Aktif (bold) · Nonaktif (abu)</text>
+  <text x="220" y="598" font-size="10" fill="#555">Threshold CPMK &amp; CPL disimpan masing-masing via POST terpisah</text>
+</svg>

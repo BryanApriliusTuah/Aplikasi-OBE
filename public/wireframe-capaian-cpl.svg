@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="Arial, sans-serif" font-size="12" fill="#111" stroke="#111">
+  <rect width="1100" height="780" fill="#fff" stroke="none"/>
+
+  <!-- SIDEBAR -->
+  <rect x="10" y="10" width="180" height="760" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="10" y="10" width="180" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="100" y="40" text-anchor="middle" font-size="13" font-weight="bold">OBE SYSTEM</text>
+  <rect x="18" y="72" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="91" font-size="12">Dashboard</text>
+  <rect x="18" y="106" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="125" font-size="12">Jadwal Mengajar</text>
+  <rect x="18" y="140" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="159" font-size="12">Nilai</text>
+  <rect x="18" y="174" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="193" font-size="12">Capaian CPMK</text>
+  <rect x="18" y="208" width="164" height="28" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="30" y="227" font-size="12">Capaian CPL</text>
+  <rect x="18" y="242" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="261" font-size="12">Laporan CPMK</text>
+  <rect x="18" y="276" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="295" font-size="12">Laporan CPL</text>
+
+  <!-- TOP NAVBAR -->
+  <rect x="200" y="10" width="890" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="40" font-size="14" font-weight="bold">Capaian CPL</text>
+  <circle cx="1060" cy="35" r="16" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1060" y="40" text-anchor="middle" font-size="12">A</text>
+
+  <!-- MAIN CARD -->
+  <rect x="200" y="70" width="890" height="700" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="100" font-size="16" font-weight="bold">Capaian CPL</text>
+
+  <!-- MAIN TAB NAV -->
+  <rect x="220" y="110" width="860" height="38" rx="8" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="224" y="114" width="130" height="30" rx="6" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="289" y="134" text-anchor="middle" font-size="11" font-weight="bold">Mahasiswa</text>
+  <text x="420" y="134" text-anchor="middle" font-size="11">Angkatan</text>
+  <text x="560" y="134" text-anchor="middle" font-size="11">Keseluruhan</text>
+
+  <!-- 3 filter type cards -->
+  <rect x="220" y="162" width="272" height="90" rx="4" fill="#f5f5f5" stroke="#111" stroke-width="1.5"/>
+  <text x="356" y="195" text-anchor="middle" font-size="22">&#128100;</text>
+  <text x="356" y="214" text-anchor="middle" font-size="11" font-weight="bold">CPL Mahasiswa</text>
+  <text x="356" y="230" text-anchor="middle" font-size="9">Capaian CPL dari seluruh CPMK</text>
+  <text x="356" y="242" text-anchor="middle" font-size="9">yang telah ditempuh</text>
+
+  <rect x="504" y="162" width="272" height="90" rx="4" fill="none" stroke="#ccc" stroke-width="1"/>
+  <text x="640" y="195" text-anchor="middle" font-size="22">&#128197;</text>
+  <text x="640" y="214" text-anchor="middle" font-size="11">CPL per Semester</text>
+  <text x="640" y="230" text-anchor="middle" font-size="9">Capaian CPL dalam satu</text>
+  <text x="640" y="242" text-anchor="middle" font-size="9">semester</text>
+
+  <rect x="788" y="162" width="272" height="90" rx="4" fill="none" stroke="#ccc" stroke-width="1"/>
+  <text x="924" y="195" text-anchor="middle" font-size="22">&#128467;</text>
+  <text x="924" y="214" text-anchor="middle" font-size="11">CPL per Tahun Akademik</text>
+  <text x="924" y="230" text-anchor="middle" font-size="9">Capaian CPL dalam satu</text>
+  <text x="924" y="242" text-anchor="middle" font-size="9">tahun akademik</text>
+
+  <!-- Filter (active): CPL Mahasiswa -->
+  <rect x="220" y="264" width="860" height="84" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="220" y="264" width="860" height="30" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="238" y="284" font-size="11" font-weight="bold">Filter CPL Mahasiswa</text>
+
+  <text x="230" y="312" font-size="10">Program Studi</text>
+  <rect x="230" y="316" width="220" height="26" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="240" y="333" font-size="11">Teknik Informatika  &#9660;</text>
+
+  <text x="464" y="312" font-size="10">Tahun Angkatan</text>
+  <rect x="464" y="316" width="180" height="26" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="474" y="333" font-size="11">Semua Tahun  &#9660;</text>
+
+  <text x="658" y="312" font-size="10">Mahasiswa *</text>
+  <rect x="658" y="316" width="260" height="26" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="668" y="333" font-size="11">Pilih Mahasiswa  &#9660;</text>
+
+  <rect x="930" y="316" width="36" height="26" rx="3" fill="#555" stroke="none"/>
+  <text x="948" y="333" text-anchor="middle" font-size="14" fill="#fff">&#128269;</text>
+
+  <!-- Bar Chart Section -->
+  <rect x="220" y="360" width="860" height="200" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="220" y="360" width="860" height="30" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="238" y="380" font-size="11" font-weight="bold">Grafik Capaian CPL &#8212; Andi Prasetyo (2110001)</text>
+  <rect x="1030" y="364" width="42" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1051" y="379" text-anchor="middle" font-size="10">Export</text>
+
+  <!-- Bar chart area -->
+  <rect x="230" y="396" width="840" height="152" fill="#f9f9f9" stroke="#ccc" stroke-width="1"/>
+
+  <!-- Y-axis -->
+  <line x1="280" y1="400" x2="280" y2="538" stroke="#888" stroke-width="1"/>
+  <!-- X-axis -->
+  <line x1="280" y1="538" x2="1060" y2="538" stroke="#888" stroke-width="1"/>
+
+  <!-- Y-axis grid lines and labels -->
+  <line x1="280" y1="538" x2="1060" y2="538" stroke="#ddd" stroke-width="0.8"/>
+  <text x="272" y="542" text-anchor="end" font-size="8" fill="#666">0</text>
+  <line x1="280" y1="503" x2="1060" y2="503" stroke="#ddd" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <text x="272" y="507" text-anchor="end" font-size="8" fill="#666">25</text>
+  <line x1="280" y1="469" x2="1060" y2="469" stroke="#ddd" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <text x="272" y="473" text-anchor="end" font-size="8" fill="#666">50</text>
+  <line x1="280" y1="435" x2="1060" y2="435" stroke="#ddd" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <text x="272" y="439" text-anchor="end" font-size="8" fill="#666">75</text>
+  <line x1="280" y1="400" x2="1060" y2="400" stroke="#ddd" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <text x="272" y="404" text-anchor="end" font-size="8" fill="#666">100</text>
+
+  <!-- Bars (5 CPLs): bar height scale 138px = 100% -->
+  <!-- CPL-01: 88.5% → height=122, top=416 -->
+  <rect x="310" y="416" width="80" height="122" fill="#555" stroke="none"/>
+  <text x="350" y="412" text-anchor="middle" font-size="8" fill="#333">88.5%</text>
+  <text x="350" y="552" text-anchor="middle" font-size="8" fill="#333">CPL-01</text>
+
+  <!-- CPL-02: 68.2% → height=94, top=444 -->
+  <rect x="460" y="444" width="80" height="94" fill="#555" stroke="none"/>
+  <text x="500" y="440" text-anchor="middle" font-size="8" fill="#333">68.2%</text>
+  <text x="500" y="552" text-anchor="middle" font-size="8" fill="#333">CPL-02</text>
+
+  <!-- CPL-03: 75% → height=104, top=434 -->
+  <rect x="610" y="434" width="80" height="104" fill="#555" stroke="none"/>
+  <text x="650" y="430" text-anchor="middle" font-size="8" fill="#333">75.0%</text>
+  <text x="650" y="552" text-anchor="middle" font-size="8" fill="#333">CPL-03</text>
+
+  <!-- CPL-04: 92% → height=127, top=411 -->
+  <rect x="760" y="411" width="80" height="127" fill="#555" stroke="none"/>
+  <text x="800" y="407" text-anchor="middle" font-size="8" fill="#333">92.0%</text>
+  <text x="800" y="552" text-anchor="middle" font-size="8" fill="#333">CPL-04</text>
+
+  <!-- CPL-05: 55% → height=76, top=462 -->
+  <rect x="910" y="462" width="80" height="76" fill="#bbb" stroke="none"/>
+  <text x="950" y="458" text-anchor="middle" font-size="8" fill="#333">55.0%</text>
+  <text x="950" y="552" text-anchor="middle" font-size="8" fill="#333">CPL-05</text>
+
+  <!-- Detail table -->
+  <rect x="220" y="568" width="860" height="30" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="238" y="588" font-size="11" font-weight="bold">Tabel Detail Capaian CPL</text>
+  <rect x="220" y="598" width="860" height="28" fill="#eee" stroke="#111" stroke-width="0.8"/>
+  <line x1="370" y1="598" x2="370" y2="684" stroke="#111" stroke-width="0.5"/>
+  <line x1="560" y1="598" x2="560" y2="684" stroke="#111" stroke-width="0.5"/>
+  <line x1="750" y1="598" x2="750" y2="684" stroke="#111" stroke-width="0.5"/>
+  <line x1="940" y1="598" x2="940" y2="684" stroke="#111" stroke-width="0.5"/>
+  <text x="295" y="617" text-anchor="middle" font-size="10" font-weight="bold">Kode CPL</text>
+  <text x="465" y="617" text-anchor="middle" font-size="10" font-weight="bold">Deskripsi CPL</text>
+  <text x="655" y="617" text-anchor="middle" font-size="10" font-weight="bold">CPMK Kontributor</text>
+  <text x="845" y="617" text-anchor="middle" font-size="10" font-weight="bold">Capaian</text>
+  <text x="1010" y="617" text-anchor="middle" font-size="10" font-weight="bold">Status</text>
+  <line x1="220" y1="626" x2="1080" y2="626" stroke="#ccc" stroke-width="0.8"/>
+  <text x="295" y="642" text-anchor="middle" font-size="10">CPL-01</text>
+  <text x="465" y="642" text-anchor="middle" font-size="10">Menguasai konsep...</text>
+  <text x="655" y="642" text-anchor="middle" font-size="10">CPMK-01, CPMK-03</text>
+  <text x="845" y="642" text-anchor="middle" font-size="10" font-weight="bold">88.5%</text>
+  <rect x="980" y="633" width="56" height="16" rx="3" fill="#555" stroke="none"/>
+  <text x="1008" y="645" text-anchor="middle" font-size="9" fill="#fff">&#10003; Tercapai</text>
+  <line x1="220" y1="650" x2="1080" y2="650" stroke="#ccc" stroke-width="0.8"/>
+  <text x="295" y="666" text-anchor="middle" font-size="10">CPL-02</text>
+  <text x="465" y="666" text-anchor="middle" font-size="10">Mampu merancang...</text>
+  <text x="655" y="666" text-anchor="middle" font-size="10">CPMK-02</text>
+  <text x="845" y="666" text-anchor="middle" font-size="10" font-weight="bold">68.2%</text>
+  <rect x="974" y="657" width="68" height="16" rx="3" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="1008" y="669" text-anchor="middle" font-size="9">&#10007; Blm Tercapai</text>
+  <line x1="220" y1="674" x2="1080" y2="674" stroke="#ccc" stroke-width="0.8"/>
+  <text x="645" y="694" text-anchor="middle" font-size="10" fill="#888">... baris selanjutnya ...</text>
+</svg>

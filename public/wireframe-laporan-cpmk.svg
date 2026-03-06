@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1340" font-family="Arial, sans-serif" font-size="12" fill="#111" stroke="#111">
+  <rect width="1100" height="1340" fill="#fff" stroke="none"/>
+
+  <!-- SIDEBAR -->
+  <rect x="10" y="10" width="180" height="1320" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="10" y="10" width="180" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="100" y="40" text-anchor="middle" font-size="13" font-weight="bold">OBE SYSTEM</text>
+  <rect x="18" y="72" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="91" font-size="12">Dashboard</text>
+  <rect x="18" y="106" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="125" font-size="12">Nilai</text>
+  <rect x="18" y="140" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="159" font-size="12">Capaian CPMK</text>
+  <rect x="18" y="174" width="164" height="28" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="30" y="193" font-size="12">Laporan CPMK</text>
+  <rect x="18" y="208" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="227" font-size="12">Laporan CPL</text>
+
+  <!-- TOP NAVBAR -->
+  <rect x="200" y="10" width="890" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="40" font-size="14" font-weight="bold">Laporan CPMK — Portofolio Mata Kuliah</text>
+  <circle cx="1060" cy="35" r="16" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1060" y="40" text-anchor="middle" font-size="12">A</text>
+
+  <!-- TOP ACTION BAR -->
+  <rect x="200" y="70" width="890" height="42" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="210" y="80" width="80" height="24" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="250" y="96" text-anchor="middle" font-size="11">← Kembali</text>
+  <rect x="1040" y="80" width="42" height="24" rx="3" fill="#555" stroke="none"/>
+  <text x="1061" y="96" text-anchor="middle" font-size="10" fill="#fff">↓ ZIP</text>
+
+  <!-- PORTFOLIO CARD -->
+  <rect x="200" y="122" width="890" height="1208" fill="none" stroke="#111" stroke-width="1.5"/>
+
+  <!-- PORTFOLIO HEADER -->
+  <text x="645" y="160" text-anchor="middle" font-size="16" font-weight="bold">PORTOFOLIO MATA KULIAH</text>
+
+  <!-- SECTION 1: Identitas Mata Kuliah -->
+  <text x="220" y="194" font-size="12" font-weight="bold">1. Identitas Mata Kuliah</text>
+  <rect x="220" y="200" width="860" height="168" fill="none" stroke="#111" stroke-width="1"/>
+  <line x1="430" y1="200" x2="430" y2="368" stroke="#111" stroke-width="0.8"/>
+  <!-- rows -->
+  <line x1="220" y1="224" x2="1080" y2="224" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="220" y1="248" x2="1080" y2="248" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="220" y1="272" x2="1080" y2="272" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="220" y1="296" x2="1080" y2="296" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="220" y1="320" x2="1080" y2="320" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="220" y1="344" x2="1080" y2="344" stroke="#ccc" stroke-width="0.8"/>
+
+  <text x="228" y="217" font-size="11" font-weight="bold">Nama Mata Kuliah</text>
+  <text x="438" y="217" font-size="11">Pemrograman Web</text>
+  <text x="228" y="241" font-size="11" font-weight="bold">Kode Mata Kuliah</text>
+  <text x="438" y="241" font-size="11">MK-001</text>
+  <text x="228" y="265" font-size="11" font-weight="bold">Program Studi</text>
+  <text x="438" y="265" font-size="11">Teknik Informatika</text>
+  <text x="228" y="289" font-size="11" font-weight="bold">Semester</text>
+  <text x="438" y="289" font-size="11">5</text>
+  <text x="228" y="313" font-size="11" font-weight="bold">Jumlah SKS</text>
+  <text x="438" y="313" font-size="11">3 SKS</text>
+  <text x="228" y="337" font-size="11" font-weight="bold">Tahun Akademik</text>
+  <text x="438" y="337" font-size="11">2024/2025 Genap</text>
+  <text x="228" y="361" font-size="11" font-weight="bold">Dosen</text>
+  <text x="438" y="356" font-size="11">Kelas A: Dr. Budi S. (NIP: 123) - Koordinator</text>
+  <text x="438" y="370" font-size="10" fill="#555">Kelas B: Ibu Sari D. (NIP: 456) - Dosen</text>
+
+  <!-- SECTION 2: CPMK -->
+  <text x="220" y="398" font-size="12" font-weight="bold">2. Capaian Pembelajaran Mata Kuliah (CPMK)</text>
+  <rect x="220" y="404" width="860" height="122" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="220" y="404" width="860" height="24" fill="#eee" stroke="#111" stroke-width="0.8"/>
+  <line x1="346" y1="404" x2="346" y2="526" stroke="#111" stroke-width="0.8"/>
+  <line x1="616" y1="404" x2="616" y2="526" stroke="#111" stroke-width="0.8"/>
+  <line x1="750" y1="404" x2="750" y2="526" stroke="#111" stroke-width="0.8"/>
+  <line x1="890" y1="404" x2="890" y2="526" stroke="#111" stroke-width="0.8"/>
+  <text x="283" y="421" text-anchor="middle" font-size="10" font-weight="bold">Kode CPMK</text>
+  <text x="481" y="421" text-anchor="middle" font-size="10" font-weight="bold">Rumusan CPMK</text>
+  <text x="683" y="421" text-anchor="middle" font-size="10" font-weight="bold">Keterkaitan CPL</text>
+  <text x="820" y="421" text-anchor="middle" font-size="10" font-weight="bold">Metode Pembelajaran</text>
+  <text x="985" y="421" text-anchor="middle" font-size="10" font-weight="bold">Metode Asesmen</text>
+  <line x1="220" y1="428" x2="1080" y2="428" stroke="#ccc" stroke-width="0.8"/>
+  <text x="283" y="444" text-anchor="middle" font-size="10">CPMK-01</text>
+  <text x="481" y="444" text-anchor="middle" font-size="10">Mahasiswa mampu membuat...</text>
+  <text x="683" y="444" text-anchor="middle" font-size="10">CPL-01, CPL-03</text>
+  <text x="820" y="444" text-anchor="middle" font-size="10">Ceramah, Praktikum</text>
+  <text x="985" y="444" text-anchor="middle" font-size="10">Tugas, UTS, UAS</text>
+  <line x1="220" y1="452" x2="1080" y2="452" stroke="#ccc" stroke-width="0.8"/>
+  <text x="283" y="468" text-anchor="middle" font-size="10">CPMK-02</text>
+  <text x="481" y="468" text-anchor="middle" font-size="10">Mahasiswa mampu merancang...</text>
+  <text x="683" y="468" text-anchor="middle" font-size="10">CPL-02</text>
+  <text x="820" y="468" text-anchor="middle" font-size="10">Proyek</text>
+  <text x="985" y="468" text-anchor="middle" font-size="10">Proyek Akhir</text>
+  <line x1="220" y1="476" x2="1080" y2="476" stroke="#ccc" stroke-width="0.8"/>
+  <text x="645" y="510" text-anchor="middle" font-size="10" fill="#888">... baris selanjutnya ...</text>
+
+  <!-- SECTION 3: Rencana dan Realisasi -->
+  <text x="220" y="546" font-size="12" font-weight="bold">3. Rencana dan Realisasi Penilaian CPMK</text>
+  <rect x="220" y="552" width="860" height="122" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="220" y="552" width="860" height="24" fill="#eee" stroke="#111" stroke-width="0.8"/>
+  <line x1="314" y1="552" x2="314" y2="674" stroke="#111" stroke-width="0.8"/>
+  <line x1="400" y1="552" x2="400" y2="674" stroke="#111" stroke-width="0.8"/>
+  <line x1="530" y1="552" x2="530" y2="674" stroke="#111" stroke-width="0.8"/>
+  <line x1="740" y1="552" x2="740" y2="674" stroke="#111" stroke-width="0.8"/>
+  <line x1="900" y1="552" x2="900" y2="674" stroke="#111" stroke-width="0.8"/>
+  <text x="267" y="569" text-anchor="middle" font-size="10" font-weight="bold">Kode CPMK</text>
+  <text x="357" y="569" text-anchor="middle" font-size="10" font-weight="bold">Bobot%</text>
+  <text x="465" y="569" text-anchor="middle" font-size="10" font-weight="bold">Teknik Penilaian</text>
+  <text x="635" y="569" text-anchor="middle" font-size="10" font-weight="bold">Indikator Penilaian</text>
+  <text x="820" y="569" text-anchor="middle" font-size="10" font-weight="bold">Nilai Rata-rata</text>
+  <text x="990" y="569" text-anchor="middle" font-size="10" font-weight="bold">Rata-rata Capaian</text>
+  <line x1="220" y1="576" x2="1080" y2="576" stroke="#ccc" stroke-width="0.8"/>
+  <text x="267" y="592" text-anchor="middle" font-size="10">CPMK-01</text>
+  <text x="357" y="592" text-anchor="middle" font-size="10">30%</text>
+  <text x="465" y="592" text-anchor="middle" font-size="10">Tugas Harian</text>
+  <text x="635" y="592" text-anchor="middle" font-size="10">Kebenaran, ketepatan</text>
+  <text x="820" y="592" text-anchor="middle" font-size="10">85.00</text>
+  <text x="990" y="592" text-anchor="middle" font-size="10" font-weight="bold">91.2%</text>
+  <line x1="220" y1="600" x2="1080" y2="600" stroke="#ccc" stroke-width="0.8"/>
+  <text x="267" y="616" text-anchor="middle" font-size="10">CPMK-02</text>
+  <text x="357" y="616" text-anchor="middle" font-size="10">25%</text>
+  <text x="465" y="616" text-anchor="middle" font-size="10">UTS</text>
+  <text x="635" y="616" text-anchor="middle" font-size="10">Pemahaman konsep</text>
+  <text x="820" y="616" text-anchor="middle" font-size="10">70.00</text>
+  <text x="990" y="616" text-anchor="middle" font-size="10" font-weight="bold">68.4%</text>
+  <line x1="220" y1="624" x2="1080" y2="624" stroke="#ccc" stroke-width="0.8"/>
+  <text x="645" y="656" text-anchor="middle" font-size="10" fill="#888">... baris selanjutnya ...</text>
+
+  <!-- SECTION 4: Analisis -->
+  <text x="220" y="694" font-size="12" font-weight="bold">4. Analisis Pencapaian CPMK</text>
+  <rect x="220" y="700" width="860" height="250" fill="none" stroke="#111" stroke-width="1"/>
+
+  <text x="234" y="722" font-size="11" font-weight="bold">Standar Minimal Capaian:</text>
+  <text x="420" y="722" font-size="11">75%</text>
+  <text x="234" y="742" font-size="11" font-weight="bold">CPMK Tercapai:</text>
+  <text x="420" y="742" font-size="11">CPMK-01, CPMK-03, CPMK-05</text>
+  <text x="234" y="762" font-size="11" font-weight="bold">CPMK Tidak Tercapai:</text>
+  <text x="420" y="762" font-size="11">CPMK-02, CPMK-04</text>
+
+  <text x="234" y="784" font-size="11" font-weight="bold">Analisis Singkat:</text>
+  <rect x="1020" y="776" width="52" height="20" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1046" y="790" text-anchor="middle" font-size="10">✏ Edit</text>
+
+  <!-- Display mode -->
+  <rect x="234" y="794" width="826" height="50" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="648" y="818" text-anchor="middle" font-size="11">Sebagian besar CPMK tercapai. CPMK-02 dan CPMK-04</text>
+  <text x="648" y="834" text-anchor="middle" font-size="11">perlu perhatian lebih pada semester berikutnya.</text>
+
+  <!-- Edit mode (hidden, shown as dashed) -->
+  <rect x="234" y="854" width="826" height="82" fill="#fafafa" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="248" y="873" font-size="10" font-weight="bold">[Edit Mode - tersembunyi, muncul saat klik Edit]</text>
+  <text x="248" y="890" font-size="10">○ Otomatis — pilih template (radio buttons)</text>
+  <text x="248" y="906" font-size="10">  └ Template Default | Template Singkat | Template Detail  [+ Edit Template button per item]</text>
+  <text x="248" y="922" font-size="10">○ Manual — textarea untuk tulis analisis sendiri</text>
+  <rect x="248" y="928" width="56" height="18" rx="3" fill="#555" stroke="none"/>
+  <text x="276" y="940" text-anchor="middle" font-size="10" fill="#fff">Simpan</text>
+  <rect x="312" y="928" width="40" height="18" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="332" y="940" text-anchor="middle" font-size="10">Batal</text>
+
+  <!-- SECTION 5: CQI -->
+  <text x="220" y="974" font-size="12" font-weight="bold">5. Tindak Lanjut &amp; CQI (Continuous Quality Improvement)</text>
+  <rect x="220" y="980" width="860" height="130" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="1020" y="984" width="52" height="20" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1046" y="998" text-anchor="middle" font-size="10">✏ Edit</text>
+
+  <text x="234" y="1004" font-size="11" font-weight="bold">Rencana Tindak Lanjut:</text>
+  <rect x="234" y="1010" width="826" height="50" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+  <text x="648" y="1034" text-anchor="middle" font-size="11">Memberikan remedial untuk mahasiswa yang belum</text>
+  <text x="648" y="1050" text-anchor="middle" font-size="11">mencapai CPMK-02 dan CPMK-04.</text>
+
+  <!-- CQI Edit mode -->
+  <rect x="234" y="1068" width="826" height="38" fill="#fafafa" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="248" y="1086" font-size="10">[Edit Mode CQI: textarea + radio Auto/Manual + Simpan/Batal]</text>
+
+  <text x="220" y="1116" font-size="10" fill="#555">Note: Tombol Download ZIP mengekspor seluruh portofolio sebagai arsip ZIP</text>
+  <text x="220" y="1132" font-size="10" fill="#555">Analisis (Seksyen 4) dan CQI (Seksyen 5) dapat diedit langsung di halaman ini</text>
+</svg>

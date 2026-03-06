@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 860" font-family="Arial, sans-serif" font-size="12" fill="#111" stroke="#111">
+
+  <!-- Page background -->
+  <rect width="1100" height="860" fill="#fff" stroke="none"/>
+
+  <!-- ===== SIDEBAR ===== -->
+  <rect x="10" y="10" width="180" height="840" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="10" y="10" width="180" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="100" y="40" text-anchor="middle" font-size="13" font-weight="bold">OBE SYSTEM</text>
+  <rect x="18" y="72" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="91" font-size="12">Dashboard</text>
+  <rect x="18" y="106" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="125" font-size="12">Jadwal Mengajar</text>
+  <rect x="18" y="140" width="164" height="28" fill="#ddd" stroke="#111" stroke-width="1"/>
+  <text x="30" y="159" font-size="12">Nilai Mahasiswa</text>
+  <rect x="18" y="174" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="193" font-size="12">Mata Kuliah</text>
+  <rect x="18" y="208" width="164" height="28" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="30" y="227" font-size="12">Mahasiswa</text>
+
+  <!-- ===== TOP NAVBAR ===== -->
+  <rect x="200" y="10" width="890" height="50" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="40" font-size="14" font-weight="bold">Nilai Mahasiswa</text>
+  <circle cx="1060" cy="35" r="16" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="1060" y="40" text-anchor="middle" font-size="12">A</text>
+  <text x="1082" y="40" font-size="12">Admin</text>
+
+  <!-- ===== FILTER SECTION ===== -->
+  <rect x="200" y="74" width="890" height="108" fill="none" stroke="#111" stroke-width="1.5"/>
+  <rect x="200" y="74" width="890" height="32" fill="#ddd" stroke="#111" stroke-width="1.5"/>
+  <text x="220" y="95" font-size="12" font-weight="bold">Filter Jadwal</text>
+
+  <!-- Program Studi (locked) -->
+  <text x="210" y="122" font-size="10">Program Studi</text>
+  <rect x="210" y="126" width="175" height="30" fill="#eee" stroke="#111" stroke-width="1"/>
+  <text x="220" y="146" font-size="11">[lock] Teknik Informatika</text>
+
+  <!-- Tahun Akademik -->
+  <text x="398" y="122" font-size="10">Tahun Akademik</text>
+  <rect x="398" y="126" width="140" height="30" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="408" y="146" font-size="11">Semua Tahun  ▼</text>
+
+  <!-- Semester -->
+  <text x="550" y="122" font-size="10">Semester</text>
+  <rect x="550" y="126" width="140" height="30" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="560" y="146" font-size="11">Semua Semester  ▼</text>
+
+  <!-- Mata Kuliah (select2) -->
+  <text x="704" y="122" font-size="10">Mata Kuliah</text>
+  <rect x="704" y="126" width="220" height="30" fill="#fff" stroke="#111" stroke-width="1"/>
+  <text x="714" y="146" font-size="11">Semua Mata Kuliah  ▼</text>
+
+  <!-- Apply + Reset -->
+  <rect x="938" y="126" width="100" height="30" fill="#ddd" stroke="#111" stroke-width="1.5"/>
+  <text x="988" y="146" text-anchor="middle" font-size="11">Terapkan</text>
+  <rect x="1046" y="126" width="34" height="30" fill="#fff" stroke="#111" stroke-width="1.5"/>
+  <text x="1063" y="146" text-anchor="middle" font-size="11">↺</text>
+
+  <!-- ===== DATA TABLE ===== -->
+  <rect x="200" y="196" width="890" height="600" fill="none" stroke="#111" stroke-width="1.5"/>
+
+  <!-- Table header row -->
+  <rect x="200" y="196" width="890" height="34" fill="#ddd" stroke="#111" stroke-width="1.5"/>
+  <!-- Col headers -->
+  <line x1="250" y1="196" x2="250" y2="796" stroke="#111" stroke-width="0.8"/>
+  <line x1="490" y1="196" x2="490" y2="796" stroke="#111" stroke-width="0.8"/>
+  <line x1="660" y1="196" x2="660" y2="796" stroke="#111" stroke-width="0.8"/>
+  <line x1="780" y1="196" x2="780" y2="796" stroke="#111" stroke-width="0.8"/>
+  <line x1="930" y1="196" x2="930" y2="796" stroke="#111" stroke-width="0.8"/>
+  <line x1="1010" y1="196" x2="1010" y2="796" stroke="#111" stroke-width="0.8"/>
+
+  <text x="225" y="218" text-anchor="middle" font-size="11" font-weight="bold">No</text>
+  <text x="370" y="218" text-anchor="middle" font-size="11" font-weight="bold">Mata Kuliah</text>
+  <text x="575" y="218" text-anchor="middle" font-size="11" font-weight="bold">Dosen</text>
+  <text x="720" y="218" text-anchor="middle" font-size="11" font-weight="bold">Program Studi</text>
+  <text x="855" y="218" text-anchor="middle" font-size="11" font-weight="bold">Progress Penilaian</text>
+  <text x="970" y="218" text-anchor="middle" font-size="11" font-weight="bold">Status</text>
+  <text x="1055" y="218" text-anchor="middle" font-size="11" font-weight="bold">Aksi</text>
+
+  <!-- ===== ROW 1 ===== -->
+  <line x1="200" y1="310" x2="1090" y2="310" stroke="#ccc" stroke-width="0.8"/>
+  <text x="225" y="268" text-anchor="middle" font-size="11">1</text>
+  <!-- Mata Kuliah cell -->
+  <text x="258" y="248" font-size="11" font-weight="bold">Algoritma Pemrograman</text>
+  <rect x="258" y="254" width="50" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="283" y="266" text-anchor="middle" font-size="9">MK-001</text>
+  <rect x="314" y="254" width="58" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="343" y="266" text-anchor="middle" font-size="9">Kelas A</text>
+  <rect x="378" y="254" width="70" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="413" y="266" text-anchor="middle" font-size="9">2024 Ganjil</text>
+  <!-- Dosen cell -->
+  <rect x="498" y="238" width="70" height="16" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="533" y="250" text-anchor="middle" font-size="9" fill="#111">★ Koordinator</text>
+  <text x="498" y="268" font-size="10" font-weight="bold">Dr. Budi Santoso</text>
+  <text x="498" y="284" font-size="9" fill="#555">— Ibu Sari Dewi</text>
+  <text x="498" y="296" font-size="9" fill="#555">— Pak Hendra K.</text>
+  <!-- Program Studi -->
+  <text x="668" y="268" font-size="10">Teknik Informatika</text>
+  <!-- Progress -->
+  <text x="790" y="252" font-size="10">8 / 10</text>
+  <text x="906" y="252" text-anchor="end" font-size="10" font-weight="bold">80%</text>
+  <rect x="790" y="258" width="116" height="7" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="790" y="258" width="93" height="7" rx="3" fill="#555" stroke="none"/>
+  <!-- Status -->
+  <rect x="936" y="254" width="68" height="20" rx="3" fill="none" stroke="#111" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="970" y="268" text-anchor="middle" font-size="9">⏱ Belum Validasi</text>
+  <!-- Aksi -->
+  <rect x="1018" y="252" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1030" y="268" text-anchor="middle" font-size="11">👁</text>
+  <rect x="1046" y="252" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1058" y="268" text-anchor="middle" font-size="11">📈</text>
+  <rect x="1074" y="252" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1086" y="268" text-anchor="middle" font-size="11">✏</text>
+
+  <!-- ===== ROW 2 ===== -->
+  <rect x="201" y="311" width="888" height="90" fill="#f5f5f5" stroke="none"/>
+  <line x1="200" y1="400" x2="1090" y2="400" stroke="#ccc" stroke-width="0.8"/>
+  <text x="225" y="360" text-anchor="middle" font-size="11">2</text>
+  <text x="258" y="340" font-size="11" font-weight="bold">Basis Data</text>
+  <rect x="258" y="346" width="50" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="283" y="358" text-anchor="middle" font-size="9">MK-002</text>
+  <rect x="314" y="346" width="58" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="343" y="358" text-anchor="middle" font-size="9">Kelas B</text>
+  <rect x="378" y="346" width="70" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="413" y="358" text-anchor="middle" font-size="9">2024 Genap</text>
+  <rect x="498" y="330" width="70" height="16" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="533" y="342" text-anchor="middle" font-size="9" fill="#111">★ Koordinator</text>
+  <text x="498" y="360" font-size="10" font-weight="bold">Prof. Andi Rahmat</text>
+  <text x="668" y="360" font-size="10">Teknik Informatika</text>
+  <text x="790" y="344" font-size="10">10 / 10</text>
+  <text x="906" y="344" text-anchor="end" font-size="10" font-weight="bold">100%</text>
+  <rect x="790" y="350" width="116" height="7" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="790" y="350" width="116" height="7" rx="3" fill="#111" stroke="none"/>
+  <rect x="936" y="346" width="68" height="20" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="970" y="360" text-anchor="middle" font-size="9" fill="#111">✓ Tervalidasi</text>
+  <rect x="1018" y="344" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1030" y="360" text-anchor="middle" font-size="11">👁</text>
+  <rect x="1046" y="344" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1058" y="360" text-anchor="middle" font-size="11">📈</text>
+  <rect x="1074" y="344" width="24" height="22" rx="3" fill="#bbb" stroke="#bbb" stroke-width="1"/>
+  <text x="1086" y="360" text-anchor="middle" font-size="11">🔒</text>
+
+  <!-- ===== ROW 3 ===== -->
+  <line x1="200" y1="490" x2="1090" y2="490" stroke="#ccc" stroke-width="0.8"/>
+  <text x="225" y="448" text-anchor="middle" font-size="11">3</text>
+  <text x="258" y="428" font-size="11" font-weight="bold">Jaringan Komputer</text>
+  <rect x="258" y="434" width="50" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="283" y="446" text-anchor="middle" font-size="9">MK-003</text>
+  <rect x="314" y="434" width="58" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="343" y="446" text-anchor="middle" font-size="9">Kelas A</text>
+  <rect x="378" y="434" width="70" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="413" y="446" text-anchor="middle" font-size="9">2024 Ganjil</text>
+  <rect x="498" y="418" width="70" height="16" rx="3" fill="none" stroke="#111" stroke-width="1.5"/>
+  <text x="533" y="430" text-anchor="middle" font-size="9" fill="#111">★ Koordinator</text>
+  <text x="498" y="448" font-size="10" font-weight="bold">Ibu Citra Melani</text>
+  <text x="498" y="464" font-size="9" fill="#555">— Bpk. Rudi W.</text>
+  <text x="668" y="448" font-size="10">Teknik Informatika</text>
+  <text x="790" y="432" font-size="10">3 / 10</text>
+  <text x="906" y="432" text-anchor="end" font-size="10" font-weight="bold">30%</text>
+  <rect x="790" y="438" width="116" height="7" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <rect x="790" y="438" width="35" height="7" rx="3" fill="#555" stroke="none"/>
+  <rect x="936" y="434" width="68" height="20" rx="3" fill="none" stroke="#111" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="970" y="448" text-anchor="middle" font-size="9">⏱ Belum Validasi</text>
+  <rect x="1018" y="432" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1030" y="448" text-anchor="middle" font-size="11">👁</text>
+  <rect x="1046" y="432" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1058" y="448" text-anchor="middle" font-size="11">📈</text>
+  <rect x="1074" y="432" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1086" y="448" text-anchor="middle" font-size="11">✏</text>
+
+  <!-- ===== ROW 4 (empty dosen) ===== -->
+  <rect x="201" y="491" width="888" height="80" fill="#f5f5f5" stroke="none"/>
+  <line x1="200" y1="570" x2="1090" y2="570" stroke="#ccc" stroke-width="0.8"/>
+  <text x="225" y="535" text-anchor="middle" font-size="11">4</text>
+  <text x="258" y="520" font-size="11" font-weight="bold">Pemrograman Web</text>
+  <rect x="258" y="526" width="50" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="283" y="538" text-anchor="middle" font-size="9">MK-004</text>
+  <rect x="314" y="526" width="58" height="16" rx="3" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="343" y="538" text-anchor="middle" font-size="9">Kelas C</text>
+  <text x="498" y="535" font-size="10" font-style="italic">Belum ditentukan</text>
+  <text x="668" y="535" font-size="10">Teknik Informatika</text>
+  <text x="790" y="535" font-size="10" font-style="italic">Tidak ada data</text>
+  <rect x="936" y="522" width="68" height="20" rx="3" fill="none" stroke="#111" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="970" y="536" text-anchor="middle" font-size="9">⏱ Belum Validasi</text>
+  <rect x="1018" y="522" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1030" y="538" text-anchor="middle" font-size="11">👁</text>
+  <rect x="1046" y="522" width="24" height="22" rx="3" fill="none" stroke="#111" stroke-width="1"/>
+  <text x="1058" y="538" text-anchor="middle" font-size="11">📈</text>
+  <rect x="1074" y="522" width="24" height="22" rx="3" fill="#bbb" stroke="#bbb" stroke-width="1"/>
+  <text x="1086" y="538" text-anchor="middle" font-size="11">🔒</text>
+
+  <!-- ===== REMAINING ROWS (placeholder) ===== -->
+  <line x1="200" y1="620" x2="1090" y2="620" stroke="#ddd" stroke-width="0.8"/>
+  <text x="645" y="598" text-anchor="middle" font-size="11" fill="#888">... baris selanjutnya ...</text>
+  <line x1="200" y1="650" x2="1090" y2="650" stroke="#ddd" stroke-width="0.8"/>
+  <text x="645" y="640" text-anchor="middle" font-size="11" fill="#888">... baris selanjutnya ...</text>
+
+  <!-- ===== TABLE FOOTER ===== -->
+  <rect x="200" y="776" width="890" height="30" fill="#eee" stroke="#111" stroke-width="1"/>
+  <text x="645" y="795" text-anchor="middle" font-size="11">Total: 12 jadwal mengajar</text>
+
+  <!-- ===== LEGEND ===== -->
+  <text x="200" y="828" font-size="10" fill="#555">Legend:   👁 = Lihat Teknik Penilaian   📈 = Lihat Nilai CPMK   ✏ = Input Nilai (dosen pengampu)   🔒 = Input Nilai (dikunci / bukan pengampu)</text>
+  <text x="200" y="844" font-size="10" fill="#555">Progress bar: ██ 100% (full) · ██ partial · Empty = tidak ada data   |   Status: solid = Tervalidasi · dashed = Belum Validasi</text>
+
+</svg>
