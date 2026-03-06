@@ -343,10 +343,10 @@
 	<div class="hero-sub">Kelola kurikulum berbasis OBE Program Studi Teknik Informatika Universitas Palangka Raya.</div>
 	<div class="d-flex gap-2 flex-wrap mt-3">
 		<button id="btn-start-tour" onclick="startTour()" class="btn btn-light btn-sm" style="font-weight:600; border-radius:999px; padding:6px 18px; display:inline-flex; align-items:center; gap:6px;">
-			<i class="bi bi-play-circle-fill text-primary"></i> Tutorial Dashboard
+			<i class="bi bi-play-circle-fill text-primary"></i> Panduan Singkat
 		</button>
 		<button onclick="startFullTour()" class="btn btn-sm" style="font-weight:600; border-radius:999px; padding:6px 18px; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.4);">
-			<i class="bi bi-map-fill"></i> Tour Per Halaman
+			<i class="bi bi-map-fill"></i> Panduan Lengkap
 		</button>
 	</div>
 </div>
