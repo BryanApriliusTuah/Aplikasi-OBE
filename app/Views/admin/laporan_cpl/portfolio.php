@@ -26,7 +26,6 @@
 				<p class="mt-3">
 					<strong>Program Studi:</strong> <?= esc($report['identitas']['nama_program_studi']) ?><br>
 					<strong>Tahun Akademik:</strong> <?= esc($report['identitas']['tahun_akademik']) ?><br>
-					<strong>Angkatan:</strong> <?= esc($report['identitas']['angkatan']) ?>
 				</p>
 			</div>
 
@@ -319,7 +318,7 @@
 													<textarea class="form-control form-control-sm font-monospace"
 														name="penyebab_template_tidak_tercapai_<?= esc($key) ?>"
 														rows="3"><?= esc($tmpl['template_tidak_tercapai'] ?? '') ?></textarea>
-													<small class="text-muted">Placeholder: <code>{total_cpl}</code>, <code>{jumlah_tercapai}</code>, <code>{jumlah_tidak_tercapai}</code>, <code>{cpl_tidak_tercapai_list}</code>, <code>{standar_minimal}</code></small>
+													<!-- <small class="text-muted">Placeholder: <code>{total_cpl}</code>, <code>{jumlah_tercapai}</code>, <code>{jumlah_tidak_tercapai}</code>, <code>{cpl_tidak_tercapai_list}</code>, <code>{standar_minimal}</code></small> -->
 												</div>
 											</div>
 										</div>
