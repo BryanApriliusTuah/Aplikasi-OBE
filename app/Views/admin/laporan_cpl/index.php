@@ -34,15 +34,25 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label for="program_studi" class="modern-filter-label">
+								<label class="modern-filter-label">
 									Program Studi <span class="text-danger">*</span>
 								</label>
-								<select class="form-select modern-filter-input" id="program_studi" name="program_studi" required>
-									<option value="">-- Pilih Program Studi --</option>
-									<?php foreach ($programStudi as $kode => $nama): ?>
-										<option value="<?= esc($kode) ?>" <?= ucwords(strtolower($nama)) === 'Teknik Informatika' ? 'selected' : '' ?>><?= esc($nama) ?></option>
-									<?php endforeach; ?>
-								</select>
+								<?php
+								$lockedKode = '';
+								$lockedNama = 'Teknik Informatika';
+								foreach ($programStudi as $kode => $nama) {
+									if (ucwords(strtolower($nama)) === 'Teknik Informatika') {
+										$lockedKode = $kode;
+										$lockedNama = $nama;
+										break;
+									}
+								}
+								?>
+								<input type="hidden" id="program_studi" name="program_studi" value="<?= esc($lockedKode) ?>">
+								<div class="form-control modern-filter-input bg-light d-flex align-items-center gap-1" style="cursor: not-allowed; color: #6c757d;">
+									<i class="bi bi-lock-fill" style="font-size: 0.75rem;"></i>
+									<?= esc($lockedNama) ?>
+								</div>
 							</div>
 						</div>
 
