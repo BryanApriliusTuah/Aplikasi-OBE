@@ -40,8 +40,8 @@
 
 						<div class="mb-3">
 							<label for="mahasiswa_ids" class="form-label">Mahasiswa <span class="text-danger">*</span></label>
-							<small class="d-block text-muted mb-2">Pilih satu atau lebih mahasiswa yang terlibat dalam kegiatan ini</small>
-							<select class="form-select" id="mahasiswa_ids" name="mahasiswa_ids[]" multiple="multiple" required>
+							<small class="d-block text-muted mb-2">Mahasiswa yang terlibat dalam kegiatan ini tidak dapat diubah</small>
+							<select class="form-select" id="mahasiswa_ids" multiple="multiple" disabled>
 								<?php foreach ($mahasiswa as $mhs): ?>
 									<option value="<?= $mhs['id'] ?>"
 										<?= in_array($mhs['id'], $selected_mahasiswa_ids) ? 'selected' : '' ?>>
@@ -49,6 +49,9 @@
 									</option>
 								<?php endforeach; ?>
 							</select>
+							<?php foreach ($selected_mahasiswa_ids as $id): ?>
+								<input type="hidden" name="mahasiswa_ids[]" value="<?= esc($id) ?>">
+							<?php endforeach; ?>
 						</div>
 
 						<h5 class="mb-3 mt-4 text-primary"><i class="bi bi-bookmark"></i> Detail Kegiatan</h5>
@@ -80,13 +83,8 @@
 
 						<div class="mb-3">
 							<label for="status_kegiatan" class="form-label">Status Kegiatan <span class="text-danger">*</span></label>
-							<select class="form-select" id="status_kegiatan" name="status_kegiatan" required>
-								<option value="diajukan" <?= $kegiatan['status_kegiatan'] == 'diajukan' ? 'selected' : '' ?>>Diajukan</option>
-								<option value="disetujui" <?= $kegiatan['status_kegiatan'] == 'disetujui' ? 'selected' : '' ?>>Disetujui</option>
-								<option value="ditolak" <?= $kegiatan['status_kegiatan'] == 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
-								<option value="berlangsung" <?= $kegiatan['status_kegiatan'] == 'berlangsung' ? 'selected' : '' ?>>Berlangsung</option>
-								<option value="selesai" <?= $kegiatan['status_kegiatan'] == 'selesai' ? 'selected' : '' ?>>Selesai</option>
-							</select>
+							<input type="text" class="form-control" value="<?= esc($kegiatan['status_kegiatan']) ?>" readonly>
+							<input type="hidden" name="status_kegiatan" value="<?= esc($kegiatan['status_kegiatan']) ?>">
 						</div>
 					</div>
 				</div>
