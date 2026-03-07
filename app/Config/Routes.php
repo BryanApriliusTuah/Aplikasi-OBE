@@ -201,6 +201,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('nilai/detail-nilai-teknik/(:num)', 'Nilai::getDetailNilaiTeknikPenilaian/$1');
 	$routes->post('nilai/validate/(:num)', 'Nilai::validateNilai/$1');
 	$routes->post('nilai/unvalidate/(:num)', 'Nilai::unvalidateNilai/$1');
+	$routes->post('nilai/clear-nilai-teknik/(:num)', 'Nilai::clearNilaiTeknik/$1');
 	$routes->get('nilai/lihat-nilai/(:num)', 'Nilai::lihatNilai/$1');
 	$routes->get('nilai/lihat-cpmk/(:num)', 'Nilai::lihatCpmk/$1');
 	$routes->get('nilai/lihat-cpl/(:num)', 'Nilai::lihatCpl/$1');

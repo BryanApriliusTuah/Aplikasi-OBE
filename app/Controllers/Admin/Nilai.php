@@ -712,6 +712,49 @@ class Nilai extends BaseController
 	}
 
 	/**
+	 * Clear all scores for a jadwal (teknik_penilaian, cpmk, and final scores)
+	 */
+	public function clearNilaiTeknik($jadwal_id)
+	{
+		$currentDosenId = null;
+		if (session()->get('role') === 'dosen') {
+			$dosenModel = new DosenModel();
+			$currentDosen = $dosenModel->where('user_id', session()->get('user_id'))->first();
+			$currentDosenId = $currentDosen ? $currentDosen['id'] : null;
+		}
+
+		if (!$this->canInputGrades($jadwal_id, $currentDosenId)) {
+			return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Anda tidak memiliki akses untuk menghapus nilai pada jadwal ini.']);
+		}
+
+		$jadwalModel = new MengajarModel();
+		$jadwal = $jadwalModel->find($jadwal_id);
+
+		if (!$jadwal) {
+			return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Jadwal tidak ditemukan.']);
+		}
+
+		if ($jadwal['is_nilai_validated'] == 1 && session()->get('role') === 'dosen') {
+			return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Nilai sudah divalidasi. Anda tidak dapat menghapus nilai.']);
+		}
+
+		$db = \Config\Database::connect();
+		$db->transStart();
+
+		$db->table('nilai_teknik_penilaian')->where('jadwal_id', $jadwal_id)->delete();
+		$db->table('nilai_cpmk_mahasiswa')->where('jadwal_id', $jadwal_id)->delete();
+		$db->table('nilai_mahasiswa')->where('jadwal_id', $jadwal_id)->delete();
+
+		$db->transComplete();
+
+		if ($db->transStatus() === false) {
+			return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menghapus nilai dari database.']);
+		}
+
+		return $this->response->setJSON(['status' => 'success', 'message' => 'Semua nilai berhasil dihapus.']);
+	}
+
+	/**
 	 * AJAX endpoint to get detail nilai by teknik_penilaian
 	 */
 	public function getDetailNilaiTeknikPenilaian($jadwal_id)

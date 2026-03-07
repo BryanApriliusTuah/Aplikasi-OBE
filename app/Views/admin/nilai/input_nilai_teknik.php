@@ -677,41 +677,55 @@
 	}
 
 	function clearAllValues() {
-		if (confirm('Apakah Anda yakin ingin mengosongkan semua nilai?')) {
-			const inputs = document.querySelectorAll('.nilai-input');
-			const updatedMahasiswa = new Set();
+		if (confirm('Apakah Anda yakin ingin mengosongkan semua nilai?\n\nSemua nilai akan dihapus dari database dan tidak dapat dikembalikan.')) {
+			fetch('<?= base_url('admin/nilai/clear-nilai-teknik/' . $jadwal['id']) ?>', {
+					method: 'POST',
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest',
+						'<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status === 'success') {
+						const inputs = document.querySelectorAll('.nilai-input');
+						const updatedMahasiswa = new Set();
 
-			inputs.forEach(input => {
-				input.value = '';
-				input.classList.remove('is-valid', 'is-invalid');
-				updatedMahasiswa.add(input.getAttribute('data-mahasiswa'));
-			});
+						inputs.forEach(input => {
+							input.value = '';
+							input.classList.remove('is-valid', 'is-invalid');
+							updatedMahasiswa.add(input.getAttribute('data-mahasiswa'));
+						});
 
-			// Reset grade displays for all students
-			updatedMahasiswa.forEach(mahasiswaId => {
-				const nilaiAngkaEl = document.querySelector(`.nilai-angka-display[data-mahasiswa="${mahasiswaId}"]`);
-				const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
-				const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
+						updatedMahasiswa.forEach(mahasiswaId => {
+							const nilaiAngkaEl = document.querySelector(`.nilai-angka-display[data-mahasiswa="${mahasiswaId}"]`);
+							const nilaiHurufEl = document.querySelector(`.nilai-huruf-display[data-mahasiswa="${mahasiswaId}"]`);
+							const keteranganEl = document.querySelector(`.keterangan-display[data-mahasiswa="${mahasiswaId}"]`);
 
-				if (nilaiAngkaEl) {
-					nilaiAngkaEl.textContent = '-';
-					nilaiAngkaEl.className = 'fw-bold nilai-angka-display';
-				}
+							if (nilaiAngkaEl) {
+								nilaiAngkaEl.textContent = '-';
+								nilaiAngkaEl.className = 'fw-bold nilai-angka-display';
+							}
+							if (nilaiHurufEl) {
+								nilaiHurufEl.textContent = '-';
+								nilaiHurufEl.className = 'fw-bold nilai-huruf-display';
+								nilaiHurufEl.title = '';
+							}
+							if (keteranganEl) {
+								keteranganEl.textContent = '-';
+								keteranganEl.className = 'fw-bold keterangan-display';
+								keteranganEl.title = '';
+							}
+						});
 
-				if (nilaiHurufEl) {
-					nilaiHurufEl.textContent = '-';
-					nilaiHurufEl.className = 'fw-bold nilai-huruf-display';
-					nilaiHurufEl.title = '';
-				}
-
-				if (keteranganEl) {
-					keteranganEl.textContent = '-';
-					keteranganEl.className = 'fw-bold keterangan-display';
-					keteranganEl.title = '';
-				}
-			});
-
-			updateSaveStatus('Semua nilai dikosongkan.');
+						updateSaveStatus('Semua nilai berhasil dihapus dari database.');
+					} else {
+						alert('Gagal menghapus nilai: ' + data.message);
+					}
+				})
+				.catch(error => {
+					alert('Terjadi kesalahan saat menghapus nilai: ' + error.message);
+				});
 		}
 	}
 
