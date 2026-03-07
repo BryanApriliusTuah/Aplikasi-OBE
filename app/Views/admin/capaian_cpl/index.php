@@ -134,7 +134,12 @@
 
 <div class="card">
 	<div class="card-body">
-		<h2 class="mb-4">Capaian CPL</h2>
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h2 class="mb-0">Capaian CPL</h2>
+			<button id="btnExcludeMerdeka" class="btn btn-outline-secondary btn-sm" onclick="toggleExcludeMerdeka()" title="Kecualikan jadwal Merdeka dari perhitungan">
+				<i class="bi bi-toggle-off me-1"></i> Kecualikan Merdeka
+			</button>
+		</div>
 
 		<!-- Modern Tab Navigation -->
 		<div class="modern-tab-nav mb-4" id="cplTabs" role="tablist">
@@ -734,6 +739,21 @@
 	let currentKeseluruhanData = null;
 	let currentActiveFilter = 1; // Track which filter is currently active for Individual tab (1, 2, or 3)
 	let currentActiveComparativeFilter = 1; // Track which filter is currently active for Comparative tab (1, 2, or 3)
+	let excludeMerdeka = false;
+
+	function toggleExcludeMerdeka() {
+		excludeMerdeka = !excludeMerdeka;
+		const btn = document.getElementById('btnExcludeMerdeka');
+		if (excludeMerdeka) {
+			btn.classList.remove('btn-outline-secondary');
+			btn.classList.add('btn-warning');
+			btn.innerHTML = '<i class="bi bi-toggle-on me-1"></i> Kecualikan MBKM';
+		} else {
+			btn.classList.remove('btn-warning');
+			btn.classList.add('btn-outline-secondary');
+			btn.innerHTML = '<i class="bi bi-toggle-off me-1"></i> Kecualikan MBKM';
+		}
+	}
 
 	// Pagination Helper Function
 	function initPagination(tableId, rowsPerPage = 10) {
@@ -1387,7 +1407,8 @@
 		let ajaxData = {
 			mahasiswa_id: mahasiswaId,
 			program_studi: $(`#programStudiSelect${filterNum}`).val(),
-			tahun_angkatan: $(`#tahunAngkatanSelect${filterNum}`).val()
+			tahun_angkatan: $(`#tahunAngkatanSelect${filterNum}`).val(),
+			exclude_merdeka: excludeMerdeka ? 1 : 0
 		};
 
 		// Filter-specific validation and data
@@ -1444,7 +1465,8 @@
 		// Build the validation and data object based on filter type
 		let ajaxData = {
 			program_studi: programStudi,
-			tahun_angkatan: tahunAngkatan
+			tahun_angkatan: tahunAngkatan,
+			exclude_merdeka: excludeMerdeka ? 1 : 0
 		};
 
 		// Filter-specific validation and data
@@ -1509,7 +1531,8 @@
 			url: '<?= base_url("admin/capaian-cpl/keseluruhan-data") ?>',
 			method: 'GET',
 			data: {
-				program_studi: programStudi
+				program_studi: programStudi,
+				exclude_merdeka: excludeMerdeka ? 1 : 0
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1541,7 +1564,8 @@
 			url: '<?= base_url("admin/capaian-cpl/all-subjects-data") ?>',
 			method: 'GET',
 			data: {
-				program_studi: programStudi
+				program_studi: programStudi,
+				exclude_merdeka: excludeMerdeka ? 1 : 0
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1725,7 +1749,8 @@
 		// Build ajax data based on active filter
 		let ajaxData = {
 			mahasiswa_id: mahasiswaId,
-			cpl_id: cplId
+			cpl_id: cplId,
+			exclude_merdeka: excludeMerdeka ? 1 : 0
 		};
 
 		// Add filter-specific data
@@ -1929,7 +1954,8 @@
 			method: 'GET',
 			data: {
 				cpl_id: cplId,
-				program_studi: programStudi
+				program_studi: programStudi,
+				exclude_merdeka: excludeMerdeka ? 1 : 0
 			},
 			success: function(response) {
 				if (response.success) {
@@ -2070,7 +2096,8 @@
 		let ajaxData = {
 			cpl_id: cplId,
 			program_studi: programStudi,
-			tahun_angkatan: tahunAngkatan
+			tahun_angkatan: tahunAngkatan,
+			exclude_merdeka: excludeMerdeka ? 1 : 0
 		};
 
 		// Add filter-specific data

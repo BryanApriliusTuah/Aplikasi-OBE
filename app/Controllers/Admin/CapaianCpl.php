@@ -51,6 +51,7 @@ class CapaianCpl extends BaseController
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$mahasiswaId) {
 			return $this->response->setJSON([
@@ -131,6 +132,11 @@ class CapaianCpl extends BaseController
 				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
+			// Exclude Merdeka classes if requested
+			if ($excludeMerdeka) {
+				$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+			}
+
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Sum all CPMK scores and bobot for this CPL
@@ -149,7 +155,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 					$totalNilaiCpmk += $row['nilai_cpmk'];
 					$totalBobot += $bobot;
 				}
@@ -250,7 +256,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 					$capaian = round(($row['nilai_cpmk'] / $bobot) * 100, 2);
 					$totalNilaiCpmk += $row['nilai_cpmk'];
 					$totalBobot += $bobot;
@@ -354,6 +360,7 @@ class CapaianCpl extends BaseController
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$programStudi || !$tahunAngkatan) {
 			return $this->response->setJSON([
@@ -432,6 +439,11 @@ class CapaianCpl extends BaseController
 				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
+			// Exclude Merdeka classes if requested
+			if ($excludeMerdeka) {
+				$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+			}
+
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Calculate CPL for each student: sum all CPMK scores / sum all bobot × 100
@@ -447,7 +459,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
 					}
@@ -614,6 +626,7 @@ class CapaianCpl extends BaseController
 		$tahunAngkatan = $this->request->getGet('tahun_angkatan');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$cplId || !$programStudi || !$tahunAngkatan) {
 			return $this->response->setJSON([
@@ -689,6 +702,11 @@ class CapaianCpl extends BaseController
 			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
+		// Exclude Merdeka classes if requested
+		if ($excludeMerdeka) {
+			$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+		}
+
 		$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 		// Sum CPMK scores per student for this CPL
@@ -761,6 +779,7 @@ class CapaianCpl extends BaseController
 		$cplId = $this->request->getGet('cpl_id');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$mahasiswaId || !$cplId) {
 			return $this->response->setJSON([
@@ -823,6 +842,11 @@ class CapaianCpl extends BaseController
 			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
+		// Exclude Merdeka classes if requested
+		if ($excludeMerdeka) {
+			$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+		}
+
 		$nilaiList = $nilaiBuilder
 			->orderBy('cpmk.kode_cpmk', 'ASC')
 			->orderBy('jm.tahun_akademik', 'DESC')
@@ -842,7 +866,7 @@ class CapaianCpl extends BaseController
 			}
 			$bobot = $bobotCache[$bobotKey];
 
-			if ($bobot > 0) {
+			if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 				$capaian = round(($row['nilai_cpmk'] / $bobot) * 100, 2);
 
 				$detailData[] = [
@@ -1013,7 +1037,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 					$mhsId = $row['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1170,7 +1194,7 @@ class CapaianCpl extends BaseController
 						$bobotCache[$bobotKey] = $this->getCpmkBobotForJadwal($row['cpmk_id'], $row['jadwal_id']);
 					}
 					$bobot = $bobotCache[$bobotKey];
-					if ($bobot > 0) {
+					if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
 						$mhsId = $row['mahasiswa_id'];
 						if (!isset($studentScores[$mhsId])) {
 							$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1219,6 +1243,7 @@ class CapaianCpl extends BaseController
 		$programStudi = $this->request->getGet('program_studi');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$programStudi) {
 			return $this->response->setJSON([
@@ -1296,6 +1321,11 @@ class CapaianCpl extends BaseController
 				$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 			}
 
+			// Exclude Merdeka classes if requested
+			if ($excludeMerdeka) {
+				$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+			}
+
 			$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 			// Calculate per-student CPL using sum/sum then average across students
@@ -1309,7 +1339,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
 					$mhsId = $nilai['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1365,6 +1395,7 @@ class CapaianCpl extends BaseController
 		$programStudi = $this->request->getGet('program_studi');
 		$semester = $this->request->getGet('semester');
 		$tahunAkademik = $this->request->getGet('tahun_akademik');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$cplId || !$programStudi) {
 			return $this->response->setJSON([
@@ -1440,6 +1471,11 @@ class CapaianCpl extends BaseController
 			$nilaiBuilder->like('jm.tahun_akademik', $tahunAkademik, 'after');
 		}
 
+		// Exclude Merdeka classes if requested
+		if ($excludeMerdeka) {
+			$nilaiBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+		}
+
 		$nilaiList = $nilaiBuilder->get()->getResultArray();
 
 		// Calculate per-student CPL scores using sum/sum with bobot caching
@@ -1453,7 +1489,7 @@ class CapaianCpl extends BaseController
 			}
 			$bobot = $bobotCache[$bobotKey];
 
-			if ($bobot > 0) {
+			if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
 				$mhsId = $nilai['mahasiswa_id'];
 				if (!isset($studentScores[$mhsId])) {
 					$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1508,6 +1544,7 @@ class CapaianCpl extends BaseController
 	public function getAllSubjectsData()
 	{
 		$programStudi = $this->request->getGet('program_studi');
+		$excludeMerdeka = $this->request->getGet('exclude_merdeka');
 
 		if (!$programStudi) {
 			return $this->response->setJSON([
@@ -1519,11 +1556,17 @@ class CapaianCpl extends BaseController
 		$db = \Config\Database::connect();
 
 		// Get all active jadwal for the selected program studi (across all years)
-		$jadwalList = $db->table('jadwal jm')
+		$jadwalBuilder = $db->table('jadwal jm')
 			->select('jm.*, mk.kode_mk, mk.nama_mk, mk.semester')
 			->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 			->where('jm.program_studi', $programStudi)
-			->where('jm.status', 'active')
+			->where('jm.status', 'active');
+
+		if ($excludeMerdeka) {
+			$jadwalBuilder->where('jm.kelas_jenis !=', 'Merdeka');
+		}
+
+		$jadwalList = $jadwalBuilder
 			->orderBy('mk.semester', 'ASC')
 			->orderBy('mk.nama_mk', 'ASC')
 			->orderBy('jm.tahun_akademik', 'DESC')
@@ -1587,7 +1630,7 @@ class CapaianCpl extends BaseController
 					$bobotCache[$bobotKey] = $this->getCpmkBobotForJadwal($nilai['cpmk_id'], $jadwalId);
 				}
 				$bobot = $bobotCache[$bobotKey];
-				if ($bobot > 0) {
+				if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
 					$mhsId = $nilai['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
