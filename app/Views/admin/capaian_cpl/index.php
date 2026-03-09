@@ -134,12 +134,12 @@
 
 <div class="card">
 	<div class="card-body">
-		<div class="d-flex justify-content-between align-items-center mb-4">
+		<!-- <div class="d-flex justify-content-between align-items-center mb-4">
 			<h2 class="mb-0">Capaian CPL</h2>
 			<button id="btnExcludeMerdeka" class="btn btn-outline-secondary btn-sm" onclick="toggleExcludeMerdeka()" title="Kecualikan jadwal Merdeka dari perhitungan">
 				<i class="bi bi-toggle-off me-1"></i> Kecualikan Merdeka
 			</button>
-		</div>
+		</div> -->
 
 		<!-- Modern Tab Navigation -->
 		<div class="modern-tab-nav mb-4" id="cplTabs" role="tablist">
