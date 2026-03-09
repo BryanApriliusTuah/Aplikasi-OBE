@@ -13,6 +13,9 @@ $routes->get('admin', 'Admin\Dashboard::index');
 $routes->get('admin/dashboard', 'Admin\Dashboard::index');
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
 
+	// ERD (Entity Relationship Diagram)
+	$routes->get('erd', 'Erd::index');
+
 	// Fakultas
 	$routes->get('fakultas', 'Fakultas::index');
 	$routes->post('fakultas/sync', 'Fakultas::syncFromApi');
