@@ -38,12 +38,25 @@
 							<span class="d-none d-lg-inline ms-1">Mingguan</span>
 						</a>
 					<?php endif; ?>
-					<a href="<?= base_url('admin/nilai/unduh-dpna/' . $jadwal['id']) ?>"
-						class="btn btn-success"
-						target="_blank"
-						title="Unduh Daftar Penilaian Nilai Akhir">
-						<i class="bi bi-download me-2"></i>Unduh DPNA
-					</a>
+					<div class="btn-group">
+						<button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+							<i class="bi bi-download me-1"></i>Unduh DPNA
+						</button>
+						<ul class="dropdown-menu dropdown-menu-end">
+							<li>
+								<a class="dropdown-item" href="<?= base_url('admin/nilai/export-dpna-excel-siobe/' . $jadwal['id']) ?>">
+									<i class="bi bi-file-earmark-excel text-success me-2"></i>Format SIOBE
+									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Semua teknik penilaian</small>
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="<?= base_url('admin/nilai/export-dpna-excel/' . $jadwal['id']) ?>">
+									<i class="bi bi-file-earmark-excel text-primary me-2"></i>Format SIUBER
+									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Tugas / UTS / UAS</small>
+								</a>
+							</li>
+						</ul>
+					</div>
 					<?php if (!isset($jadwal['is_nilai_validated']) || $jadwal['is_nilai_validated'] == 0): ?>
 						<button type="button"
 							class="btn btn-primary"

@@ -254,8 +254,22 @@
 	?>
 
 	<?php
-	// Calculate total columns for header: 3 (No, NIM, Nama) + teknik_list + 3 (Nilai Angka, Nilai Huruf, Keterangan)
-	$total_columns = 3 + count($teknik_list) + 3;
+	// Group teknik_list by type (same as "Format DPNA" grouped view)
+	$bobot_tugas = 0;
+	$bobot_uts   = 0;
+	$bobot_uas   = 0;
+	foreach ($teknik_list as $_t) {
+		if ($_t['teknik_key'] === 'tes_tulis_uts') {
+			$bobot_uts += $_t['bobot'];
+		} elseif ($_t['teknik_key'] === 'tes_tulis_uas') {
+			$bobot_uas += $_t['bobot'];
+		} else {
+			$bobot_tugas += $_t['bobot'];
+		}
+	}
+
+	// Calculate total columns for header: 3 (No, NIM, Nama) + 3 (Tugas, UTS, UAS) + 3 (Nilai Angka, Nilai Huruf, Keterangan)
+	$total_columns = 9;
 	$middle_colspan = $total_columns - 2; // Exclude logo and DPNA columns
 	?>
 
@@ -310,9 +324,9 @@
 				<col style="width: 50px;">
 				<col style="width: 120px;">
 				<col style="width: 250px;">
-				<?php foreach ($teknik_list as $item): ?>
-					<col style="width: 110px;">
-				<?php endforeach; ?>
+				<col style="width: 130px;">
+				<col style="width: 120px;">
+				<col style="width: 120px;">
 				<col style="width: 80px;">
 				<col style="width: 70px;">
 				<col style="width: 100px;">
@@ -322,21 +336,30 @@
 					<th>No</th>
 					<th>NIM</th>
 					<th>Nama</th>
-					<?php foreach ($teknik_list as $item): ?>
-						<?php
-						$cpmk_display = $item['kode_cpmk'] ?? $item['cpmk_code'] ?? 'N/A';
-						?>
-						<th>
-							<div style="font-size: 0.85em;">
-								<strong><?= esc($item['teknik_label']) ?></strong><br>
-								<small style="font-weight: normal;">Minggu: <?= $item['minggu'] ?></small><br>
-								<small style="font-weight: normal;"><?= esc($cpmk_display) ?></small><br>
-								<small style="background-color: #27ae60; color: white; padding: 2px 5px; border-radius: 3px;">
-									<?= number_format($item['bobot'], 1) ?>%
-								</small>
-							</div>
-						</th>
-					<?php endforeach; ?>
+					<th>
+						<div style="font-size: 0.85em;">
+							<strong>Tugas</strong><br>
+							<small style="background-color: #27ae60; color: white; padding: 2px 5px; border-radius: 3px;">
+								<?= number_format($bobot_tugas, 1) ?>%
+							</small>
+						</div>
+					</th>
+					<th>
+						<div style="font-size: 0.85em;">
+							<strong>UTS</strong><br>
+							<small style="background-color: #27ae60; color: white; padding: 2px 5px; border-radius: 3px;">
+								<?= number_format($bobot_uts, 1) ?>%
+							</small>
+						</div>
+					</th>
+					<th>
+						<div style="font-size: 0.85em;">
+							<strong>UAS</strong><br>
+							<small style="background-color: #27ae60; color: white; padding: 2px 5px; border-radius: 3px;">
+								<?= number_format($bobot_uas, 1) ?>%
+							</small>
+						</div>
+					</th>
 					<th>Nilai Angka</th>
 					<th>Nilai Huruf</th>
 					<th>Keterangan</th>
@@ -345,7 +368,7 @@
 			<tbody>
 				<?php if (empty($dpna_data)): ?>
 					<tr>
-						<td colspan="<?= 6 + count($teknik_list) ?>" style="text-align: center; padding: 30px; color: #999;">
+						<td colspan="9" style="text-align: center; padding: 30px; color: #999;">
 							Tidak ada data mahasiswa
 						</td>
 					</tr>
@@ -376,20 +399,34 @@
 								$grade_class = 'grade-e';
 								break;
 						}
+
+						// Calculate grouped averages (same logic as "Format DPNA" in input_nilai_teknik)
+						$tugas_vals = [];
+						$uts_vals   = [];
+						$uas_vals   = [];
+						foreach ($teknik_list as $item) {
+							$score = $row['teknik_' . $item['rps_mingguan_id'] . '_' . $item['teknik_key']] ?? 0;
+							if ($item['teknik_key'] === 'tes_tulis_uts') {
+								$uts_vals[] = $score;
+							} elseif ($item['teknik_key'] === 'tes_tulis_uas') {
+								$uas_vals[] = $score;
+							} else {
+								$tugas_vals[] = $score;
+							}
+						}
+						$tugas_avg = count($tugas_vals) ? array_sum($tugas_vals) / count($tugas_vals) : 0;
+						$uts_avg   = count($uts_vals)   ? array_sum($uts_vals)   / count($uts_vals)   : 0;
+						$uas_avg   = count($uas_vals)   ? array_sum($uas_vals)   / count($uas_vals)   : 0;
 						?>
 						<tr>
 							<td><?= $row['no'] ?></td>
 							<td><?= esc($row['nim']) ?></td>
 							<td class="left"><?= esc($row['nama']) ?></td>
-							<?php foreach ($teknik_list as $item): ?>
-								<?php
-								$rps_mingguan_id = $item['rps_mingguan_id'];
-								$teknik_key = $item['teknik_key'];
-								?>
-								<td><?= number_format($row['teknik_' . $rps_mingguan_id . '_' . $teknik_key], 2) ?></td>
-							<?php endforeach; ?>
+							<td><?= number_format($tugas_avg, 2) ?></td>
+							<td><?= number_format($uts_avg, 2) ?></td>
+							<td><?= number_format($uas_avg, 2) ?></td>
 							<td><?= number_format($row['nilai_akhir'], 2) ?></td>
-							<td><strong><?= esc($row['nilai_huruf']) ?></strong></td>
+							<td class="<?= $grade_class ?>"><strong><?= esc($row['nilai_huruf']) ?></strong></td>
 							<td><?= esc($row['keterangan'] ?? '-') ?></td>
 						</tr>
 					<?php endforeach; ?>
