@@ -1,6 +1,8 @@
 <?php
 namespace App\Services;
 
+use App\Libraries\TeknikPenilaian;
+
 class RpsPreviewService
 {
     public static function getData($id)
@@ -88,10 +90,7 @@ class RpsPreviewService
             
             $teknik_formatted = [];
             $teknik_list = json_decode($m['teknik_penilaian'], true);
-            $teknik_labels = [
-                'partisipasi' => 'Partisipasi', 'observasi' => 'Observasi', 'unjuk_kerja' => 'Unjuk Kerja',
-                'proyek' => 'Proyek', 'tes_tulis_uts' => 'Tes Tulis (UTS)', 'tes_tulis_uas' => 'Tes Tulis (UAS)', 'tes_lisan' => 'Tes Lisan'
-            ];
+            $teknik_labels = TeknikPenilaian::LABELS;
             if (is_array($teknik_list)) {
                 foreach ($teknik_list as $key => $value) {
                     if ($value > 0) {

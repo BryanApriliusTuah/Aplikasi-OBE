@@ -4,6 +4,7 @@ namespace App\Controllers;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Mpdf\Mpdf;
+use App\Libraries\TeknikPenilaian;
 
 class TeknikPenilaianCpmk extends BaseController
 {
@@ -66,15 +67,7 @@ class TeknikPenilaianCpmk extends BaseController
     {
         $penilaian = $this->_getProcessedData();
         $kolom_teknik = ['partisipasi', 'observasi', 'unjuk_kerja', 'proyek', 'tes_tulis_uts', 'tes_tulis_uas', 'tes_lisan'];
-        $kolom_label = [
-            'partisipasi'   => 'Partisipasi',
-            'observasi'     => 'Observasi',
-            'unjuk_kerja'   => 'Unjuk Kerja',
-            'proyek'        => 'Case Method/Project Based',
-            'tes_tulis_uts' => 'UTS',
-            'tes_tulis_uas' => 'UAS',
-            'tes_lisan'     => 'Lisan',
-        ];
+        $kolom_label = TeknikPenilaian::LABELS;
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -121,15 +114,7 @@ class TeknikPenilaianCpmk extends BaseController
     {
         $penilaian = $this->_getProcessedData();
         $kolom_teknik = ['partisipasi', 'observasi', 'unjuk_kerja', 'proyek', 'tes_tulis_uts', 'tes_tulis_uas', 'tes_lisan'];
-        $kolom_label = [
-            'partisipasi'   => 'Partisipasi',
-            'observasi'     => 'Observasi',
-            'unjuk_kerja'   => 'Unjuk Kerja',
-            'proyek'        => 'Case Method/Project Based',
-            'tes_tulis_uts' => 'UTS',
-            'tes_tulis_uas' => 'UAS',
-            'tes_lisan'     => 'Lisan',
-        ];
+        $kolom_label = TeknikPenilaian::LABELS;
 
         $html = '<style> table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; } th { background-color: #f2f2f2; } </style>';
         $html .= '<h2 style="text-align:center;">Teknik Penilaian CPMK</h2>';

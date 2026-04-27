@@ -48,20 +48,12 @@
 							<th class="text-center" style="min-width: 120px;">Project Based</th>
 							<th class="text-center" style="min-width: 80px;">UTS</th>
 							<th class="text-center" style="min-width: 80px;">UAS</th>
-							<th class="text-center" style="min-width: 90px;">Tes Lisan</th>
+							<th class="text-center" style="min-width: 90px;">Praktikum</th>
 							<th class="text-center" style="min-width: 80px;">Total</th>
 						</tr>
 					</thead>
 					<?php
-					$teknik_list = [
-						'partisipasi'   => 'Partisipasi',
-						'observasi'     => 'Observasi',
-						'unjuk_kerja'   => 'Unjuk Kerja',
-						'proyek'        => 'Case Method/Project Based',
-						'tes_tulis_uts' => 'UTS',
-						'tes_tulis_uas' => 'UAS',
-						'tes_lisan'     => 'Tes Lisan'
-					];
+					$teknik_list = \App\Libraries\TeknikPenilaian::LABELS;
 
 					$grouped = [];
 					foreach ($penilaian as $row) {

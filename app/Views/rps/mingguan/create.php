@@ -99,15 +99,7 @@
 	<div class="mb-2">
 		<label>Teknik Penilaian (Opsional)</label><br>
 		<?php
-		$teknikList = [
-			'partisipasi'   => 'Partisipasi (Kehadiran / Quiz)',
-			'observasi'     => 'Observasi (Praktek / Tugas)',
-			'unjuk_kerja'   => 'Unjuk Kerja (Presentasi)',
-			'proyek'        => 'Proyek (Case Method/Project Based)',
-			'tes_tulis_uts' => 'Tes Tulis (UTS)',
-			'tes_tulis_uas' => 'Tes Tulis (UAS)',
-			'tes_lisan'     => 'Tes Lisan (Tugas Kelompok)'
-		];
+		$teknikList = \App\Libraries\TeknikPenilaian::VERBOSE_LABELS;
 		?>
 		<div id="teknik-penilaian-wrapper">
 			<?php foreach ($teknikList as $key => $label) : ?>

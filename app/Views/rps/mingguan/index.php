@@ -96,15 +96,7 @@ if ($totalBobot == 100) {
 								<td>
 									<?php
 									$teknik = json_decode($m['teknik_penilaian'], true);
-									$label_teknik = [
-										'partisipasi'   => 'Partisipasi',
-										'observasi'     => 'Observasi',
-										'unjuk_kerja'   => 'Unjuk Kerja',
-										'proyek'        => 'Proyek',
-										'tes_tulis_uts' => 'Tes Tulis (UTS)',
-										'tes_tulis_uas' => 'Tes Tulis (UAS)',
-										'tes_lisan'     => 'Tes Lisan'
-									];
+									$label_teknik = \App\Libraries\TeknikPenilaian::LABELS;
 									$hasil = [];
 									if (is_array($teknik)) {
 										foreach ($teknik as $k => $bobot) {

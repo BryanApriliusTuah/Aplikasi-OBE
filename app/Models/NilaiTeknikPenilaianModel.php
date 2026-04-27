@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use App\Libraries\TeknikPenilaian;
 
 class NilaiTeknikPenilaianModel extends Model
 {
@@ -73,15 +74,7 @@ class NilaiTeknikPenilaianModel extends Model
 
         // Process and flatten the results
         $result = [];
-        $teknik_labels = [
-            'partisipasi'   => 'Partisipasi (Kehadiran / Quiz)',
-            'observasi'     => 'Observasi (Praktek / Tugas)',
-            'unjuk_kerja'   => 'Unjuk Kerja (Presentasi)',
-            'proyek'        => 'Proyek (Case Method/Project Based)',
-            'tes_tulis_uts' => 'Tes Tulis (UTS)',
-            'tes_tulis_uas' => 'Tes Tulis (UAS)',
-            'tes_lisan'     => 'Tes Lisan (Tugas Kelompok)'
-        ];
+        $teknik_labels = TeknikPenilaian::VERBOSE_LABELS;
 
         foreach ($rps_mingguan as $row) {
             $teknik_data = json_decode($row['teknik_penilaian'], true);

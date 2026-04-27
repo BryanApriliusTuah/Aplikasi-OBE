@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\TeknikPenilaian;
 
 class LaporanCpmk extends BaseController
 {
@@ -343,32 +344,14 @@ class LaporanCpmk extends BaseController
 
 	private function formatTeknikPenilaian($teknik)
 	{
-		$mapping = [
-			'partisipasi' => 'Partisipasi',
-			'observasi' => 'Observasi',
-			'unjuk_kerja' => 'Unjuk Kerja',
-			'proyek' => 'Proyek',
-			'tes_tulis_uts' => 'Ujian Tengah Semester',
-			'tes_tulis_uas' => 'Ujian Akhir Semester',
-			'tes_lisan' => 'Tes Lisan'
-		];
+		$mapping = TeknikPenilaian::LABELS;
 
 		return $mapping[$teknik] ?? ucfirst(str_replace('_', ' ', $teknik));
 	}
 
 	private function MetodeAssesment($teknik)
 	{
-		$mapping = [
-			'partisipasi' => 'Kehadiran/Quiz',
-			'observasi' => 'Praktek/Tugas',
-			'unjuk_kerja' => 'Presentasi',
-			'proyek' => 'Case Method/Project Based',
-			'tes_tulis_uts' => 'UTS',
-			'tes_tulis_uas' => 'UAS',
-			'tes_lisan' => 'Tugas Kelompok'
-		];
-
-		return $mapping[$teknik] ?? ucfirst(str_replace('_', ' ', $teknik));
+		return TeknikPenilaian::ACTIVITY_LABELS[$teknik] ?? ucfirst(str_replace('_', ' ', $teknik));
 	}
 
 	private function getAssessmentData($mataKuliahId, $jadwalIds)

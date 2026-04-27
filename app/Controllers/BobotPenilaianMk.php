@@ -3,18 +3,11 @@ namespace App\Controllers;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Libraries\TeknikPenilaian;
 
 class BobotPenilaianMk extends BaseController
 {
-    private $teknik_list = [
-        'partisipasi'      => 'Partisipasi',
-        'observasi'        => 'Observasi',
-        'unjuk_kerja'      => 'Unjuk Kerja',
-        'proyek'           => 'Project Based',
-        'tes_tulis_uts'    => 'UTS',
-        'tes_tulis_uas'    => 'UAS',
-        'tes_lisan'        => 'Tes Lisan'
-    ];
+    private $teknik_list = TeknikPenilaian::LABELS;
 
     public function index()
     {
@@ -59,7 +52,7 @@ class BobotPenilaianMk extends BaseController
         // Header
         $headers = [
             'MK', 'CPL', 'CPMK',
-            'Partisipasi', 'Observasi', 'Unjuk Kerja', 'Project Based', 'UTS', 'UAS', 'Tes Lisan', 'Total'
+            'Partisipasi', 'Observasi', 'Unjuk Kerja', 'Project Based', 'UTS', 'UAS', 'Praktikum', 'Total'
         ];
         $colMap = range('A', 'K');
         foreach ($headers as $i => $h) {
@@ -165,7 +158,7 @@ class BobotPenilaianMk extends BaseController
             <th>Project Based</th>
             <th>UTS</th>
             <th>UAS</th>
-            <th>Tes Lisan</th>
+            <th>Praktikum</th>
             <th>Total</th>
         </tr></thead><tbody>';
 

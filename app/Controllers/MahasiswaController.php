@@ -10,6 +10,7 @@ use App\Models\NilaiCpmkMahasiswaModel;
 use App\Models\MataKuliahModel;
 use App\Models\NilaiTeknikPenilaianModel;
 use App\Models\GradeConfigModel;
+use App\Libraries\TeknikPenilaian;
 
 class MahasiswaController extends BaseController
 {
@@ -509,15 +510,7 @@ class MahasiswaController extends BaseController
 						->get()
 						->getResultArray();
 
-					$teknikLabels = [
-						'partisipasi' => 'Partisipasi',
-						'observasi' => 'Observasi',
-						'unjuk_kerja' => 'Unjuk Kerja',
-						'proyek' => 'Proyek',
-						'tes_tulis_uts' => 'UTS',
-						'tes_tulis_uas' => 'UAS',
-						'tes_lisan' => 'Tes Lisan'
-					];
+					$teknikLabels = TeknikPenilaian::LABELS;
 
 					foreach ($rpsMingguanList as $rpsMingguan) {
 						$teknikData = json_decode($rpsMingguan['teknik_penilaian'], true);

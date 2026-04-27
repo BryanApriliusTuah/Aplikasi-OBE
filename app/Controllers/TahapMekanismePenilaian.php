@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Models\RpsMingguanModel;
+use App\Libraries\TeknikPenilaian;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Mpdf\Mpdf;
@@ -34,10 +35,7 @@ class TahapMekanismePenilaian extends BaseController
             $teknik = json_decode($jsonString, true);
             if (!is_array($teknik) || empty($teknik)) return '-';
             
-            $labels = [
-                'partisipasi' => 'Partisipasi', 'observasi' => 'Observasi', 'unjuk_kerja' => 'Unjuk Kerja',
-                'proyek' => 'Proyek', 'tes_tulis_uts' => 'Tes Tulis (UTS)', 'tes_tulis_uas' => 'Tes Tulis (UAS)', 'tes_lisan' => 'Tes Lisan'
-            ];
+            $labels = TeknikPenilaian::LABELS;
             $hasil = [];
             foreach ($teknik as $key => $bobot) {
                 if ($bobot > 0) {
