@@ -19,34 +19,6 @@ window.OBE_TOURS = (function () {
 		return origin + basePath + '/' + path.replace(/^\//, '');
 	}
 
-	// Tour chain ordered by the 6-stage guide
-	var TOUR_CHAIN = [
-		'tahun-akademik',
-		'settings',
-		'dosen',
-		'profil-lulusan',
-		'cpl',
-		'bahan-kajian',
-		'mata-kuliah',
-		'cpmk',
-		'cpl-pl',
-		'cpl-bk',
-		'bkmk',
-		'cpl-mk',
-		'pemetaan-cpl-mk-cpmk',
-		'pemetaan-mk-cpmk-sub',
-		'rps',
-		'mengajar',
-		'nilai',
-		'input-nilai-teknik',
-		'capaian-cpmk',
-		'capaian-cpl',
-		'laporan-cpmk',
-		'laporan-cpl',
-		'mbkm',
-		'mbkm/input-nilai',
-	];
-
 	// Helper: find first existing element from a list of selectors
 	function el() {
 		for (var i = 0; i < arguments.length; i++) {
@@ -88,6 +60,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel ini menampilkan semua tahun akademik. Kolom <b>Status</b> menunjukkan tahun akademik mana yang sedang aktif. Gunakan ikon toggle untuk mengaktifkan/menonaktifkan. Tahun Akademik dengan status tidak aktif tidak akan muncul sebagai opsi di filter tahun akademik pada halaman lain.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group', 'table tbody tr:first-child .d-flex'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi di Tabel',
+						description: 'Setiap baris tahun akademik memiliki tombol aksi di kolom paling kanan:<br><br><b>• <i class="bi bi-toggle-on text-success"></i> / <i class="bi bi-toggle-off text-secondary"></i> Toggle Status</b> — klik untuk mengaktifkan atau menonaktifkan tahun akademik. Hanya satu yang boleh aktif; sistem akan menonaktifkan yang lain secara otomatis.<br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah data tahun atau pilihan semester (Ganjil/Genap).<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus tahun akademik. Akan muncul konfirmasi sebelum data dihapus. Tahun akademik yang masih memiliki data terkait tidak dapat dihapus.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -127,6 +107,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel ini berisi rentang nilai dan konversinya ke huruf mutu (A, B, C, D, E). Klik <b>Tambah</b> untuk menambah aturan baru atau edit data yang sudah ada.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Huruf Mutu',
+						description: 'Setiap baris konfigurasi huruf mutu memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah rentang nilai minimum/maksimum atau label huruf mutu (misal: A, AB, B, BC, C, D, E).<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus aturan konversi ini. Pastikan rentang nilai tidak ada yang tumpang tindih agar perhitungan nilai huruf berjalan dengan benar.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -157,6 +145,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Daftar Dosen',
 						description: 'Tabel dosen yang terdaftar di sistem. Setiap dosen memiliki akun yang dapat digunakan untuk login, mengelola RPS, dan menginput nilai.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi di Tabel Dosen',
+						description: 'Setiap baris dosen memiliki tombol aksi:<br><br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus akun dosen dari sistem. Akan muncul dialog konfirmasi sebelum data benar-benar dihapus.',
+						side: 'left'
 					}
 				}
 			]
@@ -199,6 +195,14 @@ window.OBE_TOURS = (function () {
 						description: 'Semua profil lulusan yang telah didefinisikan akan ditampilkan di sini. Profil ini akan dipetakan ke CPL pada tahap berikutnya.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Profil Lulusan',
+						description: 'Setiap baris profil lulusan memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah nama atau deskripsi profil lulusan. Perubahan ini akan langsung mempengaruhi tampilan di halaman pemetaan CPL–PL.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus profil lulusan. Profil yang sudah dipetakan ke CPL tidak dapat dihapus sebelum relasi pemetaannya dihapus terlebih dahulu.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -238,6 +242,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel berisi semua CPL program studi. Setiap CPL akan dipetakan ke Profil Lulusan, Bahan Kajian, dan Mata Kuliah pada tahap pemetaan.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi CPL',
+						description: 'Setiap baris CPL memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah kode CPL (misal: CPL-01) atau deskripsi kemampuan yang dituju. Pastikan perubahan tidak bertentangan dengan pemetaan yang sudah ada.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus CPL. CPL yang sudah dipetakan ke Profil Lulusan, Bahan Kajian, atau Mata Kuliah harus dihapus relasi pemetaannya terlebih dahulu sebelum CPL bisa dihapus.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -268,6 +280,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Daftar Bahan Kajian',
 						description: 'Semua bahan kajian ditampilkan di sini. Selanjutnya BK akan dipetakan ke CPL dan Mata Kuliah di tahap pemetaan kurikulum.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Bahan Kajian',
+						description: 'Setiap baris bahan kajian memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah nama atau deskripsi bahan kajian. Perubahan akan langsung tercermin di semua pemetaan CPL–BK dan BK–MK yang sudah ada.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus bahan kajian. Bahan kajian yang sudah dipetakan ke CPL atau Mata Kuliah tidak dapat langsung dihapus; relasi pemetaannya harus dihapus terlebih dahulu.',
+						side: 'left'
 					}
 				}
 			]
@@ -300,6 +320,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel ini menampilkan semua MK beserta kode, SKS, dan semester. Setiap MK akan memiliki CPMK dan dipetakan ke CPL.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Mata Kuliah',
+						description: 'Setiap baris mata kuliah memiliki tombol aksi:<br><br><b>• <i class="bi bi-eye text-info"></i> Detail</b> — lihat informasi lengkap MK: kode, nama, SKS, semester, dan daftar CPMK yang dimilikinya.<br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah data MK seperti nama atau SKS jika terdapat perbedaan dengan data SIUBER.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus mata kuliah dari sistem. MK yang sudah memiliki CPMK, pemetaan, atau RPS tidak dapat dihapus sebelum data terkait dihapus terlebih dahulu.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -330,6 +358,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Daftar CPMK',
 						description: 'Semua CPMK dari seluruh mata kuliah ditampilkan di sini. CPMK akan dipetakan ke CPL dan digunakan sebagai dasar penilaian.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi CPMK',
+						description: 'Setiap baris CPMK memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah kode CPMK, deskripsi, atau mata kuliah induknya. Gunakan kode yang konsisten, misal: <b>CPMK011</b> (CPMK pertama CPL01 di MK tertentu).<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus CPMK. CPMK yang sudah dipetakan ke CPL atau sudah digunakan dalam penilaian nilai tidak dapat dihapus sebelum relasi terkait dihapus.',
+						side: 'left'
 					}
 				}
 			]
@@ -364,6 +400,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel menampilkan relasi antara CPL dan Profil Lulusan. Pastikan semua CPL sudah terpetakan minimal ke satu profil lulusan.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Pemetaan CPL–PL',
+						description: 'Setiap baris pemetaan CPL–PL memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah relasi CPL dan Profil Lulusan yang terhubung.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus relasi pemetaan ini. CPL yang dihapus relasinya tidak akan lagi terhubung ke profil lulusan tersebut, namun data CPL dan PL-nya sendiri tidak ikut terhapus.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -394,6 +438,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Matriks CPL – Bahan Kajian',
 						description: 'Tabel pemetaan CPL ke Bahan Kajian. Data ini digunakan dalam matriks pemenuhan kurikulum.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Pemetaan CPL–BK',
+						description: 'Setiap baris pemetaan CPL–BK memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah relasi CPL dan Bahan Kajian yang terhubung jika terjadi kesalahan pemetaan.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus relasi pemetaan ini. Data CPL dan BK tidak ikut terhapus; hanya koneksi di antara keduanya yang dihapus.',
+						side: 'left'
 					}
 				}
 			]
@@ -434,6 +486,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel menampilkan semua relasi antara Bahan Kajian dan Mata Kuliah yang telah didefinisikan.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Pemetaan BK–MK',
+						description: 'Setiap baris pemetaan BK–MK memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah relasi Bahan Kajian dan Mata Kuliah yang terhubung.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus relasi pemetaan ini. Hanya koneksi antara BK dan MK yang dihapus; data BK dan MK sendiri tetap aman. Anda juga bisa menggunakan tombol <b>Lihat Matriks</b> untuk memvisualisasikan distribusi BK ke MK dalam format tabel silang.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -464,6 +524,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Matriks CPL – MK',
 						description: 'Tabel menampilkan semua relasi CPL dan MK. Pastikan setiap CPL minimal terpetakan ke satu mata kuliah.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Pemetaan CPL–MK',
+						description: 'Setiap baris pemetaan CPL–MK memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah relasi CPL dan MK jika terjadi kesalahan input.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus relasi pemetaan ini. Hanya koneksi antara CPL dan MK yang dihapus; pemetaan CPL–MK–CPMK yang bergantung pada relasi ini juga perlu diperiksa ulang setelah penghapusan.',
+						side: 'left'
 					}
 				}
 			]
@@ -496,6 +564,14 @@ window.OBE_TOURS = (function () {
 						description: 'Tabel ini adalah peta kurikulum OBE yang paling krusial. Gunakan fitur ekspor untuk mendokumentasikan pemetaan ini.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Pemetaan CPL–MK–CPMK',
+						description: 'Setiap baris pemetaan tiga arah memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah relasi CPL, MK, atau CPMK yang terhubung. Perubahan akan langsung mempengaruhi perhitungan capaian CPL mahasiswa.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus relasi pemetaan ini. Nilai mahasiswa yang sudah diinput berdasarkan CPMK ini <b>tidak akan terhapus</b>, namun relasi ke CPL tidak lagi tercatat dalam laporan.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -526,6 +602,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Daftar Sub-CPMK',
 						description: 'Semua Sub-CPMK dari seluruh mata kuliah. Setelah tahap ini, struktur kurikulum sudah lengkap dan siap untuk pembuatan RPS.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Sub-CPMK',
+						description: 'Setiap baris Sub-CPMK memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah deskripsi Sub-CPMK atau CPMK induknya. Sub-CPMK digunakan sebagai indikator penilaian spesifik di RPS mingguan.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus Sub-CPMK. Sub-CPMK yang sudah digunakan dalam RPS mingguan atau teknik penilaian tidak dapat dihapus sebelum data RPS terkait dihapus terlebih dahulu.',
+						side: 'left'
 					}
 				}
 			]
@@ -560,6 +644,14 @@ window.OBE_TOURS = (function () {
 						description: 'Semua RPS yang telah dibuat ditampilkan di sini. Klik RPS untuk mengisi detail mingguan, referensi, teknik penilaian, dan bobot nilai.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi RPS',
+						description: 'Setiap baris RPS memiliki 5 tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Edit</b> — ubah informasi umum RPS seperti dosen pengampu, koordinator, atau tahun akademik.<br><b>• <i class="bi bi-bookmark-fill text-warning"></i> Referensi</b> — kelola daftar referensi/pustaka yang digunakan dalam mata kuliah ini.<br><b>• <i class="bi bi-calendar-week text-success"></i> Kelola Mingguan</b> — atur rencana pembelajaran per minggu, termasuk materi, teknik penilaian, dan bobot CPMK. Ini adalah bagian terpenting dari RPS.<br><b>• <i class="bi bi-eye text-info"></i> Preview</b> — buka dokumen RPS dalam tampilan cetak, siap diekspor ke PDF.<br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus seluruh RPS beserta data mingguan dan teknik penilaiannya. Tindakan ini tidak dapat dibatalkan.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -593,6 +685,14 @@ window.OBE_TOURS = (function () {
 						description: 'Klik Ikon titik tiga di pojok kanan atas setiap kelas untuk melihat secara detail jadwal. Pastikan data jadwal sudah benar sebelum lanjut ke input nilai.',
 						side: 'top'
 					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group', 'table tbody tr:first-child .dropdown'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi Jadwal Mengajar',
+						description: 'Setiap baris kelas memiliki tombol aksi:<br><br><b>• <i class="bi bi-three-dots-vertical text-secondary"></i> Menu</b> — klik ikon titik tiga untuk membuka menu opsi:<br>&nbsp;&nbsp;- <b><i class="bi bi-eye text-info"></i> Detail</b>: lihat informasi lengkap kelas termasuk jadwal pertemuan, ruangan, dan daftar mahasiswa.<br>&nbsp;&nbsp;- <b><i class="bi bi-people text-primary"></i> Mahasiswa</b>: lihat daftar mahasiswa yang terdaftar di kelas ini.',
+						side: 'left'
+					}
 				}
 			]
 		},
@@ -615,6 +715,14 @@ window.OBE_TOURS = (function () {
 						title: '<i class="bi bi-table text-info"></i> Daftar Kelas – Input Nilai',
 						description: 'Berisikan daftar kelas yang diajarkan. Setiap dosen hanya dapat menginput nilai untuk kelas yang diajarnya. Klik tombol <b>Input Nilai</b> untuk memasukkan nilai mahasiswa per CPMK. Setelah seluruh nilai diinput, tekan tombol <b>Validasi Nilai</b>, jika nilai sudah sesuai. Nilai yang sudah divalidasi tidak dapat diubah tanpa persetujuan admin.',
 						side: 'top'
+					}
+				},
+				{
+					element: el('table tbody tr:first-child td:last-child', 'table tbody tr:first-child .btn-group'),
+					popover: {
+						title: '<i class="bi bi-sliders text-secondary"></i> Ikon Aksi di Tabel Nilai',
+						description: 'Setiap baris kelas memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Input Nilai</b> — masuk ke halaman input nilai mahasiswa untuk kelas ini. Tersedia sebelum nilai divalidasi.<br><b>• <i class="bi bi-check-circle text-success"></i> Validasi</b> — kunci nilai kelas ini agar tidak bisa diubah. Hanya tampil jika semua nilai sudah diisi dan belum divalidasi.<br><b>• <i class="bi bi-x-circle text-warning"></i> Batalkan Validasi</b> (<i>Admin only</i>) — buka kunci nilai yang sudah divalidasi sehingga dosen bisa mengedit kembali.<br><b>• <i class="bi bi-eye text-info"></i> Lihat</b> — lihat rekap nilai kelas dalam mode baca saja (tersedia setelah validasi).',
+						side: 'left'
 					}
 				}
 			]
@@ -814,7 +922,7 @@ window.OBE_TOURS = (function () {
 					element: el('#mbkmTable thead tr th:last-child', '#mbkmTable th:last-child'),
 					popover: {
 						title: '<i class="bi bi-gear-fill text-secondary"></i> Kolom Aksi Per Kegiatan',
-						description: 'Setiap baris kegiatan memiliki tombol aksi:<br><br><b>• Input Nilai</b> — masukkan nilai konversi CPMK untuk kegiatan yang sudah disetujui/berlangsung.<br><b>• Edit</b> — ubah data kegiatan seperti program, sub-program, atau tujuan.<br><b>• Hapus</b> — hapus kegiatan dari sistem (membutuhkan konfirmasi).',
+						description: 'Setiap baris kegiatan memiliki tombol aksi:<br><br><b>• <i class="bi bi-pencil-square text-primary"></i> Input Nilai</b> — masukkan nilai konversi CPMK untuk kegiatan yang sudah disetujui atau sedang berlangsung. Tombol ini hanya aktif jika status kegiatan memenuhi syarat. <br><b>• <i class="bi bi-trash text-danger"></i> Hapus</b> — hapus kegiatan dari sistem. Akan muncul dialog konfirmasi. Penghapusan juga menghapus nilai CPMK yang sudah diinput untuk kegiatan ini.',
 						side: 'left'
 					}
 				}
