@@ -75,7 +75,7 @@
 				</div>
 
 				<div class="col-md-6">
-					<label for="grade_point" class="form-label small text-muted mb-2">Grade Point</label>
+					<label for="grade_point" class="form-label small text-muted mb-2">Bobot</label>
 					<input type="number"
 						class="form-control"
 						id="grade_point"

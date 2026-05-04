@@ -11,7 +11,7 @@
 			<h4 class="mb-0 fw-semibold">Pengaturan Sistem Penilaian</h4>
 			<div class="d-flex gap-2">
 				<a href="<?= base_url('admin/settings/create') ?>" class="btn btn-dark btn-sm">
-					<i class="bi bi-plus-lg"></i> Tambah
+					<i class="bi bi-plus-lg"></i> Tambah Penilaian
 				</a>
 			</div>
 		</div>
@@ -103,9 +103,9 @@
 					<tr>
 						<th scope="col" class="text-center" style="width: 5%;">No</th>
 						<th scope="col" class="text-center" style="width: 10%;">Huruf</th>
-						<th scope="col" class="text-center" style="width: 15%;">Range</th>
-						<th scope="col" class="text-center" style="width: 10%;">Point</th>
-						<th scope="col" style="width: 25%;">Deskripsi</th>
+						<th scope="col" class="text-center" style="width: 15%;">Penilaian Angka Patokan</th>
+						<th scope="col" class="text-center" style="width: 10%;">Bobot</th>
+						<th scope="col" class="text-center" style="width: 25%;">Deskripsi</th>
 						<th scope="col" class="text-center" style="width: 10%;">Lulus</th>
 						<th scope="col" class="text-center" style="width: 10%;">Status</th>
 						<th scope="col" class="text-center" style="width: 15%;">Aksi</th>

@@ -85,7 +85,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="grade_point" class="form-label">Grade Point</label>
+                        <label for="grade_point" class="form-label">Bobot</label>
                         <input type="number"
                                class="form-control"
                                id="grade_point"
