@@ -155,7 +155,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					$totalNilaiCpmk += $row['nilai_cpmk'];
 					$totalBobot += $bobot;
 				}
@@ -256,7 +256,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					$capaian = round(($row['nilai_cpmk'] / $bobot) * 100, 2);
 					$totalNilaiCpmk += $row['nilai_cpmk'];
 					$totalBobot += $bobot;
@@ -459,7 +459,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
 					}
@@ -866,7 +866,7 @@ class CapaianCpl extends BaseController
 			}
 			$bobot = $bobotCache[$bobotKey];
 
-			if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+			if ($bobot > 0) {
 				$capaian = round(($row['nilai_cpmk'] / $bobot) * 100, 2);
 
 				$detailData[] = [
@@ -1037,7 +1037,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					$mhsId = $row['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1194,7 +1194,7 @@ class CapaianCpl extends BaseController
 						$bobotCache[$bobotKey] = $this->getCpmkBobotForJadwal($row['cpmk_id'], $row['jadwal_id']);
 					}
 					$bobot = $bobotCache[$bobotKey];
-					if ($bobot > 0 && floatval($row['nilai_cpmk']) > 0) {
+					if ($bobot > 0) {
 						$mhsId = $row['mahasiswa_id'];
 						if (!isset($studentScores[$mhsId])) {
 							$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1339,7 +1339,7 @@ class CapaianCpl extends BaseController
 				}
 				$bobot = $bobotCache[$bobotKey];
 
-				if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					$mhsId = $nilai['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1489,7 +1489,7 @@ class CapaianCpl extends BaseController
 			}
 			$bobot = $bobotCache[$bobotKey];
 
-			if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
+			if ($bobot > 0) {
 				$mhsId = $nilai['mahasiswa_id'];
 				if (!isset($studentScores[$mhsId])) {
 					$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
@@ -1630,7 +1630,7 @@ class CapaianCpl extends BaseController
 					$bobotCache[$bobotKey] = $this->getCpmkBobotForJadwal($nilai['cpmk_id'], $jadwalId);
 				}
 				$bobot = $bobotCache[$bobotKey];
-				if ($bobot > 0 && floatval($nilai['nilai_cpmk']) > 0) {
+				if ($bobot > 0) {
 					$mhsId = $nilai['mahasiswa_id'];
 					if (!isset($studentScores[$mhsId])) {
 						$studentScores[$mhsId] = ['totalNilai' => 0, 'totalBobot' => 0];
