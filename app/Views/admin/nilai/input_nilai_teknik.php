@@ -472,7 +472,7 @@
 					const minScore = parseFloat(grade.min_score);
 					const maxScore = parseFloat(grade.max_score);
 
-					if (score > minScore && score <= maxScore) {
+					if (score >= minScore && score <= maxScore) {
 						const isPassing = grade.is_passing == 1;
 						return {
 							grade: grade.grade_letter,

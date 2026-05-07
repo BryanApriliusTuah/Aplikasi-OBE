@@ -229,23 +229,17 @@
 										</td>
 									<?php endforeach; ?>
 
-									<!-- Calculate sum and grade -->
+									<!-- Nilai Akhir from stored nilai_mahasiswa (authoritative source) -->
 									<?php
-									if (count($student_scores) > 0) {
-										$total = array_sum($student_scores);
-
-										// Use dynamic grade configuration from database
-										$gradeConfigModel = new \App\Models\GradeConfigModel();
-										$grade_data = $gradeConfigModel->getGradeByScore($total);
-
-										$nilai_huruf = $grade_data ? $grade_data['grade_letter'] : 'E';
-										$is_passing = $grade_data ? (bool)$grade_data['is_passing'] : false;
-										$keterangan = $is_passing ? 'Lulus' : 'Tidak Lulus';
-									}
+									$stored = $final_scores_map[$mahasiswa['id']] ?? null;
+									$total = $stored ? (float)$stored['nilai_akhir'] : null;
+									$nilai_huruf = $stored['nilai_huruf'] ?? null;
+									$keterangan = $stored['status_kelulusan'] ?? null;
+									$has_final = $stored && $total !== null && $total > 0;
 									?>
 									<!-- Nilai Akhir Angka -->
 									<td class="text-center">
-										<?php if (count($student_scores) > 0): ?>
+										<?php if ($has_final): ?>
 											<strong><?= number_format($total, 2) ?></strong>
 										<?php else: ?>
 											<span class="text-muted">-</span>
@@ -253,7 +247,7 @@
 									</td>
 									<!-- Nilai Akhir Huruf -->
 									<td class="text-center">
-										<?php if (count($student_scores) > 0): ?>
+										<?php if ($has_final && $nilai_huruf && $nilai_huruf !== '-'): ?>
 											<strong><?= esc($nilai_huruf) ?></strong>
 										<?php else: ?>
 											<span class="text-muted">-</span>
@@ -261,7 +255,7 @@
 									</td>
 									<!-- Keterangan -->
 									<td class="text-center">
-										<?php if (count($student_scores) > 0): ?>
+										<?php if ($has_final && $keterangan): ?>
 											<?= esc($keterangan) ?>
 										<?php else: ?>
 											<span class="text-muted">-</span>

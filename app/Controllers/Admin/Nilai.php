@@ -892,6 +892,7 @@ class Nilai extends BaseController
 		$mahasiswaModel = new MahasiswaModel();
 		$cpmkModel = new CpmkModel();
 		$nilaiCpmkModel = new NilaiCpmkMahasiswaModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
 
 		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
 		if (!$jadwal) {
@@ -938,6 +939,13 @@ class Nilai extends BaseController
 		$standarCpmkModel = new \App\Models\StandarMinimalCpmkModel();
 		$passingThreshold = $standarCpmkModel->getPersentase();
 
+		// Get stored final scores (nilai_akhir and nilai_huruf) as the authoritative source
+		$final_scores = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
+		$final_scores_map = [];
+		foreach ($final_scores as $score) {
+			$final_scores_map[$score['mahasiswa_id']] = $score;
+		}
+
 		$data = [
 			'title' => 'Lihat Nilai CPMK',
 			'jadwal' => $jadwal,
@@ -946,6 +954,7 @@ class Nilai extends BaseController
 			'existing_scores' => $existing_scores,
 			'cpmk_stats' => $cpmk_stats,
 			'passing_threshold' => $passingThreshold,
+			'final_scores_map' => $final_scores_map,
 		];
 
 		return view('admin/nilai/lihat_cpmk', $data);
