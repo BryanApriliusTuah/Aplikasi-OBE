@@ -323,7 +323,6 @@
 						<ul class="mb-0 mt-2">
 							<li>File harus dalam format Excel (.xlsx)</li>
 							<li>Gunakan template dari tombol "Unduh DPNA" untuk memastikan format yang benar</li>
-							<li>Kolom yang akan diimport: Tugas, UTS, UAS</li>
 							<li>Pastikan NIM mahasiswa sesuai dengan data di sistem</li>
 							<li>Nilai yang di-upload akan menggantikan nilai yang sudah ada</li>
 						</ul>
@@ -467,7 +466,6 @@
 
 		// Function to convert numeric grade to letter grade using dynamic config
 		function getNilaiHuruf(score) {
-			// Use dynamic grade configuration from database
 			if (gradeConfig && gradeConfig.length > 0) {
 				for (let i = 0; i < gradeConfig.length; i++) {
 					const grade = gradeConfig[i];
@@ -475,59 +473,17 @@
 					const maxScore = parseFloat(grade.max_score);
 
 					if (score > minScore && score <= maxScore) {
-						// Determine color based on is_passing and score range
-						let color = 'secondary';
-						if (grade.is_passing == 1) {
-							color = 'success';
-						} else {
-							color = 'danger';
-						}
-
+						const isPassing = grade.is_passing == 1;
 						return {
 							grade: grade.grade_letter,
-							color: color,
-							is_passing: grade.is_passing == 1
+							color: isPassing ? 'success' : 'danger',
+							is_passing: isPassing
 						};
 					}
 				}
 			}
 
-			// Fallback to hardcoded values if no config found
-			if (score > 80) return {
-				grade: 'A',
-				color: 'success',
-				is_passing: true
-			};
-			if (score > 70) return {
-				grade: 'AB',
-				color: 'success',
-				is_passing: true
-			};
-			if (score > 65) return {
-				grade: 'B',
-				color: 'info',
-				is_passing: true
-			};
-			if (score > 60) return {
-				grade: 'BC',
-				color: 'info',
-				is_passing: true
-			};
-			if (score > 50) return {
-				grade: 'C',
-				color: 'warning',
-				is_passing: true
-			};
-			if (score > 40) return {
-				grade: 'D',
-				color: 'danger',
-				is_passing: false
-			};
-			return {
-				grade: 'E',
-				color: 'danger',
-				is_passing: false
-			};
+			return { grade: '-', color: 'secondary', is_passing: false };
 		}
 
 		// Function to get keterangan based on grade info
@@ -567,8 +523,8 @@
 
 			// If all inputs are filled and valid
 			if (validCount === inputs.length && validCount > 0) {
-				// Calculate weighted average
-				const finalScore = totalBobot > 0 ? totalScore / totalBobot : totalScore / validCount;
+				// Match server-side formula: Σ(nilai × bobot / 100), not normalized by total bobot
+				const finalScore = totalScore / 100;
 				return finalScore;
 			}
 

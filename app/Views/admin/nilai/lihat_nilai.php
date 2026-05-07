@@ -248,12 +248,12 @@
 										</td>
 									<?php endforeach; ?>
 									<td class="align-middle text-center">
-										<span class="fw-bold" style="font-size: 1rem; min-width: 50px;">
+										<span class="fw-bold <?= $keterangan == 'Lulus' ? 'text-success' : ($nilai_akhir > 0 ? 'text-danger' : '') ?>" style="font-size: 1rem; min-width: 50px;">
 											<?= $nilai_akhir > 0 ? number_format($nilai_akhir, 2) : '-' ?>
 										</span>
 									</td>
 									<td class="align-middle text-center">
-										<span class="fw-bold" style="font-size: 1rem; min-width: 50px;">
+										<span class="fw-bold <?= $nilai_huruf !== '-' ? ($keterangan == 'Lulus' ? 'text-success' : 'text-danger') : '' ?>" style="font-size: 1rem; min-width: 50px;">
 											<?= esc($nilai_huruf) ?>
 										</span>
 									</td>
