@@ -211,6 +211,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($rou
 	$routes->get('nilai/unduh-dpna/(:num)', 'Nilai::unduhDpna/$1');
 	$routes->get('nilai/export-dpna-excel/(:num)', 'Nilai::exportDpnaExcel/$1');
 	$routes->get('nilai/export-dpna-excel-siobe/(:num)', 'Nilai::exportDpnaExcelSiobe/$1');
+	$routes->get('nilai/export-dpna-excel-siuber/(:num)', 'Nilai::exportDpnaExcelSiuber/$1');
 	$routes->get('nilai/export-cpmk-excel/(:num)', 'Nilai::exportCpmkExcel/$1');
 	$routes->get('nilai/export-cpl-excel/(:num)', 'Nilai::exportCplExcel/$1');
 	$routes->post('nilai/import-nilai-excel/(:num)', 'Nilai::importNilaiExcel/$1');

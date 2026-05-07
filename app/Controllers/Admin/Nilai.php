@@ -2211,22 +2211,25 @@ class Nilai extends BaseController
 			return $letter;
 		};
 
-		// Group teknik_list by type (same as "Format DPNA" grouped view)
-		$bobot_tugas = 0;
-		$bobot_uts   = 0;
-		$bobot_uas   = 0;
+		// Build unique teknik metadata (label + total bobot) keyed by teknik_key
+		$teknik_meta = [];
 		foreach ($teknik_list as $_t) {
-			if ($_t['teknik_key'] === 'tes_tulis_uts') {
-				$bobot_uts += $_t['bobot'];
-			} elseif ($_t['teknik_key'] === 'tes_tulis_uas') {
-				$bobot_uas += $_t['bobot'];
-			} else {
-				$bobot_tugas += $_t['bobot'];
+			$k = $_t['teknik_key'];
+			if (!isset($teknik_meta[$k])) {
+				$teknik_meta[$k] = ['label' => $_t['teknik_label'], 'bobot' => 0];
 			}
+			$teknik_meta[$k]['bobot'] += $_t['bobot'];
 		}
 
-		// Calculate the last column: No, NIM, Nama, Tugas, UTS, UAS, Nilai Angka, Nilai Huruf, Keterangan
-		$totalColumns = 9;
+		// Determine which keys to include; default to all if no filter provided
+		$requested = $this->request->getGet('teknik_keys');
+		$selected_keys = (!empty($requested))
+			? array_filter($requested, fn($k) => isset($teknik_meta[$k]))
+			: array_keys($teknik_meta);
+		$selected_keys = array_values($selected_keys);
+
+		// Calculate the last column: No, NIM, Nama, [selected teknik columns], Nilai Angka, Nilai Huruf, Keterangan
+		$totalColumns = 3 + count($selected_keys) + 3;
 		$keteranganColIndex = $totalColumns - 1;
 		$lastColLetter = $getColumnLetter($keteranganColIndex);
 		$beforeLastColLetter = $getColumnLetter($keteranganColIndex - 1);
@@ -2282,10 +2285,12 @@ class Nilai extends BaseController
 		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nama');
 
 
-		// Grouped columns: Tugas, UTS, UAS
-		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Tugas' . "\n(" . number_format($bobot_tugas, 1) . '%)');
-		$sheet->setCellValue($getColumnLetter($col++) . $row, 'UTS' . "\n(" . number_format($bobot_uts, 1) . '%)');
-		$sheet->setCellValue($getColumnLetter($col++) . $row, 'UAS' . "\n(" . number_format($bobot_uas, 1) . '%)');
+		// One column per selected teknik type
+		foreach ($selected_keys as $k) {
+			$label = $teknik_meta[$k]['label'];
+			$bobot = $teknik_meta[$k]['bobot'];
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $label . "\n(" . number_format($bobot, 1) . '%)');
+		}
 
 		// Nilai Akhir and Keterangan columns
 		$nilaiAkhirStartCol = $col;
@@ -2311,28 +2316,19 @@ class Nilai extends BaseController
 			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nim']);
 			$sheet->setCellValue($getColumnLetter($col++) . $row, $data['nama']);
 
-			// Calculate grouped averages (same logic as "Format DPNA" grouped view)
-			$tugas_vals = [];
-			$uts_vals   = [];
-			$uas_vals   = [];
+			// Group scores by teknik_key across all weeks
+			$scores_by_key = [];
 			foreach ($teknik_list as $item) {
-				$score = $data['teknik_' . $item['rps_mingguan_id'] . '_' . $item['teknik_key']] ?? 0;
-				if ($item['teknik_key'] === 'tes_tulis_uts') {
-					$uts_vals[] = $score;
-				} elseif ($item['teknik_key'] === 'tes_tulis_uas') {
-					$uas_vals[] = $score;
-				} else {
-					$tugas_vals[] = $score;
-				}
+				$k = $item['teknik_key'];
+				$scores_by_key[$k][] = $data['teknik_' . $item['rps_mingguan_id'] . '_' . $k] ?? 0;
 			}
-			$tugas_avg = count($tugas_vals) ? array_sum($tugas_vals) / count($tugas_vals) : 0;
-			$uts_avg   = count($uts_vals)   ? array_sum($uts_vals)   / count($uts_vals)   : 0;
-			$uas_avg   = count($uas_vals)   ? array_sum($uas_vals)   / count($uas_vals)   : 0;
 
 			$teknikColStart = $col;
-			$sheet->setCellValue($getColumnLetter($col++) . $row, round($tugas_avg, 2));
-			$sheet->setCellValue($getColumnLetter($col++) . $row, round($uts_avg, 2));
-			$sheet->setCellValue($getColumnLetter($col++) . $row, round($uas_avg, 2));
+			foreach ($selected_keys as $k) {
+				$vals = $scores_by_key[$k] ?? [];
+				$avg  = count($vals) ? array_sum($vals) / count($vals) : 0;
+				$sheet->setCellValue($getColumnLetter($col++) . $row, round($avg, 2));
+			}
 			$teknikColEnd = $col - 1;
 
 			// Add background color to grouped score cells
@@ -2654,6 +2650,249 @@ class Nilai extends BaseController
 		$sheet->getStyle($lastColLetter . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
 		$filename = 'DPNA_SIOBE_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk']) . '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
+
+		$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $filename . '"');
+		header('Cache-Control: max-age=0');
+		$writer->save('php://output');
+		exit;
+	}
+
+	/**
+	 * Export DPNA in SIUBER format (POST).
+	 * The caller sends mapping[{rps_mingguan_id}_{teknik_key}] = tugas|uts|uas|skip
+	 * for every teknik-per-week row. Scores assigned to the same category are
+	 * averaged (weighted by bobot) and written into three fixed columns: Tugas, UTS, UAS.
+	 */
+	public function exportDpnaExcelSiuber($jadwal_id)
+	{
+		$jadwalModel         = new MengajarModel();
+		$mahasiswaModel      = new MahasiswaModel();
+		$nilaiTeknikModel    = new NilaiTeknikPenilaianModel();
+		$nilaiMahasiswaModel = new NilaiMahasiswaModel();
+
+		$jadwal = $jadwalModel->getJadwalWithDetails(['id' => $jadwal_id], true);
+		if (!$jadwal) {
+			return redirect()->back()->with('error', 'Jadwal tidak ditemukan.');
+		}
+
+		$students        = $mahasiswaModel->getStudentsByJadwal($jadwal_id);
+		$teknik_list     = $nilaiTeknikModel->getTeknikPenilaianByJadwal($jadwal_id);
+		$existing_scores = $nilaiTeknikModel->getScoresByJadwalForInput($jadwal_id);
+		$final_scores    = $nilaiMahasiswaModel->getFinalScoresByJadwal($jadwal_id);
+
+		$final_scores_map = [];
+		foreach ($final_scores as $fs) {
+			$final_scores_map[$fs['mahasiswa_id']] = $fs;
+		}
+
+		// Auto-group all items by teknik_key; each unique key becomes one column
+		$teknik_groups = [];
+		foreach ($teknik_list as $item) {
+			$key = $item['teknik_key'];
+			if (!isset($teknik_groups[$key])) {
+				$teknik_groups[$key] = ['label' => $item['teknik_label'], 'items' => []];
+			}
+			$teknik_groups[$key]['items'][] = $item;
+		}
+		$teknik_keys = array_keys($teknik_groups);
+
+		$getKeterangan = function ($grade) {
+			return in_array(strtoupper($grade), ['B', 'BC', 'C', 'D', 'E']) ? 'TM' : 'Lulus';
+		};
+
+		// Total CPMK contribution for a teknik group per student: Σ(score × bobot / 100)
+		$calcTeknikScore = function ($items, $mahasiswa_id) use ($existing_scores) {
+			$total = 0;
+			$has_score = false;
+			foreach ($items as $item) {
+				$score = $existing_scores[$mahasiswa_id][$item['rps_mingguan_id']][$item['teknik_key']] ?? null;
+				if ($score !== null && $score !== '') {
+					$total     += (float) $score * (float) $item['bobot'] / 100;
+					$has_score  = true;
+				}
+			}
+			return $has_score ? round($total, 2) : null;
+		};
+
+		// Excel generation
+		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$sheet = $spreadsheet->getActiveSheet();
+		$spreadsheet->getProperties()
+			->setCreator('OBE System')
+			->setTitle('DPNA SIUBER - ' . $jadwal['nama_mk'])
+			->setSubject('Daftar Penilaian Nilai Akhir (Format SIUBER)');
+
+		$sheet->getRowDimension(1)->setRowHeight(50);
+		$sheet->getRowDimension(2)->setRowHeight(20);
+
+		$logoPath = FCPATH . 'img/Logo UPR.png';
+		if (file_exists($logoPath)) {
+			$drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+			$drawing->setName('Logo');
+			$drawing->setDescription('Logo');
+			$drawing->setPath($logoPath);
+			$drawing->setCoordinates('A1');
+			$drawing->setHeight(50);
+			$drawing->setOffsetX(10);
+			$drawing->setOffsetY(5);
+			$drawing->setWorksheet($sheet);
+		}
+
+		$semester_type = '';
+		if (isset($jadwal['semester'])) {
+			$semester_type = ($jadwal['semester'] % 2 == 0) ? 'Genap' : 'Ganjil';
+		}
+		$tahun = isset($jadwal['tahun_akademik'])
+			? trim(preg_replace('/(Ganjil|Genap)/', '', $jadwal['tahun_akademik']))
+			: '';
+
+		$getColumnLetter = function ($index) {
+			$letter = '';
+			while ($index >= 0) {
+				$letter = chr($index % 26 + 65) . $letter;
+				$index = floor($index / 26) - 1;
+			}
+			return $letter;
+		};
+
+		// Dynamic columns: No(0), NIM(1), Nama(2), [one per teknik_key], Nilai Angka, Nilai Huruf, Keterangan
+		$numTeknik      = count($teknik_keys);
+		$totalColumns   = 3 + $numTeknik + 3;
+		$lastColIndex   = $totalColumns - 1;
+		$lastColLetter  = $getColumnLetter($lastColIndex);
+		$beforeLastLetter = $getColumnLetter($lastColIndex - 1);
+
+		$sheet->setCellValue('B1', "KEMENTERIAN PENDIDIKAN TINGGI, SAINS, \nDAN TEKNOLOGI");
+		$sheet->mergeCells('B1:' . $beforeLastLetter . '1');
+		$sheet->getStyle('B1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		$dpna_text = "DPNA\nSemester " . $semester_type . " " . $tahun;
+		$sheet->setCellValue($lastColLetter . '1', $dpna_text);
+		$sheet->getStyle($lastColLetter . '1')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle($lastColLetter . '1')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
+
+		$sheet->setCellValue('B2', 'UNIVERSITAS PALANGKA RAYA');
+		$sheet->mergeCells('B2:' . $beforeLastLetter . '2');
+		$sheet->getStyle('B2')->getFont()->setBold(true)->setSize(15);
+		$sheet->getStyle('B2')->getAlignment()
+			->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+			->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+		$row = 4;
+		$sheet->setCellValue('B' . $row, 'MATA KULIAH');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['nama_mk']));
+		$row++;
+		$sheet->setCellValue('B' . $row, 'KELAS/PROGRAM STUDI');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['kelas']) . ' / ' . strtoupper($jadwal['program_studi']));
+		$row++;
+		$sheet->setCellValue('B' . $row, 'DOSEN KOORDINATOR');
+		$sheet->setCellValue('C' . $row, strtoupper($jadwal['dosen_ketua']));
+		$sheet->getStyle('B4:C' . $row)->getFont()->setBold(true)->setSize(12);
+
+		$row += 2;
+		$headerRow = $row;
+		$col = 0;
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'No');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'NIM');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nama');
+		foreach ($teknik_keys as $tkey) {
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $teknik_groups[$tkey]['label']);
+		}
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nilai Angka');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Nilai Huruf');
+		$sheet->setCellValue($getColumnLetter($col++) . $row, 'Keterangan');
+
+		$headerStyle = $sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $headerRow);
+		$headerStyle->getFont()->setBold(true);
+		$headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+			->getStartColor()->setARGB('FF4472C4');
+		$headerStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+		$headerStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+		$headerStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+		$headerStyle->getAlignment()->setWrapText(true);
+
+		$row++;
+		$no = 1;
+		$teknikStartColLetter = $getColumnLetter(3);
+		$teknikEndColLetter   = $getColumnLetter(3 + $numTeknik - 1);
+
+		foreach ($students as $student) {
+			$mid = $student['id'];
+
+			$col = 0;
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $no++);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $student['nim']);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $student['nama_lengkap']);
+			foreach ($teknik_keys as $tkey) {
+				$score = $calcTeknikScore($teknik_groups[$tkey]['items'], $mid);
+				$sheet->setCellValue($getColumnLetter($col++) . $row, $score !== null ? $score : '-');
+			}
+			$nilai_akhir = $final_scores_map[$mid]['nilai_akhir'] ?? 0;
+			$nilai_huruf = $final_scores_map[$mid]['nilai_huruf'] ?? '-';
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $nilai_akhir);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $nilai_huruf);
+			$sheet->setCellValue($getColumnLetter($col++) . $row, $getKeterangan($nilai_huruf));
+
+			$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			$sheet->getStyle($teknikStartColLetter . $row . ':' . $lastColLetter . $row)->getAlignment()
+				->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+			if ($numTeknik > 0) {
+				$sheet->getStyle($teknikStartColLetter . $row . ':' . $teknikEndColLetter . $row)->getFill()
+					->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+					->getStartColor()->setARGB('FFFFFF00');
+			}
+
+			$row++;
+		}
+
+		$lastRow = $row - 1;
+		$sheet->getStyle('A' . $headerRow . ':' . $lastColLetter . $lastRow)->applyFromArray([
+			'borders' => [
+				'allBorders' => [
+					'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+					'color'       => ['argb' => 'FF000000'],
+				],
+			],
+		]);
+
+		for ($i = 0; $i <= $lastColIndex; $i++) {
+			$sheet->getColumnDimension($getColumnLetter($i))->setAutoSize(true);
+		}
+
+		// Signature section
+		$db = \Config\Database::connect();
+		$dosenKetuaNip = $db->table('jadwal_dosen jd')
+			->select('d.nip')
+			->join('dosen d', 'd.id = jd.dosen_id')
+			->where('jd.jadwal_id', $jadwal_id)
+			->where('jd.role', 'leader')
+			->get()
+			->getRowArray();
+		$nip = $dosenKetuaNip['nip'] ?? '';
+
+		$row = $lastRow + 3;
+		$sheet->setCellValue($lastColLetter . $row, 'Palangka Raya, ' . date('d F Y'));
+		$row++;
+		$sheet->setCellValue($lastColLetter . $row, 'Mengetahui');
+		$row++;
+		$sheet->setCellValue($lastColLetter . $row, 'Dosen Koordinator Mata Kuliah');
+		$row += 4;
+		$sheet->setCellValue($lastColLetter . $row, $jadwal['dosen_ketua']);
+		$sheet->getStyle($lastColLetter . $row)->getFont()->setBold(true);
+		$row++;
+		$sheet->setCellValue($lastColLetter . $row, 'NIP. ' . $nip);
+
+		$filename = 'DPNA_SIUBER_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $jadwal['nama_mk'])
+			. '_' . $jadwal['kelas'] . '_' . date('YmdHis') . '.xlsx';
 
 		$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

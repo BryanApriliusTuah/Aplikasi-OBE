@@ -50,9 +50,9 @@
 								</a>
 							</li>
 							<li>
-								<a class="dropdown-item" href="<?= base_url('admin/nilai/export-dpna-excel/' . $jadwal['id']) ?>">
+								<a class="dropdown-item" href="<?= base_url('admin/nilai/export-dpna-excel-siuber/' . $jadwal['id']) ?>">
 									<i class="bi bi-file-earmark-excel text-primary me-2"></i>Format SIUBER
-									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Tugas / UTS / UAS</small>
+									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Semua teknik penilaian</small>
 								</a>
 							</li>
 						</ul>
@@ -363,6 +363,7 @@
 	</div>
 </div>
 
+
 <?= $this->endSection() ?>
 
 <?= $this->section('css') ?>
@@ -401,6 +402,10 @@
 		.modern-table-wrapper {
 			max-height: 60vh !important;
 		}
+	}
+
+	.hover-bg:hover {
+		background-color: rgba(0, 0, 0, 0.04);
 	}
 </style>
 <?= $this->endSection() ?>
@@ -942,5 +947,6 @@
 			document.fonts.ready.then(updateStickyPositions);
 		}
 	}
+
 </script>
 <?= $this->endSection() ?>
