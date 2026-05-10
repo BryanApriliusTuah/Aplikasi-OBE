@@ -357,9 +357,6 @@ class LaporanCpl extends BaseController
 					$totalBobotCpmk = 0;
 
 					foreach ($cpmkMataKuliahList as $cpmkMk) {
-						$mataKuliahIds[] = $cpmkMk['mata_kuliah_id'];
-						$mataKuliahNames[] = $cpmkMk['nama_mk'];
-
 						// Calculate bobot from rps_mingguan for each mata kuliah
 						$bobotQuery = "
 							SELECT COALESCE(SUM(rm.bobot), 0) as total_bobot
@@ -368,7 +365,13 @@ class LaporanCpl extends BaseController
 							WHERE rm.cpmk_id = ? AND r.mata_kuliah_id = ?
 						";
 						$bobotResult = $this->db->query($bobotQuery, [$cpmkId, $cpmkMk['mata_kuliah_id']])->getRowArray();
-						$totalBobotCpmk += $bobotResult['total_bobot'] ?? 0;
+						$mkBobot = (float)($bobotResult['total_bobot'] ?? 0);
+
+						if ($mkBobot > 0) {
+							$mataKuliahIds[] = $cpmkMk['mata_kuliah_id'];
+							$mataKuliahNames[] = $cpmkMk['nama_mk'];
+							$totalBobotCpmk += $mkBobot;
+						}
 					}
 
 					$cpmkDetails[] = [
@@ -385,8 +388,10 @@ class LaporanCpl extends BaseController
 
 			// Get all nilai_cpmk for all students for these CPMK
 			$nilaiList = $this->db->table('nilai_cpmk_mahasiswa ncm')
-				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, ncm.jadwal_id, jm.mata_kuliah_id')
+				->select('ncm.nilai_cpmk, ncm.cpmk_id, ncm.mahasiswa_id, ncm.jadwal_id, jm.mata_kuliah_id, mhs.nama_lengkap, mk.nama_mk')
 				->join('jadwal jm', 'jm.id = ncm.jadwal_id')
+				->join('mahasiswa mhs', 'mhs.id = ncm.mahasiswa_id')
+				->join('mata_kuliah mk', 'mk.id = jm.mata_kuliah_id')
 				->whereIn('ncm.mahasiswa_id', $studentIds)
 				->whereIn('ncm.cpmk_id', $cpmkIds)
 				->like('jm.tahun_akademik', $tahunAkademik, 'both')
@@ -473,6 +478,17 @@ class LaporanCpl extends BaseController
 				$countStudents = count(array_unique(array_column($cpmkScores, 'mahasiswa_id'))); // Unique students count
 				$avgScore = $countStudents > 0 ? $totalScore / $countStudents : 0;
 
+				// Build per-student detail grouped by mata kuliah
+				$detailMahasiswa = [];
+				foreach ($cpmkScores as $row) {
+					$detailMahasiswa[] = [
+						'nama' => $row['nama_lengkap'],
+						'nama_mk' => $row['nama_mk'],
+						'nilai' => $row['nilai_cpmk'],
+					];
+				}
+				usort($detailMahasiswa, fn($a, $b) => strcmp($a['nama_mk'] . $a['nama'], $b['nama_mk'] . $b['nama']));
+
 				// Use bobot from cpmkDetails (already calculated from rps_mingguan)
 				$bobot = $cpmkDetail['bobot_cpmk'];
 
@@ -481,7 +497,10 @@ class LaporanCpl extends BaseController
 						'kode_cpmk' => $cpmkDetail['kode_cpmk'],
 						'mata_kuliah_names' => $cpmkDetail['mata_kuliah_names'],
 						'capaian_rata_rata' => round($avgScore, 2),
-						'bobot' => $bobot
+						'total_nilai' => round($totalScore, 2),
+						'jumlah_mahasiswa' => $countStudents,
+						'bobot' => $bobot,
+						'detail_mahasiswa' => $detailMahasiswa,
 					];
 				}
 			}
@@ -491,7 +510,7 @@ class LaporanCpl extends BaseController
 				'deskripsi' => $cpl['deskripsi'],
 				'cpmk_kontributor' => $cpmkContributors,
 				'capaian_cpl' => round($nilaiCpl, 2),
-				'total_bobot' => $totalBobot,
+				'total_bobot' => array_sum(array_column($cpmkContributors, 'bobot')),
 				'total_capaian_cpl_persen' => round($totalCplScore, 2),
 				'capaian_cpl_persen' => round($average, 2)
 			];

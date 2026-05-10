@@ -141,7 +141,28 @@
 										<td><?= esc($assessment['teknik_penilaian']) ?></td>
 										<td><?= esc($assessment['indikator_penilaian']) ?></td>
 										<td class="text-center"><?= number_format($assessment['nilai_rata_rata'], 2) ?></td>
-										<td class="text-center <?= $statusClass ?> fw-bold"><?= number_format($persentase, 2) ?>%</td>
+										<?php
+										$jumlahMhs     = (int)($assessment['jumlah_mahasiswa'] ?? 0);
+										$totalSkor     = floatval($assessment['total_score'] ?? 0);
+										$nilaiRataRata = floatval($assessment['nilai_rata_rata'] ?? 0);
+										$bobotVal      = floatval($assessment['bobot'] ?? 0);
+										$tooltipText   = implode('', [
+											"<strong>Langkah 1 – Rata-rata mahasiswa:</strong><br>",
+											number_format($totalSkor, 2), " &divide; ", $jumlahMhs, " mahasiswa",
+											" = <strong>", number_format($nilaiRataRata, 2), "</strong><br><br>",
+											"<strong>Langkah 2 – Capaian terhadap bobot:</strong><br>",
+											"(", number_format($nilaiRataRata, 2), " &divide; ", number_format($bobotVal, 2), ") &times; 100",
+											" = <strong>", number_format($persentase, 2), "%</strong>",
+										]);
+										?>
+										<td class="text-center <?= $statusClass ?> fw-bold"
+											data-bs-toggle="tooltip"
+											data-bs-html="true"
+											data-bs-placement="left"
+											title="<?= htmlspecialchars($tooltipText, ENT_QUOTES) ?>"
+											style="cursor: help;">
+											<?= number_format($persentase, 2) ?>%
+										</td>
 									</tr>
 								<?php endforeach; ?>
 							<?php else: ?>
@@ -600,6 +621,12 @@
 
 <?= $this->section('js') ?>
 <script>
+	document.addEventListener('DOMContentLoaded', function () {
+		document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+			new bootstrap.Tooltip(el);
+		});
+	});
+
 	function getSelectedDocuments() {
 		const selected = [];
 		document.querySelectorAll('input[id^="doc_"]:checked').forEach(checkbox => {

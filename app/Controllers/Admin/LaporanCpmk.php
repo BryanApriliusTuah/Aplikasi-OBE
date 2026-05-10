@@ -428,6 +428,7 @@ class LaporanCpmk extends BaseController
 				'indikator_penilaian' => 'Kesesuaian hasil kerja dengan rubrik',
 				'nilai_rata_rata' => $nilaiRataRata,
 				'jumlah_mahasiswa' => $jumlahMahasiswa,
+				'total_score' => $totalScore,
 				'persentase_capaian' => $persentaseCapaian
 			];
 		}

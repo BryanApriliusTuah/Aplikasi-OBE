@@ -112,7 +112,8 @@
 							<?php if (!empty($report['cpmk_cpl_matrix'])): ?>
 								<?php foreach ($report['cpmk_cpl_matrix'] as $mk): ?>
 									<?php
-									$cpmkList = array_values($mk['cpmk_list']);
+									$cpmkList = array_values(array_filter($mk['cpmk_list'], fn($c) => $c['bobot_cpmk'] > 0));
+									if (empty($cpmkList)) continue;
 									$rowspan = count($cpmkList);
 									?>
 									<?php foreach ($cpmkList as $index => $cpmk): ?>
@@ -189,10 +190,49 @@
 														<?= esc($cpmk['mata_kuliah_names']) ?>
 													<?php endif; ?>
 												</td>
-												<td class="text-center"><?= number_format($cpmk['capaian_rata_rata'], 2) ?> (<?= $cpmk['bobot'] ?>)</td>
+												<?php
+												$cpmkPopoverHtml  = '<ul class="list-unstyled mb-0" style="font-size:0.8rem;">';
+												$cpmkPopoverHtml .= '<li><span class="text-muted">&Sigma;(nilai CPMK mahasiswa):</span> ' . number_format($cpmk['total_nilai'], 2) . '</li>';
+												$cpmkPopoverHtml .= '<li><span class="text-muted">Jumlah Mahasiswa:</span> ' . $cpmk['jumlah_mahasiswa'] . '</li>';
+												$cpmkPopoverHtml .= '<li><span class="text-muted">Bobot CPMK:</span> ' . $cpmk['bobot'] . '</li>';
+												$cpmkPopoverHtml .= '<li><hr class="my-1"></li>';
+												$cpmkPopoverHtml .= '<li><b>Rata-rata</b> = ' . number_format($cpmk['total_nilai'], 2) . ' / ' . $cpmk['jumlah_mahasiswa'] . ' = <b>' . number_format($cpmk['capaian_rata_rata'], 2) . '</b></li>';
+												$cpmkPopoverHtml .= '</ul>';
+												?>
+												<td class="text-center"
+													style="cursor:help;"
+													data-bs-toggle="popover"
+													data-bs-trigger="hover focus"
+													data-bs-html="true"
+													data-bs-placement="left"
+													data-bs-title="Detail Rata-rata <?= esc($cpmk['kode_cpmk']) ?>"
+													data-bs-content="<?= htmlspecialchars($cpmkPopoverHtml, ENT_QUOTES, 'UTF-8') ?>">
+													<?= number_format($cpmk['capaian_rata_rata'], 2) ?> (<?= $cpmk['bobot'] ?>)
+													<i class="bi bi-info-circle text-muted ms-1" style="font-size:0.75rem;"></i>
+												</td>
 												<?php if ($index === 0): ?>
-													<td rowspan="<?= $rowspan ?>" class="align-middle text-center">
+													<?php
+													$totalNilaiEq = implode(' + ', array_map(fn($c) => number_format($c['total_nilai'], 2), $cpl['cpmk_kontributor']));
+													$bobotEq      = implode(' + ', array_map(fn($c) => $c['bobot'], $cpl['cpmk_kontributor']));
+													$popoverHtml  = '<ul class="list-unstyled mb-0" style="font-size:0.8rem;">';
+													foreach ($cpl['cpmk_kontributor'] as $c) {
+														$popoverHtml .= '<li><b>' . esc($c['kode_cpmk']) . '</b>: ' . number_format($c['total_nilai'], 2) . '</li>';
+													}
+													$popoverHtml .= '<li><hr class="my-1"></li>';
+													$popoverHtml .= '<li><b>Total Nilai CPL</b> = ' . $totalNilaiEq . ' = <b>' . number_format($cpl['capaian_cpl'], 2) . '</b></li>';
+													$popoverHtml .= '<li><b>Total Bobot</b> = ' . $bobotEq . ' = <b>' . $cpl['total_bobot'] . '</b></li>';
+													$popoverHtml .= '</ul>';
+													?>
+													<td rowspan="<?= $rowspan ?>" class="align-middle text-center"
+														style="cursor:help;"
+														data-bs-toggle="popover"
+														data-bs-trigger="hover focus"
+														data-bs-html="true"
+														data-bs-placement="left"
+														data-bs-title="Detail Perhitungan CPL <?= esc($cpl['kode_cpl']) ?>"
+														data-bs-content="<?= htmlspecialchars($popoverHtml, ENT_QUOTES, 'UTF-8') ?>">
 														<?= number_format($cpl['capaian_cpl'], 2) ?> (<?= $cpl['total_bobot'] ?>)
+														<i class="bi bi-info-circle text-muted ms-1" style="font-size:0.75rem;"></i>
 													</td>
 													<td rowspan="<?= $rowspan ?>" class="align-middle text-center fw-bold <?= $statusClass ?>">
 														<?= number_format($cpl['capaian_cpl_persen'], 2) ?>%
@@ -577,9 +617,7 @@
 								<?php endforeach; ?>
 							<?php else: ?>
 								<li class="text-muted">Tidak ada mata kuliah kontributor</li>
-							<?php endif; ?>
-						</ul>
-					</div>
+                            <?php endif; ?>
 
 					<!-- Bukti Dokumentasi Asesmen -->
 					<div class="d-flex align-items-center gap-2 mb-2">
@@ -689,6 +727,10 @@
 
 <?= $this->section('js') ?>
 <script>
+	document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => {
+		new bootstrap.Popover(el, { container: 'body' });
+	});
+
 	function selectAllLampiran() {
 		document.querySelectorAll('.lampiran-checkbox').forEach(checkbox => {
 			checkbox.checked = true;
