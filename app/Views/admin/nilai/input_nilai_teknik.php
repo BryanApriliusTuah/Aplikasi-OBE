@@ -52,7 +52,7 @@
 							<li>
 								<a class="dropdown-item" href="<?= base_url('admin/nilai/export-dpna-excel-siuber/' . $jadwal['id']) ?>">
 									<i class="bi bi-file-earmark-excel text-primary me-2"></i>Format SIUBER
-									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Semua teknik penilaian</small>
+									<small class="text-muted d-block ms-4" style="font-size:0.75rem;">Penggabungan teknik penilaian</small>
 								</a>
 							</li>
 						</ul>
