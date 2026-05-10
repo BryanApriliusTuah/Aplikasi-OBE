@@ -1141,7 +1141,7 @@ window.OBE_TOURS = (function () {
 					element: el('#portfolio-content .card-body > div:nth-child(4) h5'),
 					popover: {
 						title: '<i class="bi bi-clipboard2-data text-info"></i> Bagian 3 – Rencana dan Realisasi Penilaian',
-						description: 'Tabel ini membandingkan <b>rencana penilaian</b> (dari RPS) dengan <b>realisasi</b> aktual. Terdapat dua kolom kunci:<br><br><b>• Nilai Rata-rata Mahasiswa</b> — rata-rata nilai mentah (0–100) yang diperoleh seluruh mahasiswa di kelas untuk teknik penilaian CPMK tersebut. Dihitung dari: <code>∑(Nilai mentahan)/Total mahasiswa</code>.<br><br><b>• Rata-rata Capaian (%)</b> — persentase ketercapaian CPMK, dihitung dengan: <code>∑(Capaian CPMK)/Total mahasiswa</code>. Ditampilkan <span style="color:#198754">hijau</span> jika ≥ standar minimal, <span style="color:#dc3545">merah</span> jika di bawah standar.<br><br>Standar minimal capaian dikonfigurasi di menu <b>Pengaturan Sistem</b> (admin only).',
+						description: 'Tabel ini membandingkan <b>rencana penilaian</b> (dari RPS) dengan <b>realisasi</b> aktual. Terdapat dua kolom kunci:<br><br><b>• Nilai Rata-rata Mahasiswa</b> — rata-rata nilai CPMK yang diperoleh seluruh mahasiswa di kelas untuk teknik penilaian CPMK tersebut. Dihitung dari: <code>∑(Nilai CPMK Mahasiswa)/Total mahasiswa</code>.<br><br><b>• Rata-rata Capaian (%)</b> — persentase ketercapaian CPMK, dihitung dengan: <code>∑(Capaian CPMK)/Total mahasiswa</code>. Ditampilkan <span style="color:#198754">hijau</span> jika ≥ standar minimal, <span style="color:#dc3545">merah</span> jika di bawah standar.<br><br>Standar minimal capaian dikonfigurasi di menu <b>Pengaturan Sistem</b> (admin only).',
 						side: 'bottom'
 					}
 				},
