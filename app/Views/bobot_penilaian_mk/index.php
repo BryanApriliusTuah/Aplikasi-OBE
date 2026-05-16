@@ -33,7 +33,7 @@
 				<p class="mt-3 fw-semibold">Belum ada data bobot penilaian</p>
 			</div>
 		<?php else: ?>
-			<div class="modern-table-wrapper">
+			<div class="modern-table-wrapper" style="max-height: calc(100vh - 220px); overflow-y: auto;">
 				<div class="scroll-indicator"></div>
 				<table class="modern-table" id="bobotMkTable">
 					<thead>
