@@ -66,7 +66,7 @@ class TeknikPenilaianCpmk extends BaseController
     public function exportExcel()
     {
         $penilaian = $this->_getProcessedData();
-        $kolom_teknik = ['partisipasi', 'observasi', 'unjuk_kerja', 'proyek', 'tes_tulis_uts', 'tes_tulis_uas', 'tes_lisan'];
+        $kolom_teknik = ['partisipasi', 'observasi(Tugas)', 'unjuk_kerja', 'proyek', 'tes_tulis_uts', 'tes_tulis_uas', 'Praktikum'];
         $kolom_label = TeknikPenilaian::LABELS;
 
         $spreadsheet = new Spreadsheet();
