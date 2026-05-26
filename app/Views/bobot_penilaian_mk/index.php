@@ -47,7 +47,7 @@
 							<th class="text-center" style="min-width: 120px;">Project Based</th>
 							<th class="text-center" style="min-width: 80px;">UTS</th>
 							<th class="text-center" style="min-width: 80px;">UAS</th>
-							<th class="text-center" style="min-width: 90px;">Tes Lisan</th>
+							<th class="text-center" style="min-width: 90px;">Praktikum</th>
 							<th class="text-center" style="min-width: 80px;">Total</th>
 						</tr>
 					</thead>

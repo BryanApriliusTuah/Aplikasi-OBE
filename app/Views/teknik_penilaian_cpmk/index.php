@@ -60,7 +60,7 @@
 							<th class="text-center" style="min-width: 140px;">Case Method/Project Based</th>
 							<th class="text-center" style="min-width: 80px;">UTS</th>
 							<th class="text-center" style="min-width: 80px;">UAS</th>
-							<th class="text-center" style="min-width: 80px;">Lisan</th>
+							<th class="text-center" style="min-width: 80px;">Praktikum</th>
 						</tr>
 					</thead>
 					<tbody>
