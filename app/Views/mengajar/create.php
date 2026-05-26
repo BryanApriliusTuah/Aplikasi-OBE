@@ -20,6 +20,24 @@
 					<div class="card-body">
 						<div class="row g-3">
 							<div class="col-12">
+								<label for="tahun_akademik" class="form-label">Semester</label>
+								<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
+									<option value="">-- Pilih Semester --</option>
+									<?php foreach ($tahun_akademik_list as $tahun): ?>
+										<option value="<?= esc($tahun) ?>" <?= old('tahun_akademik') === $tahun ? 'selected' : '' ?>>
+											<?= esc($tahun) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<?php if (empty($tahun_akademik_list)): ?>
+									<div class="form-text text-warning">
+										<i class="bi bi-exclamation-triangle"></i>
+										Belum ada tahun akademik. <a href="<?= base_url('admin/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<div class="col-12">
 								<label for="mata_kuliah_id" class="form-label">Mata Kuliah</label>
 								<select class="form-select" id="mata_kuliah_id" name="mata_kuliah_id" required>
 									<option value="">-- Pilih Mata Kuliah --</option>
@@ -58,23 +76,6 @@
 								?>
 								<input type="hidden" name="program_studi_kode" value="<?= esc($defaultProdi['kode'] ?? '') ?>">
 								<input type="text" class="form-control" value="<?= esc($defaultProdi['nama_resmi'] ?? 'Teknik Informatika') ?>" disabled>
-							</div>
-							<div class="col-md-6">
-								<label for="tahun_akademik" class="form-label">Semester</label>
-								<select class="form-select" id="tahun_akademik" name="tahun_akademik" required>
-									<option value="">-- Pilih Semester --</option>
-									<?php foreach ($tahun_akademik_list as $tahun): ?>
-										<option value="<?= esc($tahun) ?>" <?= old('tahun_akademik') === $tahun ? 'selected' : '' ?>>
-											<?= esc($tahun) ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
-								<?php if (empty($tahun_akademik_list)): ?>
-									<div class="form-text text-warning">
-										<i class="bi bi-exclamation-triangle"></i>
-										Belum ada tahun akademik. <a href="<?= base_url('admin/tahun-akademik/create') ?>" target="_blank">Tambahkan di sini</a>.
-									</div>
-								<?php endif; ?>
 							</div>
 
 							<div class="col-md-6">
@@ -238,6 +239,15 @@
 
 			// Fetch API kelas data
 			if (kodeMk) {
+				var tahunAkademik = $('#tahun_akademik').val();
+				if (!tahunAkademik) {
+					$apiKelasSection.show();
+					$apiKelasContainer.html('<div class="alert alert-warning mb-0">Pilih semester terlebih dahulu sebelum memilih mata kuliah.</div>');
+					return;
+				}
+				var taParts = tahunAkademik.split(' ');
+				var semesterId = taParts[0] + (taParts[1] === 'Ganjil' ? '1' : '2');
+
 				$apiKelasSection.show();
 				$apiKelasLoading.show();
 				$apiKelasContainer.html('');
@@ -246,7 +256,8 @@
 					url: '<?= base_url('admin/mengajar/getApiKelas') ?>',
 					method: 'GET',
 					data: {
-						kode_mk: kodeMk
+						kode_mk: kodeMk,
+						semester_id: semesterId
 					},
 					headers: {
 						'X-Requested-With': 'XMLHttpRequest'

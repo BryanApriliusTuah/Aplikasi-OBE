@@ -805,7 +805,12 @@ class Mengajar extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Kode MK diperlukan']);
         }
 
-        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=20252&prodiKode=58&fakKode=5&klsJenis=Reguler&mkKode=' . urlencode($mkKode);
+        $semesterId = $this->request->getGet('semester_id');
+        if (empty($semesterId) || !preg_match('/^\d{5}$/', $semesterId)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Semester ID tidak valid. Gunakan format 5 digit, misalnya 20252.']);
+        }
+
+        $apiUrl = 'https://api.siuber.upr.ac.id/api/siuber/jadwal?klsSemester=' . $semesterId . '&prodiKode=58&fakKode=5&klsJenis=Reguler&mkKode=' . urlencode($mkKode);
         $apiKey = 'XT)+KVdVT]Z]1-p8<tIz/H0W5}_z%@KS';
         $client = \Config\Services::curlrequest();
 
